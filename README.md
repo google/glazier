@@ -38,3 +38,12 @@ __Extensible__
 
 Glazier makes it simple to extend the installer by writing a bit of Python or
 Powershell code.
+
+## Contact
+
+We have a public discussion list at
+[glazier-discuss@googlegroups.com](https://groups.google.com/forum/#!forum/glazier-discuss)
+
+## Disclaimer
+
+This is not an official Google product.
