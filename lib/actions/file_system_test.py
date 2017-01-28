@@ -25,15 +25,15 @@ class FileSystemTest(unittest.TestCase):
 
   def setUp(self):
     # fake filesystem
-    fakefs = fake_filesystem.FakeFilesystem()
-    fakefs.CreateDirectory(r'/stage')
-    fakefs.CreateFile(r'/file1.txt', contents='file1')
-    fakefs.CreateFile(r'/file2.txt', contents='file2')
-    self.fake_open = fake_filesystem.FakeFileOpen(fakefs)
-    file_system.os = fake_filesystem.FakeOsModule(fakefs)
-    file_system.shutil = fake_filesystem_shutil.FakeShutilModule(fakefs)
+    fs = fake_filesystem.FakeFilesystem()
+    fs.CreateDirectory(r'/stage')
+    fs.CreateFile(r'/file1.txt', contents='file1')
+    fs.CreateFile(r'/file2.txt', contents='file2')
+    self.fake_open = fake_filesystem.FakeFileOpen(fs)
+    file_system.os = fake_filesystem.FakeOsModule(fs)
+    file_system.shutil = fake_filesystem_shutil.FakeShutilModule(fs)
     file_system.open = self.fake_open
-    self.fakefs = fakefs
+    self.fs = fs
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -44,8 +44,8 @@ class FileSystemTest(unittest.TestCase):
     dst2 = r'/windows/glazier/other.log'
     cf = file_system.MultiCopyFile([[src1, dst1], [src2, dst2]], build_info)
     cf.Run()
-    self.assertTrue(self.fakefs.Exists(r'/windows/glazier/glazier.log'))
-    self.assertTrue(self.fakefs.Exists(r'/windows/glazier/other.log'))
+    self.assertTrue(self.fs.Exists(r'/windows/glazier/glazier.log'))
+    self.assertTrue(self.fs.Exists(r'/windows/glazier/other.log'))
     # bad path
     src1 = r'/missing.txt'
     cf = file_system.CopyFile([src1, dst1], build_info)

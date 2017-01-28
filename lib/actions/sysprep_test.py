@@ -56,13 +56,12 @@ UNATTEND_XML = r"""<?xml version='1.0' encoding='utf-8'?>
 class SysprepTest(unittest.TestCase):
 
   def setUp(self):
-    fakefs = fake_filesystem.FakeFilesystem()
-    fakefs.CreateDirectory('/windows/panther')
-    fakefs.CreateFile('/windows/panther/unattend.xml', contents=UNATTEND_XML)
-    self.fake_open = fake_filesystem.FakeFileOpen(fakefs)
-    sysprep.os = fake_filesystem.FakeOsModule(fakefs)
+    fs = fake_filesystem.FakeFilesystem()
+    fs.CreateDirectory('/windows/panther')
+    fs.CreateFile('/windows/panther/unattend.xml', contents=UNATTEND_XML)
+    self.fake_open = fake_filesystem.FakeFileOpen(fs)
+    sysprep.os = fake_filesystem.FakeOsModule(fs)
     sysprep.open = self.fake_open
-    self.fakefs = fakefs
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
