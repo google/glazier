@@ -14,7 +14,7 @@
 
 """Tests for glazier.lib.powershell."""
 
-from fakefs import fake_filesystem
+from pyfakefs import fake_filesystem
 from glazier.lib import powershell
 import mock
 import unittest

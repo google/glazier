@@ -14,7 +14,7 @@
 
 """Tests for glazier.lib.actions.installer."""
 
-from fakefs import fake_filesystem
+from pyfakefs import fake_filesystem
 from glazier.lib.actions import installer
 import mock
 import unittest

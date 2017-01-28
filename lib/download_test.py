@@ -15,7 +15,7 @@
 """Tests for glazier.lib.download."""
 
 import StringIO
-from fakefs import fake_filesystem
+from pyfakefs import fake_filesystem
 from glazier.lib import buildinfo
 from glazier.lib import download
 import mock

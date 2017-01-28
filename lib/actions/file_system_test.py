@@ -14,8 +14,8 @@
 
 """Tests for glazier.lib.actions.file_system."""
 
-from fakefs import fake_filesystem
-from fakefs import fake_filesystem_shutil
+from pyfakefs import fake_filesystem
+from pyfakefs import fake_filesystem_shutil
 from glazier.lib.actions import file_system
 import mock
 import unittest

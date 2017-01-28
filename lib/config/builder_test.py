@@ -14,7 +14,7 @@
 
 """Tests for glazier.lib.config.builder."""
 
-from fakefs import fake_filesystem
+from pyfakefs import fake_filesystem
 from glazier.lib import buildinfo
 from glazier.lib.config import builder
 import mock

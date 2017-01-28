@@ -14,7 +14,7 @@
 
 """Tests for glazier.lib.resources."""
 
-from fakefs import fake_filesystem
+from pyfakefs import fake_filesystem
 from glazier.lib import resources
 import mock
 import unittest

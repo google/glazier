@@ -14,7 +14,7 @@
 
 """Tests for glazier.lib.actions.sysprep."""
 
-from fakefs import fake_filesystem
+from pyfakefs import fake_filesystem
 from glazier.lib.actions import sysprep
 import mock
 import unittest

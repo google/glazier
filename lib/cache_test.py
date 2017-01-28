@@ -15,7 +15,7 @@
 """Tests for glazier.lib.cache."""
 
 import os
-from fakefs import fake_filesystem
+from pyfakefs import fake_filesystem
 from glazier.lib import cache
 import mock
 import unittest

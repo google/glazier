@@ -14,7 +14,7 @@
 
 """Tests for glazier.chooser.chooser."""
 
-from fakefs import fake_filesystem
+from pyfakefs import fake_filesystem
 from glazier.chooser import chooser
 import mock
 import unittest

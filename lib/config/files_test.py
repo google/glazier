@@ -14,7 +14,7 @@
 
 """Tests for glazier.lib.config.files."""
 
-from fakefs import fake_filesystem
+from pyfakefs import fake_filesystem
 from glazier.lib.config import files
 import mock
 import unittest

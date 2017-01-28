@@ -14,7 +14,7 @@
 
 """Unit tests for autobuild."""
 
-from fakefs import fake_filesystem
+from pyfakefs import fake_filesystem
 from glazier import autobuild
 import mock
 import unittest

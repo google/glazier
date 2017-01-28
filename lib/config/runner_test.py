@@ -14,8 +14,8 @@
 
 """Tests for glazier.lib.config.runner."""
 
-from fakefs import fake_filesystem
-from fakefs import fake_filesystem_shutil
+from pyfakefs import fake_filesystem
+from pyfakefs import fake_filesystem_shutil
 from glazier.lib import buildinfo
 from glazier.lib.config import runner
 import mock

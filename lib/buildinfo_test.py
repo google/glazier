@@ -15,7 +15,7 @@
 """Tests for glazier.lib.buildinfo."""
 
 import datetime
-from fakefs import fake_filesystem
+from pyfakefs import fake_filesystem
 from glazier.lib import buildinfo
 from gwinpy.wmi.hw_info import DeviceId
 import mock
