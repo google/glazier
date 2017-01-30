@@ -17,10 +17,10 @@
 from glazier.lib import buildinfo
 from glazier.lib.actions import powershell
 import mock
-import unittest
+from google.apputils import basetest
 
 
-class PowershellTest(unittest.TestCase):
+class PowershellTest(basetest.TestCase):
 
   def setUp(self):
     buildinfo.constants.FLAGS.config_server = 'https://glazier/'
@@ -59,4 +59,4 @@ class PowershellTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

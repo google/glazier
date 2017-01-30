@@ -17,10 +17,10 @@
 from pyfakefs import fake_filesystem
 from glazier.lib import resources
 import mock
-import unittest
+from google.apputils import basetest
 
 
-class ResourcesTest(unittest.TestCase):
+class ResourcesTest(basetest.TestCase):
 
   def setUp(self):
     self.fs = fake_filesystem.FakeFilesystem()

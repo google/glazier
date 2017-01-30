@@ -18,10 +18,10 @@ import os
 from pyfakefs import fake_filesystem
 from glazier.lib import cache
 import mock
-import unittest
+from google.apputils import basetest
 
 
-class CacheTest(unittest.TestCase):
+class CacheTest(basetest.TestCase):
 
   def setUp(self):
     self.cache = cache.Cache()
@@ -83,4 +83,4 @@ class CacheTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

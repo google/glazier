@@ -17,10 +17,10 @@
 import sys
 from glazier.lib import interact
 import mock
-import unittest
+from google.apputils import basetest
 
 
-class InteractTest(unittest.TestCase):
+class InteractTest(basetest.TestCase):
 
   @mock.patch('__builtin__.raw_input', autospec=True)
   def testGetUsername(self, raw):
@@ -56,4 +56,4 @@ class InteractTest(unittest.TestCase):
     self.assertEqual('user*name', result)
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

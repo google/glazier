@@ -16,10 +16,10 @@
 
 from glazier.lib.actions import system
 import mock
-import unittest
+from google.apputils import basetest
 
 
-class SystemTest(unittest.TestCase):
+class SystemTest(basetest.TestCase):
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -74,4 +74,4 @@ class SystemTest(unittest.TestCase):
     s.Validate()
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

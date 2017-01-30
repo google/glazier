@@ -16,10 +16,10 @@
 
 from glazier.lib import ntp
 import mock
-import unittest
+from google.apputils import basetest
 
 
-class NtpTest(unittest.TestCase):
+class NtpTest(basetest.TestCase):
 
   @mock.patch.object(ntp.time, 'sleep', autospec=True)
   @mock.patch.object(ntp.subprocess, 'call', autospec=True)
@@ -50,4 +50,4 @@ class NtpTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

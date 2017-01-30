@@ -16,10 +16,10 @@
 
 from glazier.lib import logs
 import mock
-import unittest
+from google.apputils import basetest
 
 
-class LoggingTest(unittest.TestCase):
+class LoggingTest(basetest.TestCase):
 
   @mock.patch.object(logs.logging, 'FileHandler')
   def testSetup(self, fh):
@@ -34,4 +34,4 @@ class LoggingTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

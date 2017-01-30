@@ -17,14 +17,14 @@
 from pyfakefs import fake_filesystem
 from glazier import autobuild
 import mock
-import unittest
+from google.apputils import basetest
 
 
 class LogFatal(Exception):
   pass
 
 
-class BuildInfoTest(unittest.TestCase):
+class BuildInfoTest(basetest.TestCase):
 
   @mock.patch.object(autobuild, 'logs', autospec=True)
   def setUp(self, logs):
@@ -68,4 +68,4 @@ class BuildInfoTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

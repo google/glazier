@@ -17,10 +17,10 @@
 from glazier.lib import buildinfo
 from glazier.lib.config import base
 import mock
-import unittest
+from google.apputils import basetest
 
 
-class BaseTest(unittest.TestCase):
+class BaseTest(basetest.TestCase):
 
   def setUp(self):
     self.buildinfo = buildinfo.BuildInfo()
@@ -42,4 +42,4 @@ class BaseTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

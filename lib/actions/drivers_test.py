@@ -17,10 +17,10 @@
 from glazier.lib.actions import drivers
 from glazier.lib.buildinfo import BuildInfo
 import mock
-import unittest
+from google.apputils import basetest
 
 
-class DriversTest(unittest.TestCase):
+class DriversTest(basetest.TestCase):
 
   @mock.patch.object(BuildInfo, 'ReleasePath')
   @mock.patch('glazier.lib.download.Download.VerifyShaHash', autospec=True)
@@ -98,4 +98,4 @@ class DriversTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

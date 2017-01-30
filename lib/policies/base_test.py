@@ -15,10 +15,10 @@
 """Tests for glazier.lib.policies.base."""
 
 from glazier.lib.policies import base
-import unittest
+from google.apputils import basetest
 
 
-class BaseTest(unittest.TestCase):
+class BaseTest(basetest.TestCase):
 
   def testVerify(self):
     b = base.BasePolicy(None)
@@ -26,4 +26,4 @@ class BaseTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

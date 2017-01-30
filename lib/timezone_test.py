@@ -15,10 +15,10 @@
 """Unittests for the timezone library."""
 
 from glazier.lib import timezone
-import unittest
+from google.apputils import basetest
 
 
-class TimezoneTest(unittest.TestCase):
+class TimezoneTest(basetest.TestCase):
 
   def setUp(self):
     self.tz = timezone.Timezone()
@@ -39,4 +39,4 @@ class TimezoneTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

@@ -15,10 +15,10 @@
 """Tests for glazier.lib.actions.base."""
 
 from glazier.lib.actions import base
-import unittest
+from google.apputils import basetest
 
 
-class BaseTest(unittest.TestCase):
+class BaseTest(basetest.TestCase):
 
   def testRun(self):
     b = base.BaseAction(None, None)
@@ -27,4 +27,4 @@ class BaseTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

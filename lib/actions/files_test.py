@@ -19,10 +19,10 @@ from pyfakefs import fake_filesystem_shutil
 from glazier.lib import buildinfo
 from glazier.lib.actions import files
 import mock
-import unittest
+from google.apputils import basetest
 
 
-class FilesTest(unittest.TestCase):
+class FilesTest(basetest.TestCase):
 
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem()
@@ -213,4 +213,4 @@ class FilesTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

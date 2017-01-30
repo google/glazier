@@ -18,10 +18,10 @@ from pyfakefs import fake_filesystem
 from glazier.lib import buildinfo
 from glazier.lib.config import builder
 import mock
-import unittest
+from google.apputils import basetest
 
 
-class ConfigBuilderTest(unittest.TestCase):
+class ConfigBuilderTest(basetest.TestCase):
 
   def setUp(self):
 
@@ -87,4 +87,4 @@ class ConfigBuilderTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

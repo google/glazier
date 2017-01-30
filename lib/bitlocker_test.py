@@ -16,10 +16,10 @@
 
 from glazier.lib import bitlocker
 import mock
-import unittest
+from google.apputils import basetest
 
 
-class BitlockerTest(unittest.TestCase):
+class BitlockerTest(basetest.TestCase):
 
   @mock.patch.object(
       bitlocker.powershell.PowerShell, 'RunCommand', autospec=True)
@@ -56,4 +56,4 @@ class BitlockerTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

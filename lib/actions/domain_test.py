@@ -16,10 +16,10 @@
 
 from glazier.lib.actions import domain
 import mock
-import unittest
+from google.apputils import basetest
 
 
-class DomainTest(unittest.TestCase):
+class DomainTest(basetest.TestCase):
 
   @mock.patch.object(domain.domain_join, 'DomainJoin', autospec=True)
   @mock.patch(
@@ -54,4 +54,4 @@ class DomainTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()

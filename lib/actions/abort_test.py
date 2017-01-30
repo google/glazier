@@ -16,10 +16,10 @@
 
 from glazier.lib.actions import abort
 import mock
-import unittest
+from google.apputils import basetest
 
 
-class AbortTest(unittest.TestCase):
+class AbortTest(basetest.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testAbort(self, build_info):
@@ -59,4 +59,4 @@ class AbortTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  basetest.main()
