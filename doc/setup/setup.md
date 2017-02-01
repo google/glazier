@@ -18,6 +18,7 @@ of their respective owners and not the Glazier developers.
     *   Provides various interfaces to Windows subsystems.
 *   python-gflags: https://github.com/google/python-gflags
     *   Provides flag handling to various libraries.
+*   pyyaml: https://pypi.python.org/pypi/PyYAML
 
 For tests:
 
