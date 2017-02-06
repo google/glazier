@@ -14,6 +14,9 @@
 
 """Actions for stopping the image."""
 
+from __future__ import absolute_import
+from __future__ import print_function
+
 import logging
 import re
 from glazier.lib import interact
@@ -43,7 +46,7 @@ class Warn(BaseAction):
   """Warn the user about a problem condition, and ask whether to continue."""
 
   def Run(self):
-    print '\n\n%s\n\n' % str(self._args[0])
+    print('\n\n%s\n\n' % str(self._args[0]))
     response = interact.Prompt('Do you still want to proceed (y/n)? ')
     if not response or not re.match(r'^[Yy](es)?$', response):
       raise ActionError('User chose not to continue installation.')

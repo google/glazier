@@ -21,6 +21,9 @@
 
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
+
 import hashlib
 import logging
 import os
@@ -256,13 +259,13 @@ class BaseDownloader(object):
   def PrintDebugInfo(self):
     """Print the debugging information to the screen."""
     if self._debug_info:
-      print '\n\n\n\n'
-      print '---------------'
-      print 'Debugging info: '
-      print '---------------'
+      print('\n\n\n\n')
+      print('---------------')
+      print('Debugging info: ')
+      print('---------------')
       for key, value in self._debug_info.items():
-        print '%s: %s' % (key, value)
-      print '\n\n\n'
+        print('%s: %s' % (key, value))
+      print('\n\n\n')
 
   def _StreamToDisk(self, file_stream, show_progress=None):
     """Save a file stream to disk.

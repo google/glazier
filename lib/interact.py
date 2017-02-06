@@ -14,6 +14,9 @@
 
 """Glazier user interaction."""
 
+from __future__ import absolute_import
+from __future__ import print_function
+
 import logging
 import re
 import time
@@ -44,7 +47,7 @@ def Keystroke(message, validator='.*', timeout=30):
     String of the character input from the user that matched input_regex.
   """
   import msvcrt  # pylint: disable=g-import-not-at-top
-  print message
+  print(message)
   i = 0
   kbhit = False
   while i < timeout and not kbhit:
