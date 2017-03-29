@@ -84,8 +84,17 @@ class DomainJoin(object):
             r'%s\join-domain.ps1' % constants.SYS_CACHE,
             args=[self._username, self._password, self._domain_name])
       except powershell.PowerShellError as e:
+         # Replace and mask password in error output.
+        c = []
+        error = str(e).split()
+        for item in error:
+          if self._password in item:
+            c.append('************')
+          else:
+            c.append(item)
+        # Display cleaned output
         logging.error(
-            'Domain join failed. Sleeping 5 minutes then trying again. (%s)', e)
+            'Domain join failed. Sleeping 5 minutes then trying again. (%s)', c)
         time.sleep(300)
         continue
       logging.info('Joined the machine to the domain.')

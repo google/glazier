@@ -26,6 +26,7 @@ class ResourcesTest(basetest.TestCase):
     self.fs = fake_filesystem.FakeFilesystem()
     resources.os = fake_filesystem.FakeOsModule(self.fs)
     self.fs.CreateFile('/test/file.txt')
+    self.fs.CreateFile('/test2/resources/file.txt')
 
   def testGetResourceFileName(self):
     r = resources.Resources('/test')
@@ -33,8 +34,12 @@ class ResourcesTest(basetest.TestCase):
                       'missing.txt')
     self.assertEqual(r.GetResourceFileName('file.txt'), '/test/file.txt')
 
-    with mock.patch.object(r.os, 'cwd') as cwd:
-      cwd.return_value = '/test2'
+    with mock.patch.object(resources.os.path, 'dirname') as dirname:
+      dirname.return_value = '/test2'
       r = resources.Resources()
       self.assertEqual(
           r.GetResourceFileName('file.txt'), '/test2/resources/file.txt')
+
+
+if __name__ == '__main__':
+  basetest.main()

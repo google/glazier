@@ -32,3 +32,7 @@ class FileUtilTest(basetest.TestCase):
                       '/test/file.txt')
     file_util.CreateDirectories('/tmp/test/path/file.log')
     self.assertTrue(self.filesystem.Exists('/tmp/test/path'))
+
+
+if __name__ == '__main__':
+  basetest.main()
