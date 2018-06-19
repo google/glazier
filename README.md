@@ -3,7 +3,13 @@
 Glazier is a tool for automating the installation of the Microsoft Windows
 operating system on various device platforms.
 
-[TOC]
+Table of contents
+=================
+
+- [Glazier](#glazier)
+  * [Why Glazier?](#why-glazier-)
+  * [Contact](#contact)
+  * [Disclaimer](#disclaimer)
 
 ## Why Glazier?
 
