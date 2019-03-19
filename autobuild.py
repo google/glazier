@@ -21,7 +21,8 @@ from glazier.lib import constants
 from glazier.lib import logs
 from glazier.lib.config import builder
 from glazier.lib.config import runner
-import gflags as flags
+from absl import app
+from absl import flags
 
 FLAGS = flags.FLAGS
 flags.DEFINE_bool('preserve_tasks', False,

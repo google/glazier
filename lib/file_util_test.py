@@ -16,10 +16,10 @@
 
 from pyfakefs import fake_filesystem
 from glazier.lib import file_util
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class FileUtilTest(basetest.TestCase):
+class FileUtilTest(absltest.TestCase):
 
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem()
@@ -35,4 +35,4 @@ class FileUtilTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

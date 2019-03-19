@@ -19,10 +19,10 @@ from pyfakefs import fake_filesystem_shutil
 from glazier.lib import buildinfo
 from glazier.lib.config import runner
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class ConfigRunnerTest(basetest.TestCase):
+class ConfigRunnerTest(absltest.TestCase):
 
   def setUp(self):
     self.buildinfo = buildinfo.BuildInfo()
@@ -125,4 +125,4 @@ class ConfigRunnerTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

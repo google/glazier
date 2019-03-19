@@ -16,10 +16,10 @@
 
 from glazier.lib.actions import tpm
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class TpmTest(basetest.TestCase):
+class TpmTest(absltest.TestCase):
 
   @mock.patch.object(tpm.bitlocker, 'Bitlocker', autospec=True)
   def testBitlockerEnable(self, bitlocker):
@@ -45,4 +45,4 @@ class TpmTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

@@ -20,7 +20,7 @@ from glazier.lib import buildinfo
 from gwinpy.wmi.hw_info import DeviceId
 import mock
 import yaml
-from google.apputils import basetest
+from absl.testing import absltest
 
 _RELEASE_INFO = """
 supported_models:
@@ -43,7 +43,7 @@ versions:
 """
 
 
-class BuildInfoTest(basetest.TestCase):
+class BuildInfoTest(absltest.TestCase):
 
   def setUp(self):
     # fake filesystem
@@ -494,4 +494,4 @@ class BuildInfoTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

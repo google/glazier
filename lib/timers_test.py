@@ -17,10 +17,10 @@
 import datetime
 from glazier.lib import timers
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class TimersTest(basetest.TestCase):
+class TimersTest(absltest.TestCase):
 
   def setUp(self):
     self.t = timers.Timers()
@@ -41,4 +41,4 @@ class TimersTest(basetest.TestCase):
     self.assertIn('timer_2', all_t)
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

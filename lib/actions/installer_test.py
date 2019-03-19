@@ -17,10 +17,10 @@
 from pyfakefs import fake_filesystem
 from glazier.lib.actions import installer
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class InstallerTest(basetest.TestCase):
+class InstallerTest(absltest.TestCase):
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -206,4 +206,4 @@ class InstallerTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

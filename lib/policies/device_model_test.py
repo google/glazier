@@ -16,10 +16,10 @@
 
 from glazier.lib.policies import device_model
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class DeviceModelTest(basetest.TestCase):
+class DeviceModelTest(absltest.TestCase):
 
   @mock.patch('__builtin__.raw_input', autospec=True)
   @mock.patch('__builtin__.print', autospec=True)
@@ -58,4 +58,4 @@ class DeviceModelTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

@@ -14,7 +14,7 @@
 
 """Constants and Flags used by the Glazier imaging code."""
 
-import gflags as flags
+from absl import flags
 
 BUILD_LOG_FILE = 'glazier.log'
 REG_ROOT = r'SOFTWARE\Glazier'

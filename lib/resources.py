@@ -16,7 +16,7 @@
 
 import os
 from glazier.lib import constants
-import gflags as flags
+from absl import flags
 
 FLAGS = flags.FLAGS
 

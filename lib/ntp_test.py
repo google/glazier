@@ -18,10 +18,10 @@ import os
 import time
 from glazier.lib import ntp
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class NtpTest(basetest.TestCase):
+class NtpTest(absltest.TestCase):
 
   @mock.patch.object(ntp.time, 'sleep', autospec=True)
   @mock.patch.object(ntp.subprocess, 'call', autospec=True)
@@ -53,4 +53,4 @@ class NtpTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

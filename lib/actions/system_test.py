@@ -16,10 +16,10 @@
 
 from glazier.lib.actions import system
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class SystemTest(basetest.TestCase):
+class SystemTest(absltest.TestCase):
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -74,4 +74,4 @@ class SystemTest(basetest.TestCase):
     s.Validate()
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

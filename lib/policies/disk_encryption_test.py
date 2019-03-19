@@ -16,10 +16,10 @@
 
 from glazier.lib.policies import disk_encryption
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class DiskEncryptionTest(basetest.TestCase):
+class DiskEncryptionTest(absltest.TestCase):
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -37,4 +37,4 @@ class DiskEncryptionTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

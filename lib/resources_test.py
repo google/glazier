@@ -17,10 +17,10 @@
 from pyfakefs import fake_filesystem
 from glazier.lib import resources
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class ResourcesTest(basetest.TestCase):
+class ResourcesTest(absltest.TestCase):
 
   def setUp(self):
     self.fs = fake_filesystem.FakeFilesystem()
@@ -42,4 +42,4 @@ class ResourcesTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

@@ -16,10 +16,10 @@
 
 from glazier.lib import power
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class PowerTest(basetest.TestCase):
+class PowerTest(absltest.TestCase):
 
   @mock.patch.object(power.subprocess, 'call', autospec=True)
   def testRestart(self, call):
@@ -35,4 +35,4 @@ class PowerTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

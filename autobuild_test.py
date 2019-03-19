@@ -17,14 +17,14 @@
 from pyfakefs import fake_filesystem
 from glazier import autobuild
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
 class LogFatal(Exception):
   pass
 
 
-class BuildInfoTest(basetest.TestCase):
+class BuildInfoTest(absltest.TestCase):
 
   @mock.patch.object(autobuild, 'logs', autospec=True)
   def setUp(self, logs):
@@ -68,4 +68,4 @@ class BuildInfoTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

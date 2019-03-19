@@ -17,10 +17,10 @@
 from glazier.lib.actions import updates
 from glazier.lib.buildinfo import BuildInfo
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class UpdatesTest(basetest.TestCase):
+class UpdatesTest(absltest.TestCase):
 
   @mock.patch.object(BuildInfo, 'ReleasePath')
   @mock.patch('glazier.lib.download.Download.VerifyShaHash', autospec=True)
@@ -89,4 +89,4 @@ class UpdatesTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

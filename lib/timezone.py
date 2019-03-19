@@ -23,7 +23,7 @@
 import logging
 from xml.dom.minidom import parse
 from glazier.lib import resources
-import gflags as flags
+from absl import flags
 
 FLAGS = flags.FLAGS
 

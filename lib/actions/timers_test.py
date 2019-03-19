@@ -17,10 +17,10 @@
 from glazier.lib.actions import timers
 from glazier.lib.actions.base import ValidationError
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class TimersTest(basetest.TestCase):
+class TimersTest(absltest.TestCase):
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -42,4 +42,4 @@ class TimersTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

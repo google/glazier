@@ -16,10 +16,10 @@
 
 from glazier.lib import bitlocker
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class BitlockerTest(basetest.TestCase):
+class BitlockerTest(absltest.TestCase):
 
   @mock.patch.object(
       bitlocker.powershell.PowerShell, 'RunCommand', autospec=True)
@@ -56,4 +56,4 @@ class BitlockerTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

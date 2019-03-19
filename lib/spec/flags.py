@@ -14,7 +14,7 @@
 
 """Class for determining host spec via flags."""
 
-import gflags as flags
+from absl import flags
 
 FLAGS = flags.FLAGS
 

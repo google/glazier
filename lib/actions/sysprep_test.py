@@ -17,7 +17,7 @@
 from pyfakefs import fake_filesystem
 from glazier.lib.actions import sysprep
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 UNATTEND_XML = r"""<?xml version='1.0' encoding='utf-8'?>
 <unattend xmlns="urn:schemas-microsoft-com:unattend">
@@ -53,7 +53,7 @@ UNATTEND_XML = r"""<?xml version='1.0' encoding='utf-8'?>
 </unattend>"""
 
 
-class SysprepTest(basetest.TestCase):
+class SysprepTest(absltest.TestCase):
 
   def setUp(self):
     fs = fake_filesystem.FakeFilesystem()
@@ -130,4 +130,4 @@ class SysprepTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

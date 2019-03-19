@@ -19,7 +19,7 @@ from pyfakefs import fake_filesystem
 from glazier.lib import buildinfo
 from glazier.lib import download
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 _TEST_INI = """
 [BUILD]
@@ -28,7 +28,7 @@ branch=stable
 """
 
 
-class PathsTest(basetest.TestCase):
+class PathsTest(absltest.TestCase):
 
   def setUp(self):
     self.buildinfo = buildinfo.BuildInfo()
@@ -62,7 +62,7 @@ class PathsTest(basetest.TestCase):
     self.assertEqual(result, '/tmp/sub/dir/other/another/file.txt')
 
 
-class DownloadTest(basetest.TestCase):
+class DownloadTest(absltest.TestCase):
 
   def setUp(self):
     self._dl = download.BaseDownloader()
@@ -223,4 +223,4 @@ class DownloadTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

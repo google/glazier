@@ -17,10 +17,10 @@
 from pyfakefs import fake_filesystem
 from glazier.lib import powershell
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class PowershellTest(basetest.TestCase):
+class PowershellTest(absltest.TestCase):
 
   def setUp(self):
     self.fs = fake_filesystem.FakeFilesystem()
@@ -98,4 +98,4 @@ class PowershellTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

@@ -17,7 +17,7 @@
 from pyfakefs import fake_filesystem
 from glazier.chooser import chooser
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 _TEST_CONF = [{
     'name':
@@ -102,7 +102,7 @@ _TEST_CONF = [{
 }]
 
 
-class ChooserTest(basetest.TestCase):
+class ChooserTest(absltest.TestCase):
 
   @mock.patch.object(chooser, 'tk', autospec=True)
   def setUp(self, unused_tk):
@@ -158,4 +158,4 @@ class ChooserTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

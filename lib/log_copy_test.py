@@ -19,10 +19,10 @@ import shutil
 import sys
 from glazier.lib import log_copy
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class LogCopyTest(basetest.TestCase):
+class LogCopyTest(absltest.TestCase):
 
   @mock.patch.object(log_copy.logging, 'FileHandler', autospec=True)
   def setUp(self, unused_handler):
@@ -92,4 +92,4 @@ class LogCopyTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

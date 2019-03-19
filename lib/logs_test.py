@@ -16,10 +16,10 @@
 
 from glazier.lib import logs
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
-class LoggingTest(basetest.TestCase):
+class LoggingTest(absltest.TestCase):
 
   @mock.patch.object(logs.logging, 'FileHandler')
   def testSetup(self, fh):
@@ -34,4 +34,4 @@ class LoggingTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()

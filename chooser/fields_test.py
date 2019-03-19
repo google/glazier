@@ -16,11 +16,11 @@
 
 from glazier.chooser import fields
 import mock
-from google.apputils import basetest
+from absl.testing import absltest
 
 
 @mock.patch.object(fields, 'tk', autospec=True)
-class FieldsTest(basetest.TestCase):
+class FieldsTest(absltest.TestCase):
 
   @mock.patch.object(fields, 'tk', autospec=True)
   def setUp(self, tk):
@@ -41,7 +41,7 @@ class FieldsTest(basetest.TestCase):
     toggle.Value()
 
 
-class RadioMenuTest(basetest.TestCase):
+class RadioMenuTest(absltest.TestCase):
 
   @mock.patch.object(fields, 'tk', autospec=True)
   def setUp(self, tk):
@@ -62,7 +62,7 @@ class RadioMenuTest(basetest.TestCase):
     self.rm.button.configure.assert_called_with(text='en-us')
 
 
-class TimerTest(basetest.TestCase):
+class TimerTest(absltest.TestCase):
 
   class Quit(Exception):
     pass
@@ -99,4 +99,4 @@ class TimerTest(basetest.TestCase):
 
 
 if __name__ == '__main__':
-  basetest.main()
+  absltest.main()
