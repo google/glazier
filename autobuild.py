@@ -27,6 +27,7 @@ from absl import flags
 FLAGS = flags.FLAGS
 flags.DEFINE_bool('preserve_tasks', False,
                   'Preserve the existing task list, if any.')
+flags.DEFINE_list('verify_urls',None,'Comma-separated list of URLs')
 
 logging = logs.logging
 
@@ -77,7 +78,7 @@ class AutoBuild(object):
 
     try:
       r = runner.ConfigRunner(self._build_info)
-      r.Start(task_list=task_list)
+      r.Start(task_list=task_list, net_check=FLAGS.verify_urls)
     except runner.ConfigRunnerError as e:
       self._LogFatal(str(e))
 
@@ -88,4 +89,4 @@ def main(unused_argv):
 
 
 if __name__ == '__main__':
-  main(sys.argv)
+  app.run(main)

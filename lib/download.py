@@ -162,7 +162,6 @@ class BaseDownloader(object):
     for handler in self._GetHandlers():
       opener.add_handler(handler)
     urllib2.install_opener(opener)
-
     while True:
       try:
         attempt += 1

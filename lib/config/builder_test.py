@@ -14,7 +14,6 @@
 
 """Tests for glazier.lib.config.builder."""
 
-from pyfakefs import fake_filesystem
 from glazier.lib import buildinfo
 from glazier.lib.config import builder
 import mock
@@ -26,8 +25,6 @@ class ConfigBuilderTest(absltest.TestCase):
   def setUp(self):
 
     self.buildinfo = buildinfo.BuildInfo()
-    # filesystem
-    self.filesystem = fake_filesystem.FakeFilesystem()
     self.cb = builder.ConfigBuilder(self.buildinfo)
     self.cb._task_list = []
 

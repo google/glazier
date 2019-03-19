@@ -13,11 +13,9 @@ Glazier relies on some third party modules which need to be included with the
 Python distribution to enable full functionality. These modules are the property
 of their respective owners and not the Glazier developers.
 
-*   google-apputils: https://github.com/google/google-apputils
+*   absl-py: https://github.com/abseil/abseil-py
 *   gwinpy: https://github.com/google/winops/tree/master/gwinpy
     *   Provides various interfaces to Windows subsystems.
-*   python-gflags: https://github.com/google/python-gflags
-    *   Provides flag handling to various libraries.
 *   pyyaml: https://pypi.python.org/pypi/PyYAML
 
 For tests:
@@ -49,6 +47,9 @@ When building a WinPE image for use with Glazier, you will need to include:
     connectivity is necessary to reach the distribution point.)
 *   A Python interpreter. See [Python Requirements](#python-requirements).
 *   The Glazier codebase.
+*   For WMI functionality, the [WMI package] (https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/winpe-add-packages--optional-components-reference) must be included.
+*   Glazier makes use of the Windows "shutdown" command which may not be
+    included in WinPE by default. If the latter, include shutdown in WinPE.
 
 ### Startup
 

@@ -35,7 +35,7 @@ def _Powershell():
 class PowerShell(object):
   """Interact with the powershell interpreter to run scripts."""
 
-  def __init__(self, echo_off=False):
+  def __init__(self, echo_off=True):
     self.echo_off = echo_off
 
   def _LaunchPs(self, op, args, ok_result):

@@ -41,7 +41,7 @@ class ConfigRunnerTest(absltest.TestCase):
              'path': ['path1']}, {'data': {'pull': 'val2'},
                                   'path': ['path2']}, {'data': {'pull': 'val3'},
                                                        'path': ['path3']}]
-    self.cr._ProcessTasks(conf)
+    self.cr._ProcessTasks(conf, None)
     dump.assert_has_calls([
         mock.call(
             self.cr._task_list_path, conf[1:], mode='w'), mock.call(
@@ -64,7 +64,7 @@ class ConfigRunnerTest(absltest.TestCase):
     conf = [{'data': {'Shutdown': ['25', 'Reason']}, 'path': ['path1']}]
     event = runner.base.actions.RestartEvent('Some reason', timeout=25)
     action.side_effect = event
-    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
+    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf, None)
     restart.assert_called_with(25, 'Some reason')
     self.assertTrue(pop.called)
     pop.reset_mock()
@@ -72,7 +72,7 @@ class ConfigRunnerTest(absltest.TestCase):
     event = runner.base.actions.RestartEvent(
         'Some other reason', timeout=10, retry_on_restart=True)
     action.side_effect = event
-    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
+    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf, None)
     restart.assert_called_with(10, 'Some other reason')
     self.assertFalse(pop.called)
 
@@ -83,7 +83,7 @@ class ConfigRunnerTest(absltest.TestCase):
     conf = [{'data': {'Restart': ['25', 'Reason']}, 'path': ['path1']}]
     event = runner.base.actions.ShutdownEvent('Some reason', timeout=25)
     action.side_effect = event
-    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
+    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf, None)
     shutdown.assert_called_with(25, 'Some reason')
     self.assertTrue(pop.called)
     pop.reset_mock()
@@ -91,7 +91,7 @@ class ConfigRunnerTest(absltest.TestCase):
     event = runner.base.actions.ShutdownEvent(
         'Some other reason', timeout=10, retry_on_restart=True)
     action.side_effect = event
-    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
+    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf, None)
     shutdown.assert_called_with(10, 'Some other reason')
     self.assertFalse(pop.called)
 
@@ -116,13 +116,17 @@ class ConfigRunnerTest(absltest.TestCase):
     # invalid command
     self.assertRaises(runner.ConfigRunnerError, self.cr._ProcessTasks,
                       [{'data': {'BadSetTimer': ['Timer1']},
-                        'path': ['/autobuild']}])
+                        'path': ['/autobuild']}], None)
     # action error
     set_timer.side_effect = runner.base.actions.ActionError
     self.assertRaises(runner.ConfigRunnerError, self.cr._ProcessTasks,
                       [{'data': {'SetTimer': ['Timer1']},
-                        'path': ['/autobuild']}])
+                        'path': ['/autobuild']}], None)
 
+  def testCheckUrl(self):
+    self.cr._CheckUrl('')
+    with self.assertRaises(Exception) as context:
+      self.assertIn('Unknown/invalid URL passed', context.exception)
 
 if __name__ == '__main__':
   absltest.main()

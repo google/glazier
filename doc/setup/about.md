@@ -185,8 +185,9 @@ installation.
 ## File Distribution
 
 Glazier relies heavily on HTTP(S) as its mechanism for distribution of content.
-\(We refer to HTTP and HTTPS interchangeably. HTTPS is highly recommended where
-available.\) HTTP was chosen for a variety of reasons, including:
+\(We refer to HTTP and HTTPS interchangeably. However, HTTPS is required for
+Glazier to operate correctly.\) HTTP was chosen for a variety of reasons,
+including:
 
 *   It is an open and ubiquitous protocol
 *   There are numerous freely available implementations of HTTP servers

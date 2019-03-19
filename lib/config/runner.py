@@ -14,7 +14,12 @@
 
 """Manages the execution of the local host task list."""
 
+import socket
+import ssl
 import sys
+from time import sleep
+import urllib2
+from glazier.lib import constants
 from glazier.lib import policies
 from glazier.lib import power
 from glazier.lib.config import base
@@ -28,13 +33,13 @@ class ConfigRunnerError(base.ConfigError):
 class ConfigRunner(base.ConfigBase):
   """Executes all steps from the installation task list."""
 
-  def Start(self, task_list):
+  def Start(self, task_list, net_check=None):
     self._task_list_path = task_list
     try:
       data = files.Read(self._task_list_path)
     except files.Error as e:
       raise ConfigRunnerError(e)
-    self._ProcessTasks(data)
+    self._ProcessTasks(data, net_check)
 
   def _PopTask(self, tasks):
     """Remove the first event from the task list and save new list to disk."""
@@ -44,12 +49,51 @@ class ConfigRunner(base.ConfigBase):
     except files.Error as e:
       raise ConfigRunnerError(e)
 
-  def _ProcessTasks(self, tasks):
+  def _CheckUrl(self, url):
+    while True:
+      status = None
+      try:
+        address = [
+            i[4][0] for i in socket.getaddrinfo(
+                socket.gethostname(), None, socket.AF_INET)]
+      except IOError:
+        address = 'No Network Adapter Found'
+
+      try:
+        if constants.FLAGS.environment == 'WinPE':
+          ctx = ssl.create_default_context()
+          ctx.check_hostname = False
+          ctx.verify_mode = ssl.CERT_NONE
+          status = urllib2.urlopen(url, context=ctx).code
+        else:
+          status = urllib2.urlopen(url).code
+      except urllib2.URLError:
+        print 'Unable to connect...'
+      except ValueError:
+        print 'Unknown/invalid URL passed: %s' % url
+        print 'skipping URL...'
+        break
+      if status == 200:
+        print url + ' reachable'
+        break
+      else:
+        print """%s NOT reachable,
+              Sleeping for 20 seconds and trying again...""" % url
+        print 'Please check if the machine is on the correct network...'
+        print 'Current IP List: %s' % address
+        sleep(20)
+
+  def _ProcessTasks(self, tasks, net_check):
     """Process the pending tasks list.
 
     Args:
       tasks: The list of pending tasks.
+      net_check: List of URLs to verify are reachable
     """
+    if net_check:
+      for url in net_check:
+        self._CheckUrl(url)
+
     while tasks:
       entry = tasks[0]['data']
       self._build_info.ActiveConfigPath(set_to=tasks[0]['path'])

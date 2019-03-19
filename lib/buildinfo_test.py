@@ -15,6 +15,7 @@
 """Tests for glazier.lib.buildinfo."""
 
 import datetime
+import re
 from pyfakefs import fake_filesystem
 from glazier.lib import buildinfo
 from gwinpy.wmi.hw_info import DeviceId
@@ -41,6 +42,22 @@ versions:
   windows-10-stable: 'stable'
   windows-10-unstable: 'unstable'
 """
+
+
+class _REGEXP(object):
+  """Mock helper for matching regexp matches.."""
+
+  def __init__(self, pattern):
+    self._regexp = re.compile(pattern)
+
+  def __eq__(self, other):
+    return bool(self._regexp.search(other))
+
+  def __ne__(self, other):
+    return not self._regexp.search(other)
+
+  def __repr__(self):
+    return '<REGEXP(%s)>' % self._regexp.pattern
 
 
 class BuildInfoTest(absltest.TestCase):
@@ -438,12 +455,13 @@ class BuildInfoTest(absltest.TestCase):
     virtual.return_value = True
     # virtual machine
     self.assertEqual(self.buildinfo.EncryptionLevel(), 'none')
-    info.assert_called_with(mock.REGEXP('^Virtual machine type .*'), mock.ANY)
+    info.assert_called_with(
+        _REGEXP('^Virtual machine type .*'), mock.ANY)
     virtual.return_value = False
     # tpm
     tpm.return_value = True
     self.assertEqual(self.buildinfo.EncryptionLevel(), 'tpm')
-    info.assert_called_with(mock.REGEXP('^TPM detected .*'))
+    info.assert_called_with(_REGEXP('^TPM detected .*'))
     # default
     self.assertEqual(self.buildinfo.EncryptionLevel(), 'tpm')
 

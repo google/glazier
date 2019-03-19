@@ -165,7 +165,7 @@ the future.
     *   Supports partial device matching from the left (eg AA-BB in the config
         will match AA-BB-CC-DD in hardware).
 *   encryption_type
-    *   TPM, Startup Key, etc
+    *   tpm, none
 *   graphics
     *   Detected graphics cards (by name).
 *   os_code

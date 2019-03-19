@@ -83,8 +83,7 @@ class DownloadTest(absltest.TestCase):
   @mock.patch.object(download.urllib2, 'urlopen', autospec=True)
   @mock.patch.object(download.BaseDownloader, '_StreamToDisk', autospec=True)
   @mock.patch.object(download.time, 'sleep', autospec=True)
-  @mock.patch.object(download.urllib2, 'HTTPSHandler', autospec=True)
-  def testDownloadFileInternal(self, cert_handler, sleep, stream, urlopen):
+  def testDownloadFileInternal(self, sleep, stream, urlopen):
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
     httperr = download.urllib2.HTTPError('Error', None, None, None, None)
@@ -93,7 +92,6 @@ class DownloadTest(absltest.TestCase):
     urlopen.side_effect = iter([httperr, urlerr, file_stream])
     self._dl._DownloadFile('https://www.example.com/build.yaml', max_retries=4)
     stream.assert_called_with(self._dl, file_stream, None)
-    self.assertTrue(cert_handler.called)
     # 404
     file_stream.getcode.return_value = 404
     urlopen.side_effect = iter([httperr, file_stream])

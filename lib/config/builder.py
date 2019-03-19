@@ -94,10 +94,20 @@ class ConfigBuilder(base.ConfigBase):
       yaml_config = files.Read(path)
     except (files.Error, buildinfo.BuildInfoError) as e:
       raise ConfigBuilderError(e)
+    timer_start = 'start_{}_{}'.format(conf_path.rstrip('/'), conf_file)
+    self._task_list.append({
+        'path': copy.deepcopy(self._build_info.ActiveConfigPath()),
+        'data': {'SetTimer': [timer_start]}
+    })
     controls = yaml_config['controls']
     for control in controls:
       if 'pin' not in control or self._MatchPin(control['pin']):
         self._StoreControls(control, yaml_config.get('templates'))
+    timer_stop = 'stop_{}_{}'.format(conf_path.rstrip('/'), conf_file)
+    self._task_list.append({
+        'path': copy.deepcopy(self._build_info.ActiveConfigPath()),
+        'data': {'SetTimer': [timer_stop]}
+    })
     self._build_info.ActiveConfigPath(pop=True)
 
   def _MatchPin(self, pins):
