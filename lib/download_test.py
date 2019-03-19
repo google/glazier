@@ -15,6 +15,7 @@
 """Tests for glazier.lib.download."""
 
 import StringIO
+
 from pyfakefs import fake_filesystem
 from glazier.lib import buildinfo
 from glazier.lib import download
@@ -72,6 +73,9 @@ class DownloadTest(absltest.TestCase):
     download.os = fake_filesystem.FakeOsModule(self.filesystem)
     download.open = fake_filesystem.FakeFileOpen(self.filesystem)
 
+  def tearDown(self):
+    flagsaver.RestoreFlagValues(self.__saved_flags)
+
   def testConvertBytes(self):
     self.assertEqual(self._dl._ConvertBytes(123), '123.00B')
     self.assertEqual(self._dl._ConvertBytes(23455), '22.91KB')
@@ -80,58 +84,67 @@ class DownloadTest(absltest.TestCase):
     self.assertEqual(self._dl._ConvertBytes(56755555555), '52.86GB')
     self.assertEqual(self._dl._ConvertBytes(6785555555555), '6.17TB')
 
-  @mock.patch.object(download.urllib2, 'urlopen', autospec=True)
-  @mock.patch.object(download.BaseDownloader, '_StreamToDisk', autospec=True)
+  @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
   @mock.patch.object(download.time, 'sleep', autospec=True)
-  def testDownloadFileInternal(self, sleep, stream, urlopen):
+  def testOpenStreamInternal(self, sleep, urlopen):
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
-    httperr = download.urllib2.HTTPError('Error', None, None, None, None)
-    urlerr = download.urllib2.URLError('Error')
+    httperr = download.urllib.error.HTTPError('Error', None, None, None, None)
+    urlerr = download.urllib.error.URLError('Error')
     # 200
     urlopen.side_effect = iter([httperr, urlerr, file_stream])
-    self._dl._DownloadFile('https://www.example.com/build.yaml', max_retries=4)
-    stream.assert_called_with(self._dl, file_stream, None)
+    res = self._dl._OpenStream(
+        'https://www.example.com/build.yaml', max_retries=4)
+    self.assertEqual(res, file_stream)
     # 404
     file_stream.getcode.return_value = 404
     urlopen.side_effect = iter([httperr, file_stream])
-    self.assertRaises(download.DownloadError, self._dl._DownloadFile,
+    self.assertRaises(download.DownloadError, self._dl._OpenStream,
                       'https://www.example.com/build.yaml')
     # retries
     file_stream.getcode.return_value = 200
     urlopen.side_effect = iter([httperr, httperr, file_stream])
     self.assertRaises(
         download.DownloadError,
-        self._dl._DownloadFile,
+        self._dl._OpenStream,
         'https://www.example.com/build.yaml',
         max_retries=2)
     sleep.assert_has_calls([mock.call(20), mock.call(20)])
 
-  @mock.patch.object(download.BaseDownloader, '_DownloadFile', autospec=True)
-  def testDownloadFile(self, downf):
-    url = 'https://www.example.com/build.yaml'
-    path = r'C:\Cache\build.yaml'
-    self._dl.DownloadFile(url, path, max_retries=5)
-    downf.assert_called_with(self._dl, url, 5, None)
-    self.assertEqual(self._dl._save_location, path)
-    self._dl.DownloadFile(url, path, max_retries=5, show_progress=True)
-    downf.assert_called_with(self._dl, url, 5, True)
-    self._dl.DownloadFile(url, path, max_retries=5, show_progress=False)
-    downf.assert_called_with(self._dl, url, 5, False)
+  @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
+  def testCheckUrl(self, urlopen):
+    file_stream = mock.Mock()
+    file_stream.getcode.return_value = 200
+    # match
+    urlopen.side_effect = iter([file_stream])
+    self.assertTrue(
+        self._dl.CheckUrl(
+            'https://www.example.com/build.yaml', status_codes=[200]))
+    # miss
+    urlopen.side_effect = iter([file_stream])
+    self.assertFalse(
+        self._dl.CheckUrl(
+            'https://www.example.com/build.yaml',
+            max_retries=1,
+            status_codes=[201]))
 
-  @mock.patch.object(download.BaseDownloader, '_DownloadFile', autospec=True)
+  @mock.patch.object(download.BaseDownloader, '_StreamToDisk', autospec=True)
+  @mock.patch.object(download.BaseDownloader, '_OpenStream', autospec=True)
   @mock.patch.object(download.tempfile, 'NamedTemporaryFile', autospec=True)
-  def testDownloadFileTemp(self, tempf, downf):
+  def testDownloadFileTemp(self, tempf, downf, todisk):
     url = 'https://www.example.com/build.yaml'
     path = r'C:\Windows\Temp\tmpblahblah'
     tempf.return_value.name = path
     self._dl.DownloadFileTemp(url, max_retries=5)
-    downf.assert_called_with(self._dl, url, 5, None)
+    downf.assert_called_with(self._dl, url, 5)
+    todisk.assert_called_with(self._dl, downf.return_value, False)
     self.assertEqual(self._dl._save_location, path)
     self._dl.DownloadFileTemp(url, max_retries=5, show_progress=True)
-    downf.assert_called_with(self._dl, url, 5, True)
+    downf.assert_called_with(self._dl, url, 5)
+    todisk.assert_called_with(self._dl, downf.return_value, True)
     self._dl.DownloadFileTemp(url, max_retries=5, show_progress=False)
-    downf.assert_called_with(self._dl, url, 5, False)
+    downf.assert_called_with(self._dl, url, 5)
+    todisk.assert_called_with(self._dl, downf.return_value, False)
 
   @mock.patch.object(download.BaseDownloader, '_StoreDebugInfo', autospec=True)
   def testStreamToDisk(self, store_info):

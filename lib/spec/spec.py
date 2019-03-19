@@ -14,8 +14,8 @@
 
 """Generic class for determining the desired host operating system."""
 
-from glazier.lib.spec import flags as flag_spec
 from absl import flags
+from glazier.lib.spec import flags as flag_spec
 
 SPEC_OPTS = {
     'flag': flag_spec,

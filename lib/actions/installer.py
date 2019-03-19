@@ -70,7 +70,7 @@ class BuildInfoDump(BaseAction):
   """Dump build information to disk."""
 
   def Run(self):
-    path = os.path.join(self._build_info.Cache().Path(), 'build_info.yaml')
+    path = os.path.join(self._build_info.CachePath(), 'build_info.yaml')
     self._build_info.Serialize(path)
 
 
@@ -92,7 +92,7 @@ class BuildInfoSave(BaseAction):
                     registry_key, registry_value)
 
   def Run(self):
-    path = os.path.join(self._build_info.Cache().Path(), 'build_info.yaml')
+    path = os.path.join(self._build_info.CachePath(), 'build_info.yaml')
     if os.path.exists(path):
       with open(path) as handle:
         input_config = yaml.safe_load(handle)

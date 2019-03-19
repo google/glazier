@@ -110,7 +110,7 @@ class LogCopy(object):
       raise LogCopyError('Drive mapping failed.')
 
   def EventLogCopy(self, source_log):
-    """Copy a log flie to EventLog."""
+    """Copy a log file to EventLog."""
     self._EventLogUpload(source_log)
 
   def ShareCopy(self, source_log, share):

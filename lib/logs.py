@@ -19,6 +19,9 @@ import logging.handlers
 from glazier.lib import constants
 
 
+EVT_LOG_ID = 'GlazierBuildLog'
+
+
 class LogError(Exception):
   pass
 
@@ -41,7 +44,7 @@ def Setup():
   try:
     fh = logging.FileHandler(log_file)
   except IOError:
-    raise LogError('Failed to open log file %s.', log_file)
+    raise LogError('Failed to open log file %s.' % log_file)
 
   formatter = logging.Formatter(
       '%(asctime)s.%(msecs)03d\t%(filename)s:%(lineno)d] %(message)s',
@@ -52,6 +55,11 @@ def Setup():
   # console
   ch = logging.StreamHandler()
   ch.setLevel(logging.INFO)
+
+  if constants.FLAGS.environment != 'WinPE':
+    event_handler = logging.handlers.NTEventLogHandler(EVT_LOG_ID)
+    event_handler.setLevel(logging.INFO)
+    logger.addHandler(event_handler)
 
   # add the handlers to the logger
   logger.addHandler(fh)

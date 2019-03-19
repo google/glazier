@@ -189,9 +189,8 @@ class BuildInfoTest(absltest.TestCase):
     self.assertFalse(self.buildinfo.BuildPinMatch('USER_locale', []))
     self.assertFalse(self.buildinfo.BuildPinMatch('USER_missing', ['na']))
 
-  def testCache(self):
-    self.assertEqual(self.buildinfo.Cache().Path(),
-                     buildinfo.constants.SYS_CACHE)
+  def testCachePath(self):
+    self.assertEqual(self.buildinfo.CachePath(), buildinfo.constants.SYS_CACHE)
 
   @mock.patch.object(
       buildinfo.hw_info.HWInfo, 'ComputerSystemManufacturer', autospec=True)
@@ -491,7 +490,6 @@ class BuildInfoTest(absltest.TestCase):
     self.buildinfo.TimerSet('test_timer_1')
     self.assertEqual(self.buildinfo.TimerGet('test_timer_2'), None)
     self.assertEqual(self.buildinfo.TimerGet('test_timer_1'), now)
-
 
   @mock.patch.object(
       buildinfo.hw_info.HWInfo, 'VideoControllers', autospec=True)

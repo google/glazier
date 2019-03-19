@@ -42,15 +42,18 @@ class CacheTest(absltest.TestCase):
   @mock.patch.object(cache.download, 'Transform', autospec=True)
   @mock.patch.object(cache.download.Download, 'DownloadFile', autospec=True)
   def testCacheFromLine(self, download, transform):
+    cache_path = r'C:\Cache\Path'
+    build_info = mock.Mock()
+    build_info.CachePath.return_value = cache_path
     remote1 = r'folder/other/installer.msi'
     remote2 = r'config_file.conf'
-    local1 = os.path.join(self.cache.Path(), 'installer.msi')
-    local2 = os.path.join(self.cache.Path(), 'config_file.conf')
+    local1 = os.path.join(cache_path, 'installer.msi')
+    local2 = os.path.join(cache_path, 'config_file.conf')
     line_in = 'msiexec /i @%s /qa /l*v CONF=#%s' % (remote1, remote2)
     line_out = 'msiexec /i %s /qa /l*v CONF=%s' % (local1, local2)
     download.return_value = True
     transform.side_effect = self.MockTransform
-    result = self.cache.CacheFromLine(line_in, None)
+    result = self.cache.CacheFromLine(line_in, build_info)
     self.assertEqual(result, line_out)
     call1 = mock.call(self.cache._downloader,
                       'https://test.example.com/bin/%s' % remote1, local1)
@@ -61,12 +64,13 @@ class CacheTest(absltest.TestCase):
     transfer_err = cache.download.DownloadError('Error message.')
     download.side_effect = transfer_err
     self.assertRaises(cache.CacheError, self.cache.CacheFromLine,
-                      '@%s' % remote2, None)
+                      '@%s' % remote2, build_info)
 
   def testDestinationPath(self):
-    path = self.cache._DestinationPath('http://some.web.address/folder/other/'
-                                       'an_installer.msi')
-    self.assertEqual(path, os.path.join(self.cache.Path(), 'an_installer.msi'))
+    path = self.cache._DestinationPath(
+        r'C:\Cache\Path', 'http://some.web.address/folder/other/'
+        'an_installer.msi')
+    self.assertEqual(path, os.path.join(r'C:\Cache\Path', 'an_installer.msi'))
 
   def testFindDownload(self):
     line_test = self.cache._FindDownload('powershell -file '

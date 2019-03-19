@@ -33,11 +33,18 @@ def Dump(path, data, mode='w'):
     mode: Mode to use for writing the file (default: w)
   """
   file_util.CreateDirectories(path)
+  tmp_f = path + '.tmp'
+  # Write to a .tmp file to avoid corrupting the original if aborted mid-way.
   try:
-    with open(path, mode) as handle:
+    with open(tmp_f, mode) as handle:
       handle.write(yaml.dump(data))
   except IOError as e:
     raise Error('Could not save data to yaml file %s: %s' % (path, str(e)))
+  # Replace the original with the tmp.
+  try:
+    file_util.Move(tmp_f, path)
+  except file_util.Error as e:
+    raise Error('Could not replace config file. (%s)' % str(e))
 
 
 def Read(path):

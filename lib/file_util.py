@@ -39,3 +39,23 @@ def CreateDirectories(path):
       os.makedirs(dirname)
     except (shutil.Error, OSError):
       raise Error('Unable to make directory: %s' % dirname)
+
+
+def Move(src, dst):
+  """Move a file from src to dst.
+
+  Python's os.rename doesn't support overwrite on Windows.
+
+  Args:
+    src: The full file path to the source.
+    dst: The full file path to the destination.
+
+  Raises:
+    Error: Failure moving the file.
+  """
+  try:
+    if os.path.exists(dst):
+      os.remove(dst)
+    os.rename(src, dst)
+  except OSError as e:
+    raise Error('Failure moving file from %s to %s. (%s)' % (src, dst, str(e)))

@@ -101,7 +101,7 @@ class InstallerTest(absltest.TestCase):
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testBuildInfoDump(self, build_info):
-    build_info.Cache.return_value.Path.return_value = r'C:\Cache\Dir'
+    build_info.CachePath.return_value = r'C:\Cache\Dir'
     d = installer.BuildInfoDump(None, build_info)
     d.Run()
     build_info.Serialize.assert_called_with(r'C:\Cache\Dir/build_info.yaml')
@@ -116,7 +116,7 @@ class InstallerTest(absltest.TestCase):
     fs.CreateFile(
         '/tmp/build_info.yaml',
         contents='{BUILD: {opt 1: true, opt 2: some value, opt 3: 12345}}\n')
-    build_info.Cache.return_value.Path.return_value = '/tmp'
+    build_info.CachePath.return_value = '/tmp'
     s = installer.BuildInfoSave(None, build_info)
     s.Run()
     reg.return_value.SetKeyValue.assert_has_calls(

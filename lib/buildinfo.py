@@ -16,7 +16,6 @@
 
 import logging
 import time
-from glazier.lib import cache
 from glazier.lib import constants
 from glazier.lib import timers
 from glazier.lib.config import files
@@ -36,7 +35,6 @@ class BuildInfo(object):
 
   def __init__(self):
     self._active_conf_path = []
-    self._cache = None
     self._chooser_pending = []
     self._chooser_responses = {}
     self._hw_info = None
@@ -213,15 +211,13 @@ class BuildInfo(object):
         'os_code': self.OsCode,
     }
 
-  def Cache(self):
-    """The local build cache.
+  def CachePath(self):
+    """Get the path to the local build cache.
 
     Returns:
-      An instance of the Cache class.
+      The path to the local build cache as a string.
     """
-    if not self._cache:
-      self._cache = cache.Cache()
-    return self._cache
+    return constants.SYS_CACHE
 
   def ComputerManufacturer(self):
     """Get the computer manufacturer from WMI.
@@ -539,7 +535,6 @@ class BuildInfo(object):
       True if a TPM is present, else False.
     """
     return self._TpmInfo().TpmPresent()
-
 
   def VideoControllers(self):
     """Get any local video (graphics) controllers.

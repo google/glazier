@@ -15,11 +15,10 @@
 """Provide access to non-Python installer resource files."""
 
 import os
-from glazier.lib import constants
 from absl import flags
+from glazier.lib import constants
 
 FLAGS = flags.FLAGS
-
 flags.DEFINE_string('resource_path', '',
                     'Path to top level installer resource file storage.')
 

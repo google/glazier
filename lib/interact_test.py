@@ -22,7 +22,7 @@ from absl.testing import absltest
 
 class InteractTest(absltest.TestCase):
 
-  @mock.patch('__builtin__.raw_input', autospec=True)
+  @mock.patch('glazier.lib.interact.input', autospec=True)
   def testGetUsername(self, raw):
     raw.side_effect = iter(['invalid-name', '', '  ', 'username1'])
     self.assertEqual(interact.GetUsername(), 'username1')
@@ -47,7 +47,7 @@ class InteractTest(absltest.TestCase):
     result = interact.Keystroke('mesg', validator='[0-9]')
     self.assertEqual(result, None)
 
-  @mock.patch('__builtin__.raw_input', autospec=True)
+  @mock.patch('glazier.lib.interact.input', autospec=True)
   def testPrompt(self, raw):
     raw.return_value = 'user*name'
     result = interact.Prompt('mesg', '^\\w+$')

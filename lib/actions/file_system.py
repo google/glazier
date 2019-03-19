@@ -102,7 +102,7 @@ class SetupCache(FileSystem):
   """Create the imaging cache directory."""
 
   def Run(self):
-    path = self._build_info.Cache().Path()
+    path = self._build_info.CachePath()
     self._CreateDirectories(path)
 
   def Validate(self):

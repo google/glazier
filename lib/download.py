@@ -29,11 +29,13 @@ import logging
 import os
 import re
 import socket
+import ssl
 import subprocess
 import sys
 import tempfile
 import time
-import urllib2
+
+from six.moves import urllib
 
 CHUNK_BYTE_SIZE = 65536
 
@@ -112,6 +114,7 @@ class BaseDownloader(object):
     self._debug_info = {}
     self._save_location = None
     self._default_show_progress = show_progress
+    self._ca_cert_file = None
 
   def _ConvertBytes(self, num_bytes):
     """Converts number of bytes to a human readable format.
@@ -140,53 +143,85 @@ class BaseDownloader(object):
     return size
 
   def _GetHandlers(self):
-    return [urllib2.HTTPSHandler()]
+    return [urllib.request.HTTPSHandler()]
 
-  def _DownloadFile(self, url, max_retries=5, show_progress=None):
-    """Downloads a file from and saves it to the specified location.
+  def _OpenStream(self, url, max_retries=5, status_codes=None):
+    """Opens a connection to a remote resource.
 
     Args:
       url:  The address of the file to be downloaded.
-      max_retries:  The number of times to attempt to download
-        a file if the first attempt fails.
-      show_progress: Print download progress to stdout (overrides default).
+      max_retries:  The number of times to attempt to download a file if the
+        first attempt fails. A negative number implies infinite.
+      status_codes: A list of acceptable status codes to be returned by the
+        remote endpoint.
+
+    Returns:
+      file_stream: urlopen's file stream
 
     Raises:
-      DownloadError: The downloaded file did not match the expected file
-        size.
+      DownloadError: The resource was unreachable or failed to return with the
+        expected code.
     """
     attempt = 0
     file_stream = None
 
-    opener = urllib2.OpenerDirector()
+    opener = urllib.request.OpenerDirector()
     for handler in self._GetHandlers():
       opener.add_handler(handler)
-    urllib2.install_opener(opener)
+    urllib.request.install_opener(opener)
     while True:
       try:
         attempt += 1
-        file_stream = urllib2.urlopen(url)
-      except urllib2.HTTPError:
+        file_stream = urllib.request.urlopen(url, cafile=self._ca_cert_file)
+      except urllib.error.HTTPError:
         logging.error('File not found on remote server: %s.', url)
-      except urllib2.URLError as e:
+      except urllib.error.URLError as e:
         logging.error('Error connecting to remote server to download file '
                       '"%s". The error was: %s', url, e)
+        try:
+          logging.info('Trying again with machine context...')
+          ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+          file_stream = urllib.request.urlopen(url, context=ctx)
+        except urllib.error.HTTPError:
+          logging.error('File not found on remote server: %s.', url)
+        except urllib.error.URLError as e:
+          logging.error('Error connecting to remote server to download file '
+                        '"%s". The error was: %s', url, e)
       if file_stream:
-        if file_stream.getcode() in [200]:
-          break
+        if file_stream.getcode() in (status_codes or [200]):
+          return file_stream
+        elif file_stream.getcode() in [302]:
+          url = file_stream.geturl()
         else:
           raise DownloadError('Invalid return code for file %s. [%d]' %
                               (url, file_stream.getcode()))
 
-      if attempt < max_retries:
+      if max_retries < 0 or attempt < max_retries:
         logging.info('Sleeping for 20 seconds and then retrying the download.')
         time.sleep(20)
       else:
-        raise DownloadError('Permanent download failure for file %s.' % url)
+        raise DownloadError('Permanent failure for resource %s.' % url)
 
-    self._StreamToDisk(file_stream, show_progress)
+  def CheckUrl(self, url, status_codes, max_retries=5):
+    """Check a remote URL for availability.
 
-  def DownloadFile(self, url, save_location, max_retries=5, show_progress=None):
+    Args:
+      url: A URL to access.
+      status_codes: Acceptable status codes for the connection (list).
+      max_retries: Number of retries before giving up.
+
+    Returns:
+      True if accessing the file produced one of status_codes.
+    """
+    try:
+      self._OpenStream(url, max_retries=max_retries, status_codes=status_codes)
+      return True
+    except DownloadError as e:
+      logging.error(e)
+    return False
+
+  def DownloadFile(self, url, save_location, max_retries=5,
+                   show_progress=False):
     """Downloads a file to temporary storage.
 
     Args:
@@ -197,9 +232,10 @@ class BaseDownloader(object):
       show_progress: Print download progress to stdout (overrides default).
     """
     self._save_location = save_location
-    self._DownloadFile(url, max_retries, show_progress)
+    file_stream = self._OpenStream(url, max_retries)
+    self._StreamToDisk(file_stream, show_progress)
 
-  def DownloadFileTemp(self, url, max_retries=5, show_progress=None):
+  def DownloadFileTemp(self, url, max_retries=5, show_progress=False):
     """Downloads a file to temporary storage.
 
     Args:
@@ -214,7 +250,8 @@ class BaseDownloader(object):
     destination = tempfile.NamedTemporaryFile()
     self._save_location = destination.name
     destination.close()
-    self._DownloadFile(url, max_retries, show_progress)
+    file_stream = self._OpenStream(url, max_retries)
+    self._StreamToDisk(file_stream, show_progress)
     return self._save_location
 
   def _DownloadChunkReport(self, bytes_so_far, total_size):

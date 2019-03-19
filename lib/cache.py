@@ -16,7 +16,6 @@
 
 import os
 import re
-from glazier.lib import constants
 from glazier.lib import download
 
 DNLD_RE = re.compile(r'([@|#][\S]+)')
@@ -32,17 +31,18 @@ class Cache(object):
   def __init__(self):
     self._downloader = download.Download(show_progress=False)
 
-  def _DestinationPath(self, url):
+  def _DestinationPath(self, cache_path, url):
     """Determines the local path for a file being downloaded.
 
     Args:
+      cache_path: Path to the local build cache
       url: A web address to a file as a string
 
     Returns:
       The local disk path as a string.
     """
     file_name = url.split('/').pop()
-    destination = os.path.join(self.Path(), file_name)
+    destination = os.path.join(cache_path, file_name)
     return destination
 
   def _FindDownload(self, line):
@@ -75,7 +75,7 @@ class Cache(object):
     match = self._FindDownload(line)
     while match:
       dl = download.Transform(match, build_info)
-      destination = self._DestinationPath(dl)
+      destination = self._DestinationPath(build_info.CachePath(), dl)
       try:
         self._downloader.DownloadFile(dl, destination)
       except download.DownloadError as e:
@@ -84,11 +84,3 @@ class Cache(object):
       line = line.replace(match, destination)
       match = self._FindDownload(line)
     return line
-
-  def Path(self):
-    """Returns the path to the local build cache.
-
-    Returns:
-      the path to the local build cache
-    """
-    return constants.SYS_CACHE

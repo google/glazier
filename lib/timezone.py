@@ -22,8 +22,8 @@
 """
 import logging
 from xml.dom.minidom import parse
-from glazier.lib import resources
 from absl import flags
+from glazier.lib import resources
 
 FLAGS = flags.FLAGS
 

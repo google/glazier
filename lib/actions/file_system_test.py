@@ -98,7 +98,7 @@ class FileSystemTest(absltest.TestCase):
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testSetupCache(self, build_info):
-    build_info.Cache.return_value.Path.return_value = '/test/cache/path'
+    build_info.CachePath.return_value = '/test/cache/path'
     sc = file_system.SetupCache([], build_info)
     sc.Run()
     self.assertTrue(file_system.os.path.exists('/test/cache/path'))

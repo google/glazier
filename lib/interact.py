@@ -20,6 +20,7 @@ from __future__ import print_function
 import logging
 import re
 import time
+from six.moves import input
 
 
 def GetUsername():
@@ -74,7 +75,7 @@ def Prompt(message, validator='.*'):
   Returns:
     a response string if successful, else None
   """
-  response = raw_input(message)
+  response = input(message)
   if not re.match(validator, response):
     logging.error('Invalid response entered.')
     return None

@@ -18,7 +18,9 @@ from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 from glazier.lib import buildinfo
 from glazier.lib.config import runner
+
 import mock
+
 from absl.testing import absltest
 
 
@@ -26,6 +28,7 @@ class ConfigRunnerTest(absltest.TestCase):
 
   def setUp(self):
     self.buildinfo = buildinfo.BuildInfo()
+    runner.FLAGS.verify_urls = None
     # filesystem
     self.filesystem = fake_filesystem.FakeFilesystem()
     runner.os = fake_filesystem.FakeOsModule(self.filesystem)
@@ -41,7 +44,7 @@ class ConfigRunnerTest(absltest.TestCase):
              'path': ['path1']}, {'data': {'pull': 'val2'},
                                   'path': ['path2']}, {'data': {'pull': 'val3'},
                                                        'path': ['path3']}]
-    self.cr._ProcessTasks(conf, None)
+    self.cr._ProcessTasks(conf)
     dump.assert_has_calls([
         mock.call(
             self.cr._task_list_path, conf[1:], mode='w'), mock.call(
@@ -64,7 +67,7 @@ class ConfigRunnerTest(absltest.TestCase):
     conf = [{'data': {'Shutdown': ['25', 'Reason']}, 'path': ['path1']}]
     event = runner.base.actions.RestartEvent('Some reason', timeout=25)
     action.side_effect = event
-    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf, None)
+    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
     restart.assert_called_with(25, 'Some reason')
     self.assertTrue(pop.called)
     pop.reset_mock()
@@ -72,7 +75,7 @@ class ConfigRunnerTest(absltest.TestCase):
     event = runner.base.actions.RestartEvent(
         'Some other reason', timeout=10, retry_on_restart=True)
     action.side_effect = event
-    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf, None)
+    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
     restart.assert_called_with(10, 'Some other reason')
     self.assertFalse(pop.called)
 
@@ -83,7 +86,7 @@ class ConfigRunnerTest(absltest.TestCase):
     conf = [{'data': {'Restart': ['25', 'Reason']}, 'path': ['path1']}]
     event = runner.base.actions.ShutdownEvent('Some reason', timeout=25)
     action.side_effect = event
-    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf, None)
+    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
     shutdown.assert_called_with(25, 'Some reason')
     self.assertTrue(pop.called)
     pop.reset_mock()
@@ -91,7 +94,7 @@ class ConfigRunnerTest(absltest.TestCase):
     event = runner.base.actions.ShutdownEvent(
         'Some other reason', timeout=10, retry_on_restart=True)
     action.side_effect = event
-    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf, None)
+    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
     shutdown.assert_called_with(10, 'Some other reason')
     self.assertFalse(pop.called)
 
@@ -114,19 +117,32 @@ class ConfigRunnerTest(absltest.TestCase):
     self.assertTrue(set_timer.return_value.Run.called)
     self.assertTrue(dump.called)
     # invalid command
-    self.assertRaises(runner.ConfigRunnerError, self.cr._ProcessTasks,
-                      [{'data': {'BadSetTimer': ['Timer1']},
-                        'path': ['/autobuild']}], None)
+    self.assertRaises(runner.ConfigRunnerError, self.cr._ProcessTasks, [{
+        'data': {
+            'BadSetTimer': ['Timer1']
+        },
+        'path': ['/autobuild']
+    }])
     # action error
     set_timer.side_effect = runner.base.actions.ActionError
-    self.assertRaises(runner.ConfigRunnerError, self.cr._ProcessTasks,
-                      [{'data': {'SetTimer': ['Timer1']},
-                        'path': ['/autobuild']}], None)
+    self.assertRaises(runner.ConfigRunnerError, self.cr._ProcessTasks, [{
+        'data': {
+            'SetTimer': ['Timer1']
+        },
+        'path': ['/autobuild']
+    }])
 
-  def testCheckUrl(self):
-    self.cr._CheckUrl('')
-    with self.assertRaises(Exception) as context:
-      self.assertIn('Unknown/invalid URL passed', context.exception)
+  @mock.patch.object(runner.download.Download, 'CheckUrl', autospec=True)
+  def testVerifyUrls(self, dl):
+    dl.return_value = True
+    runner.FLAGS.verify_urls = ['http://www.example.com/']
+    self.cr._ProcessTasks([])
+    dl.assert_called_with(
+        mock.ANY, 'http://www.example.com/', [200], max_retries=-1)
+    # fail
+    dl.return_value = False
+    self.assertRaises(runner.ConfigRunnerError, self.cr._ProcessTasks, [])
+
 
 if __name__ == '__main__':
   absltest.main()
