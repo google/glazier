@@ -14,6 +14,10 @@
 
 """Ensure the machine supports disk encryption if required."""
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 from glazier.lib.policies.base import BasePolicy
 from glazier.lib.policies.base import ImagingPolicyException
 

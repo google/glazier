@@ -24,7 +24,7 @@ SPEC_OPTS = {
 FLAGS = flags.FLAGS
 flags.DEFINE_enum(
     'glazier_spec', None,
-    SPEC_OPTS.keys(),
+    list(SPEC_OPTS.keys()),
     ('Which host specification module to use for determining host features '
      'like Hostname and OS.'))
 

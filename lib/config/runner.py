@@ -88,14 +88,14 @@ class ConfigRunner(base.ConfigBase):
               self._task_list_path = e.task_list_path
             if not e.retry_on_restart:
               self._PopTask(tasks)
-            power.Restart(e.timeout, e.message)
+            power.Restart(e.timeout, str(e))
             sys.exit(0)
           except base.actions.ShutdownEvent as e:
             if e.task_list_path:
               self._task_list_path = e.task_list_path
             if not e.retry_on_restart:
               self._PopTask(tasks)
-            power.Shutdown(e.timeout, e.message)
+            power.Shutdown(e.timeout, str(e))
             sys.exit(0)
       self._PopTask(tasks)
 

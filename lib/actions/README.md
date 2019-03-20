@@ -140,8 +140,7 @@ program executions occurring as part of a typical imaging process.
         *   ArgA[str]: The entire command line to execute including flags.
         *   ArgB[list]: One or more integers indicating successful exit codes.
             *   Default: [0]
-        *   ArgC[list]: One or more integers indicating that a reboot is
-            required.
+        *   ArgC[list]: One or more integers indicating a reboot is required.
             *   Default: []
         *   ArgD[bool]: Rerun after a reboot occurs. A reboot code must be
             provided and returned by the execution.)
@@ -262,23 +261,44 @@ Run a Powershell script file using the local Powershell interpreter.
 
     PSScript: ['C:\Sample-Script2.ps1', ['-Flag1', 123, '-Flag2']]
 
-### RegAdd
+### RegAdd/MultiRegAdd
 
-Create a registry key.
+Create/modify a registry key.
 
-#### Arguments
+Also available as MultiRegAdd for creating larger sets of registry keys.
+
+#### RegAdd Arguments
 
 *   Format: List
     *   Arg1[str]: Root key
     *   Arg2[str]: Key path
     *   Arg3[str]: Key name
-    *   Arg4[str]: Key value
-    *   Arg5[str]: Key type
+    *   Arg4([str] or [int]): Key value
+    *   Arg5[str]: Key type (REG_SZ or REG_DWORD)
     *   Arg6[bool]: Use 64bit Registry (Optional)
+
+#### MultiRegAdd Arguments
+
+*   Format: List
+    *   Arg1[list]: First Key to add
+        *   ArgA[str]: Root key
+        *   ArgB[str]: Key path
+        *   ArgC[str]: Key name
+        *   ArgD([str] or [int]: Key value
+        *   ArgE[str]: Key type (REG_SZ or REG_DWORD)
+        *   ArgF[bool]: Use 64bit Registry (Optional)
+    *  Arg2[list]: Second key to add (optional)
+    *  ...
+
 
 #### Examples
 
     RegAdd: ['HKLM', 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform', 'KeyManagementServiceName', 'kms.example.com', 'REG_SZ']
+
+    MultiRegAdd:
+      - ['HKLM', 'SOFTWARE\Policies\Microsoft\WindowsStore', 'RemoveWindowsStore', 1, 'REG_DWORD']
+      - ['HKLM', 'SOFTWARE\Policies\Microsoft\Windows\Windows Search', 'AllowCortana', 0, 'REG_DWORD']
+
 
 ### Reboot
 

@@ -14,11 +14,15 @@
 
 """Ensure the device hardware is supported."""
 
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 import logging
 import re
 from glazier.lib.policies.base import BasePolicy
 from glazier.lib.policies.base import ImagingPolicyException
+
+from six.moves import input
 
 _PARTIAL_NOTICE = ("""
                   !!!!! Notice !!!!!
@@ -59,7 +63,7 @@ class DeviceModel(BasePolicy):
     """
     warning = message % this_model
     print(warning)
-    answer = raw_input('Do you still want to proceed (y/n)? ')
+    answer = input('Do you still want to proceed (y/n)? ')
     answer_re = r'^[Yy](es)?$'
     if re.match(answer_re, answer):
       return True

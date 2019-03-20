@@ -31,7 +31,6 @@ class Execute(BaseAction):
   """Run an executable."""
 
   def _Run(self, command, success_codes, reboot_codes, restart_retry):
-    result = 0
     c = cache.Cache()
     logging.debug('Interpreting command %s', command)
     try:
@@ -40,18 +39,31 @@ class Execute(BaseAction):
       raise ActionError(e)
     logging.info('Executing command %s', command)
     try:
-      result = subprocess.call(command, shell=True)
+      output = ''
+      err = ''
+      result = subprocess.Popen(command,
+                                shell=True,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+      output, err = result.communicate()
     except WindowsError as e:  # pylint: disable=undefined-variable
       raise ActionError('Failed to execute command %s (%s)' % (command, str(e)))
     except KeyboardInterrupt:
       logging.debug('Child received KeyboardInterrupt. Ignoring.')
-    if result in reboot_codes:
+
+    if output:
+      logging.info(output)
+    if err:
+      logging.error(err)
+
+    if result.returncode in reboot_codes:
       raise RestartEvent(
-          'Restart triggered by exit code %d' % result,
+          'Restart triggered by exit code %d' % result.returncode,
           5,
           retry_on_restart=restart_retry)
-    elif result not in success_codes:
-      raise ActionError('Command returned invalid exit code %d' % result)
+    elif result.returncode not in success_codes:
+      raise ActionError('Command returned invalid exit code %d' %
+                        result.returncode)
     time.sleep(5)
 
   def Run(self):

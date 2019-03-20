@@ -40,16 +40,14 @@ class ConfigRunnerTest(absltest.TestCase):
   @mock.patch.object(runner.base.actions, 'pull', autospec=True)
   @mock.patch.object(runner.files, 'Dump', autospec=True)
   def testIteration(self, dump, unused_get):
-    conf = [{'data': {'pull': 'val1'},
-             'path': ['path1']}, {'data': {'pull': 'val2'},
-                                  'path': ['path2']}, {'data': {'pull': 'val3'},
-                                                       'path': ['path3']}]
+    conf = [{'data': {'pull': 'val1'}, 'path': ['path1']},
+            {'data': {'pull': 'val2'}, 'path': ['path2']},
+            {'data': {'pull': 'val3'}, 'path': ['path3']}]
     self.cr._ProcessTasks(conf)
     dump.assert_has_calls([
-        mock.call(
-            self.cr._task_list_path, conf[1:], mode='w'), mock.call(
-                self.cr._task_list_path, conf[2:], mode='w'), mock.call(
-                    self.cr._task_list_path, [], mode='w')
+        mock.call(self.cr._task_list_path, conf[1:], mode='w'),
+        mock.call(self.cr._task_list_path, conf[2:], mode='w'),
+        mock.call(self.cr._task_list_path, [], mode='w')
     ])
 
   @mock.patch.object(runner.files, 'Dump', autospec=True)

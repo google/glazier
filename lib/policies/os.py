@@ -12,19 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Simplify access to Glazier policy modules."""
+"""Ensure the operating system is supported."""
 
-from glazier.lib.policies import base
-from glazier.lib.policies import device_model
-from glazier.lib.policies import disk_encryption
-from glazier.lib.policies import os
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-# pylint: disable=invalid-name
-BannedPlatform = device_model.BannedPlatform
-DeviceModel = device_model.DeviceModel
-DiskEncryption = disk_encryption.DiskEncryption
-UnsupportedOs = os.UnsupportedOs
+from glazier.lib.policies.base import BasePolicy
+from glazier.lib.policies.base import ImagingPolicyException
 
-ImagingPolicyException = base.ImagingPolicyException
-ImagingPolicyWarning = base.ImagingPolicyWarning
 
+class UnsupportedOs(BasePolicy):
+
+  def Verify(self):
+    raise ImagingPolicyException(
+        'The requested operating system is no longer supported. '
+        'Installation cannot continue.')

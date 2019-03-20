@@ -13,9 +13,10 @@
 # limitations under the License.
 
 """Actions for managing the host registry."""
-
+import logging
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
+from glazier.lib.actions.base import ValidationError
 from gwinpy.registry import registry
 
 
@@ -24,10 +25,12 @@ class RegAdd(BaseAction):
 
   def Run(self):
     use_64bit = True
+
     if len(self._args) > 5:
       use_64bit = self._args[5]
 
     try:
+      logging.info('Setting registry key: %s', self._args)
       reg = registry.Registry(root_key=self._args[0])
       reg.SetKeyValue(key_path=self._args[1],
                       key_name=self._args[2],
@@ -39,3 +42,41 @@ class RegAdd(BaseAction):
     except IndexError:
       raise ActionError('Unable to access all required arguments. [%s]' %
                         str(self._args))
+
+  def Validate(self):
+    self._TypeValidator(self._args, list)
+    if not 5 <= len(self._args) <= 6:
+      raise ValidationError('Invalid args length: %s' % self._args)
+    self._TypeValidator(self._args[0], str)  # Root key
+    self._TypeValidator(self._args[1], str)  # Key path
+    self._TypeValidator(self._args[2], str)  # Key name
+    if self._args[4] == 'REG_DWORD':  # Key value
+      self._TypeValidator(self._args[3], int)
+    else:
+      self._TypeValidator(self._args[3], str)
+    self._TypeValidator(self._args[4], str)  # Key type
+    if self._args[4] not in ['REG_DWORD', 'REG_SZ']:
+      raise ValidationError('Unsupported Key type passed: %s' % self._args[4])
+    if len(self._args) > 5:  # Use 64bit Registry
+      self._TypeValidator(self._args[5], bool)
+
+
+class MultiRegAdd(BaseAction):
+  """Perform RegAdd on multiple sets of registry entries."""
+
+  def Run(self):
+    try:
+      for arg in self._args:
+        ra = RegAdd(arg, self._build_info)
+        ra.Run()
+    except IndexError:
+      raise ActionError('Unable to determine registry sets from %s.' %
+                        str(self._args))
+
+  def Validate(self):
+    self._TypeValidator(self._args, list)
+    for arg in self._args:
+      ra = RegAdd(arg, self._build_info)
+      ra.Validate()
+
+

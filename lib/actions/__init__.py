@@ -47,6 +47,7 @@ MultiCopyFile = file_system.MultiCopyFile
 PSScript = powershell.PSScript
 Reboot = system.Reboot
 RegAdd = registry.RegAdd
+MultiRegAdd = registry.MultiRegAdd
 SetTimer = timers.SetTimer
 SetUnattendTimeZone = sysprep.SetUnattendTimeZone
 SetupCache = file_system.SetupCache

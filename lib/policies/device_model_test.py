@@ -21,7 +21,7 @@ from absl.testing import absltest
 
 class DeviceModelTest(absltest.TestCase):
 
-  @mock.patch('__builtin__.raw_input', autospec=True)
+  @mock.patch.object(device_model, 'input', autospec=True)
   @mock.patch('__builtin__.print', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo',
               autospec=True)

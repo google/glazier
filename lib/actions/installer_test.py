@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tests for glazier.lib.actions.installer."""
 
 from pyfakefs import fake_filesystem
@@ -22,8 +21,7 @@ from absl.testing import absltest
 
 class InstallerTest(absltest.TestCase):
 
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testAddChoice(self, build_info):
     choice = {
         'type':
@@ -98,8 +96,7 @@ class InstallerTest(absltest.TestCase):
     a = installer.AddChoice(False, None)
     self.assertRaises(installer.ValidationError, a.Validate)
 
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testBuildInfoDump(self, build_info):
     build_info.CachePath.return_value = r'C:\Cache\Dir'
     d = installer.BuildInfoDump(None, build_info)
@@ -107,8 +104,7 @@ class InstallerTest(absltest.TestCase):
     build_info.Serialize.assert_called_with(r'C:\Cache\Dir/build_info.yaml')
 
   @mock.patch.object(installer.registry, 'Registry', autospec=True)
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testBuildInfoSave(self, build_info, reg):
     fs = fake_filesystem.FakeFilesystem()
     installer.open = fake_filesystem.FakeFileOpen(fs)
@@ -119,13 +115,12 @@ class InstallerTest(absltest.TestCase):
     build_info.CachePath.return_value = '/tmp'
     s = installer.BuildInfoSave(None, build_info)
     s.Run()
-    reg.return_value.SetKeyValue.assert_has_calls(
-        [
-            mock.call(installer.constants.REG_ROOT, 'opt 1', True),
-            mock.call(installer.constants.REG_ROOT, 'opt 2', 'some value'),
-            mock.call(installer.constants.REG_ROOT, 'opt 3', 12345),
-        ],
-        any_order=True)
+    reg.return_value.SetKeyValue.assert_has_calls([
+        mock.call(installer.constants.REG_ROOT, 'opt 1', True),
+        mock.call(installer.constants.REG_ROOT, 'opt 2', 'some value'),
+        mock.call(installer.constants.REG_ROOT, 'opt 3', 12345),
+    ],
+                                                  any_order=True)
     s.Run()
 
   @mock.patch.object(installer.file_system, 'CopyFile', autospec=True)
@@ -135,10 +130,10 @@ class InstallerTest(absltest.TestCase):
     with self.assertRaises(installer.RestartEvent):
       ex.Run()
     copy.assert_has_calls([
-        mock.call([r'X:\task_list.yaml', '%s\\task_list.yaml' % cache],
-                  mock.ANY),
-        mock.call().Run(),
+        mock.call([r'X:\task_list.yaml',
+                   '%s\\task_list.yaml' % cache], mock.ANY),
     ])
+    copy.return_value.Run.assert_called()
 
   @mock.patch.object(installer.log_copy, 'LogCopy', autospec=True)
   def testLogCopy(self, copy):
@@ -193,8 +188,7 @@ class InstallerTest(absltest.TestCase):
     s.Validate()
 
   @mock.patch.object(installer.chooser, 'Chooser', autospec=True)
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testShowChooser(self, build_info, chooser):
     c = installer.ShowChooser(None, build_info)
     c.Run()

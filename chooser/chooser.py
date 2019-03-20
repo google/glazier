@@ -30,7 +30,8 @@ file, to be consumed by the caller.
 import logging
 from glazier.chooser import fields
 from glazier.lib import resources
-import Tkinter as tk
+
+from six.moves import tkinter as tk
 
 
 class Chooser(object):

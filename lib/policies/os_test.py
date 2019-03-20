@@ -12,19 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Simplify access to Glazier policy modules."""
+"""Tests for glazier.lib.policies.os."""
 
-from glazier.lib.policies import base
-from glazier.lib.policies import device_model
-from glazier.lib.policies import disk_encryption
 from glazier.lib.policies import os
+import mock
+from absl.testing import absltest
 
-# pylint: disable=invalid-name
-BannedPlatform = device_model.BannedPlatform
-DeviceModel = device_model.DeviceModel
-DiskEncryption = disk_encryption.DiskEncryption
-UnsupportedOs = os.UnsupportedOs
 
-ImagingPolicyException = base.ImagingPolicyException
-ImagingPolicyWarning = base.ImagingPolicyWarning
+class OsTest(absltest.TestCase):
 
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  def testUnsupportedOs(self, build_info):
+    o = os.UnsupportedOs(build_info)
+    self.assertRaises(os.ImagingPolicyException,
+                      o.Verify)
+
+
+if __name__ == '__main__':
+  absltest.main()

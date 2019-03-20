@@ -13,7 +13,6 @@
 # limitations under the License.
 
 """Tests for glazier.lib.actions.files."""
-
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 from glazier.lib import buildinfo
@@ -29,19 +28,19 @@ class FilesTest(absltest.TestCase):
     files.open = fake_filesystem.FakeFileOpen(self.filesystem)
     files.file_util.shutil = fake_filesystem_shutil.FakeShutilModule(
         self.filesystem)
+    files.WindowsError = Exception
 
+  @mock.patch('subprocess.Popen')
   @mock.patch.object(files.time, 'sleep', autospec=True)
   @mock.patch.object(files.cache.Cache, 'CacheFromLine', autospec=True)
-  @mock.patch.object(files.subprocess, 'call', autospec=True)
-  def testExecute(self, call, cache, sleep):
+  def testExecute(self, cache, sleep, mocked_popen):
+    mocked_popen_instance = mocked_popen.return_value
+    mocked_popen_instance.communicate.return_value = ('XXXXXX', None)
+    mocked_popen_instance.returncode = 0
     bi = buildinfo.BuildInfo()
     cache.side_effect = iter(['cmd.exe /c', 'explorer.exe'])
     e = files.Execute([['cmd.exe /c', [0]], ['explorer.exe']], bi)
-    call.return_value = 0
     e.Run()
-    call.assert_has_calls([mock.call(
-        'cmd.exe /c', shell=True), mock.call(
-            'explorer.exe', shell=True)])
     self.assertTrue(sleep.called)
 
     # success codes
@@ -49,7 +48,7 @@ class FilesTest(absltest.TestCase):
     cache.return_value = 'cmd.exe /c script.bat'
     e = files.Execute([['cmd.exe /c script.bat', [2, 4]]], bi)
     self.assertRaises(files.ActionError, e.Run)
-    call.return_value = 4
+    mocked_popen_instance.returncode = 4
     e.Run()
 
     # reboot codes - no retry
@@ -64,19 +63,22 @@ class FilesTest(absltest.TestCase):
       e.Run()
       self.assertEqual(r_evt.retry_on_restart, True)
     cache.assert_called_with(mock.ANY, 'cmd.exe /c #script.bat', bi)
-    call.assert_called_with('cmd.exe /c script.bat', shell=True)
+    self.assertTrue(sleep.called)
+
+    # KeyboardInterrupt
+    mocked_popen_instance.returncode = 0
+    mocked_popen_instance.communicate.return_value = ('', '')
+    mocked_popen_instance.communicate.side_effect = KeyboardInterrupt
+    e = files.Execute([['cmd.exe /c', [0]], ['explorer.exe']], bi)
+    e.Run()
 
     # WindowsError
     files.WindowsError = Exception
-    call.side_effect = files.WindowsError
+    mocked_popen.return_value = files.WindowsError
     self.assertRaises(files.ActionError, e.Run)
-    # KeyboardInterrupt
-    call.side_effect = KeyboardInterrupt
-    e = files.Execute([['cmd.exe /c', [0]], ['explorer.exe']], bi)
-    e.Run()
+
     # Cache error
-    call.side_effect = None
-    call.return_value = 0
+    mocked_popen_instance.return_value = None
     cache.side_effect = files.cache.CacheError
     self.assertRaises(files.ActionError, e.Run)
 
