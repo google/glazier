@@ -48,6 +48,7 @@ PSScript = powershell.PSScript
 Reboot = system.Reboot
 RegAdd = registry.RegAdd
 MultiRegAdd = registry.MultiRegAdd
+RegDel = registry.RegDel
 SetTimer = timers.SetTimer
 SetUnattendTimeZone = sysprep.SetUnattendTimeZone
 SetupCache = file_system.SetupCache

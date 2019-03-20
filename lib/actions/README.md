@@ -290,7 +290,6 @@ Also available as MultiRegAdd for creating larger sets of registry keys.
     *  Arg2[list]: Second key to add (optional)
     *  ...
 
-
 #### Examples
 
     RegAdd: ['HKLM', 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform', 'KeyManagementServiceName', 'kms.example.com', 'REG_SZ']
@@ -299,6 +298,19 @@ Also available as MultiRegAdd for creating larger sets of registry keys.
       - ['HKLM', 'SOFTWARE\Policies\Microsoft\WindowsStore', 'RemoveWindowsStore', 1, 'REG_DWORD']
       - ['HKLM', 'SOFTWARE\Policies\Microsoft\Windows\Windows Search', 'AllowCortana', 0, 'REG_DWORD']
 
+### RegDel
+
+Delete a registry key.
+
+*   Format: List
+    *   Arg1[str]: Root key
+    *   Arg2[str]: Key path
+    *   Arg3[str]: Key name
+    *   Arg4[bool]: Use 64bit Registry (Optional)
+
+#### Examples
+
+    RegDel: ['HKLM', 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform', 'KeyManagementServiceName']
 
 ### Reboot
 

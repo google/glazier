@@ -80,3 +80,35 @@ class MultiRegAdd(BaseAction):
       ra.Validate()
 
 
+class RegDel(BaseAction):
+  """Delete a registry key."""
+
+  def Run(self):
+    use_64bit = True
+
+    if len(self._args) > 3:
+      use_64bit = self._args[3]
+
+    try:
+      logging.info('Attempting to delete registry key: %s', self._args)
+      reg = registry.Registry(root_key=self._args[0])
+      reg.RemoveKeyValue(
+          key_path=self._args[1], key_name=self._args[2], use_64bit=use_64bit)
+    except registry.RegistryError as e:
+      if e.errno == 2:
+        logging.warn('Registry key %s not found', self._args)
+      else:
+        raise ActionError(str(e))
+    except IndexError:
+      raise ActionError(
+          'Unable to access all required arguments. [%s]' % str(self._args))
+
+  def Validate(self):
+    self._TypeValidator(self._args, list)
+    if not 3 <= len(self._args) <= 4:
+      raise ValidationError('Invalid args length: %s' % self._args)
+    self._TypeValidator(self._args[0], str)  # Root key
+    self._TypeValidator(self._args[1], str)  # Key path
+    self._TypeValidator(self._args[2], str)  # Key name
+    if len(self._args) > 3:  # Use 64bit Registry
+      self._TypeValidator(self._args[3], bool)
