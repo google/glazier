@@ -298,8 +298,9 @@ Also available as MultiRegAdd for creating larger sets of registry keys.
       - ['HKLM', 'SOFTWARE\Policies\Microsoft\WindowsStore', 'RemoveWindowsStore', 1, 'REG_DWORD']
       - ['HKLM', 'SOFTWARE\Policies\Microsoft\Windows\Windows Search', 'AllowCortana', 0, 'REG_DWORD']
 
-### RegDel
+### RegDel/MultiRegDel
 
+#### RegDel Arguments
 Delete a registry key.
 
 *   Format: List
@@ -308,9 +309,24 @@ Delete a registry key.
     *   Arg3[str]: Key name
     *   Arg4[bool]: Use 64bit Registry (Optional)
 
+#### MultiRegDel Arguments
+
+*   Format: List
+    *   Arg1[list]: First Key to add
+        *   ArgA[str]: Root key
+        *   ArgB[str]: Key path
+        *   ArgC[str]: Key name
+        *   ArgD[bool]: Use 64bit Registry (Optional)
+    *  Arg2[list]: Second key to add (optional)
+    *  ...
+
 #### Examples
 
     RegDel: ['HKLM', 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform', 'KeyManagementServiceName']
+
+    MultiRegDel:
+      - ['HKLM', 'SOFTWARE\Policies\Microsoft\WindowsStore', 'RemoveWindowsStore']
+      - ['HKLM', 'SOFTWARE\Policies\Microsoft\Windows\Windows Search', 'AllowCortana']
 
 ### Reboot
 

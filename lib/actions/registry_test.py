@@ -73,6 +73,7 @@ class RegistryTest(absltest.TestCase):
     ra = registry.RegAdd(args, build_info)
     self.assertRaises(registry.ActionError, ra.Run)
 
+    # Multiple missing arguments
     args = [
         ['HKLM', kpath, 'KeyManagementServiceName', 'kms-server.example.com',
          'REG_SZ'],
@@ -106,6 +107,37 @@ class RegistryTest(absltest.TestCase):
     rkv.side_effect = err
     rd.Run()
     warn.assert_called_with('Registry key %s not found', args)
+
+  @mock.patch(
+      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch.object(registry.registry, 'Registry', autospec=True)
+  def testMultiDel(self, winreg, build_info):
+    # Mock delete registry keys
+    kpath = (r'SOFTWARE\Microsoft\Windows NT\CurrentVersion'
+             r'\SoftwareProtectionPlatform')
+    args = [
+        'HKLM', kpath, 'KeyManagementServiceName', False]
+    rkv = winreg.return_value.RemoveKeyValue
+    rd = registry.RegDel(args, build_info)
+    rd.Run()
+    rkv.assert_called_with(
+        key_path=kpath,
+        key_name='KeyManagementServiceName',
+        use_64bit=False)
+
+    # Missing arguments
+    args = [
+        'HKLM', kpath]
+    rd = registry.RegDel(args, build_info)
+    self.assertRaises(registry.ActionError, rd.Run)
+
+    # Multiple missing arguments
+    args = [
+        ['HKLM', kpath],
+        ['HKLM']
+    ]
+    rd = registry.MultiRegDel(args, build_info)
+    self.assertRaises(registry.ActionError, rd.Run)
 
   def testAddValidation(self):
     # List not passed
@@ -166,6 +198,14 @@ class RegistryTest(absltest.TestCase):
 
     # Valid calls
     r = registry.RegDel(['HKLM', 'SOFTWARE\fake', 'foo'], None)
+    r.Validate()
+
+  def testMultiDelValidation(self):
+    # Valid calls
+    r = registry.MultiRegDel([
+        ['HKLM', 'SOFTWARE/fake', 'foo'],
+        ['HKLM', 'SOFTWARE/boo', 'fake']
+    ], None)
     r.Validate()
 
 if __name__ == '__main__':

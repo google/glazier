@@ -112,3 +112,22 @@ class RegDel(BaseAction):
     self._TypeValidator(self._args[2], str)  # Key name
     if len(self._args) > 3:  # Use 64bit Registry
       self._TypeValidator(self._args[3], bool)
+
+
+class MultiRegDel(BaseAction):
+  """Perform RegDel on multiple sets of registry entries."""
+
+  def Run(self):
+    try:
+      for arg in self._args:
+        rd = RegDel(arg, self._build_info)
+        rd.Run()
+    except IndexError:
+      raise ActionError('Unable to determine registry sets from %s.' %
+                        str(self._args))
+
+  def Validate(self):
+    self._TypeValidator(self._args, list)
+    for arg in self._args:
+      rd = RegDel(arg, self._build_info)
+      rd.Validate()
