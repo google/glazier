@@ -52,10 +52,6 @@ def Setup():
   fh.setFormatter(formatter)
   fh.setLevel(logging.DEBUG)
 
-  # console
-  ch = logging.StreamHandler()
-  ch.setLevel(logging.INFO)
-
   if constants.FLAGS.environment != 'WinPE':
     event_handler = logging.handlers.NTEventLogHandler(EVT_LOG_ID)
     event_handler.setLevel(logging.INFO)
@@ -63,4 +59,3 @@ def Setup():
 
   # add the handlers to the logger
   logger.addHandler(fh)
-  logger.addHandler(ch)
