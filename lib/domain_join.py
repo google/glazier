@@ -84,7 +84,7 @@ class DomainJoin(object):
             r'%s\join-domain.ps1' % constants.SYS_CACHE,
             args=[self._username, self._password, self._domain_name])
       except powershell.PowerShellError as e:
-         # Replace and mask password in error output.
+        # Replace and mask password in error output.
         c = []
         error = str(e).split()
         for item in error:
