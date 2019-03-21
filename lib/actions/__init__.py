@@ -14,20 +14,22 @@
 
 """Simplify access to Glazier action modules."""
 
-from glazier.lib.actions import abort
-from glazier.lib.actions import base
-from glazier.lib.actions import domain
-from glazier.lib.actions import drivers
-from glazier.lib.actions import file_system
-from glazier.lib.actions import files
-from glazier.lib.actions import installer
-from glazier.lib.actions import powershell
-from glazier.lib.actions import registry
-from glazier.lib.actions import sysprep
-from glazier.lib.actions import system
-from glazier.lib.actions import timers
-from glazier.lib.actions import tpm
-from glazier.lib.actions import updates
+from __future__ import absolute_import
+
+from . import abort
+from . import base
+from . import domain
+from . import drivers
+from . import file_system
+from . import files
+from . import installer
+from . import powershell
+from . import registry
+from . import sysprep
+from . import system
+from . import timers
+from . import tpm
+from . import updates
 
 # pylint: disable=invalid-name
 Abort = abort.Abort
