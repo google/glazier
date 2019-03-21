@@ -161,7 +161,7 @@ This example gives a concept for a basic `build.yaml`.
     templates:
       apply_img:
         - Get:
-          - ['@MyCorp/WIM/2017_27_01/Windows10.wim',
+          - ['@MyRepo/WIM/2017_27_01/Windows10.wim',
              'C:\base.wim',
              'ae0666f161fed1a5dde998bbd0e140550d2da0db27db1d0e31e370f2bd366a57']
         - Execute:

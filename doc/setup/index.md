@@ -3,6 +3,7 @@
 1.  [About Glazier](about.md)
 1.  [General Setup Guide](setup.md)
 1.  [Configuration Layout & Branches](config_layout.md)
+1.  [The Configuration Handler](configuration_handlers.md)
 
 ## Advanced Topics
 
