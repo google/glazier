@@ -14,12 +14,14 @@
 
 """Tests for glazier.lib.download."""
 
-import StringIO
-
 from pyfakefs import fake_filesystem
 from glazier.lib import buildinfo
 from glazier.lib import download
+
 import mock
+
+import six
+
 from absl.testing import absltest
 
 _TEST_INI = """
@@ -32,6 +34,7 @@ branch=stable
 class PathsTest(absltest.TestCase):
 
   def setUp(self):
+    super(PathsTest, self).setUp()
     self.buildinfo = buildinfo.BuildInfo()
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
@@ -149,8 +152,8 @@ class DownloadTest(absltest.TestCase):
   @mock.patch.object(download.BaseDownloader, '_StoreDebugInfo', autospec=True)
   def testStreamToDisk(self, store_info):
     # setup
-    http_stream = StringIO.StringIO()
-    http_stream.write('First line.\nSecond line.\n')
+    http_stream = six.BytesIO()
+    http_stream.write(b'First line.\nSecond line.\n')
     http_stream.seek(0)
     download.CHUNK_BYTE_SIZE = 5
     file_stream = mock.Mock()
