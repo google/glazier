@@ -28,7 +28,9 @@ supported syntax.
 
 The top level is a dictionary of two elements, *templates* and *controls*.
 
-### templates
+### Templates
+
+tl;dr Think of templates as function declarations.
 
 Templates is a dictionary of named elements. The name is used to reference each
 template from one or more control elements. Templates are not executed unless
@@ -43,7 +45,18 @@ Beneath the template name is the common command element structure described
 below. Pins are not used in templates, as it is assumed they will be called from
 a pinned control instead.
 
-### controls
+Example:
+
+```yaml
+templates:
+  install-oregon-trail:  # <-- Template name
+    Execute: [           # <-- glazier Action
+        ['googet install -noconfirm oregon-trail']
+    ]
+    Reboot: []          # <-- glazier Action
+```
+
+### Controls
 
 Controls is an ordered list of unnamed elements. The list structure is used to
 provide a consistent ordering of elements from top to bottom, so commands can be
@@ -182,5 +195,5 @@ free to comment the configs to improve readability.
 
 ## Configuration Handlers
 
-See the [Glazier Configuration Handlers](config_handlers.md) page for more
+See the [Glazier Configuration Handlers](../setup/config_handlers.md) page for more
 information about how the configuration files are processed.
