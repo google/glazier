@@ -36,7 +36,7 @@ __Scalability__
 
 Glazier distributes all data over HTTPS, which means you can use as simple or as
 advanced of a distribution platform as you need. Run it from a simple free web
-server or a large cloud-based CDN.
+server or a large cloud-based CDN. HTTPS is a requirement.
 
 Proxies make it easy to accelerate image deployment to remote sites.
 
