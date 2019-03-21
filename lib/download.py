@@ -172,7 +172,10 @@ class BaseDownloader(object):
     while True:
       try:
         attempt += 1
-        file_stream = urllib.request.urlopen(url, cafile=self._ca_cert_file)
+        if FLAGS.environment == 'WinPE':
+          file_stream = urllib.request.urlopen(url, cafile=self._ca_cert_file)
+        else:
+          file_stream = urllib.request.urlopen(url)
       except urllib.error.HTTPError:
         logging.error('File not found on remote server: %s.', url)
       except urllib.error.URLError as e:
@@ -272,6 +275,7 @@ class BaseDownloader(object):
     if bytes_so_far >= total_size:
       sys.stdout.write('\n')
 
+
   def _StoreDebugInfo(self, file_stream, socket_error=None):
     """Gathers debug information for use when file downloads fail.
 
@@ -356,8 +360,8 @@ class BaseDownloader(object):
     actual_file_size = os.path.getsize(self._save_location)
     if actual_file_size != expected_size:
       self._StoreDebugInfo(file_stream)
-      message = ('File size of %s bytes did not match expected size of %s!',
-                 actual_file_size, expected_size)
+      message = ('File size of %s bytes did not match expected size of %s!' %
+                 (actual_file_size, expected_size))
       raise DownloadError(message)
 
   def VerifyShaHash(self, file_path, expected):
