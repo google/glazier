@@ -21,8 +21,7 @@ from absl.testing import absltest
 
 class DiskEncryptionTest(absltest.TestCase):
 
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testVerify(self, build_info):
     de = disk_encryption.DiskEncryption(build_info)
     de._build_info.EncryptionLevel.return_value = 'none'

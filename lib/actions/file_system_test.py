@@ -35,8 +35,7 @@ class FileSystemTest(absltest.TestCase):
     file_system.open = self.fake_open
     self.fs = fs
 
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testCopyFile(self, build_info):
     src1 = r'/file1.txt'
     dst1 = r'/windows/glazier/glazier.log'
@@ -72,8 +71,7 @@ class FileSystemTest(absltest.TestCase):
                                     ['/tmp/src2.txt', '/tmp/dest2.txt']], None)
     cf.Validate()
 
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testMkdir(self, build_info):
     md = file_system.MkDir(['/stage/subdir1/subdir2'], build_info)
     md.Run()
@@ -95,8 +93,7 @@ class FileSystemTest(absltest.TestCase):
     md = file_system.MkDir(['/tmp/some/dir'], None)
     md.Validate()
 
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testSetupCache(self, build_info):
     build_info.CachePath.return_value = '/test/cache/path'
     sc = file_system.SetupCache([], build_info)

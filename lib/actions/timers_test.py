@@ -22,8 +22,7 @@ from absl.testing import absltest
 
 class TimersTest(absltest.TestCase):
 
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testSetTimer(self, build_info):
     args = ['Timer1']
     st = timers.SetTimer(args, build_info)

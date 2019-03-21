@@ -21,8 +21,7 @@ from absl.testing import absltest
 
 class RegistryTest(absltest.TestCase):
 
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   def testAdd(self, winreg, build_info):
     # Mock add registry keys

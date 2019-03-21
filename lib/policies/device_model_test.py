@@ -23,8 +23,7 @@ class DeviceModelTest(absltest.TestCase):
 
   @mock.patch.object(device_model, 'input', autospec=True)
   @mock.patch('__builtin__.print', autospec=True)
-  @mock.patch('glazier.lib.buildinfo.BuildInfo',
-              autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testVerify(self, build_info, user_out, user_in):
     dm = device_model.DeviceModel(build_info)
 
@@ -49,8 +48,7 @@ class DeviceModelTest(absltest.TestCase):
     user_in.return_value = 'n'
     self.assertRaises(device_model.ImagingPolicyException, dm.Verify)
 
-  @mock.patch('glazier.lib.buildinfo.BuildInfo',
-              autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testBannedPlatform(self, build_info):
     bp = device_model.BannedPlatform(build_info)
     self.assertRaises(device_model.ImagingPolicyException,

@@ -21,20 +21,21 @@ from absl.testing import absltest
 
 class SystemTest(absltest.TestCase):
 
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testReboot(self, build_info):
     r = system.Reboot([30, 'reboot for reasons'], build_info)
     with self.assertRaises(system.RestartEvent) as evt:
       r.Run()
-      self.assertEqual(evt.timeout, '30')
-      self.assertEqual(evt.message, 'reboot for reasons')
+    ex = evt.exception
+    self.assertEqual(ex.timeout, '30')
+    self.assertEqual(str(ex), 'reboot for reasons')
 
     r = system.Reboot([10], build_info)
     with self.assertRaises(system.RestartEvent) as evt:
       r.Run()
-      self.assertEqual(evt.timeout, '10')
-      self.assertEqual(evt.message, 'undefined')
+    ex = evt.exception
+    self.assertEqual(ex.timeout, '10')
+    self.assertEqual(str(ex), 'unspecified')
 
   def testRebootValidate(self):
     r = system.Reboot(30, None)
@@ -46,20 +47,21 @@ class SystemTest(absltest.TestCase):
     r = system.Reboot([30, 'reasons'], None)
     r.Validate()
 
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testShutdown(self, build_info):
     r = system.Shutdown([15, 'reboot for reasons'], build_info)
     with self.assertRaises(system.ShutdownEvent) as evt:
       r.Run()
-      self.assertEqual(evt.timeout, '15')
-      self.assertEqual(evt.message, 'reboot for reasons')
+    ex = evt.exception
+    self.assertEqual(ex.timeout, '15')
+    self.assertEqual(str(ex), 'reboot for reasons')
 
     r = system.Shutdown([1], build_info)
     with self.assertRaises(system.ShutdownEvent) as evt:
       r.Run()
-      self.assertEqual(evt.timeout, '1')
-      self.assertEqual(evt.message, 'undefined')
+    ex = evt.exception
+    self.assertEqual(ex.timeout, '1')
+    self.assertEqual(str(ex), 'unspecified')
 
   def testShutdownValidate(self):
     s = system.Shutdown(30, None)

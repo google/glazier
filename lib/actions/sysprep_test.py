@@ -63,8 +63,7 @@ class SysprepTest(absltest.TestCase):
     sysprep.os = fake_filesystem.FakeOsModule(fs)
     sysprep.open = self.fake_open
 
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testSetUnattendTimeZoneEditUnattend(self, build_info):
     st = sysprep.SetUnattendTimeZone([], build_info)
     st._EditUnattend(
@@ -77,8 +76,7 @@ class SysprepTest(absltest.TestCase):
                       'Yakutsk Standard Time',
                       '/windows/panther/noneattend.xml')
 
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(
       sysprep.SetUnattendTimeZone, '_EditUnattend', autospec=True)
   @mock.patch.object(sysprep.dhcp, 'GetDhcpOption', autospec=True)

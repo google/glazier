@@ -176,8 +176,7 @@ class FilesTest(absltest.TestCase):
     self.assertRaises(files.ValidationError, g.Validate)
 
   @mock.patch.object(files.file_util, 'CreateDirectories', autospec=True)
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testUnzip(self, build_info, create_dir):
     src = '/tmp/input.zip'
     dst = '/out/dir/path'

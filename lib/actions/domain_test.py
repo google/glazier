@@ -22,8 +22,7 @@ from absl.testing import absltest
 class DomainTest(absltest.TestCase):
 
   @mock.patch.object(domain.domain_join, 'DomainJoin', autospec=True)
-  @mock.patch(
-      'glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testDomainJoin(self, build_info, join):
     args = ['interactive', 'domain.test.com']
     dj = domain.DomainJoin(args, build_info)
