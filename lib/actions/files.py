@@ -39,22 +39,21 @@ class Execute(BaseAction):
       raise ActionError(e)
     logging.info('Executing command %s', command)
     try:
-      output = ''
-      err = ''
       result = subprocess.Popen(command,
                                 shell=True,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-      output, err = result.communicate()
+                                stderr=subprocess.STDOUT)
+      while True:
+        output = result.stdout.readline()
+        if not output and result.poll() is not None:
+          break
+        if output:
+          logging.info(output.strip())
+
     except WindowsError as e:  # pylint: disable=undefined-variable
       raise ActionError('Failed to execute command %s (%s)' % (command, str(e)))
     except KeyboardInterrupt:
       logging.debug('Child received KeyboardInterrupt. Ignoring.')
-
-    if output:
-      logging.info(output)
-    if err:
-      logging.error(err)
 
     if result.returncode in reboot_codes:
       raise RestartEvent(

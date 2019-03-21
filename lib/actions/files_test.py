@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """Tests for glazier.lib.actions.files."""
+import io
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 from glazier.lib import buildinfo
@@ -35,8 +36,8 @@ class FilesTest(absltest.TestCase):
   @mock.patch.object(files.cache.Cache, 'CacheFromLine', autospec=True)
   def testExecute(self, cache, sleep, mocked_popen):
     mocked_popen_instance = mocked_popen.return_value
-    mocked_popen_instance.communicate.return_value = ('XXXXXX', None)
     mocked_popen_instance.returncode = 0
+    mocked_popen_instance.stdout = io.StringIO(u'Foo\n')
     bi = buildinfo.BuildInfo()
     cache.side_effect = iter(['cmd.exe /c', 'explorer.exe'])
     e = files.Execute([['cmd.exe /c', [0]], ['explorer.exe']], bi)
@@ -67,8 +68,7 @@ class FilesTest(absltest.TestCase):
 
     # KeyboardInterrupt
     mocked_popen_instance.returncode = 0
-    mocked_popen_instance.communicate.return_value = ('', '')
-    mocked_popen_instance.communicate.side_effect = KeyboardInterrupt
+    mocked_popen_instance.side_effect = KeyboardInterrupt
     e = files.Execute([['cmd.exe /c', [0]], ['explorer.exe']], bi)
     e.Run()
 
