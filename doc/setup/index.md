@@ -1,10 +1,13 @@
-# Glazier Setup
-
-1.  [About Glazier](about.md)
-1.  [General Setup Guide](setup.md)
-1.  [Configuration Layout & Branches](config_layout.md)
-1.  [The Configuration Handler](config_handlers.md)
-
-## Advanced Topics
-
-1. [Creating Actions](new_actions.md)
+*   [Glazier Home](../../README.md)
+*   Getting Started
+    *   [About](about.md)
+    *   [Setup](setup.md)
+        *   [Config Layout](config_layout.md)
+        *   [Creating New Actions](new_actions.md)
+    *   [YAML files](../yaml/index.md)
+        *   [Chooser](../yaml/chooser_ui.md)
+        *   [Tips](../yaml/tips.md)
+*   Documentation
+    *   [Installer Actions](../../lib/actions/README.md)
+    *   [Policy Modules](../../lib/policies/README.md)
+    *   [Config Handlers](config_handlers.md)
