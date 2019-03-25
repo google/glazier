@@ -1,0 +1,7 @@
+absl-py
+mock
+ntplib
+pyfakefs
+PyYAML
+six
+git+git://github.com/google/winops@f82a7457507a47b2942561e14d85ea6630ea6a06#egg=gwinpy
