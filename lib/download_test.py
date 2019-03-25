@@ -14,12 +14,12 @@
 
 """Tests for glazier.lib.download."""
 
+from absl.testing import flagsaver
 from pyfakefs import fake_filesystem
 from glazier.lib import buildinfo
 from glazier.lib import download
 
 import mock
-
 import six
 
 from absl.testing import absltest
@@ -69,15 +69,13 @@ class PathsTest(absltest.TestCase):
 class DownloadTest(absltest.TestCase):
 
   def setUp(self):
+    super(DownloadTest, self).setUp()
     self._dl = download.BaseDownloader()
     # filesystem
     self.filesystem = fake_filesystem.FakeFilesystem()
     self.filesystem.CreateFile(r'C:\input.ini', contents=_TEST_INI)
     download.os = fake_filesystem.FakeOsModule(self.filesystem)
     download.open = fake_filesystem.FakeFileOpen(self.filesystem)
-
-  def tearDown(self):
-    flagsaver.RestoreFlagValues(self.__saved_flags)
 
   def testConvertBytes(self):
     self.assertEqual(self._dl._ConvertBytes(123), '123.00B')
