@@ -56,6 +56,7 @@ UNATTEND_XML = r"""<?xml version='1.0' encoding='utf-8'?>
 class SysprepTest(absltest.TestCase):
 
   def setUp(self):
+    super(SysprepTest, self).setUp()
     fs = fake_filesystem.FakeFilesystem()
     fs.CreateDirectory('/windows/panther')
     fs.CreateFile('/windows/panther/unattend.xml', contents=UNATTEND_XML)

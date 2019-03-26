@@ -23,6 +23,7 @@ from absl.testing import absltest
 class PowershellTest(absltest.TestCase):
 
   def setUp(self):
+    super(PowershellTest, self).setUp()
     buildinfo.constants.FLAGS.config_server = 'https://glazier/'
 
   @mock.patch.object(

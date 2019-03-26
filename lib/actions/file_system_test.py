@@ -24,6 +24,7 @@ from absl.testing import absltest
 class FileSystemTest(absltest.TestCase):
 
   def setUp(self):
+    super(FileSystemTest, self).setUp()
     # fake filesystem
     fs = fake_filesystem.FakeFilesystem()
     fs.CreateDirectory(r'/stage')

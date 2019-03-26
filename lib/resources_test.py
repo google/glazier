@@ -23,6 +23,7 @@ from absl.testing import absltest
 class ResourcesTest(absltest.TestCase):
 
   def setUp(self):
+    super(ResourcesTest, self).setUp()
     self.fs = fake_filesystem.FakeFilesystem()
     resources.os = fake_filesystem.FakeOsModule(self.fs)
     self.fs.CreateFile('/test/file.txt')

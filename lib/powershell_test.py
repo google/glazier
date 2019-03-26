@@ -23,6 +23,7 @@ from absl.testing import absltest
 class PowershellTest(absltest.TestCase):
 
   def setUp(self):
+    super(PowershellTest, self).setUp()
     self.fs = fake_filesystem.FakeFilesystem()
     powershell.os = fake_filesystem.FakeOsModule(self.fs)
     powershell.resources.os = fake_filesystem.FakeOsModule(self.fs)

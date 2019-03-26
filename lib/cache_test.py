@@ -24,6 +24,7 @@ from absl.testing import absltest
 class CacheTest(absltest.TestCase):
 
   def setUp(self):
+    super(CacheTest, self).setUp()
     self.cache = cache.Cache()
     fs = fake_filesystem.FakeFilesystem()
     fs.CreateDirectory(r'C:\Directory')

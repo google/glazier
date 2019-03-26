@@ -23,6 +23,7 @@ from absl.testing import absltest
 class TimersTest(absltest.TestCase):
 
   def setUp(self):
+    super(TimersTest, self).setUp()
     self.t = timers.Timers()
 
   @mock.patch.object(timers.datetime, 'datetime', autospec=True)

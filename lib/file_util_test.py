@@ -22,6 +22,7 @@ from absl.testing import absltest
 class FileUtilTest(absltest.TestCase):
 
   def setUp(self):
+    super(FileUtilTest, self).setUp()
     self.filesystem = fake_filesystem.FakeFilesystem()
     file_util.os = fake_filesystem.FakeOsModule(self.filesystem)
     file_util.open = fake_filesystem.FakeFileOpen(self.filesystem)

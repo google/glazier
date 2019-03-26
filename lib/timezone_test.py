@@ -21,6 +21,7 @@ from absl.testing import absltest
 class TimezoneTest(absltest.TestCase):
 
   def setUp(self):
+    super(TimezoneTest, self).setUp()
     self.tz = timezone.Timezone()
     timezone.FLAGS.windows_zones_resource = timezone.RESOURCE_PATH
     self.tz.LoadMap()

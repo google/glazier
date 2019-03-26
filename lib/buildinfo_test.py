@@ -63,6 +63,7 @@ class _REGEXP(object):
 class BuildInfoTest(absltest.TestCase):
 
   def setUp(self):
+    super(BuildInfoTest, self).setUp()
     # fake filesystem
     self.filesystem = fake_filesystem.FakeFilesystem()
     self.filesystem.CreateDirectory('/dev')

@@ -26,6 +26,7 @@ class LogCopyTest(absltest.TestCase):
 
   @mock.patch.object(log_copy.logging, 'FileHandler', autospec=True)
   def setUp(self, unused_handler):
+    super(LogCopyTest, self).setUp()
     self.log_file = r'C:\Windows\Logs\Glazier\glazier.log'
     self.lc = log_copy.LogCopy()
     # win32 modules
