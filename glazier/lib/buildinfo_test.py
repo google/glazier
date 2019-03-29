@@ -437,7 +437,6 @@ class BuildInfoTest(absltest.TestCase):
     tpm_present.return_value = True
     self.assertTrue(self.buildinfo.TpmPresent())
     tpm_present.return_value = False
-    self.assertTrue(self.buildinfo.TpmPresent())  # caching
     self.assertFalse(self.buildinfo.TpmPresent())
 
   @mock.patch.object(buildinfo.files, 'Read', autospec=True)
