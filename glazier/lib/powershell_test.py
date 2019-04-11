@@ -14,10 +14,15 @@
 
 """Tests for glazier.lib.powershell."""
 
+from absl import flags
+from absl.testing import flagsaver
+
 from pyfakefs import fake_filesystem
 from glazier.lib import powershell
 import mock
 from absl.testing import absltest
+
+FLAGS = flags.FLAGS
 
 
 class PowershellTest(absltest.TestCase):
@@ -58,10 +63,13 @@ class PowershellTest(absltest.TestCase):
     with self.assertRaises(powershell.PowerShellError):
       self.ps.RunCommand(['Get-ChildItem', '-Recurse'], ok_result=[100])
 
+  @flagsaver.flagsaver
   @mock.patch.object(powershell.PowerShell, '_LaunchPs', autospec=True)
   def testRunResource(self, launch):
+    FLAGS.resource_path = '/test/resources'
+    self.fs.CreateFile('/test/resources/bin/script.ps1')
     self.ps.RunResource('bin/script.ps1', args=['>>', 'out.txt'], ok_result=[0])
-    launch.assert_called_with = '/resources/bin/script.ps1'
+    launch.assert_called_with = '/test/resources/bin/script.ps1'
     # Not Found
     self.assertRaises(powershell.PowerShellError, self.ps.RunResource,
                       'missing.ps1')
