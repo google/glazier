@@ -121,7 +121,7 @@ to branch into different configurations once you have a working foundation.
 
 ## Configuration Files
 
-The [Glazier Build YAML Specification](../yaml/index.md) page goes into detail
+The [Glazier Build YAML Specification](../yaml/README.md) page goes into detail
 about the format of Glazier's configuration files.
 
 "Text files" may seem like a surprising foundation for an imaging system,

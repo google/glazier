@@ -10,7 +10,7 @@ See the links below to help get you started with your own Glazier configuration.
 
 *   [About Glazier](./setup/about.md) - Basic operating principles used in
     Glazier.
-*   [Setup Guide](./setup/index.md) - Getting started with the basic principles
+*   [Setup Guide](./setup/README.md) - Getting started with the basic principles
     from the about page.
 
 ## Glazier Configurations
@@ -27,7 +27,7 @@ supported syntax.
 
 ## YAML Files
 
-*   [Glazier YAML File Specs](./yaml/index.md) - Glazier uses YAML-based
+*   [Glazier YAML File Specs](./yaml/README.md) - Glazier uses YAML-based
     configuration files. These documents outline the supported syntax.
 *   [Chooser Interface Configs](./yaml/chooser_ui.md) - The Chooser setup UI is
     an enhancement to autobuild which allows Glazier to present the user with a

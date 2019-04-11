@@ -199,4 +199,4 @@ and `applications/build.yaml` files (for illustration - not shown here).
 Finally, the host would reboot.
 
 More information about configuration files is available in the
-[Glazier Build YAML Specification](../yaml/index.md).
+[Glazier Build YAML Specification](../yaml/README.md).
