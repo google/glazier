@@ -105,8 +105,10 @@ _TEST_CONF = [{
 class ChooserTest(absltest.TestCase):
 
   @mock.patch.object(chooser, 'tk', autospec=True)
-  def setUp(self, unused_tk):
+  def setUp(self, tk):
+    super(ChooserTest, self).setUp()
     self.ui = chooser.Chooser(_TEST_CONF, preload=False)
+    self.tk = tk
     v1 = mock.Mock()
     v1.Value.return_value = 'value1'
     v2 = mock.Mock()
@@ -124,10 +126,16 @@ class ChooserTest(absltest.TestCase):
     self.ui.timer = timer.return_value
     self.ui.Display()
 
-  @mock.patch.object(chooser, 'tk', autospec=True)
   @mock.patch.object(chooser.fields, 'Timer', autospec=True)
-  def testGuiFooter(self, unused_timer, unused_tk):
+  @mock.patch.object(chooser, 'tk', autospec=True)
+  @mock.patch.object(chooser.resources.Resources, 'GetResourceFileName')
+  def testGuiFooter(self, resources, tk, timer):
+    logo = r'C:\Glazier\resources\logo.gif'
+    resources.return_value = logo
     self.ui._GuiFooter()
+    resources.assert_called_with('logo.gif')
+    timer.assert_called_with(self.ui.root)
+    tk.PhotoImage.assert_called_with(file=logo)
 
   def testGuiHeader(self):
     self.ui._GuiHeader()
