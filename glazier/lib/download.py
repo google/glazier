@@ -44,11 +44,13 @@ FLAGS = flags.FLAGS
 
 
 def Transform(string, build_info):
-  """Transforms abbreviated file names to absolute file paths.
+  r"""Transforms abbreviated file names to absolute file paths.
 
   Short name support:
     #: A reference to the active release branch location.
     @: A reference to the binary storage root.
+    \#: Escaped # character - replaced by # in string
+    \@: Escaped @ character - replaced by @ in string
 
   Args:
     string: The configuration string to be transformed.
@@ -57,10 +59,10 @@ def Transform(string, build_info):
   Returns:
     The adjusted file name string to be used in the manifest.
   """
-  if '#' in string:
-    string = string.replace('#', '%s/' % PathCompile(build_info))
-  if '@' in string:
-    string = string.replace('@', str(build_info.BinaryPath()))
+  string = re.sub(r'(?<!\\)#', PathCompile(build_info) + '/', string)
+  string = re.sub(r'\\#', '#', string)
+  string = re.sub(r'(?<!\\)@', str(build_info.BinaryPath()), string)
+  string = re.sub(r'\\@', '@', string)
   return string
 
 

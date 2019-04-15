@@ -107,7 +107,7 @@ OS.)
     *   Arg1[str]: The desired method to use for the join, as defined by the
         domain join library.
     *   Arg2[str]: The name of the domain to join.
-    *   Arg3[str]: The OU to join the machine to. (optional)
+    *   Ar[str]: The OU to join the machine to. (optional)
 
 #### Example
 
@@ -272,7 +272,7 @@ Also available as MultiRegAdd for creating larger sets of registry keys.
 *   Format: List
     *   Arg1[str]: Root key
     *   Arg2[str]: Key path
-    *   Arg3[str]: Key name
+    *   Ar[str]: Key name
     *   Arg4([str] or [int]): Key value
     *   Arg5[str]: Key type (REG_SZ or REG_DWORD)
     *   Arg6[bool]: Use 64bit Registry (Optional)
@@ -306,7 +306,7 @@ Delete a registry key.
 *   Format: List
     *   Arg1[str]: Root key
     *   Arg2[str]: Key path
-    *   Arg3[str]: Key name
+    *   Ar[str]: Key name
     *   Arg4[bool]: Use 64bit Registry (Optional)
 
 #### MultiRegDel Arguments

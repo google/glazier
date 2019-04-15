@@ -1,4 +1,4 @@
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,12 +40,25 @@ class PathsTest(absltest.TestCase):
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
   def testTransform(self, binpath, relpath):
+    # pylint: disable=line-too-long
+    # common_typos_disable
     relpath.return_value = 'https://glazier'
     binpath.return_value = 'https://glazier/bin/'
-    result = download.Transform('stuff#blah', self.buildinfo)
-    self.assertEqual(result, 'stuffhttps://glazier/blah')
-    result = download.Transform('stuff@blah', self.buildinfo)
-    self.assertEqual(result, 'stuffhttps://glazier/bin/blah')
+
+    result = download.Transform(r'sccm.x86_64.1.00.1337\#13371337.exe',
+                                self.buildinfo)
+    self.assertEqual(result, 'sccm.x86_64.1.00.1337#13371337.exe')
+
+    result = download.Transform(r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #My-Script.ps1 -Verbose', self.buildinfo)
+    self.assertEqual(result, r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File https://glazier/My-Script.ps1 -Verbose')
+
+    result = download.Transform(r'@Corp/install/1.0.0/installer.exe sccm.x86_64.1.00.1337\@13371337.exe',
+                                self.buildinfo)
+    self.assertEqual(result, 'https://glazier/bin/Corp/install/1.0.0/installer.exe sccm.x86_64.1.00.1337@13371337.exe')
+
+    result = download.Transform(r'C:\Windows\System32\msiexec.exe /i @Google/Chrome/1.3.3.7/googlechromestandaloneenterprise64.msi /qb /norestart', self.buildinfo)
+    self.assertEqual(result, r'C:\Windows\System32\msiexec.exe /i https://glazier/bin/Google/Chrome/1.3.3.7/googlechromestandaloneenterprise64.msi /qb /norestart')
+
     result = download.Transform('nothing _ here', self.buildinfo)
     self.assertEqual(result, 'nothing _ here')
 
