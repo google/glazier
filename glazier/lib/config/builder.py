@@ -92,7 +92,7 @@ class ConfigBuilder(base.ConfigBase):
     try:
       path = download.PathCompile(self._build_info, file_name=conf_file)
       yaml_config = files.Read(path)
-    except (files.Error, buildinfo.BuildInfoError) as e:
+    except (files.Error, buildinfo.Error) as e:
       raise ConfigBuilderError(e)
     timer_start = 'start_{}_{}'.format(conf_path.rstrip('/'), conf_file)
     self._task_list.append({
@@ -140,7 +140,7 @@ class ConfigBuilder(base.ConfigBase):
       try:
         if not self._build_info.BuildPinMatch(pin, pins[pin]):
           return False
-      except buildinfo.BuildInfoError as e:
+      except buildinfo.Error as e:
         raise ConfigBuilderError('Error gathering system information. %s' % e)
     return True
 

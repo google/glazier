@@ -26,7 +26,7 @@ from gwinpy.wmi import tpm_info
 import yaml
 
 
-class BuildInfoError(Exception):
+class Error(Exception):
   pass
 
 
@@ -98,7 +98,7 @@ class BuildInfo(object):
     try:
       data = files.Read(rel_id_file)
     except files.Error as e:
-      raise BuildInfoError(e)
+      raise Error(e)
     if data and 'release_id' in data:
       return data['release_id']
     return None
@@ -110,7 +110,7 @@ class BuildInfo(object):
       try:
         self._release_info = files.Read(rel_info_file)
       except files.Error as e:
-        raise BuildInfoError(e)
+        raise Error(e)
     return self._release_info
 
   def ReleasePath(self):
@@ -153,7 +153,7 @@ class BuildInfo(object):
       try:
         self._version_info = files.Read(info_file)
       except files.Error as e:
-        raise BuildInfoError(e)
+        raise Error(e)
     return self._version_info
 
   #
@@ -183,7 +183,7 @@ class BuildInfo(object):
       True for a pin match, else False.
 
     Raises:
-      BuildInfoError: Reference made to an unsupported pin.
+      Error: Reference made to an unsupported pin.
     """
     known_pins = self.GetExportedPins()
     if pin_name.startswith('USER_'):
@@ -193,7 +193,7 @@ class BuildInfo(object):
       else:
         return False
     elif pin_name not in known_pins:
-      raise BuildInfoError('Referencing illegal pin name: %s' % pin_name)
+      raise Error('Referencing illegal pin name: %s' % pin_name)
 
     loose = False
     if pin_name in ['computer_model', 'device_id']:
@@ -226,11 +226,11 @@ class BuildInfo(object):
       A string containing the device manufacturer.
 
     Raises:
-      BuildInfoError: Failure determining the system manufacturer.
+      Error: Failure determining the system manufacturer.
     """
     result = self._HWInfo().ComputerSystemManufacturer()
     if not result:
-      raise BuildInfoError('System manufacturer could not be determined.')
+      raise Error('System manufacturer could not be determined.')
     return result
 
   def ComputerModel(self):
@@ -242,11 +242,11 @@ class BuildInfo(object):
       the hardware model as a string
 
     Raises:
-      BuildInfoError: Failure determining the system model.
+      Error: Failure determining the system model.
     """
     result = self._HWInfo().ComputerSystemModel()
     if not result:
-      raise BuildInfoError('System model could not be determined.')
+      raise Error('System model could not be determined.')
     return result
 
   def ComputerName(self):
@@ -365,7 +365,7 @@ class BuildInfo(object):
       the os code as a string
 
     Raises:
-      BuildInfoError: Reference to an unknown operating system.
+      Error: Reference to an unknown operating system.
     """
     os = self.ComputerOs()
     release_info = self._ReleaseInfo()
@@ -373,7 +373,7 @@ class BuildInfo(object):
       os_codes = release_info['os_codes']
       if os in os_codes:
         return os_codes[os]['code']
-    raise BuildInfoError('Unknown OS [%s]' % os)
+    raise Error('Unknown OS [%s]' % os)
 
   def Serialize(self, to_file):
     """Dumps internal data to a file for later reference."""
@@ -566,12 +566,12 @@ class BuildInfo(object):
       The build branch as a string.
 
     Raises:
-      BuildInfoError: Reference to an unknown operating system.
+      Error: Reference to an unknown operating system.
     """
     versions = self.KnownBranches()
     comp_os = self.ComputerOs()
     if not comp_os:
-      raise BuildInfoError('Unable to determine host OS.')
+      raise Error('Unable to determine host OS.')
     if comp_os in versions:
       return versions[comp_os]
-    raise BuildInfoError('Unable to find a release that supports %s.' % comp_os)
+    raise Error('Unable to find a release that supports %s.' % comp_os)

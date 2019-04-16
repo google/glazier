@@ -23,7 +23,7 @@ from absl.testing import absltest
 class ConfigBuilderTest(absltest.TestCase):
 
   def setUp(self):
-
+    super(ConfigBuilderTest, self).setUp()
     self.buildinfo = buildinfo.BuildInfo()
     self.cb = builder.ConfigBuilder(self.buildinfo)
     self.cb._task_list = []
@@ -68,7 +68,7 @@ class ConfigBuilderTest(absltest.TestCase):
     }
     self.assertFalse(self.cb._MatchPin(pins))
     # Error
-    bpm.side_effect = buildinfo.BuildInfoError
+    bpm.side_effect = buildinfo.Error
     self.assertRaises(builder.ConfigBuilderError, self.cb._MatchPin, pins)
 
   @mock.patch.object(builder.ConfigBuilder, '_ProcessAction', autospec=True)

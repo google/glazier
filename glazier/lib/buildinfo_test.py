@@ -94,10 +94,10 @@ class BuildInfoTest(absltest.TestCase):
     back = self.buildinfo.GetChooserOptions()
     self.assertEqual(back[0]['name'], 'system_locale')
     self.assertEqual(back[1]['name'], 'core_ps_shell')
-    self.assertEqual(len(back), 2)
+    self.assertLen(back, 2)
     self.buildinfo.FlushChooserOptions()
     back = self.buildinfo.GetChooserOptions()
-    self.assertEqual(len(back), 0)
+    self.assertEmpty(back)
 
   def testStoreChooserResponses(self):
     """Store responses from the Chooser UI."""
@@ -176,7 +176,7 @@ class BuildInfoTest(absltest.TestCase):
       self.assertFalse(self.buildinfo.BuildPinMatch('os_code', ['']))
 
     # Invalid pin
-    self.assertRaises(buildinfo.BuildInfoError, self.buildinfo.BuildPinMatch,
+    self.assertRaises(buildinfo.Error, self.buildinfo.BuildPinMatch,
                       'no_existo', ['invalid pin value'])
 
   def testBuildUserPinMatch(self):
@@ -200,7 +200,7 @@ class BuildInfoTest(absltest.TestCase):
     result = self.buildinfo.ComputerManufacturer()
     self.assertEqual(result, 'Google Inc.')
     mock_man.return_value = None
-    self.assertRaises(buildinfo.BuildInfoError,
+    self.assertRaises(buildinfo.Error,
                       self.buildinfo.ComputerManufacturer)
 
   @mock.patch.object(
@@ -214,7 +214,7 @@ class BuildInfoTest(absltest.TestCase):
     result = self.buildinfo.ComputerModel()
     self.assertEqual(result, '2537CE2')
     sys_model.return_value = None
-    self.assertRaises(buildinfo.BuildInfoError, self.buildinfo.ComputerModel)
+    self.assertRaises(buildinfo.Error, self.buildinfo.ComputerModel)
 
 
   def testHostSpecFlags(self):
@@ -309,7 +309,7 @@ class BuildInfoTest(absltest.TestCase):
     comp_os.return_value = 'win2012r2-x64-se'
     self.assertEqual(self.buildinfo.OsCode(), 'win2012r2-x64-se')
     comp_os.return_value = 'win2000-x64-se'
-    self.assertRaises(buildinfo.BuildInfoError, self.buildinfo.OsCode)
+    self.assertRaises(buildinfo.Error, self.buildinfo.OsCode)
 
   @mock.patch.object(buildinfo.net_info, 'NetInfo', autospec=True)
   def testNetInterfaces(self, netinfo):
@@ -339,7 +339,7 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(self.buildinfo.Release(), None)
     # read error
     fread.side_effect = buildinfo.files.Error
-    self.assertRaises(buildinfo.BuildInfoError, self.buildinfo.Release)
+    self.assertRaises(buildinfo.Error, self.buildinfo.Release)
 
   @mock.patch.object(buildinfo.files, 'Read', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
@@ -351,7 +351,7 @@ class BuildInfoTest(absltest.TestCase):
         'https://glazier-server.example.com/testing/release-info.yaml')
     # read error
     fread.side_effect = buildinfo.files.Error
-    self.assertRaises(buildinfo.BuildInfoError, self.buildinfo._ReleaseInfo)
+    self.assertRaises(buildinfo.Error, self.buildinfo._ReleaseInfo)
 
   @mock.patch.object(buildinfo.files, 'Read', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'ComputerOs', autospec=True)
@@ -365,10 +365,10 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(self.buildinfo.ReleasePath(), expected)
     # no os
     comp_os.return_value = None
-    self.assertRaises(buildinfo.BuildInfoError, self.buildinfo.ReleasePath)
+    self.assertRaises(buildinfo.Error, self.buildinfo.ReleasePath)
     # invalid os
     comp_os.return_value = 'invalid-os-string'
-    self.assertRaises(buildinfo.BuildInfoError, self.buildinfo.ReleasePath)
+    self.assertRaises(buildinfo.Error, self.buildinfo.ReleasePath)
 
   def testActiveConfigPath(self):
     self.buildinfo.ActiveConfigPath(append='/foo')
