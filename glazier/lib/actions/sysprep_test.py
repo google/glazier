@@ -77,11 +77,12 @@ class SysprepTest(absltest.TestCase):
                       'Yakutsk Standard Time',
                       '/windows/panther/noneattend.xml')
 
+  @mock.patch.object(sysprep.timezone, 'Timezone', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(
       sysprep.SetUnattendTimeZone, '_EditUnattend', autospec=True)
   @mock.patch.object(sysprep.dhcp, 'GetDhcpOption', autospec=True)
-  def testSetUnattendTimeZoneRun(self, dhcp, edit, build_info):
+  def testSetUnattendTimeZoneRun(self, dhcp, edit, build_info, timezone):
     build_info.NetInterfaces.return_value = [
         mock.Mock(
             ip_address='127.0.0.1',
@@ -97,6 +98,8 @@ class SysprepTest(absltest.TestCase):
     ]
     st = sysprep.SetUnattendTimeZone([], build_info)
     # Normal Run
+    timezone.return_value.TranslateZone.return_value = (
+        'New Zealand Standard Time')
     dhcp.side_effect = iter([None, None, 'Antarctica/McMurdo'])
     st.Run()
     dhcp.assert_has_calls([
@@ -117,15 +120,24 @@ class SysprepTest(absltest.TestCase):
             server_addr='255.255.255.255')
     ])
     edit.assert_called_with(st, u'New Zealand Standard Time')
+    timezone.assert_called_with(load_map=True)
+    timezone.return_value.TranslateZone.assert_called_with('Antarctica/McMurdo')
+    timezone.reset_mock()
     # Failed Mapping
     dhcp.side_effect = None
     dhcp.return_value = 'Antarctica/NorthPole'
+    timezone.return_value.TranslateZone.return_value = ''
     st.Run()
     edit.assert_called_with(st, u'Pacific Standard Time')
+    timezone.assert_called_with(load_map=True)
+    timezone.return_value.TranslateZone.assert_called_with(
+        'Antarctica/NorthPole')
+    timezone.reset_mock()
     # No Result
     dhcp.return_value = None
     st.Run()
     edit.assert_called_with(st, u'Pacific Standard Time')
+    self.assertFalse(timezone.called)
 
 
 if __name__ == '__main__':
