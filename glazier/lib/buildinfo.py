@@ -373,7 +373,7 @@ class BuildInfo(object):
       os_codes = release_info['os_codes']
       if os in os_codes:
         return os_codes[os]['code']
-    raise BuildInfoError('Unknown OS [%s]', os)
+    raise BuildInfoError('Unknown OS [%s]' % os)
 
   def Serialize(self, to_file):
     """Dumps internal data to a file for later reference."""
@@ -574,4 +574,4 @@ class BuildInfo(object):
       raise BuildInfoError('Unable to determine host OS.')
     if comp_os in versions:
       return versions[comp_os]
-    raise BuildInfoError('Unable to find a release that supports %s.', comp_os)
+    raise BuildInfoError('Unable to find a release that supports %s.' % comp_os)
