@@ -91,30 +91,32 @@ class GoogetInstall(object):
 
     return flags
 
-  def LaunchGooget(self, path, pkg, build_info, flags=None):
+  def LaunchGooget(self, pkg, build_info, **kwargs):
     """Launch the Googet executable with arguments.
 
     Args:
-      path: path to Googet binary
       pkg: package name
       build_info: current build information - used to get active release branch
-      flags: optional flags (ex: -reinstall and/or -sources)
+      **kwargs: optional parameters such as path to Googet binary, -reinstall,
+      and/or -sources
 
     Raises:
       Error: The Googet command failed.
     """
-    if not os.path.exists(path):
-      raise Error('Cannot find path of Googet binary [%s]' % path)
+    if 'path' not in kwargs:
+      kwargs['path'] = _Googet() + '\\Googet.exe'
+    if not os.path.exists(kwargs['path']):
+      raise Error('Cannot find path of Googet binary [%s]' % kwargs['path'])
     if not pkg:
       raise Error('Missing package name for Googet install.')
 
     # Pass --root as GOOGETROOT environmental variable may not exist
     root = '--root=' + _Googet()
 
-    cmd = [path, '-noconfirm', root, 'install']
+    cmd = [kwargs['path'], '-noconfirm', root, 'install']
 
-    if flags:
-      cmd.extend(self._AddFlags(flags, build_info.Branch()))
+    if 'flags' in kwargs:
+      cmd.extend(self._AddFlags(kwargs['flags'], build_info.Branch()))
 
     # Add the package name to the end of the command, this must be done last.
     cmd.append(pkg)

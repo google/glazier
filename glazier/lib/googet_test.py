@@ -48,7 +48,7 @@ class GoogetTest(absltest.TestCase):
     call.return_value = 0
 
     # Command called successfully
-    self.install.LaunchGooget(path, pkg, self.buildinfo,
+    self.install.LaunchGooget(pkg, self.buildinfo, path=path, flags=
                               ['http://example.com/team-unstable, '
                                'http://example.co.uk/secure-unstable, '
                                'https://example.jp/unstable/',
@@ -61,7 +61,7 @@ class GoogetTest(absltest.TestCase):
     call.assert_called_with(cmd)
 
     # String replacement of sources flag was successful
-    self.install.LaunchGooget(path, pkg, self.buildinfo, self.flags)
+    self.install.LaunchGooget(pkg, self.buildinfo, path=path, flags=self.flags)
     cmd_string = (' -noconfirm --root=C:\\ProgramData\\Googet install -sources '
                   'http://example.com/team-example, '
                   'http://example.co.uk/secure-example%, '
@@ -69,32 +69,34 @@ class GoogetTest(absltest.TestCase):
     cmd = path + cmd_string + pkg
     call.assert_called_with(cmd)
 
+    # No path entered, use the default
+    self.install.LaunchGooget(pkg, self.buildinfo)
+    cmd_string = ' -noconfirm --root=C:\\ProgramData\\Googet install '
+    cmd = path + cmd_string + pkg
+    call.assert_called_with(cmd)
+
     # No flags
-    self.install.LaunchGooget(path, pkg, self.buildinfo)
+    self.install.LaunchGooget(pkg, self.buildinfo, path=path)
     cmd = path + ' -noconfirm --root=C:\\ProgramData\\Googet install ' + pkg
     call.assert_called_with(cmd)
 
     # Path does not exist
     with self.assertRaisesRegex(googet.Error,
                                 'Cannot find path of Googet binary*'):
-      self.install.LaunchGooget('C:\\abc\\def\\ghi', pkg, self.buildinfo,
-                                self.flags)
-
-    # Empty Path
-    with self.assertRaisesRegex(googet.Error,
-                                'Cannot find path of Googet binary*'):
-      self.install.LaunchGooget('', pkg, self.buildinfo, self.flags)
+      self.install.LaunchGooget(pkg, self.buildinfo, path='C:\\abc\\def\\ghi',
+                                flags=self.flags)
 
     # Empty Package Name
     with self.assertRaisesRegex(googet.Error,
                                 'Missing package name for Googet install.'):
-      self.install.LaunchGooget(path, '', self.buildinfo, self.flags)
+      self.install.LaunchGooget('', self.buildinfo, path=path, flags=self.flags)
 
     # Non zero return value
     call.return_value = 2
     with self.assertRaisesRegex(googet.Error,
                                 'Googet command failed with error*'):
-      self.install.LaunchGooget(path, pkg, self.buildinfo, self.flags)
+      self.install.LaunchGooget(pkg, self.buildinfo, path=path,
+                                flags=self.flags)
 
   def testAddFlags(self):
     branch = 'example'
