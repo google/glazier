@@ -33,6 +33,7 @@ SYS_BUILD_LOG = '%s\\%s' % (SYS_LOGS_PATH, BUILD_LOG_FILE)
 SYS_SYSTEM32 = '%s\\Windows\\System32' % SYS_ROOT
 SYS_TASK_LIST = '%s\\task_list.yaml' % SYS_CACHE
 SYS_POWERSHELL = '%s\\WindowsPowerShell\\v1.0\\powershell.exe' % SYS_SYSTEM32
+SYS_GOOGETROOT = '%s\\ProgramData\\Googet' % SYS_ROOT
 
 # WinPE
 WINPE_ROOT = 'X:'
@@ -44,6 +45,7 @@ WINPE_TASK_LIST = '%s\\task_list.yaml' % WINPE_ROOT
 WINPE_DISM = '%s\\dism.exe' % WINPE_SYSTEM32
 WINPE_POWERSHELL = ('%s\\WindowsPowerShell\\v1.0\\powershell.exe' %
                     WINPE_SYSTEM32)
+WINPE_GOOGETROOT = '%s\\ProgramData\\Googet' % WINPE_ROOT
 
 
 ## Flags
