@@ -140,7 +140,7 @@ dynamically referenced.
     - policy:
         - 'DeviceModel'
 
-See also [the Policies README](../../lib/policies/README.md)
+See also [the Policies README](../../glazier/lib/policies/README.md)
 
 ### Template
 

@@ -64,7 +64,7 @@ An example startup script might look like this:
     %PYTHON% %PYTHONPATH%\glazier\autobuild.py "--environment=WinPE" "--config_server=https://glazier.example.com" "--resource_path=X:\\resources" "--preserve_tasks=true"
 
 *   `--environment` tells autobuild which host environment it's operating under.
-    This is tied to a variety of variables in lib/constants.py, which help
+    This is tied to a variety of variables in glazier/lib/constants.py, which help
     autobuild find files on the local system. You may need to modify
     _constants.py_ to fit your environment.
 *   `--config_server` tells autobuild where to find your distribution point.
@@ -77,7 +77,7 @@ An example startup script might look like this:
 ### constants.py
 
 In addition to the startup flags provided by autobuild and its libraries, the
-file _lib/constants.py_ contains a number of programmatic defaults. You may need
+file _glazier/lib/constants.py_ contains a number of programmatic defaults. You may need
 to adjust these to match your imaging environment.
 
 ## Images & Sysprep

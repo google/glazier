@@ -1,16 +1,16 @@
 # Creating New Actions
 
 Glazier's Actions are the core of the system's configuration language. Glazier
-ships with some [existing actions](../../lib/actions/README.md), but for more
+ships with some [existing actions](../../glazier/lib/actions/README.md), but for more
 custom functionality, you can also create your own.
 
-Actions are defined in the [lib/actions/ module](../../lib/actions/).
+Actions are defined in the [glazier/lib/actions/ module](../../glazier/lib/actions/).
 
 ## BaseAction
 
 All actions extend from the BaseAction class, which provides some core
 underlying functionality common to all actions. BaseAction is defined in
-[base.py](../../lib/actions/base.py).
+[base.py](../../glazier/lib/actions/base.py).
 
 All actions receive two parameters, as defined by BaseAction: `args` and
 `build_info`.
@@ -28,7 +28,7 @@ All actions receive two parameters, as defined by BaseAction: `args` and
 
 ## Action Definition
 
-Within the *lib/actions* module there are several libraries. You can extend one
+Within the *glazier/lib/actions* module there are several libraries. You can extend one
 of the existing libraries or create a new one. The layout is strictly
 organizational.
 
@@ -65,7 +65,7 @@ reference it anywhere within the class that you need.
 cannot complete cleanly. This signals Autobuild that the action has failed, and
 it should abort the installation until things are fixed.
 
-Once your action class has been defined, open *lib/actions/\_\_init\_\_.py*. Add
+Once your action class has been defined, open *glazier/lib/actions/\_\_init\_\_.py*. Add
 a new line declaring the name of your class to export it to the config handler.
 
     FancyAction = fancy.FancyAction

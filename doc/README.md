@@ -37,10 +37,10 @@ supported syntax.
 
 ## Python
 
-*   [Installer Actions](../lib/actions/README.md) - Actions are classes which
+*   [Installer Actions](../glazier/lib/actions/README.md) - Actions are classes which
     the configuration handler may call to perform a variety of tasks during
     imaging.
-*   [Policy Modules](../lib/policies/README.md) - Policy modules determine
+*   [Policy Modules](../glazier/lib/policies/README.md) - Policy modules determine
     whether or not Autobuild should be allowed to proceed with an installation.
 *   [Config Handlers](./setup/config_handlers.md) - The Glazier configuration
     handling libraries are responsible for taking the configuration language as
