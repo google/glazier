@@ -91,7 +91,7 @@ Actions are the preferred method for adding new functionality to the autobuild
 tool. Unlike hardcoded commands, actions are almost fully self contained and
 capable of self-validating.
 
-See [the Actions README](../../lib/actions/README.md) for a list of available
+See [the Actions README](../../glazier/lib/actions/README.md) for a list of available
 actions.
 
 ### Pin
