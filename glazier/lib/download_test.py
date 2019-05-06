@@ -199,6 +199,11 @@ class DownloadTest(absltest.TestCase):
       report.reset_mock()
       self._dl._StreamToDisk(file_stream, show_progress=False)
       self.assertFalse(report.called)
+      # HTTP Header returned nothing (NoneType)
+      http_stream.seek(0)
+      report.reset_mock()
+      self.assertRaises(download.DownloadError, self._dl._StreamToDisk,
+                        None)
     # IOError
     http_stream.seek(0)
     self.filesystem.CreateDirectory(r'C:\Windows')

@@ -325,9 +325,14 @@ class BaseDownloader(object):
     progress = self._default_show_progress
     if show_progress is not None:
       progress = show_progress
+
     bytes_so_far = 0
-    url = file_stream.geturl()
-    total_size = int(file_stream.info().getheader('Content-Length').strip())
+    try:
+      url = file_stream.geturl()
+      total_size = int(file_stream.info().getheader('Content-Length').strip())
+    except AttributeError:
+      raise DownloadError('Unable to reach server URL.')
+
     try:
       with open(self._save_location, 'wb') as output_file:
         logging.info('Downloading file "%s" to "%s".', url, self._save_location)
