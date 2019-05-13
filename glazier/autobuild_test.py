@@ -14,10 +14,10 @@
 
 """Unit tests for autobuild."""
 
+from absl.testing import absltest
 from pyfakefs import fake_filesystem
 from glazier import autobuild
 import mock
-from absl.testing import absltest
 
 
 class LogFatal(Exception):
@@ -28,6 +28,7 @@ class BuildInfoTest(absltest.TestCase):
 
   @mock.patch.object(autobuild, 'logs', autospec=True)
   def setUp(self, logs):
+    super(BuildInfoTest, self).setUp()
     self.autobuild = autobuild.AutoBuild()
     autobuild.logging = logs.logging
     autobuild.logging.fatal.side_effect = LogFatal()

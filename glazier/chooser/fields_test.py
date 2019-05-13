@@ -14,9 +14,9 @@
 
 """Tests for glazier.chooser.fields."""
 
+from absl.testing import absltest
 from glazier.chooser import fields
 import mock
-from absl.testing import absltest
 
 
 @mock.patch.object(fields, 'tk', autospec=True)
@@ -24,6 +24,7 @@ class FieldsTest(absltest.TestCase):
 
   @mock.patch.object(fields, 'tk', autospec=True)
   def setUp(self, tk):
+    super(FieldsTest, self).setUp()
     self.root = tk.Tk()
 
   def testLabel(self, unused_tk):
@@ -45,6 +46,7 @@ class RadioMenuTest(absltest.TestCase):
 
   @mock.patch.object(fields, 'tk', autospec=True)
   def setUp(self, tk):
+    super(RadioMenuTest, self).setUp()
     self.tk = tk
     self.root = tk.Tk()
     opts = {
@@ -69,6 +71,7 @@ class TimerTest(absltest.TestCase):
 
   @mock.patch.object(fields, 'tk', autospec=True)
   def setUp(self, tk):
+    super(TimerTest, self).setUp()
     self.root = tk.Tk()
     self.root.quit.side_effect = TimerTest.Quit
     self.timer = fields.Timer(self.root, timeout=10)

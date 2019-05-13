@@ -14,15 +14,16 @@
 
 """Tests for glazier.lib.config.files."""
 
+from absl.testing import absltest
 from pyfakefs import fake_filesystem
 from glazier.lib.config import files
 import mock
-from absl.testing import absltest
 
 
 class FilesTest(absltest.TestCase):
 
   def setUp(self):
+    super(FilesTest, self).setUp()
     self.filesystem = fake_filesystem.FakeFilesystem()
     files.open = fake_filesystem.FakeFileOpen(self.filesystem)
     files.file_util.os = fake_filesystem.FakeOsModule(self.filesystem)

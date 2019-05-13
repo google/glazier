@@ -14,9 +14,9 @@
 
 """Tests for glazier.lib.policies.disk_encryption."""
 
+from absl.testing import absltest
 from glazier.lib.policies import disk_encryption
 import mock
-from absl.testing import absltest
 
 
 class DiskEncryptionTest(absltest.TestCase):

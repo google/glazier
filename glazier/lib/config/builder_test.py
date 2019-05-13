@@ -14,10 +14,10 @@
 
 """Tests for glazier.lib.config.builder."""
 
+from absl.testing import absltest
 from glazier.lib import buildinfo
 from glazier.lib.config import builder
 import mock
-from absl.testing import absltest
 
 
 class ConfigBuilderTest(absltest.TestCase):

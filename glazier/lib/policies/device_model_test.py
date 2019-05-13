@@ -14,11 +14,10 @@
 
 """Tests for glazier.lib.policies.device_model."""
 
+from absl.testing import absltest
 from glazier.lib.policies import device_model
 import mock
 from six.moves import builtins
-
-from absl.testing import absltest
 
 
 class DeviceModelTest(absltest.TestCase):

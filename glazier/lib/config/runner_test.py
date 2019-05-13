@@ -14,6 +14,7 @@
 
 """Tests for glazier.lib.config.runner."""
 
+from absl.testing import absltest
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 from glazier.lib import buildinfo
@@ -21,12 +22,11 @@ from glazier.lib.config import runner
 
 import mock
 
-from absl.testing import absltest
-
 
 class ConfigRunnerTest(absltest.TestCase):
 
   def setUp(self):
+    super(ConfigRunnerTest, self).setUp()
     self.buildinfo = buildinfo.BuildInfo()
     runner.FLAGS.verify_urls = None
     # filesystem

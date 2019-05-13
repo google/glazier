@@ -14,10 +14,10 @@
 
 """Tests for glazier.chooser.chooser."""
 
+from absl.testing import absltest
 from pyfakefs import fake_filesystem
 from glazier.chooser import chooser
 import mock
-from absl.testing import absltest
 
 _TEST_CONF = [{
     'name':

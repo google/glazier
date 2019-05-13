@@ -14,15 +14,16 @@
 
 """Tests for glazier.lib.config.base."""
 
+from absl.testing import absltest
 from glazier.lib import buildinfo
 from glazier.lib.config import base
 import mock
-from absl.testing import absltest
 
 
 class BaseTest(absltest.TestCase):
 
   def setUp(self):
+    super(BaseTest, self).setUp()
     self.buildinfo = buildinfo.BuildInfo()
     self.cb = base.ConfigBase(self.buildinfo)
 

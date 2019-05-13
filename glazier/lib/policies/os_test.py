@@ -14,9 +14,9 @@
 
 """Tests for glazier.lib.policies.os."""
 
+from absl.testing import absltest
 from glazier.lib.policies import os
 import mock
-from absl.testing import absltest
 
 
 class OsTest(absltest.TestCase):
