@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Actions for sysprep-related activites."""
+"""Actions for sysprep-related activities."""
 
 import logging
 import re
