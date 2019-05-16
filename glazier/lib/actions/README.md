@@ -48,7 +48,7 @@ Enable Bitlocker on the host system.
 
 Available modes:
 
-*   ps_tpm: TPM via Powershell
+*   ps_tpm: TPM via PowerShell
 *   bde_tpm: TPM via manage-bde.exe
 
 #### Arguments
@@ -211,6 +211,31 @@ verification.
         - ['win2008-x64-se.wim', 'c:\base.wim']
         - ['win2008-x64-se.wim.sha256', 'c:\base.wim.sha256']
 
+### GoogetInstall
+
+Installs a package via Googet with optional arguments.
+
+#### GoogetInstall Arguments
+
+*   Format: List
+    *   Arg1[str]: Package name
+    *   Arg2[str]: All other arguments. This includes repo URLS, -reinstall, -redownload, etc. (optional)
+      * If the % character is used in Arg3, it will be replaced for the current build branch, taken from glazier/lib/buildinfo.
+    *   Arg3[str]: Googet binary location (optional)
+
+#### Examples
+
+    GoogetInstall: ['test_package_v1']
+
+    GoogetInstall: ['test_package_v1',,'C:\ProgramData\Googet\Googet.exe']
+
+    GoogetInstall: ['test_package_v1', 'http://example.com/team-unstable, http://example.co.uk/secure-unstable, https://example.jp/unstable/ -reinstall whatever']
+
+    GoogetInstall: ['test_package_v1', 'http://example.com/team-unstable, http://example.co.uk/secure-unstable, https://example.jp/unstable/ -reinstall whatever', 'C:\ProgramData\Googet\Googet.exe']
+
+    GoogetInstall: ['test_package_v1', 'http://example.com/team-%, http://example.co.uk/secure-%, https://example.jp/%/ -reinstall whatever', 'C:\ProgramData\Googet\Googet.exe']
+
+
 ### LogCopy
 
 Attempts to copy a log file to a new destination for collection.
@@ -247,7 +272,7 @@ Make a directory.
 
 ### PSScript
 
-Run a Powershell script file using the local Powershell interpreter.
+Run a PowerShell script file using the local PowerShell interpreter.
 
 #### Arguments
 

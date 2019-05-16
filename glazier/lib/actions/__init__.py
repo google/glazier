@@ -22,6 +22,7 @@ from . import domain
 from . import drivers
 from . import file_system
 from . import files
+from . import googet
 from . import installer
 from . import powershell
 from . import registry
@@ -43,6 +44,7 @@ DriverWIM = drivers.DriverWIM
 Execute = files.Execute
 ExitWinPE = installer.ExitWinPE
 Get = files.Get
+GoogetInstall = googet.GoogetInstall
 LogCopy = installer.LogCopy
 MkDir = file_system.MkDir
 MultiCopyFile = file_system.MultiCopyFile
