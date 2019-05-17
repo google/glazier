@@ -103,7 +103,7 @@ class GoogetInstall(object):
     Raises:
       Error: The Googet command failed.
     """
-    if 'path' not in kwargs:
+    if not kwargs['path']:
       kwargs['path'] = _Googet() + '\\Googet.exe'
     if not os.path.exists(kwargs['path']):
       raise Error('Cannot find path of Googet binary [%s]' % kwargs['path'])
@@ -115,7 +115,7 @@ class GoogetInstall(object):
 
     cmd = [kwargs['path'], '-noconfirm', root, 'install']
 
-    if 'flags' in kwargs:
+    if kwargs['flags']:
       cmd.extend(self._AddFlags(kwargs['flags'], build_info.Branch()))
 
     # Add the package name to the end of the command, this must be done last.

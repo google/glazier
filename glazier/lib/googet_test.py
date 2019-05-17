@@ -69,14 +69,23 @@ class GoogetTest(absltest.TestCase):
     cmd = path + cmd_string + pkg
     call.assert_called_with(cmd)
 
-    # No path entered, use the default
-    self.install.LaunchGooget(pkg, self.buildinfo)
+    # Only pkg
+    self.install.LaunchGooget(pkg, self.buildinfo, path=None, flags=None)
     cmd_string = ' -noconfirm --root=C:\\ProgramData\\Googet install '
     cmd = path + cmd_string + pkg
     call.assert_called_with(cmd)
 
+    # No Path
+    self.install.LaunchGooget(pkg, self.buildinfo, path=None, flags=self.flags)
+    cmd_string = (' -noconfirm --root=C:\\ProgramData\\Googet install -sources '
+                  'http://example.com/team-example, '
+                  'http://example.co.uk/secure-example%, '
+                  'http://example.jp/example% whatever -reinstall ')
+    cmd = path + cmd_string + pkg
+    call.assert_called_with(cmd)
+
     # No flags
-    self.install.LaunchGooget(pkg, self.buildinfo, path=path)
+    self.install.LaunchGooget(pkg, self.buildinfo, path=path, flags=None)
     cmd = path + ' -noconfirm --root=C:\\ProgramData\\Googet install ' + pkg
     call.assert_called_with(cmd)
 
