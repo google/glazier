@@ -37,24 +37,20 @@ class FileSystemTest(absltest.TestCase):
     self.fs = fs
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testCopyFile(self, build_info):
-    src1 = r'/file1.txt'
-    dst1 = r'/windows/glazier/glazier.log'
-    src2 = r'/file2.txt'
-    dst2 = r'/windows/glazier/other.log'
-    cf = file_system.MultiCopyFile([[src1, dst1], [src2, dst2]], build_info)
-    cf.Run()
-    self.assertTrue(self.fs.Exists(r'/windows/glazier/glazier.log'))
-    self.assertTrue(self.fs.Exists(r'/windows/glazier/other.log'))
-    # bad path
+  def testCopyFileBadPath(self, build_info):
     src1 = r'/missing.txt'
+    dst1 = r'/windows/glazier/glazier.log'
     cf = file_system.CopyFile([src1, dst1], build_info)
     self.assertRaises(file_system.ActionError, cf.Run)
-    # bad args
-    cf = file_system.CopyFile([src1], build_info)
+
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  def testCopyFileInvalidArgs(self, build_info):
+    cf = file_system.CopyFile([r'/file1.txt'], build_info)
     self.assertRaises(file_system.ActionError, cf.Run)
-    # bad multi args
-    cf = file_system.MultiCopyFile(src1, build_info)
+
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  def testCopyFileInvalidMultiArgs(self, build_info):
+    cf = file_system.MultiCopyFile([r'/file1.txt'], build_info)
     self.assertRaises(file_system.ActionError, cf.Run)
 
   def testCopyFileValidate(self):
