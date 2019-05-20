@@ -14,9 +14,9 @@
 
 """Tests for glazier.lib.actions.abort."""
 
+from absl.testing import absltest
 from glazier.lib.actions import abort
 import mock
-from absl.testing import absltest
 
 
 class AbortTest(absltest.TestCase):

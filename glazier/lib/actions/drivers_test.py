@@ -14,10 +14,10 @@
 
 """Tests for glazier.lib.actions.drivers."""
 
+from absl.testing import absltest
 from glazier.lib.actions import drivers
 from glazier.lib.buildinfo import BuildInfo
 import mock
-from absl.testing import absltest
 
 
 class DriversTest(absltest.TestCase):

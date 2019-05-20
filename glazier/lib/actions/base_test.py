@@ -14,8 +14,8 @@
 
 """Tests for glazier.lib.actions.base."""
 
-from glazier.lib.actions import base
 from absl.testing import absltest
+from glazier.lib.actions import base
 
 
 class BaseTest(absltest.TestCase):

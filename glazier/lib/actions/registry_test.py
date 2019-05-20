@@ -14,9 +14,9 @@
 
 """Tests for glazier.lib.actions.registry."""
 
+from absl.testing import absltest
 from glazier.lib.actions import registry
 import mock
-from absl.testing import absltest
 
 
 class RegistryTest(absltest.TestCase):

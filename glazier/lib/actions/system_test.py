@@ -14,9 +14,9 @@
 
 """Tests for glazier.lib.actions.system."""
 
+from absl.testing import absltest
 from glazier.lib.actions import system
 import mock
-from absl.testing import absltest
 
 
 class SystemTest(absltest.TestCase):

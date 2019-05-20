@@ -13,10 +13,9 @@
 # limitations under the License.
 
 """Tests for glazier.lib.actions.googet."""
-from glazier.lib.actions import googet
-
-import mock
 from absl.testing import absltest
+from glazier.lib.actions import googet
+import mock
 
 
 class GoogetTest(absltest.TestCase):
