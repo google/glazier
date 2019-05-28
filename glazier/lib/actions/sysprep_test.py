@@ -14,10 +14,11 @@
 
 """Tests for glazier.lib.actions.sysprep."""
 
+from absl.testing import absltest
 from pyfakefs import fake_filesystem
 from glazier.lib.actions import sysprep
 import mock
-from absl.testing import absltest
+
 
 UNATTEND_XML = r"""<?xml version='1.0' encoding='utf-8'?>
 <unattend xmlns="urn:schemas-microsoft-com:unattend">

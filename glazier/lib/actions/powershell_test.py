@@ -14,10 +14,10 @@
 
 """Tests for glazier.lib.actions.powershell."""
 
+from absl.testing import absltest
 from glazier.lib import buildinfo
 from glazier.lib.actions import powershell
 import mock
-from absl.testing import absltest
 
 
 class PowershellTest(absltest.TestCase):

@@ -13,10 +13,9 @@
 # limitations under the License.
 
 """Tests for glazier.lib.actions.googet."""
-from glazier.lib.actions import googet
-
-import mock
 from absl.testing import absltest
+from glazier.lib.actions import googet
+import mock
 
 
 class GoogetTest(absltest.TestCase):
@@ -28,9 +27,9 @@ class GoogetTest(absltest.TestCase):
     # Mock values
     self.mock_pkg = 'test_package_v1'
     self.mock_path = r'C:\ProgramData\Googet\Googet.exe'
-    self.mock_flags = ('http://example.com/team-unstable, '
+    self.mock_flags = ['http://example.com/team-unstable, '
                        'http://example.co.uk/secure-unstable, '
-                       'https://example.jp/unstable/ -reinstall whatever')
+                       'https://example.jp/unstable/ -reinstall whatever']
     self.mock_args = [self.mock_pkg, self.mock_flags, self.mock_path]
     self.bi = bi
 

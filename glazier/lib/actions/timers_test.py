@@ -14,10 +14,10 @@
 
 """Tests for glazier.lib.actions.timers."""
 
+from absl.testing import absltest
 from glazier.lib.actions import timers
 from glazier.lib.actions.base import ValidationError
 import mock
-from absl.testing import absltest
 
 
 class TimersTest(absltest.TestCase):

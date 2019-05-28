@@ -14,10 +14,10 @@
 
 """Tests for glazier.lib.actions.updates."""
 
+from absl.testing import absltest
 from glazier.lib.actions import updates
 from glazier.lib.buildinfo import BuildInfo
 import mock
-from absl.testing import absltest
 
 
 class UpdatesTest(absltest.TestCase):

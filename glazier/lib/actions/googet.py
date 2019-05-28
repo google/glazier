@@ -58,5 +58,7 @@ class GoogetInstall(BaseAction):
       raise ValidationError("Invalid Googet args '%s' with length of "
                             "'%d'" % (self._args, len(self._args)))
     self._TypeValidator(self._args[0], str)  # Package
-    self._TypeValidator(self._args[1], str)  # Flags
-    self._TypeValidator(self._args[2], str)  # Path
+    if len(self._args) > 1:
+      self._TypeValidator(self._args[1], list)  # Flags
+    if len(self._args) > 2:
+      self._TypeValidator(self._args[2], str)  # Path

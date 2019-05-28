@@ -14,12 +14,12 @@
 
 """Tests for glazier.lib.actions.files."""
 import io
+from absl.testing import absltest
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 from glazier.lib import buildinfo
 from glazier.lib.actions import files
 import mock
-from absl.testing import absltest
 
 
 class FilesTest(absltest.TestCase):

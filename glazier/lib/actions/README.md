@@ -219,7 +219,7 @@ Installs a package via Googet with optional arguments.
 
 *   Format: List
     *   Arg1[str]: Package name
-    *   Arg2[str]: All other arguments. This includes repo URLS, -reinstall, -redownload, etc. (optional)
+    *   Arg2[list]: All other arguments. This includes repo URLS, -reinstall, -redownload, etc. (optional)
       * If the % character is used in Arg3, it will be replaced for the current build branch, taken from glazier/lib/buildinfo.
     *   Arg3[str]: Googet binary location (optional)
 
@@ -227,13 +227,13 @@ Installs a package via Googet with optional arguments.
 
     GoogetInstall: ['test_package_v1']
 
-    GoogetInstall: ['test_package_v1',,'C:\ProgramData\Googet\Googet.exe']
+    GoogetInstall: ['test_package_v1', ['http://example.com/team-unstable, http://example.co.uk/secure-unstable, https://example.jp/unstable/ -reinstall whatever']]
 
-    GoogetInstall: ['test_package_v1', 'http://example.com/team-unstable, http://example.co.uk/secure-unstable, https://example.jp/unstable/ -reinstall whatever']
+    GoogetInstall: ['test_package_v1', [], 'C:\ProgramData\Googet\Googet.exe']
 
-    GoogetInstall: ['test_package_v1', 'http://example.com/team-unstable, http://example.co.uk/secure-unstable, https://example.jp/unstable/ -reinstall whatever', 'C:\ProgramData\Googet\Googet.exe']
+    GoogetInstall: ['test_package_v1', ['http://example.com/team-unstable, http://example.co.uk/secure-unstable, https://example.jp/unstable/ -reinstall whatever'], 'C:\ProgramData\Googet\Googet.exe']
 
-    GoogetInstall: ['test_package_v1', 'http://example.com/team-%, http://example.co.uk/secure-%, https://example.jp/%/ -reinstall whatever', 'C:\ProgramData\Googet\Googet.exe']
+    GoogetInstall: ['test_package_v1', ['http://example.com/team-%, http://example.co.uk/secure-%, https://example.jp/%/ -reinstall whatever'], 'C:\ProgramData\Googet\Googet.exe']
 
 
 ### LogCopy
