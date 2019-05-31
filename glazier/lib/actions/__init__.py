@@ -38,6 +38,7 @@ AddChoice = installer.AddChoice
 BitlockerEnable = tpm.BitlockerEnable
 BuildInfoDump = installer.BuildInfoDump
 BuildInfoSave = installer.BuildInfoSave
+CopyDir = file_system.CopyDir
 CopyFile = file_system.CopyFile
 DomainJoin = domain.DomainJoin
 DriverWIM = drivers.DriverWIM
