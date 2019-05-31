@@ -28,13 +28,32 @@ class FileSystemTest(absltest.TestCase):
     # fake filesystem
     fs = fake_filesystem.FakeFilesystem()
     fs.CreateDirectory(r'/stage')
-    fs.CreateFile(r'/file1.txt', contents='file1')
-    fs.CreateFile(r'/file2.txt', contents='file2')
+    fs.CreateFile(r'/stage/file1.txt', contents='file1')
+    fs.CreateFile(r'/stage/file2.txt', contents='file2')
     self.fake_open = fake_filesystem.FakeFileOpen(fs)
     file_system.os = fake_filesystem.FakeOsModule(fs)
     file_system.shutil = fake_filesystem_shutil.FakeShutilModule(fs)
     file_system.open = self.fake_open
     self.fs = fs
+
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  def testCopyDir(self, build_info):
+    cd = file_system.CopyDir([r'/stage', r'/root/copied'], build_info)
+    cd.Validate()
+    cd.Run()
+    self.assertTrue(self.fs.Exists(r'/root/copied/file1.txt'))
+    self.assertTrue(self.fs.Exists(r'/root/copied/file2.txt'))
+
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  def testCopyDirException(self, build_info):
+    cd = file_system.CopyDir([r'/stage', r'/stage'], build_info)
+    self.assertRaises(file_system.ActionError, cd.Run)
+
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  def testCopyDirMissingArgs(self, build_info):
+    cd = file_system.CopyDir([r'/stage'], build_info)
+    self.assertRaises(file_system.ValidationError, cd.Validate)
+    self.assertRaises(file_system.ActionError, cd.Run)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testCopyFileBadPath(self, build_info):
@@ -74,7 +93,7 @@ class FileSystemTest(absltest.TestCase):
     md.Run()
     self.assertTrue(file_system.os.path.exists('/stage/subdir1/subdir2'))
     # bad path
-    md = file_system.MkDir([r'/file1.txt'], build_info)
+    md = file_system.MkDir([r'/stage/file1.txt'], build_info)
     self.assertRaises(file_system.ActionError, md.Run)
     # bad args
     md = file_system.MkDir([], build_info)

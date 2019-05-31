@@ -65,6 +65,10 @@ BuildInfoSave.
 
 Load BuildInfo data from disk and store permanently to the registry.
 
+### CopyDir
+
+Copy directories from source to destination.
+
 ### CopyFile/MultiCopyFile
 
 Copy files from source to destination.
