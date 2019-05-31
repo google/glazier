@@ -42,6 +42,26 @@ class FileSystem(BaseAction):
         raise ActionError('Unable to create directory %s: %s' % (path, str(e)))
 
 
+class CopyDir(FileSystem):
+  """Copies directories on disk."""
+
+  def Run(self):
+    try:
+      src = self._args[0]
+      dst = self._args[1]
+    except IndexError:
+      raise ActionError('Unable to determine source and destination from %s.' %
+                        str(self._args))
+    try:
+      logging.info('Copying directory: %s to %s', src, dst)
+      shutil.copytree(src, dst)
+    except (shutil.Error, OSError) as e:
+      raise ActionError('Unable to copy %s to %s: %s' % (src, dst, str(e)))
+
+  def Validate(self):
+    self._ListOfStringsValidator(self._args, length=2)
+
+
 class CopyFile(FileSystem):
   """Copies files on disk."""
 
