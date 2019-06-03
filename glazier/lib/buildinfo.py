@@ -209,6 +209,7 @@ class BuildInfo(object):
         'encryption_type': self.EncryptionLevel,
         'graphics': self.VideoControllersByName,
         'os_code': self.OsCode,
+        'oci': self.Oci,  # copybara:strip
     }
 
   def CachePath(self):
