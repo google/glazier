@@ -29,4 +29,3 @@ UnsupportedOs = os.UnsupportedOs
 
 ImagingPolicyException = base.ImagingPolicyException
 ImagingPolicyWarning = base.ImagingPolicyWarning
-
