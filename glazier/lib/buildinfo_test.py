@@ -235,6 +235,12 @@ class BuildInfoTest(absltest.TestCase):
     # clean up
     buildinfo.spec.FLAGS.glazier_spec = old_spec
 
+  def testOCIFlags(self):
+    old_spec = buildinfo.spec.FLAGS.glazier_spec
+    buildinfo.spec.FLAGS.oci = True
+    self.assertEqual(self.buildinfo.Oci, True)
+    buildinfo.spec.FLAGS.glazier_spec = old_spec
+
   @mock.patch.object(buildinfo.hw_info.HWInfo, 'BiosSerial', autospec=True)
   def testComputerSerial(self, bios_serial):
     bios_serial.return_value = '5KD1BP1'
