@@ -16,12 +16,18 @@
 
 import datetime
 import re
+
+from absl import flags
+from absl.testing import absltest
+from absl.testing import flagsaver
+
 from pyfakefs import fake_filesystem
 from glazier.lib import buildinfo
 from gwinpy.wmi.hw_info import DeviceId
 import mock
 import yaml
-from absl.testing import absltest
+
+FLAGS = flags.FLAGS
 
 _RELEASE_INFO = """
 supported_models:
@@ -217,23 +223,19 @@ class BuildInfoTest(absltest.TestCase):
     self.assertRaises(buildinfo.Error, self.buildinfo.ComputerModel)
 
 
+  @flagsaver.flagsaver
   def testHostSpecFlags(self):
-    old_spec = buildinfo.spec.FLAGS.glazier_spec
-    buildinfo.spec.FLAGS.glazier_spec = 'flag'
-    buildinfo.spec.FLAGS.glazier_spec_hostname = 'TEST-HOST'
-    buildinfo.spec.FLAGS.glazier_spec_fqdn = 'TEST-HOST.example.com'
+    FLAGS.glazier_spec = 'flag'
+    FLAGS.glazier_spec_hostname = 'TEST-HOST'
+    FLAGS.glazier_spec_fqdn = 'TEST-HOST.example.com'
     self.assertEqual(self.buildinfo.ComputerName(), 'TEST-HOST')
     self.assertEqual(self.buildinfo.Fqdn(), 'TEST-HOST.example.com')
-    # clean up
-    buildinfo.spec.FLAGS.glazier_spec = old_spec
 
+  @flagsaver.flagsaver
   def testOsSpecFlags(self):
-    old_spec = buildinfo.spec.FLAGS.glazier_spec
-    buildinfo.spec.FLAGS.glazier_spec = 'flag'
-    buildinfo.spec.FLAGS.glazier_spec_os = 'windows-10-test'
+    FLAGS.glazier_spec = 'flag'
+    FLAGS.glazier_spec_os = 'windows-10-test'
     self.assertEqual(self.buildinfo.ComputerOs(), 'windows-10-test')
-    # clean up
-    buildinfo.spec.FLAGS.glazier_spec = old_spec
 
   @mock.patch.object(buildinfo.hw_info.HWInfo, 'BiosSerial', autospec=True)
   def testComputerSerial(self, bios_serial):

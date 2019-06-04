@@ -16,6 +16,8 @@
 
 import logging
 import time
+
+from absl import flags
 from glazier.lib import constants
 from glazier.lib import timers
 from glazier.lib.config import files
@@ -24,6 +26,8 @@ from gwinpy.wmi import hw_info
 from gwinpy.wmi import net_info
 from gwinpy.wmi import tpm_info
 import yaml
+
+FLAGS = flags.FLAGS
 
 
 class Error(Exception):
@@ -78,12 +82,12 @@ class BuildInfo(object):
       The versioned base path to the current build as a string.
     """
     server = self.ConfigServer() or ''
-    path = constants.FLAGS.binary_root_path.strip('/')
+    path = FLAGS.binary_root_path.strip('/')
     path = '%s/%s/' % (server, path)
     return path
 
   def ConfigServer(self):
-    server = constants.FLAGS.config_server
+    server = FLAGS.config_server
     if server:
       server = server.rstrip('/')
     return server
