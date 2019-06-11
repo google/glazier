@@ -46,12 +46,22 @@ class CopyDir(FileSystem):
   """Copies directories on disk."""
 
   def Run(self):
+    remove_existing = False
     try:
       src = self._args[0]
       dst = self._args[1]
+      if len(self._args) > 2:
+        remove_existing = self._args[2]
     except IndexError:
       raise ActionError('Unable to determine source and destination from %s.' %
                         str(self._args))
+    try:
+      if os.path.exists(dst) and remove_existing:
+        logging.info('Deleting existing destination: %s', dst)
+        shutil.rmtree(dst)
+    except (shutil.Error, OSError) as e:
+      raise ActionError('Unable to delete existing destination folder %s: %s' %
+                        (dst, str(e)))
     try:
       logging.info('Copying directory: %s to %s', src, dst)
       shutil.copytree(src, dst)
@@ -59,7 +69,13 @@ class CopyDir(FileSystem):
       raise ActionError('Unable to copy %s to %s: %s' % (src, dst, str(e)))
 
   def Validate(self):
-    self._ListOfStringsValidator(self._args, length=2)
+    self._TypeValidator(self._args, list)
+    if not 2 <= len(self._args) <= 3:
+      raise ValidationError('Invalid args length: %s' % self._args)
+    self._TypeValidator(self._args[0], str)  # src
+    self._TypeValidator(self._args[1], str)  # dst
+    if len(self._args) > 2:  # Remove existing folder
+      self._TypeValidator(self._args[2], bool)
 
 
 class CopyFile(FileSystem):
