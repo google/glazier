@@ -121,8 +121,8 @@ to branch into different configurations once you have a working foundation.
 
 ## Configuration Files
 
-The [Glazier Build YAML Specification](../yaml/README.md) page goes into detail
-about the format of Glazier's configuration files.
+The [Glazier Build YAML Specification](../yaml) page goes into detail about the
+format of Glazier's configuration files.
 
 "Text files" may seem like a surprising foundation for an imaging system,
 however they are ultimately one of the most powerful and flexible options
@@ -225,7 +225,7 @@ Python, you can easily extend Glazier with custom functionality.
 
 When it comes to the act of imaging a system, most of Glazier's time is spent
 performing Actions. Glazier ships with a number of core Actions, which are
-documented in [the Actions README](../../glazier/lib/actions/README.md).
+documented in [the Actions README](../../glazier/lib/actions).
 
 The Actions module in Glazier was created to be as easy to extend as possible.
 Actions are automatically recognized by Autobuild's configuration handler. An

@@ -17,7 +17,7 @@ dynamically selecting the image(s), application(s), and configuration(s) to be
 applied to a host. It retrieves any required files over the network, executes
 scripts and binaries, and modifies the host as required.
 
-Want to dive right in? See [here](doc/README.md) for further Glazier documentation.
+Want to dive right in? See [here](doc) for further Glazier documentation.
 
 ## Why Glazier?
 
@@ -54,12 +54,12 @@ Glazier makes it simple to extend the installer by writing a bit of Python or
 PowerShell code. See creating new actions under docs to get started.
 
 Glazier's Actions are the core of the system's configuration language. Glazier
-ships with some [existing actions](glazier/lib/actions/README.md), but for more
+ships with some [existing actions](glazier/lib/actions), but for more
 custom functionality, you can also create your own.
 
 ## Where do I start?
 
-We recommend starting with [these docs](doc/README.md) to learn about how Glazier works under the hood.
+We recommend starting with [these docs](doc) to learn about how Glazier works under the hood.
 
 ## Contact
 
