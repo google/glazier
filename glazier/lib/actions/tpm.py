@@ -35,4 +35,3 @@ class BitlockerEnable(BaseAction):
     if self._args[0] not in bitlocker.SUPPORTED_MODES:
       raise ValidationError('Unknown mode for BitlockerEnable: %s' %
                             self._args[0])
-
