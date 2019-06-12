@@ -74,6 +74,13 @@ Copy directories from source to destination.
 *   Format: List
     *   Arg1[str]: Source directory path
     *   Arg2[str]: Destination directory path.
+    *   Arg3[bool]: Delete existing directory before copying. (optional)
+
+#### Examples
+
+    CopyDir: ['X:\Glazier', 'C:\Glazier\Old']
+    CopyDir: ['X:\Glazier', 'C:\Glazier\Old', true]
+
 
 ### CopyFile/MultiCopyFile
 
