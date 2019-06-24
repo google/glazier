@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Glazier host information discovery subsystem."""
 
 import logging
@@ -299,8 +298,9 @@ class BuildInfo(object):
       The required encryption type as a string (none, tpm)
     """
     if self.IsVirtual():
-      logging.info('Virtual machine type %s does not require full disk '
-                   'encryption.', self.ComputerModel())
+      logging.info(
+          'Virtual machine type %s does not require full disk '
+          'encryption.', self.ComputerModel())
       return 'none'
 
     logging.info('Machine %s requires full disk encryption.',
