@@ -14,9 +14,9 @@
 
 """Tests for glazier.lib.file_util."""
 
+from absl.testing import absltest
 from pyfakefs import fake_filesystem
 from glazier.lib import file_util
-from absl.testing import absltest
 
 
 class FileUtilTest(absltest.TestCase):
