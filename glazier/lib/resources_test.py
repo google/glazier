@@ -14,10 +14,10 @@
 
 """Tests for glazier.lib.resources."""
 
+from absl.testing import absltest
 from pyfakefs import fake_filesystem
 from glazier.lib import resources
 import mock
-from absl.testing import absltest
 
 
 class ResourcesTest(absltest.TestCase):

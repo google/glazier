@@ -14,9 +14,9 @@
 
 """Tests for glazier.lib.power."""
 
+from absl.testing import absltest
 from glazier.lib import power
 import mock
-from absl.testing import absltest
 
 
 class PowerTest(absltest.TestCase):

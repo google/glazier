@@ -14,9 +14,9 @@
 
 """Tests for glazier.lib.logs."""
 
+from absl.testing import absltest
 from glazier.lib import logs
 import mock
-from absl.testing import absltest
 
 
 class LoggingTest(absltest.TestCase):

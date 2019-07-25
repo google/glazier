@@ -14,6 +14,7 @@
 
 """Tests for glazier.lib.download."""
 
+from absl.testing import absltest
 from absl.testing import flagsaver
 from pyfakefs import fake_filesystem
 from glazier.lib import buildinfo
@@ -22,7 +23,6 @@ from glazier.lib import download
 import mock
 import six
 
-from absl.testing import absltest
 
 _TEST_INI = """
 [BUILD]

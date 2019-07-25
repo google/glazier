@@ -17,9 +17,9 @@
 import datetime
 import shutil
 import sys
+from absl.testing import absltest
 from glazier.lib import log_copy
 import mock
-from absl.testing import absltest
 
 
 class LogCopyTest(absltest.TestCase):

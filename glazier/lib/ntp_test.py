@@ -16,9 +16,9 @@
 
 import os
 import time
+from absl.testing import absltest
 from glazier.lib import ntp
 import mock
-from absl.testing import absltest
 
 
 class NtpTest(absltest.TestCase):

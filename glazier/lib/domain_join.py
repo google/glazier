@@ -34,7 +34,6 @@ AUTH_OPTS = [
 ]
 
 
-
 class DomainJoinError(Exception):
   pass
 
