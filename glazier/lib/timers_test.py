@@ -15,9 +15,9 @@
 """Tests for glazier.lib.timers."""
 
 import datetime
+from absl.testing import absltest
 from glazier.lib import timers
 import mock
-from absl.testing import absltest
 
 
 class TimersTest(absltest.TestCase):

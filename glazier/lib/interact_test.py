@@ -15,9 +15,9 @@
 """Tests for glazier.lib.interact."""
 
 import sys
+from absl.testing import absltest
 from glazier.lib import interact
 import mock
-from absl.testing import absltest
 
 
 class InteractTest(absltest.TestCase):

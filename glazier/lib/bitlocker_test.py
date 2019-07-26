@@ -14,9 +14,9 @@
 
 """Tests for glazier.lib.bitlocker."""
 
+from absl.testing import absltest
 from glazier.lib import bitlocker
 import mock
-from absl.testing import absltest
 
 
 class BitlockerTest(absltest.TestCase):

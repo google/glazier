@@ -15,13 +15,13 @@
 """Tests for glazier.lib.googet."""
 
 
+from absl.testing import absltest
 from pyfakefs import fake_filesystem
 
 from glazier.lib import buildinfo
 from glazier.lib import googet
 
 import mock
-from absl.testing import absltest
 
 
 class GoogetTest(absltest.TestCase):
