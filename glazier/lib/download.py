@@ -329,7 +329,7 @@ class BaseDownloader(object):
     bytes_so_far = 0
     try:
       url = file_stream.geturl()
-      total_size = int(file_stream.info().getheader('Content-Length').strip())
+      total_size = int(file_stream.headers.get('Content-Length').strip())
     except AttributeError:
       raise DownloadError('Unable to reach server URL.')
 

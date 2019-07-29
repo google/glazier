@@ -170,7 +170,7 @@ class DownloadTest(absltest.TestCase):
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
     file_stream.geturl.return_value = 'https://www.example.com/build.yaml'
-    file_stream.info.return_value.getheader.return_value = '25'
+    file_stream.headers.get = lambda x: {'Content-Length': '25'}[x]
     file_stream.read = http_stream.read
     # success
     self._dl._save_location = r'C:\download.txt'
@@ -212,13 +212,13 @@ class DownloadTest(absltest.TestCase):
                       file_stream)
     # File Size
     http_stream.seek(0)
-    file_stream.info.return_value.getheader.return_value = '100000'
+    file_stream.headers.get = lambda x: {'Content-Length': '100000'}[x]
     self._dl._save_location = r'C:\download.txt'
     self.assertRaises(download.DownloadError, self._dl._StreamToDisk,
                       file_stream)
     # Socket Error
     http_stream.seek(0)
-    file_stream.info.return_value.getheader.return_value = '25'
+    file_stream.headers.get = lambda x: {'Content-Length': '25'}[x]
     file_stream.read = mock.Mock(side_effect=download.socket.error('SocketErr'))
     self.assertRaises(download.DownloadError, self._dl._StreamToDisk,
                       file_stream)
