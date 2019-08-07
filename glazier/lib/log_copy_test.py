@@ -17,8 +17,13 @@
 import datetime
 import shutil
 import sys
+
 from absl.testing import absltest
+
+from glazier.lib import constants
 from glazier.lib import log_copy
+
+from gwinpy.registry import registry
 import mock
 
 
@@ -34,24 +39,20 @@ class LogCopyTest(absltest.TestCase):
     sys.modules['win32netcon'] = self.win32netcon
     self.win32wnet = mock.Mock()
     sys.modules['win32wnet'] = self.win32wnet
-    self._MockWinreg()
 
-  def _MockWinreg(self):
-    winreg = mock.Mock()
-    winreg.KEY_READ = 1
-    winreg.KEY_WRITE = 2
-    self.winreg = winreg
-    sys.modules['_winreg'] = self.winreg
-
-  def testGetLogFileName(self):
+  @mock.patch.object(log_copy.datetime, 'datetime', autospec=True)
+  @mock.patch.object(log_copy.logging, 'FileHandler', autospec=True)
+  @mock.patch.object(registry, 'Registry', autospec=True)
+  def testGetLogFileName(self, reg, unused_log, dt):
+    lc = log_copy.LogCopy()
+    reg.return_value.GetKeyValue.return_value = 'WORKSTATION1-W'
     now = datetime.datetime.utcnow()
     out_date = now.replace(microsecond=0).isoformat().replace(':', '')
-    self.winreg.QueryValueEx.return_value = ['WORKSTATION1-W']
-    with mock.patch.object(
-        log_copy.datetime, 'datetime', autospec=True) as mock_dt:
-      mock_dt.utcnow.return_value = now
-      result = self.lc._GetLogFileName()
-      self.assertEqual(result, r'l:\WORKSTATION1-W-' + out_date + '.log')
+    dt.utcnow.return_value = now
+    result = lc._GetLogFileName()
+    self.assertEqual(result, r'l:\WORKSTATION1-W-' + out_date + '.log')
+    reg.assert_called_with(root_key='HKLM')
+    reg.return_value.GetKeyValue.assert_called_with(constants.REG_ROOT, 'name')
 
   @mock.patch.object(log_copy.LogCopy, '_EventLogUpload', autospec=True)
   def testEventLogCopy(self, event_up):
