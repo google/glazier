@@ -1,10 +1,14 @@
 # Glazier
 
-Glazier [noun]: a person who installs windows.
-
-## What is Glazier?
+[![Google Groups - Glazier](https://img.shields.io/badge/Support-Google%20Groups-blue){style="display:inline;margin-left:0"}](https://groups.google.com/forum/#!forum/glazier-discuss)
+[![Travis CI Build Status](https://img.shields.io/travis/google/glazier){style="display:inline;margin-left:0"}](https://travis-ci.org/google/glazier)
+[![Contributing](https://img.shields.io/badge/contributions-welcome-brightgreen){style="display:inline;margin-left:0"}](https://github.com/google/glazier/blob/master/CONTRIBUTING.md)
+[![Open Issues](https://img.shields.io/github/issues/google/glazier){style="display:inline;margin-left:0"}](https://github.com/google/glazier/issues)
+[![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg){style="display:inline;margin-left:0"}](https://github.com/google/glazier/blob/master/LICENSE)
 
 **Glazier** is a tool developed at Google for automating the installation of the Microsoft Windows operating system on various device platforms.
+
+NOTE: Gla·zier /ˈɡlāZHər/ _noun_: a person who installs windows.
 
 At a high level, any imaging system does some variation of the following:
 
@@ -17,13 +21,13 @@ dynamically selecting the image(s), application(s), and configuration(s) to be
 applied to a host. It retrieves any required files over the network, executes
 scripts and binaries, and modifies the host as required.
 
-Want to dive right in? See [here](doc) for further Glazier documentation.
+Want to dive right in? See [here](doc) for further Glazier documentation on how you can get started with Glazier in your environment.
 
 ## Why Glazier?
 
 Glazier was created with the following 3 core principles in mind:
 
-### Text-based & Code-driven
+### Text-Based & Code-Driven
 
 With Glazier, imaging is configured entirely via YAML files. This allows
 engineers to leverage source control systems to maintain and develop their
@@ -57,9 +61,9 @@ Glazier's Actions are the core of the system's configuration language. Glazier
 ships with some [existing actions](glazier/lib/actions), but for more
 custom functionality, you can also create your own.
 
-## Where do I start?
+## Getting started
 
-We recommend starting with [these docs](doc) to learn about how Glazier works under the hood.
+See our [setup docs](doc/setup) to learn about how you can get started with Glazier in your own environment.
 
 ## Contact
 
@@ -71,5 +75,7 @@ If you have any general questions for the Windows Team at Google that wrote Glaz
 [google-winops@googlegroups.com](https://groups.google.com/forum/#!forum/google-winops).
 
 ## Disclaimer
+
+Glazier is maintained by a small team at Google. Support for this repo is treated as best effort, and issues will be responded to as engineering time permits.
 
 This is not an official Google product.
