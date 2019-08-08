@@ -1,10 +1,8 @@
 # Glazier
 
-[![Google Groups - Glazier](https://img.shields.io/badge/Support-Google%20Groups-blue){style="display:inline;margin-left:0"}](https://groups.google.com/forum/#!forum/glazier-discuss)
-[![Travis CI Build Status](https://img.shields.io/travis/google/glazier){style="display:inline;margin-left:0"}](https://travis-ci.org/google/glazier)
-[![Contributing](https://img.shields.io/badge/contributions-welcome-brightgreen){style="display:inline;margin-left:0"}](https://github.com/google/glazier/blob/master/CONTRIBUTING.md)
-[![Open Issues](https://img.shields.io/github/issues/google/glazier){style="display:inline;margin-left:0"}](https://github.com/google/glazier/issues)
-[![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg){style="display:inline;margin-left:0"}](https://github.com/google/glazier/blob/master/LICENSE)
+| Support | Travis CI | Contributing | Open Issues | License |
+|----------------|------------|------|---------|-------------|
+[![Google Groups - Glazier](https://img.shields.io/badge/Support-Google%20Groups-blue)](https://groups.google.com/forum/#!forum/glazier-discuss) | [![Travis CI Build Status](https://img.shields.io/travis/google/glazier)](https://travis-ci.org/google/glazier) | [![Contributing](https://img.shields.io/badge/contributions-welcome-brightgreen)](https://github.com/google/glazier/blob/master/CONTRIBUTING.md) | [![Open Issues](https://img.shields.io/github/issues/google/glazier)](https://github.com/google/glazier/issues) | [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://github.com/google/glazier/blob/master/LICENSE)
 
 **Glazier** is a tool developed at Google for automating the installation of the Microsoft Windows operating system on various device platforms.
 
