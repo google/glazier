@@ -103,26 +103,26 @@ class DownloadTest(absltest.TestCase):
   def testOpenStreamInternal(self, sleep, urlopen):
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
-    url = 'https://www.example.com/build.yaml'
     httperr = download.urllib.error.HTTPError('Error', None, None, None, None)
     urlerr = download.urllib.error.URLError('Error')
     # 200
     urlopen.side_effect = iter([httperr, urlerr, file_stream])
-    res = self._dl._OpenStream(url, max_retries=4)
+    res = self._dl._OpenStream(
+        'https://www.example.com/build.yaml', max_retries=4)
     self.assertEqual(res, file_stream)
-    # Invalid URL
-    urlopen.side_effect = ValueError
-    self.assertRaises(download.DownloadError, self._dl._OpenStream,
-                      'not_a_real_url', max_retries=2)
     # 404
     file_stream.getcode.return_value = 404
     urlopen.side_effect = iter([httperr, file_stream])
-    self.assertRaises(download.DownloadError, self._dl._OpenStream, url)
+    self.assertRaises(download.DownloadError, self._dl._OpenStream,
+                      'https://www.example.com/build.yaml')
     # retries
     file_stream.getcode.return_value = 200
     urlopen.side_effect = iter([httperr, httperr, file_stream])
-    self.assertRaises(download.DownloadError, self._dl._OpenStream, url,
-                      max_retries=2)
+    self.assertRaises(
+        download.DownloadError,
+        self._dl._OpenStream,
+        'https://www.example.com/build.yaml',
+        max_retries=2)
     sleep.assert_has_calls([mock.call(20), mock.call(20)])
 
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
