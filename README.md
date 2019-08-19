@@ -4,22 +4,18 @@
 |----------------|------------|------|---------|-------------|
 [![Google Groups - Glazier](https://img.shields.io/badge/Support-Google%20Groups-blue)](https://groups.google.com/forum/#!forum/glazier-discuss) | [![Travis CI Build Status](https://img.shields.io/travis/google/glazier)](https://travis-ci.org/google/glazier) | [![Contributing](https://img.shields.io/badge/contributions-welcome-brightgreen)](https://github.com/google/glazier/blob/master/CONTRIBUTING.md) | [![Open Issues](https://img.shields.io/github/issues/google/glazier)](https://github.com/google/glazier/issues) | [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://github.com/google/glazier/blob/master/LICENSE)
 
-**Glazier** is a tool developed at Google for automating the installation of the Microsoft Windows operating system on various device platforms.
+Gla·zier /ˈɡlāZHər/ *noun*: a person who installs windows.
 
-NOTE: Gla·zier /ˈɡlāZHər/ _noun_: a person who installs windows.
+Glazier is a tool developed at Google for automating Windows operating system deployments.
 
-At a high level, any imaging system does some variation of the following:
+### How it works
 
-*   Boots the device into a working environment
-*   Applies an operating system to permanent storage attached to the device
-*   Performs customization of said operating system
+*   Boots a system into the Windows Preinstallation Environment (WinPE)
+*   Reaches out to a web server for instructions over HTTPS
+*   Applies a base operating system
+*   Installs applications and configurations to said operating system
 
-Glazier is no different. Glazier's Autobuild tool provides a means of
-dynamically selecting the image(s), application(s), and configuration(s) to be
-applied to a host. It retrieves any required files over the network, executes
-scripts and binaries, and modifies the host as required.
-
-Want to dive right in? See [here](doc) for further Glazier documentation on how you can get started with Glazier in your environment.
+Want to dive right in? See [here](doc) for documentation on how you can get started with Glazier in your environment.
 
 ## Why Glazier?
 
