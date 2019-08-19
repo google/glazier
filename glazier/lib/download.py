@@ -186,6 +186,9 @@ class BaseDownloader(object):
       except urllib.error.URLError as e:
         logging.error('Error connecting to remote server to download file '
                       '"%s". The error was: %s', url, e)
+      except ValueError as e:
+        logging.error('File could not be obtained from the remote server. '
+                      'The error was: "%s"', e)
         try:
           logging.info('Trying again with machine context...')
           ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
@@ -195,6 +198,9 @@ class BaseDownloader(object):
         except urllib.error.URLError as e:
           logging.error('Error connecting to remote server to download file '
                         '"%s". The error was: %s', url, e)
+        except ValueError as e:
+          logging.error('File could not be obtained from the remote server. '
+                        'The error was: "%s"', e)
       if file_stream:
         if file_stream.getcode() in (status_codes or [200]):
           return file_stream
