@@ -37,7 +37,7 @@ class FilesTest(absltest.TestCase):
   def testExecute(self, cache, sleep, mocked_popen):
     mocked_popen_instance = mocked_popen.return_value
     mocked_popen_instance.returncode = 0
-    mocked_popen_instance.stdout = io.StringIO(u'Foo\n')
+    mocked_popen_instance.stdout = io.BytesIO(b'Foo\n')
     bi = buildinfo.BuildInfo()
     cache.side_effect = iter(['cmd.exe /c', 'explorer.exe'])
     e = files.Execute([['cmd.exe /c', [0]], ['explorer.exe']], bi)

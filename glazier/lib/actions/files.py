@@ -48,7 +48,7 @@ class Execute(BaseAction):
         if not output and result.poll() is not None:
           break
         if output:
-          logging.info(output.strip())
+          logging.info(output.strip().decode('UTF-8'))
 
     except WindowsError as e:  # pylint: disable=undefined-variable
       raise ActionError('Failed to execute command %s (%s)' % (command, str(e)))
