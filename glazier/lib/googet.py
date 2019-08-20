@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Googet Python Wrapper."""
+"""GooGet Python Wrapper."""
 
 import logging
 import os
 import re
 import subprocess
+import time
 
 from glazier.lib import constants
 
@@ -26,37 +27,37 @@ class Error(Exception):
   pass
 
 
-def _Googet():
+def _GooGet():
   if constants.FLAGS.environment == 'WinPE':
     return str(constants.WINPE_GOOGETROOT)
   else:
     return str(constants.SYS_GOOGETROOT)
 
 
-class GoogetInstall(object):
-  """Install an application via Googet."""
+class GooGetInstall(object):
+  """Install an application via GooGet."""
 
   def _AddFlags(self, flags, branch=None):
-    r"""Add optional flags to Googet command.
+    r"""Add optional flags to GooGet command.
 
     Short name support:
       %: A reference to the active release branch.
       \%: Escaped % character - replaced by % in string
 
     Args:
-      flags: optional flags passed to Googet such as urls for -sources and
+      flags: optional flags passed to GooGet such as urls for -sources and
       -reinstall
       branch: active release branch
 
     Raises:
-      Error: Googet flags(s) were not passed as a list
-      Error: Googet source(s) not specified
+      Error: GooGet flags(s) were not passed as a list
+      Error: GooGet source(s) not specified
 
     Returns:
       Adjusted strings that are part of the sources array.
     """
     if not isinstance(flags, list):
-      raise Error('Googet flags were not passed as a list')
+      raise Error('GooGet flags were not passed as a list')
 
     # URL should be kept separate from other optional flags
     url, options = [], []
@@ -83,7 +84,7 @@ class GoogetInstall(object):
     flags = []
 
     if url:
-      # Sources format required for the Googet install command
+      # Sources format required for the GooGet install command
       flags.append('-sources ' + ', '.join(url))
 
     if options:
@@ -91,27 +92,29 @@ class GoogetInstall(object):
 
     return flags
 
-  def LaunchGooget(self, pkg, build_info, **kwargs):
-    """Launch the Googet executable with arguments.
+  def LaunchGooGet(self, pkg, retries, sleep, build_info, **kwargs):
+    """Launch the GooGet executable with arguments.
 
     Args:
       pkg: package name
+      retries: number of times to retry a failed GooGet installation
+      sleep: number of seconds between retry attempts
       build_info: current build information - used to get active release branch
-      **kwargs: optional parameters such as path to Googet binary, -reinstall,
+      **kwargs: optional parameters such as path to GooGet binary, -reinstall,
       and/or -sources
 
     Raises:
-      Error: The Googet command failed.
+      Error: The GooGet command failed.
     """
     if not kwargs['path']:
-      kwargs['path'] = _Googet() + '\\Googet.exe'
+      kwargs['path'] = _GooGet() + '\\googet.exe'
     if not os.path.exists(kwargs['path']):
-      raise Error('Cannot find path of Googet binary [%s]' % kwargs['path'])
+      raise Error('Cannot find path of GooGet binary [%s]' % kwargs['path'])
     if not pkg:
-      raise Error('Missing package name for Googet install.')
+      raise Error('Missing package name for GooGet install.')
 
     # Pass --root as GOOGETROOT environmental variable may not exist
-    root = '--root=' + _Googet()
+    root = '--root=' + _GooGet()
 
     cmd = [kwargs['path'], '-noconfirm', root, 'install']
 
@@ -124,11 +127,21 @@ class GoogetInstall(object):
     # Subprocess doesn't like the space in '-sources URL'
     cmd = ' '.join(cmd)
 
-    # Call the command, store the result for later
-    logging.info('Executing command %s: ', cmd)
-    result = subprocess.call(cmd)
+    max_attempts = retries + 1
 
-    if result == 0:
-      logging.info('Googet successfully installed \'%s\'', pkg)
-    else:
-      raise Error('Googet command failed with error:\n%s' % result)
+    for i in range(1, max_attempts + 1):
+      # Call the command, store the result for later
+      logging.info(
+          'Attempt %d of %d: Executing command (%s): ', i, cmd, max_attempts)
+      result = subprocess.call(cmd)
+
+      if result == 0:
+        logging.info('GooGet successfully installed \'%s\'', pkg)
+        return
+      else:
+        # TODO(b/139284519)
+        logging.warning('GooGet command failed with error:\n%s', result)
+        logging.info('sleeping for %d seconds before retrying', sleep)
+        time.sleep(sleep)
+
+    raise Error('GooGet command failed after %d attempts' % retries)

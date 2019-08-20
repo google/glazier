@@ -14,6 +14,7 @@
 
 """Tests for glazier.lib.googet."""
 
+import time
 
 from absl.testing import absltest
 from pyfakefs import fake_filesystem
@@ -24,20 +25,23 @@ from glazier.lib import googet
 import mock
 
 
-class GoogetTest(absltest.TestCase):
+class GooGetTest(absltest.TestCase):
 
   def setUp(self):
-    super(GoogetTest, self).setUp()
-    self.install = googet.GoogetInstall()
+    super(GooGetTest, self).setUp()
+    self.install = googet.GooGetInstall()
     self.buildinfo = buildinfo.BuildInfo()
     self.flags = ['whatever', '-reinstall', 'http://example.com/team-%',
                   r'http://example.co.uk/secure-%\%', r'http://%.jp/%\%']
 
   @mock.patch.object(googet.subprocess, 'call', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
-  def testLaunchGooget(self, branch, call):
-    path = r'C:\ProgramData\Googet\Googet.exe'
+  @mock.patch.object(time, 'sleep', return_value=None)
+  def testLaunchGooGet(self, sleep, branch, call):  # pylint: disable=unused-argument
+    path = r'C:\ProgramData\GooGet\googet.exe'
     pkg = 'test_package_v1'
+    retries = 5
+    sleep_dur = 30
     branch.return_value = 'example'
 
     # Filesystem
@@ -48,12 +52,13 @@ class GoogetTest(absltest.TestCase):
     call.return_value = 0
 
     # Command called successfully
-    self.install.LaunchGooget(pkg, self.buildinfo, path=path, flags=
-                              ['http://example.com/team-unstable, '
-                               'http://example.co.uk/secure-unstable, '
-                               'https://example.jp/unstable/',
-                               '-reinstall', 'whatever'])
-    cmd_string = (' -noconfirm --root=C:\\ProgramData\\Googet install -sources '
+    self.install.LaunchGooGet(
+        pkg, retries, sleep_dur, self.buildinfo, path=path, flags=[
+            'http://example.com/team-unstable, '
+            'http://example.co.uk/secure-unstable, '
+            'https://example.jp/unstable/',
+            '-reinstall', 'whatever'])
+    cmd_string = (' -noconfirm --root=C:\\ProgramData\\GooGet install -sources '
                   'http://example.com/team-unstable, '
                   'http://example.co.uk/secure-unstable, '
                   'https://example.jp/unstable/ -reinstall whatever ')
@@ -61,8 +66,9 @@ class GoogetTest(absltest.TestCase):
     call.assert_called_with(cmd)
 
     # String replacement of sources flag was successful
-    self.install.LaunchGooget(pkg, self.buildinfo, path=path, flags=self.flags)
-    cmd_string = (' -noconfirm --root=C:\\ProgramData\\Googet install -sources '
+    self.install.LaunchGooGet(
+        pkg, retries, sleep_dur, self.buildinfo, path=path, flags=self.flags)
+    cmd_string = (' -noconfirm --root=C:\\ProgramData\\GooGet install -sources '
                   'http://example.com/team-example, '
                   'http://example.co.uk/secure-example%, '
                   'http://example.jp/example% whatever -reinstall ')
@@ -70,14 +76,16 @@ class GoogetTest(absltest.TestCase):
     call.assert_called_with(cmd)
 
     # Only pkg
-    self.install.LaunchGooget(pkg, self.buildinfo, path=None, flags=None)
-    cmd_string = ' -noconfirm --root=C:\\ProgramData\\Googet install '
+    self.install.LaunchGooGet(
+        pkg, retries, sleep_dur, self.buildinfo, path=None, flags=None)
+    cmd_string = ' -noconfirm --root=C:\\ProgramData\\GooGet install '
     cmd = path + cmd_string + pkg
     call.assert_called_with(cmd)
 
     # No Path
-    self.install.LaunchGooget(pkg, self.buildinfo, path=None, flags=self.flags)
-    cmd_string = (' -noconfirm --root=C:\\ProgramData\\Googet install -sources '
+    self.install.LaunchGooGet(
+        pkg, retries, sleep_dur, self.buildinfo, path=None, flags=self.flags)
+    cmd_string = (' -noconfirm --root=C:\\ProgramData\\GooGet install -sources '
                   'http://example.com/team-example, '
                   'http://example.co.uk/secure-example%, '
                   'http://example.jp/example% whatever -reinstall ')
@@ -85,27 +93,31 @@ class GoogetTest(absltest.TestCase):
     call.assert_called_with(cmd)
 
     # No flags
-    self.install.LaunchGooget(pkg, self.buildinfo, path=path, flags=None)
-    cmd = path + ' -noconfirm --root=C:\\ProgramData\\Googet install ' + pkg
+    self.install.LaunchGooGet(
+        pkg, retries, sleep_dur, self.buildinfo, path=path, flags=None)
+    cmd = path + ' -noconfirm --root=C:\\ProgramData\\GooGet install ' + pkg
     call.assert_called_with(cmd)
 
     # Path does not exist
     with self.assertRaisesRegex(googet.Error,
-                                'Cannot find path of Googet binary*'):
-      self.install.LaunchGooget(pkg, self.buildinfo, path='C:\\abc\\def\\ghi',
-                                flags=self.flags)
+                                'Cannot find path of GooGet binary*'):
+      self.install.LaunchGooGet(
+          pkg, retries, sleep_dur, self.buildinfo, path='C:\\abc\\def\\ghi',
+          flags=self.flags)
 
     # Empty Package Name
     with self.assertRaisesRegex(googet.Error,
-                                'Missing package name for Googet install.'):
-      self.install.LaunchGooget('', self.buildinfo, path=path, flags=self.flags)
+                                'Missing package name for GooGet install.'):
+      self.install.LaunchGooGet(
+          '', retries, sleep_dur, self.buildinfo, path=path, flags=self.flags)
 
     # Non zero return value
     call.return_value = 2
-    with self.assertRaisesRegex(googet.Error,
-                                'Googet command failed with error*'):
-      self.install.LaunchGooget(pkg, self.buildinfo, path=path,
-                                flags=self.flags)
+    with self.assertRaisesRegex(
+        googet.Error,
+        'GooGet command failed after ' + str(retries) + ' attempts'):
+      self.install.LaunchGooGet(
+          pkg, retries, sleep_dur, self.buildinfo, path=path, flags=self.flags)
 
   def testAddFlags(self):
     branch = 'example'
@@ -119,7 +131,7 @@ class GoogetTest(absltest.TestCase):
 
     # Sources were passed as a string
     with self.assertRaisesRegex(googet.Error,
-                                'Googet flags were not passed as a list'):
+                                'GooGet flags were not passed as a list'):
       self.install._AddFlags('', branch)
 
     # Root flag passed

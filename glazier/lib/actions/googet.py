@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Action for running Googet commands with arguments."""
+"""Action for running GooGet commands with arguments."""
 
 import logging
 from glazier.lib import googet
@@ -21,44 +21,61 @@ from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import ValidationError
 
 
-# TODO(b/132087331): Add Support for multiple installs
-class GoogetInstall(BaseAction):
-  """Execute a Googet install command."""
+class GooGetInstall(BaseAction):
+  """Execute a GooGet install command."""
 
   # TODO(b/132083921): Add support path transforms
   def Run(self):
-    try:
+    for args in self._args:
       # Default to just the package being required
-      if len(self._args) > 1:
-        flags = self._args[1]
+      if len(args) > 1:
+        flags = args[1]
       else:
         flags = None
 
-      if len(self._args) > 2:
-        path = self._args[2]
+      if len(args) > 2:
+        path = args[2]
       else:
         path = None
 
-      logging.info('Invoking Googet with args %s', self._args)
-      install = googet.GoogetInstall()
-      install.LaunchGooget(pkg=self._args[0],
-                           build_info=self._build_info,
-                           path=path,
-                           flags=flags)
-    except googet.Error as e:
-      raise ActionError("Failure executing Googet command with error: '%s'" %
-                        e)
-    except IndexError:
-      raise ActionError("Unable to access all required arguments in command "
-                        "'%s'" % str(self._args))
+      if len(args) > 3:
+        retries = int(args[3])
+      else:
+        retries = 5
+
+      if len(args) > 4:
+        sleep = int(args[4])
+      else:
+        sleep = 30
+
+      try:
+        logging.info('Invoking GooGet with args %s', args)
+        install = googet.GooGetInstall()
+        install.LaunchGooGet(pkg=args[0],
+                             retries=retries,
+                             sleep=sleep,
+                             build_info=self._build_info,
+                             path=path,
+                             flags=flags)
+      except googet.Error as e:
+        raise ActionError("Failure executing GooGet command with error: '%s'" %
+                          e)
+      except IndexError:
+        raise ActionError("Unable to access all required arguments in command "
+                          "'%s'" % str(args))
 
   def Validate(self):
     self._TypeValidator(self._args, list)
-    if not 1 <= len(self._args) <= 3:
-      raise ValidationError("Invalid Googet args '%s' with length of "
-                            "'%d'" % (self._args, len(self._args)))
-    self._TypeValidator(self._args[0], str)  # Package
-    if len(self._args) > 1:
-      self._TypeValidator(self._args[1], list)  # Flags
-    if len(self._args) > 2:
-      self._TypeValidator(self._args[2], str)  # Path
+    for args in self._args:
+      if not 1 <= len(args) <= 5:
+        raise ValidationError("Invalid GooGet args '%s' with length of "
+                              "'%d'" % (args, len(args)))
+      self._TypeValidator(args[0], str)  # Package
+      if len(args) > 1:
+        self._TypeValidator(args[1], list)  # Flags
+      if len(args) > 2:
+        self._TypeValidator(args[2], str)  # Path
+      if len(args) > 3:
+        self._TypeValidator(args[3], int)  # Retries
+      if len(args) > 4:
+        self._TypeValidator(args[4], int)  # Sleep interval

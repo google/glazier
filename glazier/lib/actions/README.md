@@ -228,30 +228,43 @@ verification.
         - ['win2008-x64-se.wim', 'c:\base.wim']
         - ['win2008-x64-se.wim.sha256', 'c:\base.wim.sha256']
 
-### GoogetInstall
+### GooGetInstall
 
-Installs a package via Googet with optional arguments.
+Installs one or more GooGet packages with optional arguments.
 
-#### GoogetInstall Arguments
+Supports multiple packages via nested list structure.
+
+#### GooGetInstall Arguments
 
 *   Format: List
-    *   Arg1[str]: Package name
-    *   Arg2[list]: All other arguments. This includes repo URLS, -reinstall, -redownload, etc. (optional)
-      * If the % character is used in Arg3, it will be replaced for the current build branch, taken from glazier/lib/buildinfo.
-    *   Arg3[str]: Googet binary location (optional)
+    *   Arg1[str]: The first GooGet package to install
+      *   ArgA[str]: GooGet package name
+      *   ArgB[list]: All other arguments to googet.exe. This includes repo URLs, -reinstall, -redownload, etc.
+          * If the % character is used in ArgB, it will be replaced for the current build branch, taken from glazier/lib/buildinfo.
+      *   ArgC[str]: googet.exe location (optional)
+      *   ArgD[int]: Installation retry attemps (optional, defaults to 5)
+      *   ArgE[int]: Installation retry sleep interval in seconds (optional, defaults to 30)
+    *   Arg2[str]: The second GooGet package to install (optional)
+    * ...
 
 #### Examples
 
-    GoogetInstall: ['test_package_v1']
-
-    GoogetInstall: ['test_package_v1', ['http://example.com/team-unstable, http://example.co.uk/secure-unstable, https://example.jp/unstable/ -reinstall whatever']]
-
-    GoogetInstall: ['test_package_v1', [], 'C:\ProgramData\Googet\Googet.exe']
-
-    GoogetInstall: ['test_package_v1', ['http://example.com/team-unstable, http://example.co.uk/secure-unstable, https://example.jp/unstable/ -reinstall whatever'], 'C:\ProgramData\Googet\Googet.exe']
-
-    GoogetInstall: ['test_package_v1', ['http://example.com/team-%, http://example.co.uk/secure-%, https://example.jp/%/ -reinstall whatever'], 'C:\ProgramData\Googet\Googet.exe']
-
+```yaml
+    GooGetInstall: [
+      # Specify only GooGet package name
+      ['test_package_v1'],
+      # Package name with additional GooGet arguments
+      ['test_package_v1', ['http://example.com/team-unstable, http://example.co.uk/secure-unstable, https://example.jp/unstable/ -reinstall whatever']],
+      # Package name, no GooGet arguments, but with custom path to googet.exe
+      ['test_package_v1', [], 'C:\ProgramData\GooGet\googet.exe'],
+      # Package name, custom GooGet arguments, and custom path to googet.exe
+      ['test_package_v1', ['http://example.com/team-unstable, http://example.co.uk/secure-unstable, https://example.jp/unstable/ -reinstall whatever'], 'C:\ProgramData\GooGet\googet.exe'],
+      # Package name with custom retry count of 3 and sleep interval of 60 seconds
+      ['test_package_v1', [], , 3, 60],
+      # Replaces '%' in custom GooGet arguments with the current build branch
+      ['test_package_v1', ['http://example.com/team-%, http://example.co.uk/secure-%, https://example.jp/%/ -reinstall whatever'], 'C:\ProgramData\GooGet\googet.exe'],
+    ]
+```
 
 ### LogCopy
 

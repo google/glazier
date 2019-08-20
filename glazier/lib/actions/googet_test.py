@@ -18,80 +18,115 @@ from glazier.lib.actions import googet
 import mock
 
 
-class GoogetTest(absltest.TestCase):
+class GooGetTest(absltest.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def setUp(self, bi):
-    super(GoogetTest, self).setUp()
+    super(GooGetTest, self).setUp()
 
-    # Mock values
-    self.mock_pkg = 'test_package_v1'
-    self.mock_path = r'C:\ProgramData\Googet\Googet.exe'
-    self.mock_flags = ['http://example.com/team-unstable, '
-                       'http://example.co.uk/secure-unstable, '
-                       'https://example.jp/unstable/ -reinstall whatever']
-    self.mock_args = [self.mock_pkg, self.mock_flags, self.mock_path]
+    self.pkg = 'test_package_v1'
+    self.def_retries = 5
+    self.retries = 2
+    self.def_sleep = 30
+    self.sleep = 1
+    self.path = r'C:\ProgramData\GooGet\googet.exe'
+    self.flags = ['http://example.com/team-unstable, '
+                  'http://example.co.uk/secure-unstable, '
+                  'https://example.jp/unstable/ -reinstall whatever']
+    self.args = [self.pkg, self.flags, self.path, self.retries, self.sleep]
     self.bi = bi
 
-  @mock.patch.object(googet.googet, 'GoogetInstall', autospec=True)
-  def testInstall(self, mock_install):
+  @mock.patch.object(googet.googet, 'GooGetInstall', autospec=True)
+  def testInstall(self, install):
+    install = install.return_value.LaunchGooGet
 
     # All args
-    install = mock_install.return_value.LaunchGooget
-    gi = googet.GoogetInstall(self.mock_args, self.bi)
+    gi = googet.GooGetInstall([self.args], self.bi)
     gi.Run()
-    install.assert_called_with(pkg=self.mock_pkg, build_info=self.bi,
-                               path=self.mock_path, flags=self.mock_flags)
+    install.assert_called_with(pkg=self.pkg, flags=self.flags, path=self.path,
+                               retries=self.retries, sleep=self.sleep,
+                               build_info=self.bi)
+
+    # All args multi
+    gi = googet.GooGetInstall([self.args, self.args], self.bi)
+    gi.Run()
+    install.assert_called_with(pkg=self.pkg, flags=self.flags, path=self.path,
+                               retries=self.retries, sleep=self.sleep,
+                               build_info=self.bi)
 
     # No flags
-    self.mock_args = [self.mock_pkg, None, self.mock_path]
-    gi = googet.GoogetInstall(self.mock_args, self.bi)
+    self.args = [[self.pkg, None, self.path]]
+    gi = googet.GooGetInstall(self.args, self.bi)
     gi.Run()
-    install.assert_called_with(pkg=self.mock_pkg, build_info=self.bi,
-                               path=self.mock_path, flags=None)
+    install.assert_called_with(pkg=self.pkg, path=self.path, flags=None,
+                               retries=self.def_retries, sleep=self.def_sleep,
+                               build_info=self.bi)
 
     # No path
-    self.mock_args = [self.mock_pkg, self.mock_flags]
-    gi = googet.GoogetInstall(self.mock_args, self.bi)
+    self.args = [[self.pkg, self.flags]]
+    gi = googet.GooGetInstall(self.args, self.bi)
     gi.Run()
-    install.assert_called_with(pkg=self.mock_pkg, build_info=self.bi,
-                               path=None, flags=self.mock_flags)
+    install.assert_called_with(pkg=self.pkg, flags=self.flags, path=None,
+                               retries=self.def_retries, sleep=self.def_sleep,
+                               build_info=self.bi)
 
     # Just package
-    self.mock_args = [self.mock_pkg]
-    gi = googet.GoogetInstall(self.mock_args, self.bi)
+    self.args = [[self.pkg]]
+    gi = googet.GooGetInstall(self.args, self.bi)
     gi.Run()
-    install.assert_called_with(pkg=self.mock_pkg, build_info=self.bi,
-                               path=None, flags=None)
+    install.assert_called_with(pkg=self.pkg, path=None, flags=None,
+                               retries=self.def_retries, sleep=self.def_sleep,
+                               build_info=self.bi)
 
-    # GoogetError
+    # Just package multi
+    self.args = [[self.pkg], [self.pkg]]
+    gi = googet.GooGetInstall(self.args, self.bi)
+    gi.Run()
+    install.assert_called_with(pkg=self.pkg, path=None, flags=None,
+                               retries=self.def_retries, sleep=self.def_sleep,
+                               build_info=self.bi)
+
+    # Package custom retry count and sleep interval
+    self.args = [[self.pkg, None, None, self.retries, self.sleep]]
+    gi = googet.GooGetInstall(self.args, self.bi)
+    gi.Run()
+    install.assert_called_with(pkg=self.pkg, path=None, flags=None,
+                               retries=self.retries, sleep=self.sleep,
+                               build_info=self.bi)
+
+    # GooGetError
     install.side_effect = googet.googet.Error
     self.assertRaises(googet.ActionError, gi.Run)
 
     # IndexError
-    gi = googet.GoogetInstall([], self.bi)
+    gi = googet.GooGetInstall([[]], self.bi)
     install.side_effect = googet.googet.Error
     self.assertRaises(googet.ActionError, gi.Run)
 
-  def testAddValidation(self):
+  def testValidation(self):
     # Valid calls
-    g = googet.GoogetInstall(self.mock_args, self.bi)
+    g = googet.GooGetInstall([self.args], self.bi)
+    g.Validate()
+
+    # Valid calls multi
+    g = googet.GooGetInstall([self.args, self.args], self.bi)
     g.Validate()
 
     # List not passed
-    g = googet.GoogetInstall('String', self.bi)
+    g = googet.GooGetInstall(['String'], self.bi)
     self.assertRaises(googet.ValidationError, g.Validate)
 
     # Too few args
-    g = googet.GoogetInstall([], self.bi)
+    g = googet.GooGetInstall([[]], self.bi)
     self.assertRaises(googet.ValidationError, g.Validate)
 
     # Too many args
-    g = googet.GoogetInstall(self.mock_args + ['abc'], self.bi)
+    g = googet.GooGetInstall([
+        [self.pkg, self.flags, self.path, 'abc']], self.bi)
     self.assertRaises(googet.ValidationError, g.Validate)
 
     # Type error
-    g = googet.GoogetInstall(self.mock_args.append(1), self.bi)
+    g = googet.GooGetInstall(self.args.append(1), self.bi)
     self.assertRaises(googet.ValidationError, g.Validate)
 
 
