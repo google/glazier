@@ -132,7 +132,7 @@ class GooGetInstall(object):
     for i in range(1, max_attempts + 1):
       # Call the command, store the result for later
       logging.info(
-          'Attempt %d of %d: Executing command (%s): ', i, cmd, max_attempts)
+          'Attempt %d of %d: Executing command (%s): ', i, max_attempts, cmd)
       result = subprocess.call(cmd)
 
       if result == 0:
