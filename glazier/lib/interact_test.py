@@ -36,12 +36,18 @@ class InteractTest(absltest.TestCase):
     result = interact.Keystroke('mesg', timeout=1)
     self.assertEqual(result, None)
     self.assertEqual(sleep.call_count, 1)
+    # special character reply
+    msvcrt.kbhit.side_effect = iter([False, False, False, False, True])
+    msvcrt.getch.return_value = b'0xe0'
+    result = interact.Keystroke('mesg', timeout=100)
+    self.assertEqual(result, '0xe0')
+    self.assertEqual(sleep.call_count, 6)
     # reply
     msvcrt.kbhit.side_effect = iter([False, False, False, False, True])
-    msvcrt.getch.return_value = 'v'
+    msvcrt.getch.return_value = b'v'
     result = interact.Keystroke('mesg', timeout=100)
     self.assertEqual(result, 'v')
-    self.assertEqual(sleep.call_count, 6)
+    self.assertEqual(sleep.call_count, 11)
     # validation miss
     msvcrt.kbhit.side_effect = iter([True])
     result = interact.Keystroke('mesg', validator='[0-9]')

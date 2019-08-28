@@ -56,7 +56,7 @@ def Keystroke(message, validator='.*', timeout=30):
     i += 1
     time.sleep(1)
   if kbhit:
-    response = msvcrt.getch()
+    response = msvcrt.getch().decode('ISO-8859-1')
     result = re.match(validator, response)
     if result:
       logging.debug('Matched user input, %s, as a valid input.', response)
