@@ -18,6 +18,7 @@ from absl.testing import absltest
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 from glazier.lib import buildinfo
+from glazier.lib import constants
 from glazier.lib.config import runner
 
 import mock
@@ -28,7 +29,7 @@ class ConfigRunnerTest(absltest.TestCase):
   def setUp(self):
     super(ConfigRunnerTest, self).setUp()
     self.buildinfo = buildinfo.BuildInfo()
-    runner.FLAGS.verify_urls = None
+    constants.FLAGS.verify_urls = None
     # filesystem
     self.filesystem = fake_filesystem.FakeFilesystem()
     runner.os = fake_filesystem.FakeOsModule(self.filesystem)
@@ -133,7 +134,7 @@ class ConfigRunnerTest(absltest.TestCase):
   @mock.patch.object(runner.download.Download, 'CheckUrl', autospec=True)
   def testVerifyUrls(self, dl):
     dl.return_value = True
-    runner.FLAGS.verify_urls = ['http://www.example.com/']
+    constants.FLAGS.verify_urls = ['http://www.example.com/']
     self.cr._ProcessTasks([])
     dl.assert_called_with(
         mock.ANY, 'http://www.example.com/', [200], max_retries=-1)

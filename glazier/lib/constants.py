@@ -61,3 +61,7 @@ flags.DEFINE_enum('environment', 'Host', ['Host', 'WinPE'],
                   'The running host environment.')
 flags.DEFINE_string('ntp_server', 'time.google.com',
                     'Server to use for synchronizing the local system time.')
+flags.DEFINE_list(
+    'verify_urls',
+    [],
+    'Comma-separated list of URLs to verify are reachable at start')

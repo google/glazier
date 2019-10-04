@@ -18,19 +18,12 @@ from __future__ import print_function
 
 import sys
 
-from absl import flags
-
+from glazier.lib import constants
 from glazier.lib import download
 from glazier.lib import policies
 from glazier.lib import power
 from glazier.lib.config import base
 from glazier.lib.config import files
-
-FLAGS = flags.FLAGS
-flags.DEFINE_list(
-    'verify_urls',
-    [],
-    'Comma-separated list of URLs to verify are reachable at start')
 
 
 class ConfigRunnerError(base.ConfigError):
@@ -65,9 +58,9 @@ class ConfigRunner(base.ConfigBase):
     Raises:
       ConfigRunnerError: failure to confirm verify_urls
     """
-    if FLAGS.verify_urls:
+    if constants.FLAGS.verify_urls:
       dl = download.Download()
-      for url in FLAGS.verify_urls:
+      for url in constants.FLAGS.verify_urls:
         if not dl.CheckUrl(url, [200], max_retries=-1):
           raise ConfigRunnerError('verify_urls failed for url %s' % url)
 
