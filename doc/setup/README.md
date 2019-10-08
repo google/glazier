@@ -59,9 +59,13 @@ WinPE can be configured to automatically start an application using
 [startnet.cmd](https://msdn.microsoft.com/en-us/windows/hardware/commercialize/manufacture/desktop/wpeinit-and-startnetcmd-using-winpe-startup-scripts).
 An example startup script might look like this:
 
-    set PYTHON=X:\python\files\python.exe
-    set PYTHONPATH=X:\src
-    %PYTHON% %PYTHONPATH%\glazier\autobuild.py "--environment=WinPE" "--config_server=https://glazier.example.com" "--resource_path=X:\\resources" "--preserve_tasks=true"
+```powershell
+    $env:LOCALAPPDATA = 'X:\'
+    $PYTHON_EXE = 'X:\python\files\python.exe'
+    $env:PYTHONPATH = 'X:\src'
+    Write-Information 'Starting imaging process.'
+    & $PYTHON_EXE "$env:PYTHONPATH\glazier\autobuild.py" --environment=WinPE --config_server=https://glazier.example.com --resource_path=X:\\resources --preserve_tasks=true
+```
 
 *   `--environment` tells autobuild which host environment it's operating under.
     This is tied to a variety of variables in glazier/lib/constants.py, which help
@@ -89,10 +93,11 @@ complete post-install configuration tasks.
 
 One way to accomplish this is as follows:
 
-1.  Write a small script to replace the logon shell with the autobuild tool.
+1.  Write a small script to replace the logon shell with the autobuild launcher.
 
-        %WinDir%\System32\reg.exe add "HKCU\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" /v Shell /t REG_SZ /d "cmd.exe /c start /MAX C:\Glazier\autobuild.bat"
-        %WinDir%\System32\shutdown.exe /r /t 10 /c "Rebooting to resume host configuration."
+```bash
+    %WinDir%\System32\reg.exe add "HKCU\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" /v Shell /t REG_SZ /d "PowerShell.exe -NoProfile -WindowStyle Maximized -NoExit -File C:\Glazier\autobuild.ps1"
+```
 
 1.  During the WinPE stage of setup, drop your script to the local disk.
 
@@ -160,6 +165,7 @@ path with the `@` symbol.
 
 This example gives a concept for a basic `build.yaml`.
 
+```yaml
     templates:
       apply_img:
         - Get:
@@ -187,6 +193,7 @@ This example gives a concept for a basic `build.yaml`.
         - ['applications/', 'build.yaml']
 
       - Reboot: [10, 'Rebooting to complete setup. The machine will be ready to use.']
+```
 
 This config retrieves two hypothetical .bat files from the config root
 (`partition.bat`, and `apply_image.bat`). It executes `partition.bat` to
