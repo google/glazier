@@ -1,3 +1,4 @@
+# Lint as: python3
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,7 +49,7 @@ class Execute(BaseAction):
         if not output and result.poll() is not None:
           break
         if output:
-          logging.info(output.strip().decode('UTF-8'))
+          print(output.strip().decode('UTF-8'))
 
     except WindowsError as e:  # pylint: disable=undefined-variable
       raise ActionError('Failed to execute command %s (%s)' % (command, str(e)))
@@ -61,7 +62,7 @@ class Execute(BaseAction):
           5,
           retry_on_restart=restart_retry)
     elif result.returncode not in success_codes:
-      raise ActionError('Command returned invalid exit code %d' %
+      raise ActionError('Command returned invalid exit code %s' %
                         result.returncode)
     time.sleep(5)
 
