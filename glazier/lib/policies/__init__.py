@@ -16,10 +16,10 @@
 
 from __future__ import absolute_import
 
-from . import base
-from . import device_model
-from . import disk_encryption
-from . import os
+from glazier.lib.policies import base
+from glazier.lib.policies import device_model
+from glazier.lib.policies import disk_encryption
+from glazier.lib.policies import os
 
 # pylint: disable=invalid-name
 BannedPlatform = device_model.BannedPlatform
