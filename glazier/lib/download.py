@@ -174,6 +174,12 @@ class BaseDownloader(object):
     for handler in self._GetHandlers():
       opener.add_handler(handler)
     urllib.request.install_opener(opener)
+
+    url = url.strip()
+    parsed = urllib.parse.urlparse(url)
+    if not parsed.netloc:
+      raise DownloadError('Invalid remote server URL "%s".' % url)
+
     while True:
       try:
         attempt += 1
