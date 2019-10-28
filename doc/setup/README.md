@@ -56,15 +56,27 @@ When building a WinPE image for use with Glazier, you will need to include:
 ### Startup
 
 WinPE can be configured to automatically start an application using
-[startnet.cmd](https://msdn.microsoft.com/en-us/windows/hardware/commercialize/manufacture/desktop/wpeinit-and-startnetcmd-using-winpe-startup-scripts).
-An example startup script might look like this:
+_winpeshl.exe_, with configuration in
+[winpeshl.ini](https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/winpeshlini-reference-launching-an-app-when-winpe-starts).
+
+Example _winpeshl.ini_:
 
 ```powershell
-    $env:LOCALAPPDATA = 'X:\'
-    $PYTHON_EXE = 'X:\python\files\python.exe'
-    $env:PYTHONPATH = 'X:\src'
-    Write-Information 'Starting imaging process.'
-    & $PYTHON_EXE "$env:PYTHONPATH\glazier\autobuild.py" --environment=WinPE --config_server=https://glazier.example.com --resource_path=X:\\resources --preserve_tasks=true
+[LaunchApps]
+wpeinit
+powershell,
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Force
+powershell, -NoProfile -WindowStyle Maximized -NoExit -NoLogo -File "%PROGRAMFILES%\autobuild.ps1" -InformationAction Continue`
+```
+
+Example _autobuild.ps1_:
+
+```powershell
+$env:LOCALAPPDATA = 'X:\'
+$PYTHON_EXE = 'X:\python\files\python.exe'
+$env:PYTHONPATH = 'X:\src'
+Write-Information 'Starting imaging process.'
+& $PYTHON_EXE "$env:PYTHONPATH\glazier\autobuild.py" --environment=WinPE --config_server=https://glazier.example.com --resource_path=X:\\resources --preserve_tasks=true
 ```
 
 *   `--environment` tells autobuild which host environment it's operating under.

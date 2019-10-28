@@ -66,10 +66,10 @@ low-overhead way, than it is to regenerate a WIM or PE image containing the same
 changes. In other words, we always attempt to minimize the need to generate new
 boot images by pushing most routine changes into Glazier's dynamic environment.
 
-For advanced users, we recommend creating a simple launcher which will run from
-startnet.cmd and retrieve Python and Glazier over the network. This prevents the
-need to generate a new PE if any changes are required to Python, Glazier, or any
-other bundled dependencies.
+For advanced users, we recommend creating a simple launcher which will run
+directly from _winpeshl.exe_ leveraging _winpeshl.ini_ and retrieve Python and
+Glazier over the network. This prevents the need to generate a new PE if any
+changes are required to Python, Glazier, or any other bundled dependencies.
 
 ## Autobuild
 
