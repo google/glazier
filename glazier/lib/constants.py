@@ -47,7 +47,6 @@ WINPE_POWERSHELL = ('%s\\WindowsPowerShell\\v1.0\\powershell.exe' %
                     WINPE_SYSTEM32)
 WINPE_GOOGETROOT = '%s\\ProgramData\\GooGet' % WINPE_ROOT
 
-
 ## Flags
 
 FLAGS = flags.FLAGS
