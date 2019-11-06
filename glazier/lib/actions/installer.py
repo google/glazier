@@ -20,7 +20,9 @@ import time
 from glazier.chooser import chooser
 from glazier.lib import constants
 from glazier.lib import log_copy
+from glazier.lib import stage
 from glazier.lib.actions import file_system
+from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import RestartEvent
 from glazier.lib.actions.base import ValidationError
@@ -168,5 +170,21 @@ class Sleep(BaseAction):
   def Validate(self):
     self._TypeValidator(self._args, list)
     if len(self._args) is not 1:
+      raise ValidationError('Invalid args length: %s' % self._args)
+    self._TypeValidator(self._args[0], int)
+
+
+class StartStage(BaseAction):
+  """Start a new stage of the installation."""
+
+  def Run(self):
+    try:
+      stage.set_stage(int(self._args[0]))
+    except stage.Error as e:
+      raise ActionError(str(e))
+
+  def Validate(self):
+    self._TypeValidator(self._args, list)
+    if len(self._args) != 1:
       raise ValidationError('Invalid args length: %s' % self._args)
     self._TypeValidator(self._args[0], int)

@@ -471,6 +471,22 @@ Pause the installer.
 
     Sleep: [30]
 
+### StartStage
+
+Start a new stage of the imaging process.
+
+Stages are used for tracking (internally and externally) and reporting progress
+through the imaging process.
+
+#### Arguments
+
+*   Format: List
+    *   Arg1[int]: Stage number
+
+#### Examples
+
+    StartStage: [1]
+
 ### Unzip
 
 Unzip a zip file to the local filesystem.

@@ -16,6 +16,7 @@
 
 from absl.testing import absltest
 from pyfakefs import fake_filesystem
+from glazier.lib import stage
 from glazier.lib.actions import installer
 import mock
 
@@ -198,6 +199,28 @@ class InstallerTest(absltest.TestCase):
     build_info.StoreChooserResponses.assert_called_with(
         chooser.return_value.Responses.return_value)
     self.assertTrue(build_info.FlushChooserOptions.called)
+
+  @mock.patch.object(installer.stage, 'set_stage', autospec=True)
+  def testStartStage(self, set_stage):
+    s = installer.StartStage([1], None)
+    s.Run()
+    set_stage.assert_called_with(1)
+
+  @mock.patch.object(installer.stage, 'set_stage', autospec=True)
+  def testStartStageException(self, set_stage):
+    set_stage.side_effect = stage.Error('Test')
+    ss = installer.StartStage([2], None)
+    self.assertRaises(installer.ActionError, ss.Run)
+
+  def testStartStageValidate(self):
+    s = installer.StartStage('30', None)
+    self.assertRaises(installer.ValidationError, s.Validate)
+    s = installer.StartStage([1, 2, 3], None)
+    self.assertRaises(installer.ValidationError, s.Validate)
+    s = installer.StartStage(['30'], None)
+    self.assertRaises(installer.ValidationError, s.Validate)
+    s = installer.StartStage([30], None)
+    s.Validate()
 
 
 if __name__ == '__main__':
