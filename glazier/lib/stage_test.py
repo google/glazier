@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import datetime
 from absl.testing import absltest
 from glazier.lib import stage
 from gwinpy.registry import registry
@@ -62,6 +63,59 @@ class StageTest(absltest.TestCase):
   def test_get_active_stage_none(self, reg):
     reg.return_value.GetKeyValue.side_effect = registry.RegistryError('Test')
     self.assertEqual(stage.get_active_stage(), None)
+
+  @mock.patch.object(stage.registry, 'Registry', autospec=True)
+  @mock.patch.object(stage, '_load_time', autospec=True)
+  def test_get_active_time_with_end(self, load, reg):
+    reg.return_value.GetKeyValue.side_effect = registry.RegistryError('Test')
+    load.side_effect = (datetime.datetime(2019, 11, 6, 17, 38, 52, 0),
+                        datetime.datetime(2019, 11, 6, 19, 18, 52, 0))
+    self.assertEqual(
+        stage.get_active_time(3), datetime.timedelta(hours=1, minutes=40))
+    load.assert_has_calls([
+        mock.call(reg.return_value, 3, 'Start'),
+        mock.call(reg.return_value, 3, 'End')
+    ])
+
+  @mock.patch.object(stage.registry, 'Registry', autospec=True)
+  @mock.patch.object(stage, '_load_time', autospec=True)
+  def test_get_active_time_no_start(self, load, reg):
+    reg.return_value.GetKeyValue.side_effect = registry.RegistryError('Test')
+    load.side_effect = (None, datetime.datetime(2019, 11, 6, 19, 18, 52, 0))
+    self.assertRaises(stage.Error, stage.get_active_time, 4)
+
+  @mock.patch.object(stage.registry, 'Registry', autospec=True)
+  @mock.patch.object(stage, '_utc_now', autospec=True)
+  @mock.patch.object(stage, '_load_time', autospec=True)
+  def test_get_active_time_no_end(self, load, utc, reg):
+    start = datetime.datetime(2019, 10, 20, 19, 18, 12, 0)
+    now = datetime.datetime(2019, 11, 6, 10, 45, 12, 0)
+    utc.return_value = now
+    reg.return_value.GetKeyValue.side_effect = registry.RegistryError('Test')
+    load.side_effect = (start, None)
+    self.assertEqual(
+        stage.get_active_time(6),
+        datetime.timedelta(days=16, hours=15, minutes=27))
+
+  @mock.patch.object(stage.registry, 'Registry', autospec=True)
+  def test_load_time_parse(self, reg):
+    r = reg.return_value
+    r.GetKeyValue.return_value = '2019-11-06T17:37:43.279253'
+    self.assertEqual(
+        stage._load_time(r, 1, 'Start'),
+        datetime.datetime(2019, 11, 6, 17, 37, 43, 279253))
+
+  @mock.patch.object(stage.registry, 'Registry', autospec=True)
+  def test_load_time_parse_err(self, reg):
+    r = reg.return_value
+    r.GetKeyValue.return_value = '12345'
+    self.assertEqual(stage._load_time(r, 1, 'End'), None)
+
+  @mock.patch.object(stage.registry, 'Registry', autospec=True)
+  def test_load_time_reg_err(self, reg):
+    r = reg.return_value
+    r.GetKeyValue.side_effect = registry.RegistryError('Test')
+    self.assertEqual(stage._load_time(r, 1, 'End'), None)
 
   @mock.patch.object(stage, 'get_active_stage', autospec=True)
   @mock.patch.object(stage.registry, 'Registry', autospec=True)
