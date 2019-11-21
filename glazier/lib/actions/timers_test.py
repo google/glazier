@@ -15,6 +15,7 @@
 """Tests for glazier.lib.actions.timers."""
 
 from absl.testing import absltest
+from glazier.lib.actions import registry
 from glazier.lib.actions import timers
 from glazier.lib.actions.base import ValidationError
 import mock
@@ -23,11 +24,27 @@ import mock
 class TimersTest(absltest.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testSetTimer(self, build_info):
+  @mock.patch.object(registry.registry, 'Registry', autospec=True)
+  def testSetTimer(self, winreg, build_info):
     args = ['Timer1']
+    build_info.TimerGet.return_value = '2019-11-11 13:33:37.133337'
     st = timers.SetTimer(args, build_info)
     st.Run()
     build_info.TimerSet.assert_called_with('Timer1')
+
+    # Successfully add registry keys
+    args = [
+        'HKLM', r'SOFTWARE\Test', 'TIMER_image_start',
+        '2019-11-11 13:33:37.133337',
+        'REG_SZ', False
+    ]
+    ra = timers.RegAdd(args, build_info)
+    ra.Run()
+
+    # Fail to add registry key
+    skv = winreg.return_value.SetKeyValue
+    skv.side_effect = registry.registry.RegistryError
+    self.assertRaises(registry.ActionError, ra.Run)
 
   def testSetTimerValidate(self):
     st = timers.SetTimer('Timer1', None)

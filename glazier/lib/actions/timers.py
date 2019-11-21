@@ -14,14 +14,32 @@
 
 """Actions to set imaging timers."""
 
+from glazier.lib import constants
 from glazier.lib.actions.base import BaseAction
+from glazier.lib.actions.registry import RegAdd
+
+
+class Error(Exception):
+  pass
 
 
 class SetTimer(BaseAction):
   """Create an imaging timer."""
 
   def Run(self):
-    self._build_info.TimerSet(str(self._args[0]))
+    timer = str(self._args[0])
+
+    self._build_info.TimerSet(timer)
+    key_name = 'TIMER_' + timer
+    key_value = str(self._build_info.TimerGet(timer))
+    timer_key = ['HKLM',
+                 constants.REG_ROOT,
+                 key_name,
+                 key_value,
+                 'REG_SZ']
+
+    ra = RegAdd(timer_key, self._build_info)
+    ra.Run()
 
   def Validate(self):
     self._ListOfStringsValidator(self._args)
