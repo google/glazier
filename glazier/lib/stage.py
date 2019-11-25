@@ -31,7 +31,7 @@ from gwinpy.registry import registry
 
 STAGES_ROOT = constants.REG_ROOT + r'\Stages'
 ACTIVE_KEY = '_Active'
-# TODO(b/144921409): centralize registry settings
+# TODO: centralize registry settings
 USE_REG_64 = True
 
 

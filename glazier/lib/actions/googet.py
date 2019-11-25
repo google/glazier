@@ -24,7 +24,7 @@ from glazier.lib.actions.base import ValidationError
 class GooGetInstall(BaseAction):
   """Execute a GooGet install command."""
 
-  # TODO(b/132083921): Add support path transforms
+  # TODO: Add support path transforms
   def Run(self):
     for args in self._args:
       # Default to just the package being required

@@ -139,7 +139,7 @@ class GooGetInstall(object):
         logging.info('GooGet successfully installed \'%s\'', pkg)
         return
       else:
-        # TODO(b/139284519)
+        # TODO
         logging.warning('GooGet command failed with error:\n%s', result)
         logging.info('sleeping for %d seconds before retrying', sleep)
         time.sleep(sleep)
