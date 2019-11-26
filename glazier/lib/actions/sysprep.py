@@ -65,7 +65,7 @@ class SetUnattendTimeZone(BaseAction):
             from_dhcp = dhcp.GetDhcpOption(
                 client_addr=intf.ip_address,
                 client_mac=intf.mac_address,
-                option=101, server_addr=dhcp_server)
+                option=101, server_addr=dhcp_server).decode('UTF-8')
             logging.debug('DHCP server %s returned: %s', dhcp_server, from_dhcp)
             if from_dhcp:
               break
