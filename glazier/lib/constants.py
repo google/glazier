@@ -51,12 +51,13 @@ WINPE_GOOGETROOT = '%s\\ProgramData\\GooGet' % WINPE_ROOT
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('binary_root_path', '/bin', 'Path to the binary storage.')
-flags.DEFINE_string('config_root_path', '/autobuild',
+flags.DEFINE_string('config_root_path', '/untrusted',
                     'Path to the root of the configuration directory.')
 flags.DEFINE_string('config_server', 'https://glazier-server.example.com',
                     'Root URL for all build data.')
 
-flags.DEFINE_enum('environment', 'Host', ['Host', 'WinPE'],
+flags.DEFINE_enum('environment',
+                  'Untrusted', ['Host', 'WinPE', 'Trusted', 'Untrusted'],
                   'The running host environment.')
 flags.DEFINE_string('ntp_server', 'time.google.com',
                     'Server to use for synchronizing the local system time.')
