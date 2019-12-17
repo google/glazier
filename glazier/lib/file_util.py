@@ -1,3 +1,4 @@
+# python3
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,13 +18,14 @@
 import logging
 import os
 import shutil
+from typing import Text
 
 
 class Error(Exception):
   pass
 
 
-def CreateDirectories(path):
+def CreateDirectories(path: Text):
   """Create directory if the path to a file doesn't exist.
 
   Args:
@@ -41,7 +43,7 @@ def CreateDirectories(path):
       raise Error('Unable to make directory: %s' % dirname)
 
 
-def Move(src, dst):
+def Move(src: Text, dst: Text):
   """Move a file from src to dst.
 
   Python's os.rename doesn't support overwrite on Windows.

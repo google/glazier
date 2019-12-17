@@ -1,3 +1,4 @@
+# python3
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +17,14 @@
 
 import os
 import re
+import typing
+from typing import Optional, Text
+
 from glazier.lib import download
+
+if typing.TYPE_CHECKING:
+  from glazier.lib import buildinfo
+
 
 DNLD_RE = re.compile(r'([@|#][\S]+)')
 
@@ -31,7 +39,7 @@ class Cache(object):
   def __init__(self):
     self._downloader = download.Download(show_progress=False)
 
-  def _DestinationPath(self, cache_path, url):
+  def _DestinationPath(self, cache_path: Text, url: Text) -> Text:
     """Determines the local path for a file being downloaded.
 
     Args:
@@ -45,7 +53,7 @@ class Cache(object):
     destination = os.path.join(cache_path, file_name)
     return destination
 
-  def _FindDownload(self, line):
+  def _FindDownload(self, line: Text) -> Optional[Text]:
     """Searches a command line for any download strings.
 
     Args:
@@ -59,7 +67,8 @@ class Cache(object):
       return result.group(1).rstrip('"\'')
     return None
 
-  def CacheFromLine(self, line, build_info):
+  def CacheFromLine(self, line: Text,
+                    build_info: 'buildinfo.BuildInfo') -> Optional[Text]:
     """Downloads any files in the command line and replaces with the local path.
 
     Args:
