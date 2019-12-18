@@ -16,6 +16,8 @@
 
 import logging
 import time
+from typing import Any, Dict, List, Optional, Text
+
 
 from absl import flags
 from glazier.lib import constants
@@ -92,7 +94,7 @@ class BuildInfo(object):
       server = server.rstrip('/')
     return server
 
-  def Release(self):
+  def Release(self) -> Optional[Text]:
     """Determine the current build release.
 
     Returns:
@@ -117,7 +119,7 @@ class BuildInfo(object):
         raise Error(e)
     return self._release_info
 
-  def ReleasePath(self):
+  def ReleasePath(self) -> Text:
     """Determines the path to the folder containing all files for build.
 
     Returns:
@@ -129,7 +131,10 @@ class BuildInfo(object):
     path += '/'
     return path
 
-  def ActiveConfigPath(self, append=None, pop=False, set_to=None):
+  def ActiveConfigPath(self,
+                       append: Optional[Text] = None,
+                       pop: bool = False,
+                       set_to: Optional[List[Text]] = None) -> List[Text]:
     """Tracks the active configuration path beneath the config root.
 
     Use append/pop for directory traversal.
@@ -164,7 +169,7 @@ class BuildInfo(object):
   # Host Discovery Functions
   #
 
-  def BuildPinMatch(self, pin_name, pin_values):
+  def BuildPinMatch(self, pin_name: Text, pin_values: List[Text]):
     """Compare build pins to local build info data.
 
     Most pins operate on a simple 1:1 string comparison (eg os_code ==
@@ -206,7 +211,7 @@ class BuildInfo(object):
     values = values if isinstance(values, list) else [values]
     return self._StringPinner(values, pin_values, loose=loose)
 
-  def GetExportedPins(self):
+  def GetExportedPins(self) -> Dict[Text, Any]:
     return {
         'computer_model': self.ComputerModel,
         'device_id': self.DeviceIds,
@@ -223,7 +228,7 @@ class BuildInfo(object):
     """
     return constants.SYS_CACHE
 
-  def ComputerManufacturer(self):
+  def ComputerManufacturer(self) -> Text:
     """Get the computer manufacturer from WMI.
 
     Returns:
@@ -237,7 +242,7 @@ class BuildInfo(object):
       raise Error('System manufacturer could not be determined.')
     return result
 
-  def ComputerModel(self):
+  def ComputerModel(self) -> Text:
     """Get the computer model from WMI.
 
     Lenovo models are trimmed to three characters to mitigate submodel drift.
@@ -253,7 +258,7 @@ class BuildInfo(object):
       raise Error('System model could not be determined.')
     return result
 
-  def ComputerName(self):
+  def ComputerName(self) -> Text:
     """Get the assigned computer name string.
 
     Returns:
@@ -261,7 +266,7 @@ class BuildInfo(object):
     """
     return spec.GetModule().GetHostname()
 
-  def ComputerOs(self):
+  def ComputerOs(self) -> Text:
     """Get the assigned computer OS string.
 
     Returns:
@@ -277,7 +282,7 @@ class BuildInfo(object):
     """
     return self._HWInfo().BiosSerial()
 
-  def DeviceIds(self):
+  def DeviceIds(self) -> List[Text]:
     """Get local hardware device Ids.
 
     Returns:
@@ -292,7 +297,7 @@ class BuildInfo(object):
       dev_ids.append(dev_str)
     return dev_ids
 
-  def EncryptionLevel(self):
+  def EncryptionLevel(self) -> Text:
     """Determines what encryption level is required for this machine.
 
     Returns:
@@ -335,7 +340,7 @@ class BuildInfo(object):
     """
     return self._HWInfo().IsLaptop()
 
-  def IsVirtual(self):
+  def IsVirtual(self) -> bool:
     """Whether or not this build is in a virtual environment.
 
     Returns:
@@ -343,7 +348,7 @@ class BuildInfo(object):
     """
     return self._HWInfo().IsVirtualMachine()
 
-  def KnownBranches(self):
+  def KnownBranches(self) -> Dict[Text, Text]:
     return self._VersionInfo()['versions']
 
   def _NetInfo(self):
@@ -522,18 +527,18 @@ class BuildInfo(object):
     logging.debug('Model %s is not recognized as supported.', model)
     return 0
 
-  def TimerGet(self, name):
+  def TimerGet(self, name: Text):
     return self._timers.Get(name)
 
-  def TimerSet(self, name):
+  def TimerSet(self, name: Text):
     self._timers.Set(name)
 
-  def _TpmInfo(self):
+  def _TpmInfo(self) -> tpm_info.TpmInfo:
     if not self._tpm_info:
       self._tpm_info = tpm_info.TpmInfo()
     return self._tpm_info
 
-  def TpmPresent(self):
+  def TpmPresent(self) -> bool:
     """Get the TPM presence from WMI.
 
     Returns:
@@ -549,7 +554,7 @@ class BuildInfo(object):
     """
     return self._HWInfo().VideoControllers()
 
-  def VideoControllersByName(self):
+  def VideoControllersByName(self) -> List[Text]:
     """Get all names of detected video controllers.
 
     Returns:
@@ -560,11 +565,11 @@ class BuildInfo(object):
       names.append(v['name'])
     return names
 
-  def WinpeVersion(self):
+  def WinpeVersion(self) -> int:
     """The production WinPE version according to the distribution source."""
     return self._VersionInfo()['winpe-version']
 
-  def Branch(self):
+  def Branch(self) -> Text:
     """Determine the current build branch.
 
     Returns:

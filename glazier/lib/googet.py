@@ -1,3 +1,4 @@
+# python3
 # Copyright 2019 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,15 +20,20 @@ import os
 import re
 import subprocess
 import time
+import typing
+from typing import List, Text
 
 from glazier.lib import constants
+
+if typing.TYPE_CHECKING:
+  from glazier.lib import buildinfo
 
 
 class Error(Exception):
   pass
 
 
-def _GooGet():
+def _GooGet() -> Text:
   if constants.FLAGS.environment == 'WinPE':
     return str(constants.WINPE_GOOGETROOT)
   else:
@@ -37,7 +43,7 @@ def _GooGet():
 class GooGetInstall(object):
   """Install an application via GooGet."""
 
-  def _AddFlags(self, flags, branch=None):
+  def _AddFlags(self, flags: List[Text], branch: Text = None) -> List[Text]:
     r"""Add optional flags to GooGet command.
 
     Short name support:
@@ -46,7 +52,7 @@ class GooGetInstall(object):
 
     Args:
       flags: optional flags passed to GooGet such as urls for -sources and
-      -reinstall
+        -reinstall
       branch: active release branch
 
     Raises:
@@ -92,7 +98,8 @@ class GooGetInstall(object):
 
     return flags
 
-  def LaunchGooGet(self, pkg, retries, sleep, build_info, **kwargs):
+  def LaunchGooGet(self, pkg: Text, retries: int, sleep: int,
+                   build_info: 'buildinfo.BuildInfo', **kwargs):
     """Launch the GooGet executable with arguments.
 
     Args:
