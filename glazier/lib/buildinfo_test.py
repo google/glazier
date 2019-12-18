@@ -205,6 +205,7 @@ class BuildInfoTest(absltest.TestCase):
     mock_man.return_value = 'Google Inc.'
     result = self.buildinfo.ComputerManufacturer()
     self.assertEqual(result, 'Google Inc.')
+    self.buildinfo.ComputerManufacturer.cache_clear()
     mock_man.return_value = None
     self.assertRaises(buildinfo.Error,
                       self.buildinfo.ComputerManufacturer)
@@ -217,11 +218,12 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(result, 'HP Z620 Workstation')
     sys_model.return_value = '2537CE2'
     self.assertEqual(result, 'HP Z620 Workstation')  # caching
+    self.buildinfo.ComputerModel.cache_clear()
     result = self.buildinfo.ComputerModel()
     self.assertEqual(result, '2537CE2')
+    self.buildinfo.ComputerModel.cache_clear()
     sys_model.return_value = None
     self.assertRaises(buildinfo.Error, self.buildinfo.ComputerModel)
-
 
   @flagsaver.flagsaver
   def testHostSpecFlags(self):
@@ -278,6 +280,7 @@ class BuildInfoTest(absltest.TestCase):
   def testIsLaptop(self, mock_lap):
     mock_lap.return_value = True
     self.assertTrue(self.buildinfo.IsLaptop())
+    self.buildinfo.IsLaptop.cache_clear()
     mock_lap.return_value = False
     self.assertFalse(self.buildinfo.IsLaptop())
 
@@ -286,6 +289,7 @@ class BuildInfoTest(absltest.TestCase):
   def testIsVirtual(self, virt):
     virt.return_value = False
     self.assertFalse(self.buildinfo.IsVirtual())
+    self.buildinfo.IsVirtual.cache_clear()
     virt.return_value = True
     self.assertTrue(self.buildinfo.IsVirtual())
 
@@ -309,8 +313,10 @@ class BuildInfoTest(absltest.TestCase):
     comp_os.return_value = 'windows-10-stable'
     self.assertEqual(self.buildinfo.OsCode(), 'win10')
     comp_os.return_value = 'win2012r2-x64-se'
+    self.buildinfo.OsCode.cache_clear()
     self.assertEqual(self.buildinfo.OsCode(), 'win2012r2-x64-se')
     comp_os.return_value = 'win2000-x64-se'
+    self.buildinfo.OsCode.cache_clear()
     self.assertRaises(buildinfo.Error, self.buildinfo.OsCode)
 
   @mock.patch.object(buildinfo.net_info, 'NetInfo', autospec=True)
@@ -337,8 +343,10 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(self.buildinfo.Release(), '1234')
     fread.assert_called_with(
         'https://glazier-server.example.com/unstable/release-id.yaml')
+    self.buildinfo.Release.cache_clear()
     fread.return_value = {'no_release_id': '1234'}
     self.assertEqual(self.buildinfo.Release(), None)
+    self.buildinfo.Release.cache_clear()
     # read error
     fread.side_effect = buildinfo.files.Error
     self.assertRaises(buildinfo.Error, self.buildinfo.Release)
@@ -362,12 +370,15 @@ class BuildInfoTest(absltest.TestCase):
     comp_os.return_value = 'windows-7-stable'
     expected = 'https://glazier-server.example.com/stable/'
     self.assertEqual(self.buildinfo.ReleasePath(), expected)
+    self.buildinfo.ComputerOs.cache_clear()
     comp_os.return_value = 'windows-10-unstable'
     expected = 'https://glazier-server.example.com/unstable/'
     self.assertEqual(self.buildinfo.ReleasePath(), expected)
+    self.buildinfo.ComputerOs.cache_clear()
     # no os
     comp_os.return_value = None
     self.assertRaises(buildinfo.Error, self.buildinfo.ReleasePath)
+    self.buildinfo.ComputerOs.cache_clear()
     # invalid os
     comp_os.return_value = 'invalid-os-string'
     self.assertRaises(buildinfo.Error, self.buildinfo.ReleasePath)
@@ -418,12 +429,15 @@ class BuildInfoTest(absltest.TestCase):
         'tier2': ['precision workstation t3400', '20BT'],
     }
     self.assertEqual(self.buildinfo.SupportTier(), 1)
+    self.buildinfo.SupportTier.cache_clear()
     # Tier 2
     mock_comp.return_value = 'Precision WorkStation T3400'
     self.assertEqual(self.buildinfo.SupportTier(), 2)
+    self.buildinfo.SupportTier.cache_clear()
     # Partial Match
     mock_comp.return_value = '20BTS0A400'
     self.assertEqual(self.buildinfo.SupportTier(), 2)
+    self.buildinfo.SupportTier.cache_clear()
     # Unsupported
     mock_comp.return_value = 'Best Buy Special of the Day'
     self.assertEqual(self.buildinfo.SupportTier(), 0)
@@ -439,6 +453,8 @@ class BuildInfoTest(absltest.TestCase):
     tpm_present.return_value = True
     self.assertTrue(self.buildinfo.TpmPresent())
     tpm_present.return_value = False
+    self.assertTrue(self.buildinfo.TpmPresent())  # caching
+    self.buildinfo.TpmPresent.cache_clear()
     self.assertFalse(self.buildinfo.TpmPresent())
 
   @mock.patch.object(buildinfo.files, 'Read', autospec=True)
@@ -459,10 +475,12 @@ class BuildInfoTest(absltest.TestCase):
     info.assert_called_with(
         _REGEXP('^Virtual machine type .*'), mock.ANY)
     virtual.return_value = False
+    self.buildinfo.EncryptionLevel.cache_clear()
     # tpm
     tpm.return_value = True
     self.assertEqual(self.buildinfo.EncryptionLevel(), 'tpm')
     info.assert_called_with(_REGEXP('^TPM detected .*'))
+    self.buildinfo.EncryptionLevel.cache_clear()
     # default
     self.assertEqual(self.buildinfo.EncryptionLevel(), 'tpm')
 

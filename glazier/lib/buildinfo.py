@@ -14,6 +14,7 @@
 # limitations under the License.
 """Glazier host information discovery subsystem."""
 
+import functools
 import logging
 import time
 from typing import Any, Dict, List, Optional, Text
@@ -94,6 +95,7 @@ class BuildInfo(object):
       server = server.rstrip('/')
     return server
 
+  @functools.lru_cache()
   def Release(self) -> Optional[Text]:
     """Determine the current build release.
 
@@ -228,6 +230,7 @@ class BuildInfo(object):
     """
     return constants.SYS_CACHE
 
+  @functools.lru_cache()
   def ComputerManufacturer(self) -> Text:
     """Get the computer manufacturer from WMI.
 
@@ -242,6 +245,7 @@ class BuildInfo(object):
       raise Error('System manufacturer could not be determined.')
     return result
 
+  @functools.lru_cache()
   def ComputerModel(self) -> Text:
     """Get the computer model from WMI.
 
@@ -258,6 +262,7 @@ class BuildInfo(object):
       raise Error('System model could not be determined.')
     return result
 
+  @functools.lru_cache()
   def ComputerName(self) -> Text:
     """Get the assigned computer name string.
 
@@ -266,6 +271,7 @@ class BuildInfo(object):
     """
     return spec.GetModule().GetHostname()
 
+  @functools.lru_cache()
   def ComputerOs(self) -> Text:
     """Get the assigned computer OS string.
 
@@ -274,7 +280,8 @@ class BuildInfo(object):
     """
     return spec.GetModule().GetOs()
 
-  def ComputerSerial(self):
+  @functools.lru_cache()
+  def ComputerSerial(self) -> Text:
     """Get the computer serial from WMI.
 
     Returns:
@@ -282,6 +289,7 @@ class BuildInfo(object):
     """
     return self._HWInfo().BiosSerial()
 
+  @functools.lru_cache()
   def DeviceIds(self) -> List[Text]:
     """Get local hardware device Ids.
 
@@ -297,6 +305,7 @@ class BuildInfo(object):
       dev_ids.append(dev_str)
     return dev_ids
 
+  @functools.lru_cache()
   def EncryptionLevel(self) -> Text:
     """Determines what encryption level is required for this machine.
 
@@ -319,7 +328,8 @@ class BuildInfo(object):
     logging.info('No TPM was detected in this machine.')
     return 'tpm'
 
-  def Fqdn(self):
+  @functools.lru_cache()
+  def Fqdn(self) -> Text:
     """Get the assigned FQDN string.
 
     Returns:
@@ -332,7 +342,8 @@ class BuildInfo(object):
       self._hw_info = hw_info.HWInfo()
     return self._hw_info
 
-  def IsLaptop(self):
+  @functools.lru_cache()
+  def IsLaptop(self) -> bool:
     """Whether or not this machine is a laptop.
 
     Returns:
@@ -340,6 +351,7 @@ class BuildInfo(object):
     """
     return self._HWInfo().IsLaptop()
 
+  @functools.lru_cache()
   def IsVirtual(self) -> bool:
     """Whether or not this build is in a virtual environment.
 
@@ -348,6 +360,7 @@ class BuildInfo(object):
     """
     return self._HWInfo().IsVirtualMachine()
 
+  @functools.lru_cache()
   def KnownBranches(self) -> Dict[Text, Text]:
     return self._VersionInfo()['versions']
 
@@ -356,7 +369,7 @@ class BuildInfo(object):
       self._net_info = net_info.NetInfo(active_only=False, poll=True)
     return self._net_info
 
-  def NetInterfaces(self, active_only=True):
+  def NetInterfaces(self, active_only: bool = True):
     """Access the local network interfaces.
 
     Args:
@@ -368,7 +381,8 @@ class BuildInfo(object):
     ni = net_info.NetInfo(active_only=active_only, poll=True)
     return ni.Interfaces()
 
-  def OsCode(self):
+  @functools.lru_cache()
+  def OsCode(self) -> Text:
     """Return the OS code associated with this build.
 
     Returns:
@@ -492,7 +506,8 @@ class BuildInfo(object):
           return True
     return False
 
-  def SupportedModels(self):
+  @functools.lru_cache()
+  def SupportedModels(self) -> Dict[Text, List[Text]]:
     """Returns the list of known supported models (tier1 and tier2).
 
     Returns:
@@ -508,7 +523,8 @@ class BuildInfo(object):
     ]
     return supported_models
 
-  def SupportTier(self):
+  @functools.lru_cache()
+  def SupportTier(self) -> int:
     """Determines the support tier for the current device.
 
     Returns:
@@ -538,6 +554,7 @@ class BuildInfo(object):
       self._tpm_info = tpm_info.TpmInfo()
     return self._tpm_info
 
+  @functools.lru_cache()
   def TpmPresent(self) -> bool:
     """Get the TPM presence from WMI.
 
@@ -546,6 +563,7 @@ class BuildInfo(object):
     """
     return self._TpmInfo().TpmPresent()
 
+  @functools.lru_cache()
   def VideoControllers(self):
     """Get any local video (graphics) controllers.
 
@@ -554,6 +572,7 @@ class BuildInfo(object):
     """
     return self._HWInfo().VideoControllers()
 
+  @functools.lru_cache()
   def VideoControllersByName(self) -> List[Text]:
     """Get all names of detected video controllers.
 
@@ -565,6 +584,7 @@ class BuildInfo(object):
       names.append(v['name'])
     return names
 
+  @functools.lru_cache()
   def WinpeVersion(self) -> int:
     """The production WinPE version according to the distribution source."""
     return self._VersionInfo()['winpe-version']
