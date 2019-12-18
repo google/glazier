@@ -9,6 +9,9 @@ high level overview of what Glazier is and how it works.
 
 ### Python Requirements
 
+**As of Glazier Release 2.0, Glazier now uses Python 3. Python 2 is no longer
+supported.**
+
 Glazier relies on some third party modules which need to be included with the
 Python distribution to enable full functionality. These modules are the property
 of their respective owners and not the Glazier developers.
