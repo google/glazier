@@ -1,3 +1,4 @@
+# python3
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,17 +16,19 @@
 """Turn things on and off."""
 
 import subprocess
+from typing import Text
+
 from glazier.lib import constants
 
 
-def _System32():
+def _System32() -> Text:
   if constants.FLAGS.environment == 'WinPE':
     return constants.WINPE_SYSTEM32
   else:
     return constants.SYS_SYSTEM32
 
 
-def Shutdown(timeout, reason):
+def Shutdown(timeout: Text, reason: Text):
   """Shuts down a Windows machine, given a timeout period and a reason.
 
   Args:
@@ -37,7 +40,7 @@ def Shutdown(timeout, reason):
                   % (_System32(), timeout, reason))
 
 
-def Restart(timeout, reason):
+def Restart(timeout: Text, reason: Text):
   """Restarts a Windows machine, given a timeout period and a reason.
 
   Args:

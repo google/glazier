@@ -1,3 +1,4 @@
+# python3
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +19,8 @@ import logging
 import socket
 import subprocess
 import time
+from typing import Text
+
 from glazier.lib.constants import WINPE_SYSTEM32
 import ntplib
 
@@ -28,7 +31,7 @@ class NtpException(Exception):
   pass
 
 
-def SyncClockToNtp(retries=2, server='time.google.com'):
+def SyncClockToNtp(retries: int = 2, server: Text = 'time.google.com'):
   """Syncs the hardware clock to an NTP server."""
   logging.info('Reading time from NTP server %s.', server)
 

@@ -1,3 +1,4 @@
+# python3
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,10 +21,12 @@ from __future__ import print_function
 import logging
 import re
 import time
+from typing import Optional, Text
+
 from six.moves import input
 
 
-def GetUsername():
+def GetUsername() -> Text:
   """Prompt the user for their username.
 
   Returns:
@@ -36,7 +39,9 @@ def GetUsername():
   return username
 
 
-def Keystroke(message, validator='.*', timeout=30):
+def Keystroke(message: Text,
+              validator: Text = '.*',
+              timeout: int = 30) -> Optional[Text]:
   """Prompts the user for a keystroke and waits the specified amount of time.
 
   Args:
@@ -65,7 +70,7 @@ def Keystroke(message, validator='.*', timeout=30):
   return None
 
 
-def Prompt(message, validator='.*'):
+def Prompt(message: Text, validator: Text = '.*') -> Optional[Text]:
   """Prompt the user for input.
 
   Args:
