@@ -51,9 +51,9 @@ class AutoBuild(object):
 
   def _SetupTaskList(self):
     """Determines the location of the task list and erases if necessary."""
-    location = constants.WINPE_TASK_LIST
-    if FLAGS.environment == 'Host':
-      location = constants.SYS_TASK_LIST
+    location = constants.SYS_TASK_LIST
+    if self._build_info.CheckWinPE():
+      location = constants.WINPE_TASK_LIST
     logging.debug('Using task list at %s', location)
     if not FLAGS.preserve_tasks and os.path.exists(location):
       logging.debug('Purging old task list.')

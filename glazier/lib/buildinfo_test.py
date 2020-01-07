@@ -114,10 +114,35 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(self.buildinfo._chooser_responses['USER_core_ps_shell'],
                      True)
 
-  def testBinaryPath(self):
+  @mock.patch.object(buildinfo.registry, 'Registry', autospec=True)
+  def testCheckWinPE(self, reg):
+    # WinPE
+    reg.return_value.GetKeyValue.return_value = 'WindowsPE'
+    self.assertEqual(self.buildinfo.CheckWinPE(), True)
+    reg.assert_called_with('HKLM')
+    reg.return_value.GetKeyValue.assert_called_with(
+        key_path=buildinfo.WINPE_KEY, key_name=buildinfo.WINPE_VALUE,
+        use_64bit=True)
+
+    # Host
+    reg.return_value.GetKeyValue.return_value = 'Enterprise'
+    self.assertEqual(self.buildinfo.CheckWinPE(), False)
+
+    # RegistryError
+    reg.return_value.GetKeyValue.side_effect = buildinfo.registry.RegistryError
+    self.assertRaises(buildinfo.Error, self.buildinfo.CheckWinPE)
+
+  @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
+  def testConfigPath(self, mock_bin):
+    mock_bin.return_value = 'https://glazier-server.example.com/bin/'
     result = self.buildinfo.BinaryPath()
-    expected = 'https://glazier-server.example.com/bin/'
-    self.assertEqual(result, expected)
+    self.assertEqual(result, mock_bin.return_value)
+
+  @mock.patch.object(buildinfo.BuildInfo, 'ConfigServer', autospec=True)
+  def testConfigServer(self, mock_server):
+    mock_server.return_value = 'https://glazier-server.example.com'
+    result = self.buildinfo.ConfigServer()
+    self.assertEqual(result, mock_server.return_value)
 
   def testBuildPinMatch(self):
     with mock.patch.object(

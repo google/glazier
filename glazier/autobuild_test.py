@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Unit tests for autobuild."""
 
 from absl.testing import absltest
 from pyfakefs import fake_filesystem
 from glazier import autobuild
+from glazier.lib import buildinfo
+from gwinpy.registry import registry
 import mock
 
 
@@ -38,27 +39,35 @@ class BuildInfoTest(absltest.TestCase):
                       'failure is always an option')
     self.assertTrue(autobuild.logging.fatal.called)
 
-  def testSetupTaskList(self):
-    cache = autobuild.constants.SYS_CACHE
+  @mock.patch.object(buildinfo.BuildInfo, 'CheckWinPE', autospec=True)
+  def testSetupTaskList(self, winpe):
+
+    # Host
+    tasklist = autobuild.constants.SYS_TASK_LIST
+    winpe.return_value = False
     filesystem = fake_filesystem.FakeFilesystem()
-    filesystem.CreateFile(r'X:\task_list.yaml')
     autobuild.os = fake_filesystem.FakeOsModule(filesystem)
-    self.assertEqual(self.autobuild._SetupTaskList(),
-                     '%s\\task_list.yaml' % cache)
+    self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
     autobuild.FLAGS.preserve_tasks = True
-    self.assertEqual(self.autobuild._SetupTaskList(),
-                     '%s\\task_list.yaml' % cache)
-    autobuild.FLAGS.environment = 'WinPE'
-    self.assertEqual(self.autobuild._SetupTaskList(), r'X:\task_list.yaml')
-    self.assertTrue(autobuild.os.path.exists(r'X:\task_list.yaml'))
+    self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
+
+    # WinPE
+    filesystem.CreateFile(autobuild.constants.WINPE_TASK_LIST)
+    winpe.return_value = True
+    tasklist = autobuild.constants.WINPE_TASK_LIST
+    self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
+    self.assertTrue(autobuild.os.path.exists(tasklist))
     autobuild.FLAGS.preserve_tasks = False
-    self.assertEqual(self.autobuild._SetupTaskList(), r'X:\task_list.yaml')
-    self.assertFalse(autobuild.os.path.exists(r'X:\task_list.yaml'))
+    self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
+    self.assertFalse(autobuild.os.path.exists(tasklist))
 
   @mock.patch.object(autobuild.runner, 'ConfigRunner', autospec=True)
   @mock.patch.object(autobuild.builder, 'ConfigBuilder', autospec=True)
-  def testRunBuild(self, builder, runner):
+  @mock.patch.object(registry, 'Registry', autospec=True)
+  def testRunBuild(self, mock_reg, builder, runner):
+    mock_reg.return_value.GetKeyValue.return_value = 'WindowsPE'
     self.autobuild.RunBuild()
+
     # ConfigBuilderError
     builder.side_effect = autobuild.builder.ConfigBuilderError
     self.assertRaises(LogFatal, self.autobuild.RunBuild)
