@@ -33,13 +33,6 @@ class Error(Exception):
   pass
 
 
-def _GooGet() -> Text:
-  if constants.FLAGS.environment == 'WinPE':
-    return str(constants.WINPE_GOOGETROOT)
-  else:
-    return str(constants.SYS_GOOGETROOT)
-
-
 class GooGetInstall(object):
   """Install an application via GooGet."""
 
@@ -98,6 +91,12 @@ class GooGetInstall(object):
 
     return flags
 
+  def _GooGet(self, build_info) -> Text:
+    if build_info.CheckWinPE():
+      return str(constants.WINPE_GOOGETROOT)
+    else:
+      return str(constants.SYS_GOOGETROOT)
+
   def LaunchGooGet(self, pkg: Text, retries: int, sleep: int,
                    build_info: 'buildinfo.BuildInfo', **kwargs):
     """Launch the GooGet executable with arguments.
@@ -114,14 +113,14 @@ class GooGetInstall(object):
       Error: The GooGet command failed.
     """
     if not kwargs['path']:
-      kwargs['path'] = _GooGet() + '\\googet.exe'
+      kwargs['path'] = self._GooGet(build_info) + '\\googet.exe'
     if not os.path.exists(kwargs['path']):
       raise Error('Cannot find path of GooGet binary [%s]' % kwargs['path'])
     if not pkg:
       raise Error('Missing package name for GooGet install.')
 
     # Pass --root as GOOGETROOT environmental variable may not exist
-    root = '--root=' + _GooGet()
+    root = '--root=' + self._GooGet(build_info)
 
     cmd = [kwargs['path'], '-noconfirm', root, 'install']
 
