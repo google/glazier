@@ -89,6 +89,7 @@ class DownloadTest(absltest.TestCase):
     self.filesystem.CreateFile(r'C:\input.ini', contents=_TEST_INI)
     download.os = fake_filesystem.FakeOsModule(self.filesystem)
     download.open = fake_filesystem.FakeFileOpen(self.filesystem)
+    self.buildinfo = buildinfo.BuildInfo()
 
   def testConvertBytes(self):
     self.assertEqual(self._dl._ConvertBytes(123), '123.00B')
@@ -100,12 +101,18 @@ class DownloadTest(absltest.TestCase):
 
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
   @mock.patch.object(download.time, 'sleep', autospec=True)
-  def testOpenStreamInternal(self, sleep, urlopen):
+  @mock.patch.object(buildinfo.registry, 'Registry', autospec=True)
+  def testOpenStreamInternal(self, mock_reg, sleep, urlopen):
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
     url = 'https://www.example.com/build.yaml'
     httperr = download.urllib.error.HTTPError('Error', None, None, None, None)
     urlerr = download.urllib.error.URLError('Error')
+
+    # Use hosts paths
+    mock_reg.return_value.GetKeyValue.return_value = 'Enterprise'
+    self.assertEqual(self.buildinfo.CheckWinPE(), False)
+
     # 200
     urlopen.side_effect = iter([httperr, urlerr, file_stream])
     res = self._dl._OpenStream(url, max_retries=4)
@@ -126,9 +133,15 @@ class DownloadTest(absltest.TestCase):
     sleep.assert_has_calls([mock.call(20), mock.call(20)])
 
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
-  def testCheckUrl(self, urlopen):
+  @mock.patch.object(buildinfo.registry, 'Registry', autospec=True)
+  def testCheckUrl(self, mock_reg, urlopen):
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
+
+    # Use hosts paths
+    mock_reg.return_value.GetKeyValue.return_value = 'Enterprise'
+    self.assertEqual(self.buildinfo.CheckWinPE(), False)
+
     # match
     urlopen.side_effect = iter([file_stream])
     self.assertTrue(

@@ -36,6 +36,7 @@ import tempfile
 import time
 
 from absl import flags
+from glazier.lib import buildinfo
 from six.moves import urllib
 
 CHUNK_BYTE_SIZE = 65536
@@ -120,6 +121,7 @@ class BaseDownloader(object):
     self._save_location = None
     self._default_show_progress = show_progress
     self._ca_cert_file = None
+    self._build_info = buildinfo.BuildInfo()
 
   def _ConvertBytes(self, num_bytes):
     """Converts number of bytes to a human readable format.
@@ -183,7 +185,7 @@ class BaseDownloader(object):
     while True:
       try:
         attempt += 1
-        if FLAGS.environment == 'WinPE':
+        if self._build_info.CheckWinPE():
           file_stream = urllib.request.urlopen(url, cafile=self._ca_cert_file)
         else:
           file_stream = urllib.request.urlopen(url)
