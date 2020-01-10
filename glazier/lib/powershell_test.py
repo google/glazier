@@ -19,6 +19,7 @@ from absl.testing import absltest
 from absl.testing import flagsaver
 
 from pyfakefs import fake_filesystem
+from glazier.lib import buildinfo
 from glazier.lib import powershell
 import mock
 
@@ -34,9 +35,29 @@ class PowershellTest(absltest.TestCase):
     powershell.resources.os = fake_filesystem.FakeOsModule(self.fs)
     self.fs.CreateFile('/resources/bin/script.ps1')
     self.ps = powershell.PowerShell()
+    self.buildinfo = buildinfo.BuildInfo()
+
+  @mock.patch.object(buildinfo.registry, 'Registry', autospec=True)
+  def testPowerShellPath(self, mock_reg):
+    # Use hosts path
+    mock_reg.return_value.GetKeyValue.return_value = 'Enterprise'
+    self.assertEqual(self.buildinfo.CheckWinPE(), False)
+
+    self.assertEqual(self.ps._PowerShellPath(),
+                     powershell.constants.SYS_POWERSHELL)
+
+    # Use WinPE path
+    mock_reg.return_value.GetKeyValue.return_value = 'WindowsPE'
+    self.assertEqual(self.buildinfo.CheckWinPE(), True)
+
+    self.assertEqual(self.ps._PowerShellPath(),
+                     powershell.constants.WINPE_POWERSHELL)
 
   @mock.patch.object(powershell.subprocess, 'call', autospec=True)
-  def testRunLocal(self, call):
+  @mock.patch.object(buildinfo.registry, 'Registry', autospec=True)
+  def testRunLocal(self, mock_reg, call):
+    mock_reg.return_value.GetKeyValue.return_value = 'Enterprise'
+
     args = ['-Arg1', '-Arg2']
     call.return_value = 0
     with self.assertRaises(powershell.PowerShellError):
@@ -44,7 +65,7 @@ class PowershellTest(absltest.TestCase):
 
     self.ps.RunLocal('/resources/bin/script.ps1', args=args)
     cmd = [
-        powershell._Powershell(), '-NoProfile', '-NoLogo', '-File',
+        self.ps._PowerShellPath(), '-NoProfile', '-NoLogo', '-File',
         '/resources/bin/script.ps1', '-Arg1', '-Arg2'
     ]
     call.assert_called_with(cmd, shell=True)
@@ -52,11 +73,14 @@ class PowershellTest(absltest.TestCase):
       self.ps.RunLocal('/resources/bin/script.ps1', args=args, ok_result=[100])
 
   @mock.patch.object(powershell.subprocess, 'call', autospec=True)
-  def testRunCommand(self, call):
+  @mock.patch.object(buildinfo.registry, 'Registry', autospec=True)
+  def testRunCommand(self, mock_reg, call):
+    mock_reg.return_value.GetKeyValue.return_value = 'Enterprise'
+
     call.return_value = 0
     self.ps.RunCommand(['Get-ChildItem', '-Recurse'])
     cmd = [
-        powershell._Powershell(), '-NoProfile', '-NoLogo', '-Command',
+        self.ps._PowerShellPath(), '-NoProfile', '-NoLogo', '-Command',
         'Get-ChildItem', '-Recurse'
     ]
     call.assert_called_with(cmd, shell=True)
@@ -87,7 +111,10 @@ class PowershellTest(absltest.TestCase):
         ok_result='0')
 
   @mock.patch.object(powershell.subprocess, 'call', autospec=True)
-  def testSetExecutionPolicy(self, call):
+  @mock.patch.object(buildinfo.registry, 'Registry', autospec=True)
+  def testSetExecutionPolicy(self, mock_reg, call):
+    mock_reg.return_value.GetKeyValue.return_value = 'Enterprise'
+
     call.return_value = 0
     self.ps.SetExecutionPolicy(policy='RemoteSigned')
     call.assert_called_with(
@@ -102,7 +129,10 @@ class PowershellTest(absltest.TestCase):
       self.ps.SetExecutionPolicy(policy='RandomPolicy')
 
   @mock.patch.object(powershell.subprocess, 'call', autospec=True)
-  def testStartShell(self, unused_call):
+  @mock.patch.object(buildinfo.registry, 'Registry', autospec=True)
+  def testStartShell(self, mock_reg, unused_call):
+    mock_reg.return_value.GetKeyValue.return_value = 'Enterprise'
+
     self.ps.StartShell()
 
 

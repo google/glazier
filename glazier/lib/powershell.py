@@ -17,6 +17,7 @@
 import logging
 import os
 import subprocess
+from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib import resources
 
@@ -25,18 +26,18 @@ class PowerShellError(Exception):
   pass
 
 
-def _Powershell():
-  if constants.FLAGS.environment == 'WinPE':
-    return constants.WINPE_POWERSHELL
-  else:
-    return constants.SYS_POWERSHELL
-
-
 class PowerShell(object):
   """Interact with the powershell interpreter to run scripts."""
 
   def __init__(self, echo_off=True):
     self.echo_off = echo_off
+    self._build_info = buildinfo.BuildInfo()
+
+  def _PowerShellPath(self):
+    if self._build_info.CheckWinPE():
+      return constants.WINPE_POWERSHELL
+    else:
+      return constants.SYS_POWERSHELL
 
   def _LaunchPs(self, op, args, ok_result):
     """Launch the powershell executable to run a script.
@@ -53,7 +54,7 @@ class PowerShell(object):
       raise PowerShellError('Unsupported operation type. [%s]' % op)
     if not ok_result:
       ok_result = [0]
-    cmd = [_Powershell(), '-NoProfile', '-NoLogo', op] + args
+    cmd = [self._PowerShellPath(), '-NoProfile', '-NoLogo', op] + args
     if not self.echo_off:
       logging.debug('Running Powershell:%s', cmd)
     result = subprocess.call(cmd, shell=True)
@@ -148,4 +149,5 @@ class PowerShell(object):
 
   def StartShell(self):
     """Start the PowerShell interpreter."""
-    subprocess.call([_Powershell(), '-NoProfile', '-NoLogo'], shell=True)
+    subprocess.call([self._PowerShellPath(), '-NoProfile', '-NoLogo'],
+                    shell=True)
