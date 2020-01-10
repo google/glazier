@@ -15,24 +15,58 @@
 """Tests for glazier.lib.power."""
 
 from absl.testing import absltest
+from glazier.lib import buildinfo
 from glazier.lib import power
 import mock
 
 
 class PowerTest(absltest.TestCase):
 
-  @mock.patch.object(power.subprocess, 'call', autospec=True)
-  def testRestart(self, call):
-    power.Restart(60, 'Reboot fixes everything.')
-    call.assert_called_with('C:\\Windows\\System32\\shutdown.exe -r -t 60 '
-                            '-c "Reboot fixes everything." -f')
+  def setUp(self):
+    super(PowerTest, self).setUp()
+    self.buildinfo = buildinfo.BuildInfo()
 
   @mock.patch.object(power.subprocess, 'call', autospec=True)
-  def testShutdown(self, call):
-    power.Shutdown(30, 'Because I said so.')
-    call.assert_called_with('C:\\Windows\\System32\\shutdown.exe -s -t 30 '
-                            '-c "Because I said so." -f')
+  @mock.patch.object(buildinfo.registry, 'Registry', autospec=True)
+  def testRestart(self, mock_reg, call):
+    # Use WinPE paths
+    mock_reg.return_value.GetKeyValue.return_value = 'WindowsPE'
+    self.assertEqual(self.buildinfo.CheckWinPE(), True)
 
+    power.Restart(60, 'Reboot fixes everything.', self.buildinfo)
+    call.assert_called_with('%s\\shutdown.exe -r -t 60 '
+                            '-c "Reboot fixes everything." -f' %
+                            power.constants.WINPE_SYSTEM32)
+
+    # Use hosts paths
+    mock_reg.return_value.GetKeyValue.return_value = 'Enterprise'
+    self.assertEqual(self.buildinfo.CheckWinPE(), False)
+
+    power.Restart(60, 'Reboot fixes everything.', self.buildinfo)
+    call.assert_called_with('%s\\shutdown.exe -r -t 60 '
+                            '-c "Reboot fixes everything." -f' %
+                            power.constants.SYS_SYSTEM32)
+
+  @mock.patch.object(power.subprocess, 'call', autospec=True)
+  @mock.patch.object(buildinfo.registry, 'Registry', autospec=True)
+  def testShutdown(self, mock_reg, call):
+    # Use WinPE paths
+    mock_reg.return_value.GetKeyValue.return_value = 'WindowsPE'
+    self.assertEqual(self.buildinfo.CheckWinPE(), True)
+
+    power.Shutdown(30, 'Because I said so.', self.buildinfo)
+    call.assert_called_with('%s\\shutdown.exe -s -t 30 '
+                            '-c "Because I said so." -f' %
+                            power.constants.WINPE_SYSTEM32)
+
+    # Use hosts paths
+    mock_reg.return_value.GetKeyValue.return_value = 'Enterprise'
+    self.assertEqual(self.buildinfo.CheckWinPE(), False)
+
+    power.Shutdown(30, 'Because I said so.', self.buildinfo)
+    call.assert_called_with('%s\\shutdown.exe -s -t 30 '
+                            '-c "Because I said so." -f' %
+                            power.constants.SYS_SYSTEM32)
 
 if __name__ == '__main__':
   absltest.main()
