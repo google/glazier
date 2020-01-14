@@ -16,8 +16,6 @@
 from absl.testing import absltest
 from pyfakefs import fake_filesystem
 from glazier import autobuild
-from glazier.lib import buildinfo
-from gwinpy.registry import registry
 import mock
 
 
@@ -39,12 +37,12 @@ class BuildInfoTest(absltest.TestCase):
                       'failure is always an option')
     self.assertTrue(autobuild.logging.fatal.called)
 
-  @mock.patch.object(buildinfo.BuildInfo, 'CheckWinPE', autospec=True)
-  def testSetupTaskList(self, winpe):
+  @mock.patch.object(autobuild.winpe, 'check_winpe', autospec=True)
+  def testSetupTaskList(self, wpe):
 
     # Host
     tasklist = autobuild.constants.SYS_TASK_LIST
-    winpe.return_value = False
+    wpe.return_value = False
     filesystem = fake_filesystem.FakeFilesystem()
     autobuild.os = fake_filesystem.FakeOsModule(filesystem)
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
@@ -53,7 +51,7 @@ class BuildInfoTest(absltest.TestCase):
 
     # WinPE
     filesystem.CreateFile(autobuild.constants.WINPE_TASK_LIST)
-    winpe.return_value = True
+    wpe.return_value = True
     tasklist = autobuild.constants.WINPE_TASK_LIST
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
     self.assertTrue(autobuild.os.path.exists(tasklist))
@@ -61,11 +59,11 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
     self.assertFalse(autobuild.os.path.exists(tasklist))
 
+  @mock.patch.object(autobuild.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(autobuild.runner, 'ConfigRunner', autospec=True)
   @mock.patch.object(autobuild.builder, 'ConfigBuilder', autospec=True)
-  @mock.patch.object(registry, 'Registry', autospec=True)
-  def testRunBuild(self, mock_reg, builder, runner):
-    mock_reg.return_value.GetKeyValue.return_value = 'WindowsPE'
+  def testRunBuild(self, builder, runner, wpe):
+    wpe.return_value = False
     self.autobuild.RunBuild()
 
     # ConfigBuilderError

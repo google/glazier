@@ -46,6 +46,10 @@ WINPE_DISM = '%s\\dism.exe' % WINPE_SYSTEM32
 WINPE_POWERSHELL = ('%s\\WindowsPowerShell\\v1.0\\powershell.exe' %
                     WINPE_SYSTEM32)
 WINPE_GOOGETROOT = '%s\\ProgramData\\GooGet' % WINPE_ROOT
+WINPE_KEY = r'SOFTWARE\Microsoft\Windows NT\CurrentVersion'
+WINPE_VALUE = 'EditionID'
+
+USE_REG_64 = True
 
 ## Flags
 

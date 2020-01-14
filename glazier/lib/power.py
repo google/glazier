@@ -16,43 +16,38 @@
 """Turn things on and off."""
 
 import subprocess
-import typing
 from typing import Text
 
 from glazier.lib import constants
-
-if typing.TYPE_CHECKING:
-  from glazier.lib import buildinfo
+from glazier.lib import winpe
 
 
-def _System32(build_info: 'buildinfo.BuildInfo') -> Text:
-  if build_info.CheckWinPE():
+def _System32() -> Text:
+  if winpe.check_winpe():
     return constants.WINPE_SYSTEM32
   else:
     return constants.SYS_SYSTEM32
 
 
-def Shutdown(timeout: Text, reason: Text, build_info: 'buildinfo.BuildInfo'):
+def Shutdown(timeout: Text, reason: Text):
   """Shuts down a Windows machine, given a timeout period and a reason.
 
   Args:
     timeout: How long to wait before shutting down the machine.
     reason: Reason why the machine is being shut down.  This will be displayed
       to the user and written to the Windows event log.
-    build_info: the current build information
   """
   subprocess.call(r'%s\shutdown.exe -s -t %s -c "%s" -f'
-                  % (_System32(build_info), timeout, reason))
+                  % (_System32(), timeout, reason))
 
 
-def Restart(timeout: Text, reason: Text, build_info: 'buildinfo.BuildInfo'):
+def Restart(timeout: Text, reason: Text):
   """Restarts a Windows machine, given a timeout period and a reason.
 
   Args:
     timeout: How long to wait before restarting the machine.
     reason: Reason why the machine is being restarted. This will be displayed
       to the user and written to the Windows event log.
-    build_info: the current build information
   """
   subprocess.call(r'%s\shutdown.exe -r -t %s -c "%s" -f'
-                  % (_System32(build_info), timeout, reason))
+                  % (_System32(), timeout, reason))

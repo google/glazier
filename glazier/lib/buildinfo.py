@@ -25,17 +25,12 @@ from glazier.lib import constants
 from glazier.lib import timers
 from glazier.lib.config import files
 from glazier.lib.spec import spec
-from gwinpy.registry import registry
 from gwinpy.wmi import hw_info
 from gwinpy.wmi import net_info
 from gwinpy.wmi import tpm_info
 import yaml
 
 FLAGS = flags.FLAGS
-WINPE_KEY = r'SOFTWARE\Microsoft\Windows NT\CurrentVersion'
-WINPE_VALUE = 'EditionID'
-# TODO: centralize registry settings
-USE_REG_64 = True
 
 
 class Error(Exception):
@@ -82,24 +77,6 @@ class BuildInfo(object):
   #
   # Image Configuration Functions
   #
-
-  def CheckWinPE(self) -> bool:
-    """Verify image environment is WinPE or Host.
-
-    Returns:
-      True for WinPE, else False.
-    """
-    try:
-      reg = registry.Registry(root_key='HKLM')
-      regkey = reg.GetKeyValue(
-          key_path=WINPE_KEY, key_name=WINPE_VALUE, use_64bit=USE_REG_64)
-      if regkey == 'WindowsPE':
-        return True
-      else:
-        return False
-    except registry.RegistryError as e:
-      raise Error("Could not read WinPE registry key '%s\\%s'. %s" %
-                  (WINPE_KEY, WINPE_VALUE, str(e)))
 
   def BinaryPath(self):
     """Determines the path to the folder containing all binaries for build.

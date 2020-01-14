@@ -24,6 +24,7 @@ import typing
 from typing import List, Text
 
 from glazier.lib import constants
+from glazier.lib import winpe
 
 if typing.TYPE_CHECKING:
   from glazier.lib import buildinfo
@@ -91,8 +92,8 @@ class GooGetInstall(object):
 
     return flags
 
-  def _GooGet(self, build_info) -> Text:
-    if build_info.CheckWinPE():
+  def _GooGet(self) -> Text:
+    if winpe.check_winpe():
       return str(constants.WINPE_GOOGETROOT)
     else:
       return str(constants.SYS_GOOGETROOT)
@@ -113,14 +114,14 @@ class GooGetInstall(object):
       Error: The GooGet command failed.
     """
     if not kwargs['path']:
-      kwargs['path'] = self._GooGet(build_info) + '\\googet.exe'
+      kwargs['path'] = self._GooGet() + '\\googet.exe'
     if not os.path.exists(kwargs['path']):
       raise Error('Cannot find path of GooGet binary [%s]' % kwargs['path'])
     if not pkg:
       raise Error('Missing package name for GooGet install.')
 
     # Pass --root as GOOGETROOT environmental variable may not exist
-    root = '--root=' + self._GooGet(build_info)
+    root = '--root=' + self._GooGet()
 
     cmd = [kwargs['path'], '-noconfirm', root, 'install']
 

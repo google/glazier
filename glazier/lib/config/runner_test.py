@@ -67,7 +67,7 @@ class ConfigRunnerTest(absltest.TestCase):
     event = runner.base.actions.RestartEvent('Some reason', timeout=25)
     action.side_effect = event
     self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
-    restart.assert_called_with(25, 'Some reason', self.buildinfo)
+    restart.assert_called_with(25, 'Some reason')
     self.assertTrue(pop.called)
     pop.reset_mock()
     # with retry
@@ -75,7 +75,7 @@ class ConfigRunnerTest(absltest.TestCase):
         'Some other reason', timeout=10, retry_on_restart=True)
     action.side_effect = event
     self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
-    restart.assert_called_with(10, 'Some other reason', self.buildinfo)
+    restart.assert_called_with(10, 'Some other reason')
     self.assertFalse(pop.called)
 
   @mock.patch.object(runner.power, 'Shutdown', autospec=True)
@@ -86,7 +86,7 @@ class ConfigRunnerTest(absltest.TestCase):
     event = runner.base.actions.ShutdownEvent('Some reason', timeout=25)
     action.side_effect = event
     self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
-    shutdown.assert_called_with(25, 'Some reason', self.buildinfo)
+    shutdown.assert_called_with(25, 'Some reason')
     self.assertTrue(pop.called)
     pop.reset_mock()
     # with retry
@@ -94,7 +94,7 @@ class ConfigRunnerTest(absltest.TestCase):
         'Some other reason', timeout=10, retry_on_restart=True)
     action.side_effect = event
     self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
-    shutdown.assert_called_with(10, 'Some other reason', self.buildinfo)
+    shutdown.assert_called_with(10, 'Some other reason')
     self.assertFalse(pop.called)
 
 

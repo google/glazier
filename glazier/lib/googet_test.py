@@ -34,11 +34,11 @@ class GooGetTest(absltest.TestCase):
     self.flags = ['whatever', '-reinstall', 'http://example.com/team-%',
                   r'http://example.co.uk/secure-%\%', r'http://%.jp/%\%']
 
+  @mock.patch.object(googet.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(googet.subprocess, 'call', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
-  @mock.patch.object(buildinfo.registry, 'Registry', autospec=True)
   @mock.patch.object(time, 'sleep', return_value=None)
-  def testLaunchGooGet(self, sleep, mock_reg, branch, call):  # pylint: disable=unused-argument
+  def testLaunchGooGet(self, sleep, branch, call, wpe):  # pylint: disable=unused-argument
     path = r'C:\ProgramData\GooGet\googet.exe'
     pkg = 'test_package_v1'
     retries = 5
@@ -46,8 +46,7 @@ class GooGetTest(absltest.TestCase):
     branch.return_value = 'example'
 
     # Use hosts paths
-    mock_reg.return_value.GetKeyValue.return_value = 'Enterprise'
-    self.assertEqual(self.buildinfo.CheckWinPE(), False)
+    wpe.return_value = False
 
     # Filesystem
     self.filesystem = fake_filesystem.FakeFilesystem()
