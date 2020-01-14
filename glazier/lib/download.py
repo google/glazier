@@ -36,6 +36,7 @@ import tempfile
 import time
 
 from absl import flags
+from glazier.lib import winpe
 from six.moves import urllib
 
 CHUNK_BYTE_SIZE = 65536
@@ -183,7 +184,7 @@ class BaseDownloader(object):
     while True:
       try:
         attempt += 1
-        if FLAGS.environment == 'WinPE':
+        if winpe.check_winpe():
           file_stream = urllib.request.urlopen(url, cafile=self._ca_cert_file)
         else:
           file_stream = urllib.request.urlopen(url)

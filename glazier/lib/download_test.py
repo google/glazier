@@ -98,14 +98,17 @@ class DownloadTest(absltest.TestCase):
     self.assertEqual(self._dl._ConvertBytes(56755555555), '52.86GB')
     self.assertEqual(self._dl._ConvertBytes(6785555555555), '6.17TB')
 
+  @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
   @mock.patch.object(download.time, 'sleep', autospec=True)
-  def testOpenStreamInternal(self, sleep, urlopen):
+  def testOpenStreamInternal(self, sleep, urlopen, wpe):
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
     url = 'https://www.example.com/build.yaml'
     httperr = download.urllib.error.HTTPError('Error', None, None, None, None)
     urlerr = download.urllib.error.URLError('Error')
+    wpe.return_value = False
+
     # 200
     urlopen.side_effect = iter([httperr, urlerr, file_stream])
     res = self._dl._OpenStream(url, max_retries=4)
@@ -125,10 +128,13 @@ class DownloadTest(absltest.TestCase):
                       max_retries=2)
     sleep.assert_has_calls([mock.call(20), mock.call(20)])
 
+  @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
-  def testCheckUrl(self, urlopen):
+  def testCheckUrl(self, urlopen, wpe):
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
+    wpe.return_value = False
+
     # match
     urlopen.side_effect = iter([file_stream])
     self.assertTrue(
