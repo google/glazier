@@ -35,8 +35,22 @@ class PowershellTest(absltest.TestCase):
     self.fs.CreateFile('/resources/bin/script.ps1')
     self.ps = powershell.PowerShell()
 
+  @mock.patch.object(powershell.winpe, 'check_winpe', autospec=True)
+  def testPowerShell(self, wpe):
+    # WinPE
+    wpe.return_value = True
+    self.assertEqual(powershell._Powershell(),
+                     powershell.constants.WINPE_POWERSHELL)
+
+    # Host
+    wpe.return_value = False
+    self.assertEqual(powershell._Powershell(),
+                     powershell.constants.SYS_POWERSHELL)
+
+  @mock.patch.object(powershell.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(powershell.subprocess, 'call', autospec=True)
-  def testRunLocal(self, call):
+  def testRunLocal(self, call, wpe):
+    wpe.return_value = False
     args = ['-Arg1', '-Arg2']
     call.return_value = 0
     with self.assertRaises(powershell.PowerShellError):
@@ -51,8 +65,10 @@ class PowershellTest(absltest.TestCase):
     with self.assertRaises(powershell.PowerShellError):
       self.ps.RunLocal('/resources/bin/script.ps1', args=args, ok_result=[100])
 
+  @mock.patch.object(powershell.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(powershell.subprocess, 'call', autospec=True)
-  def testRunCommand(self, call):
+  def testRunCommand(self, call, wpe):
+    wpe.return_value = False
     call.return_value = 0
     self.ps.RunCommand(['Get-ChildItem', '-Recurse'])
     cmd = [
@@ -86,8 +102,10 @@ class PowershellTest(absltest.TestCase):
         args=[],
         ok_result='0')
 
+  @mock.patch.object(powershell.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(powershell.subprocess, 'call', autospec=True)
-  def testSetExecutionPolicy(self, call):
+  def testSetExecutionPolicy(self, call, wpe):
+    wpe.return_value = False
     call.return_value = 0
     self.ps.SetExecutionPolicy(policy='RemoteSigned')
     call.assert_called_with(
@@ -97,12 +115,14 @@ class PowershellTest(absltest.TestCase):
             '-ExecutionPolicy', 'RemoteSigned'
         ],
         shell=True)
-    with self.assertRaisesRegexp(powershell.PowerShellError,
-                                 'Unknown execution policy.*'):
+    with self.assertRaisesRegex(powershell.PowerShellError,
+                                'Unknown execution policy.*'):
       self.ps.SetExecutionPolicy(policy='RandomPolicy')
 
+  @mock.patch.object(powershell.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(powershell.subprocess, 'call', autospec=True)
-  def testStartShell(self, unused_call):
+  def testStartShell(self, unused_call, wpe):
+    wpe.return_value = False
     self.ps.StartShell()
 
 
