@@ -22,6 +22,7 @@ from absl.testing import absltest
 
 from glazier.lib import constants
 from glazier.lib import log_copy
+from glazier.lib import winpe
 
 from gwinpy.registry import registry
 import mock
@@ -29,9 +30,11 @@ import mock
 
 class LogCopyTest(absltest.TestCase):
 
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
   @mock.patch.object(log_copy.logging, 'FileHandler', autospec=True)
-  def setUp(self, unused_handler):
+  def setUp(self, unused_handler, wpe):
     super(LogCopyTest, self).setUp()
+    wpe.return_value = False
     self.log_file = r'C:\Windows\Logs\Glazier\glazier.log'
     self.lc = log_copy.LogCopy()
     # win32 modules
@@ -59,18 +62,21 @@ class LogCopyTest(absltest.TestCase):
     self.lc.EventLogCopy(self.log_file)
     event_up.assert_called_with(self.lc, self.log_file)
 
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
   @mock.patch.object(log_copy.LogCopy, '_GetLogFileName', autospec=True)
   @mock.patch.object(log_copy.shutil, 'copy', autospec=True)
   @mock.patch.object(log_copy.drive_map.DriveMap, 'UnmapDrive', autospec=True)
   @mock.patch.object(log_copy.drive_map.DriveMap, 'MapDrive', autospec=True)
-  def testShareUpload(self, map_drive, unmap_drive, copy, get_file_name):
+  def testShareUpload(self, map_drive, unmap_drive, copy, get_file_name, wpe):
 
     class TestCredProvider(log_copy.LogCopyCredentials):
 
       def GetUsername(self):
+        wpe.return_value = False
         return 'test_user'
 
       def GetPassword(self):
+        wpe.return_value = False
         return 'test_pass'
 
     log_copy.LogCopyCredentials = TestCredProvider

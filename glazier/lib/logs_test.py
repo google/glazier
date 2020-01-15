@@ -21,14 +21,22 @@ import mock
 
 class LoggingTest(absltest.TestCase):
 
+  @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
+  def testGetLogsPath(self, wpe):
+    # WinPE
+    wpe.return_value = True
+    self.assertEqual(logs.GetLogsPath(), logs.constants.WINPE_LOGS_PATH)
+
+    # Host
+    wpe.return_value = False
+    self.assertEqual(logs.GetLogsPath(), logs.constants.SYS_LOGS_PATH)
+
+  @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(logs.logging, 'FileHandler')
-  def testSetup(self, fh):
-    logs.constants.FLAGS.environment = 'Host'
+  def testSetup(self, fh, wpe):
+    wpe.return_value = False
     logs.Setup()
     fh.assert_called_with('%s\\glazier.log' % logs.constants.SYS_LOGS_PATH)
-    logs.constants.FLAGS.environment = 'WinPE'
-    logs.Setup()
-    fh.assert_called_with('X:\\glazier.log')
     fh.side_effect = IOError
     self.assertRaises(logs.LogError, logs.Setup)
 

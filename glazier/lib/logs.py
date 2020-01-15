@@ -17,6 +17,7 @@
 import logging
 import logging.handlers
 from glazier.lib import constants
+from glazier.lib import winpe
 
 
 EVT_LOG_ID = 'GlazierBuildLog'
@@ -28,7 +29,7 @@ class LogError(Exception):
 
 def GetLogsPath():
   path = constants.SYS_LOGS_PATH
-  if constants.FLAGS.environment == 'WinPE':
+  if winpe.check_winpe():
     path = constants.WINPE_LOGS_PATH
   return path
 
@@ -52,7 +53,7 @@ def Setup():
   fh.setFormatter(formatter)
   fh.setLevel(logging.DEBUG)
 
-  if constants.FLAGS.environment != 'WinPE':
+  if not winpe.check_winpe():
     event_handler = logging.handlers.NTEventLogHandler(EVT_LOG_ID)
     event_handler.setLevel(logging.INFO)
     logger.addHandler(event_handler)
