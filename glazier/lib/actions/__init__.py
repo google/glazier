@@ -45,6 +45,7 @@ DomainJoin = domain.DomainJoin
 DriverWIM = drivers.DriverWIM
 Execute = files.Execute
 ExitWinPE = installer.ExitWinPE
+DeleteTaskList = installer.DeleteTaskList
 Get = files.Get
 GooGetInstall = googet.GooGetInstall
 LogCopy = installer.LogCopy

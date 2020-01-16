@@ -137,6 +137,26 @@ class InstallerTest(absltest.TestCase):
     ])
     copy.return_value.Run.assert_called()
 
+  @mock.patch.object(installer.winpe, 'check_winpe', autospec=True)
+  def testDeleteTaskList(self, wpe):
+    fs = fake_filesystem.FakeFilesystem()
+    installer.open = fake_filesystem.FakeFileOpen(fs)
+    installer.os = fake_filesystem.FakeOsModule(fs)
+    s = installer.DeleteTaskList(None, None)
+
+    # WinPE, file does not exist
+    wpe.return_value = True
+    self.assertEqual(installer.constants.WINPE_TASK_LIST, r'X:\task_list.yaml')
+    self.assertRaises(installer.ActionError, s.Run)
+
+    # Host, file exists, reboot
+    wpe.return_value = False
+    fs.CreateFile(
+        installer.constants.SYS_TASK_LIST,
+        contents='{BUILD: {opt 1: true, opt 2: some value, opt 3: 12345}}\n')
+    with self.assertRaises(installer.RestartEvent):
+      s.Run()
+
   @mock.patch.object(installer.log_copy, 'LogCopy', autospec=True)
   def testLogCopy(self, copy):
     log_file = r'X:\glazier.log'

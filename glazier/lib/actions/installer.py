@@ -21,6 +21,7 @@ from glazier.chooser import chooser
 from glazier.lib import constants
 from glazier.lib import log_copy
 from glazier.lib import stage
+from glazier.lib import winpe
 from glazier.lib.actions import file_system
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
@@ -116,6 +117,23 @@ class ExitWinPE(BaseAction):
     cp.Run()
     raise RestartEvent(
         'Leaving WinPE', timeout=10, task_list_path=constants.SYS_TASK_LIST)
+
+
+class DeleteTaskList(BaseAction):
+  """Delete the tasklist file."""
+
+  def Run(self):
+    tasklist = constants.SYS_TASK_LIST
+    if winpe.check_winpe():
+      tasklist = constants.WINPE_TASK_LIST
+    try:
+      os.remove(tasklist)
+      logging.debug('Successfully deleted task list file %s', tasklist)
+    except OSError as e:
+      raise ActionError('Unable to delete task list file %s. (%s)' %
+                        (tasklist, str(e)))
+    raise RestartEvent('Successfully deleted task list file. Rebooting...',
+                       timeout=10, task_list_path=tasklist)
 
 
 class LogCopy(BaseAction):

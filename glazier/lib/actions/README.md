@@ -94,6 +94,15 @@ Also available as MultiCopyFile for copying larger sets of files.
     *   Arg1[str]: Source file path
     *   Arg2[str]: Destination file path.
 
+### DeleteTaskList
+
+Delete the current environment's (WinPE or Host) task list file. Used for situations where you want to regenerate a new task list from a new server or build root at runtime.
+
+Performs multiple steps in one:
+
+*   Deletes the task list
+*   Reboots the host
+
 #### MultiCopyFile Arguments
 
 *   Format: List
