@@ -28,14 +28,15 @@ class SetTimer(BaseAction):
 
   def Run(self):
     timer = str(self._args[0])
+    key_name = r'%s\%s' % (constants.REG_ROOT, 'Timers')
 
     self._build_info.TimerSet(timer)
-    key_name = 'TIMER_' + timer
-    key_value = str(self._build_info.TimerGet(timer))
+    value_name = 'TIMER_' + timer
+    value_data = str(self._build_info.TimerGet(timer))
     timer_key = ['HKLM',
-                 constants.REG_ROOT,
                  key_name,
-                 key_value,
+                 value_name,
+                 value_data,
                  'REG_SZ']
 
     ra = RegAdd(timer_key, self._build_info)

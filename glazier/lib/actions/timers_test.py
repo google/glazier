@@ -31,10 +31,11 @@ class TimersTest(absltest.TestCase):
     st = timers.SetTimer(args, build_info)
     st.Run()
     build_info.TimerSet.assert_called_with('Timer1')
+    key_name = r'%s\%s' % (timers.constants.REG_ROOT, 'Timers')
 
     # Successfully add registry keys
     args = [
-        'HKLM', r'SOFTWARE\Test', 'TIMER_image_start',
+        'HKLM', key_name, 'TIMER_image_start',
         '2019-11-11 13:33:37.133337',
         'REG_SZ', False
     ]
