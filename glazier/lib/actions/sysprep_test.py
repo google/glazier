@@ -101,7 +101,7 @@ class SysprepTest(absltest.TestCase):
     # Normal Run
     timezone.return_value.TranslateZone.return_value = (
         'New Zealand Standard Time')
-    dhcp.side_effect = iter([None, None, 'Antarctica/McMurdo'])
+    dhcp.side_effect = iter([b'', b'', b'Antarctica/McMurdo'])
     st.Run()
     dhcp.assert_has_calls([
         mock.call(
@@ -126,7 +126,7 @@ class SysprepTest(absltest.TestCase):
     timezone.reset_mock()
     # Failed Mapping
     dhcp.side_effect = None
-    dhcp.return_value = 'Antarctica/NorthPole'
+    dhcp.return_value = b'Antarctica/NorthPole'
     timezone.return_value.TranslateZone.return_value = ''
     st.Run()
     edit.assert_called_with(st, u'Pacific Standard Time')
@@ -135,7 +135,7 @@ class SysprepTest(absltest.TestCase):
         'Antarctica/NorthPole')
     timezone.reset_mock()
     # No Result
-    dhcp.return_value = None
+    dhcp.return_value = b''
     st.Run()
     edit.assert_called_with(st, u'Pacific Standard Time')
     self.assertFalse(timezone.called)
