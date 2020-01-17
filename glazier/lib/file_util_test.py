@@ -34,6 +34,12 @@ class FileUtilTest(absltest.TestCase):
     file_util.CreateDirectories('/tmp/test/path/file.log')
     self.assertTrue(self.filesystem.Exists('/tmp/test/path'))
 
+  def testRemove(self):
+    self.filesystem.CreateFile('/test/file.txt')
+    file_util.Remove('/test/file.txt')
+    self.assertFalse(self.filesystem.Exists('/test/file.txt'))
+    file_util.Remove('/test/file2.txt')  # should succeed silently
+
 
 if __name__ == '__main__':
   absltest.main()

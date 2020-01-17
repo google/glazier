@@ -16,6 +16,7 @@
 
 from absl.testing import absltest
 from pyfakefs import fake_filesystem
+from glazier.lib import file_util
 from glazier.lib.config import files
 import mock
 
@@ -55,6 +56,24 @@ class FilesTest(absltest.TestCase):
     # local
     result = files.Read('/tmp/downloaded2.yaml')
     self.assertEqual(result['data'], 'set2')
+
+  @mock.patch.object(files.file_util, 'Remove', autospec=True)
+  def testRemoveWithoutBackup(self, remove):
+    files.Remove('/test/file/name.yaml', backup=False)
+    remove.assert_called_with('/test/file/name.yaml')
+    # error handling
+    remove.side_effect = file_util.Error('test error')
+    self.assertRaises(
+        files.Error, files.Remove, '/test/file/name.yaml', backup=False)
+
+  @mock.patch.object(files.file_util, 'Move', autospec=True)
+  def testRemoveWithBackup(self, move):
+    files.Remove('/test/file/name.yaml', backup=True)
+    move.assert_called_with('/test/file/name.yaml', '/test/file/name.yaml.bak')
+    # error handling
+    move.side_effect = file_util.Error('test error')
+    self.assertRaises(
+        files.Error, files.Remove, '/test/file/name.yaml', backup=True)
 
   def testYamlReader(self):
     self.filesystem.CreateFile(

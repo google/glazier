@@ -1,3 +1,4 @@
+# python3
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +16,7 @@
 """Functions for interacting with yaml configuration files."""
 
 import re
+from typing import Text
 from glazier.lib import download
 from glazier.lib import file_util
 import yaml
@@ -24,7 +26,29 @@ class Error(Exception):
   pass
 
 
-def Dump(path, data, mode='w'):
+def Remove(path: Text, backup: bool = True):
+  """Remove a config file.
+
+  Args:
+    path: The filesystem path to the file.
+    backup: Whether to make a backup of the file being removed.
+
+  Raises:
+    Error: Failure performing the filesystem operation.
+  """
+  if backup:
+    try:
+      file_util.Move(path, path + '.bak')
+    except file_util.Error as e:
+      raise Error('Failed to create backup file (%s)' % str(e))
+  else:
+    try:
+      file_util.Remove(path)
+    except file_util.Error as e:
+      raise Error('Failed to remove file (%s)' % str(e))
+
+
+def Dump(path: Text, data: Text, mode: Text = 'w'):
   """Write a config file containing some data.
 
   Args:
@@ -47,7 +71,7 @@ def Dump(path, data, mode='w'):
     raise Error('Could not replace config file. (%s)' % str(e))
 
 
-def Read(path):
+def Read(path: Text):
   """Read a config file at path and return any data it contains.
 
   Will attempt to download files from remote repositories prior to reading.
@@ -70,7 +94,7 @@ def Read(path):
   return _YamlReader(path)
 
 
-def _YamlReader(path):
+def _YamlReader(path: Text) -> Text:
   """Read a configuration file and return the contents.
 
   Can be overloaded to read configs from different sources.

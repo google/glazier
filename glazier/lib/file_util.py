@@ -56,8 +56,23 @@ def Move(src: Text, dst: Text):
     Error: Failure moving the file.
   """
   try:
-    if os.path.exists(dst):
-      os.remove(dst)
+    Remove(dst)
     os.rename(src, dst)
   except OSError as e:
     raise Error('Failure moving file from %s to %s. (%s)' % (src, dst, str(e)))
+
+
+def Remove(path: Text):
+  """Remove a file.
+
+  Args:
+    path: The full file path to the file to be removed.
+
+  Raises:
+    Error: Failure removing the file.
+  """
+  try:
+    if os.path.exists(path):
+      os.remove(path)
+  except OSError as e:
+    raise Error('Failure removing file %s. (%s)' % (path, str(e)))
