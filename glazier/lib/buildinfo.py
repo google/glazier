@@ -44,6 +44,7 @@ class BuildInfo(object):
     self._active_conf_path = []
     self._chooser_pending = []
     self._chooser_responses = {}
+    self._glazier_server = ''
     self._hw_info = None
     self._net_info = None
     self._release_info = None
@@ -89,16 +90,20 @@ class BuildInfo(object):
     path = '%s/%s/' % (server, path)
     return path
 
-  def ConfigServer(self):
-    """Determine the config_server if it exists.
+  def ConfigServer(self, set_to: Text = '') -> Text:
+    """Get (or set) the config server address.
+
+    Args:
+      set_to: Update the internal server address.
 
     Returns:
       The config server without any trailing slashes.
     """
-    server = FLAGS.config_server
-    if server:
-      server = server.rstrip('/')
-    return server
+    if set_to:
+      self._glazier_server = set_to
+    if not self._glazier_server:
+      self._glazier_server = FLAGS.config_server
+    return self._glazier_server.rstrip('/')
 
   @functools.lru_cache()
   def Release(self) -> Optional[Text]:
