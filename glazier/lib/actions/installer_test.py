@@ -16,6 +16,7 @@
 
 from absl.testing import absltest
 from pyfakefs import fake_filesystem
+from glazier.lib import buildinfo
 from glazier.lib import stage
 from glazier.lib.actions import installer
 import mock
@@ -23,7 +24,7 @@ import mock
 
 class InstallerTest(absltest.TestCase):
 
-  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
   def testAddChoice(self, build_info):
     choice = {
         'type':
@@ -98,7 +99,7 @@ class InstallerTest(absltest.TestCase):
     a = installer.AddChoice(False, None)
     self.assertRaises(installer.ValidationError, a.Validate)
 
-  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
   def testBuildInfoDump(self, build_info):
     build_info.CachePath.return_value = r'C:\Cache\Dir'
     d = installer.BuildInfoDump(None, build_info)
@@ -106,7 +107,7 @@ class InstallerTest(absltest.TestCase):
     build_info.Serialize.assert_called_with(r'C:\Cache\Dir/build_info.yaml')
 
   @mock.patch.object(installer.registry, 'Registry', autospec=True)
-  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
   def testBuildInfoSave(self, build_info, reg):
     fs = fake_filesystem.FakeFilesystem()
     installer.open = fake_filesystem.FakeFileOpen(fs)
@@ -124,6 +125,14 @@ class InstallerTest(absltest.TestCase):
     ],
                                                   any_order=True)
     s.Run()
+
+  def testChangeServer(self):
+    build_info = buildinfo.BuildInfo()
+    d = installer.ChangeServer(
+        ['http://new-server.example.com', '/new/conf/root'], build_info)
+    d.Run()
+    self.assertEqual(build_info.ConfigServer(), 'http://new-server.example.com')
+    self.assertEqual(build_info.ActiveConfigPath(), '/new/conf/root')
 
   @mock.patch.object(installer.file_system, 'CopyFile', autospec=True)
   def testExitWinPE(self, copy):
@@ -190,7 +199,7 @@ class InstallerTest(absltest.TestCase):
     s.Validate()
 
   @mock.patch.object(installer.chooser, 'Chooser', autospec=True)
-  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
   def testShowChooser(self, build_info, chooser):
     c = installer.ShowChooser(None, build_info)
     c.Run()

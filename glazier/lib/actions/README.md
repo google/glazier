@@ -65,6 +65,20 @@ BuildInfoSave.
 
 Load BuildInfo data from disk and store permanently to the registry.
 
+### ChangeServer
+
+Change the active Glazier config server at runtime.
+
+#### ChangeServer Arguments
+
+*   Format: List
+    *   Arg1[str]: The config server to override the config_server flag.
+    *   Arg2[str]: The config root path to override the config_root_path flag.
+
+#### Examples
+
+    ChangeServer: ['https://new-server.example.com', '/new/config/path']
+
 ### CopyDir
 
 Copy directories from source to destination.

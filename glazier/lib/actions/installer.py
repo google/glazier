@@ -104,6 +104,20 @@ class BuildInfoSave(BaseAction):
       logging.debug('%s does not exist - skipping processing.', path)
 
 
+class ChangeServer(BaseAction):
+  """Move to a different Glazier server."""
+
+  def _Setup(self):
+    self._realtime = True
+
+  def Run(self):
+    self._build_info.ConfigServer(set_to=str(self._args[0]))
+    self._build_info.ActiveConfigPath(set_to=str(self._args[1]))
+
+  def Validate(self):
+    self._ListOfStringsValidator(self._args, 2)
+
+
 class ExitWinPE(BaseAction):
   """Exit the WinPE environment to start host configuration."""
 
