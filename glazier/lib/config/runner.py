@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Manages the execution of the local host task list."""
 
 from __future__ import print_function
@@ -46,6 +45,8 @@ class ConfigRunner(base.ConfigBase):
     tasks.pop(0)
     try:
       files.Dump(self._task_list_path, tasks, mode='w')
+      if not tasks:
+        files.Remove(self._task_list_path)
     except files.Error as e:
       raise ConfigRunnerError(e)
 

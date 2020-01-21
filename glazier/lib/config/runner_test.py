@@ -38,9 +38,10 @@ class ConfigRunnerTest(absltest.TestCase):
     self.cr = runner.ConfigRunner(self.buildinfo)
     self.cr._task_list_path = '/tmp/task_list.yaml'
 
+  @mock.patch.object(runner.files, 'Remove', autospec=True)
   @mock.patch.object(runner.base.actions, 'pull', autospec=True)
   @mock.patch.object(runner.files, 'Dump', autospec=True)
-  def testIteration(self, dump, unused_get):
+  def testIteration(self, dump, pull, remove):
     conf = [{'data': {'pull': 'val1'}, 'path': ['path1']},
             {'data': {'pull': 'val2'}, 'path': ['path2']},
             {'data': {'pull': 'val3'}, 'path': ['path3']}]
@@ -50,6 +51,8 @@ class ConfigRunnerTest(absltest.TestCase):
         mock.call(self.cr._task_list_path, conf[2:], mode='w'),
         mock.call(self.cr._task_list_path, [], mode='w')
     ])
+    pull.assert_has_calls([])
+    self.assertTrue(remove.called)
 
   @mock.patch.object(runner.files, 'Dump', autospec=True)
   def testPopTask(self, dump):
@@ -58,6 +61,13 @@ class ConfigRunnerTest(absltest.TestCase):
     dump.side_effect = runner.files.Error
     with self.assertRaises(runner.ConfigRunnerError):
       self.cr._PopTask([1, 2])
+
+  @mock.patch.object(runner.files, 'Remove', autospec=True)
+  @mock.patch.object(runner.files, 'Dump', autospec=True)
+  def testPopLastTask(self, dump, remove):
+    self.cr._PopTask([1])
+    dump.assert_called_with('/tmp/task_list.yaml', [], mode='w')
+    remove.assert_called_with('/tmp/task_list.yaml')
 
   @mock.patch.object(runner.power, 'Restart', autospec=True)
   @mock.patch.object(runner.ConfigRunner, '_ProcessAction', autospec=True)
@@ -97,32 +107,8 @@ class ConfigRunnerTest(absltest.TestCase):
     shutdown.assert_called_with(10, 'Some other reason')
     self.assertFalse(pop.called)
 
-
   @mock.patch.object(runner.base.actions, 'SetTimer', autospec=True)
-  @mock.patch.object(runner.files, 'Read', autospec=True)
-  @mock.patch.object(runner.files, 'Dump', autospec=True)
-  def testProcessActions(self, dump, reader, set_timer):
-    reader.return_value = [{'data': {'SetTimer': ['TestTimer']},
-                            'path': ['/autobuild']}]
-    # missing file
-    reader.side_effect = runner.files.Error
-    self.assertRaises(runner.ConfigRunnerError, self.cr.Start,
-                      '/tmp/path/missing.yaml')
-    reader.side_effect = None
-    # valid command
-    self.cr.Start('/tmp/path/tasks.yaml')
-    reader.assert_called_with('/tmp/path/tasks.yaml')
-    set_timer.assert_called_with(build_info=self.buildinfo, args=['TestTimer'])
-    self.assertTrue(set_timer.return_value.Run.called)
-    self.assertTrue(dump.called)
-    # invalid command
-    self.assertRaises(runner.ConfigRunnerError, self.cr._ProcessTasks, [{
-        'data': {
-            'BadSetTimer': ['Timer1']
-        },
-        'path': ['/autobuild']
-    }])
-    # action error
+  def testProcessWithActionError(self, set_timer):
     set_timer.side_effect = runner.base.actions.ActionError
     self.assertRaises(runner.ConfigRunnerError, self.cr._ProcessTasks, [{
         'data': {
@@ -130,6 +116,38 @@ class ConfigRunnerTest(absltest.TestCase):
         },
         'path': ['/autobuild']
     }])
+
+  def testProcessWithInvalidCommand(self):
+    self.assertRaises(runner.ConfigRunnerError, self.cr._ProcessTasks, [{
+        'data': {
+            'BadSetTimer': ['Timer1']
+        },
+        'path': ['/autobuild']
+    }])
+
+  @mock.patch.object(runner.files, 'Read', autospec=True)
+  def testStartWithMissingFile(self, reader):
+    reader.side_effect = runner.files.Error
+    self.assertRaises(runner.ConfigRunnerError, self.cr.Start,
+                      '/tmp/path/missing.yaml')
+
+  @mock.patch.object(runner.base.actions, 'SetTimer', autospec=True)
+  @mock.patch.object(runner.files, 'Read', autospec=True)
+  @mock.patch.object(runner.files, 'Remove', autospec=True)
+  @mock.patch.object(runner.files, 'Dump', autospec=True)
+  def testStartWithActions(self, dump, remove, reader, set_timer):
+    reader.return_value = [{
+        'data': {
+            'SetTimer': ['TestTimer']
+        },
+        'path': ['/autobuild']
+    }]
+    self.cr.Start('/tmp/path/tasks.yaml')
+    reader.assert_called_with('/tmp/path/tasks.yaml')
+    set_timer.assert_called_with(build_info=self.buildinfo, args=['TestTimer'])
+    self.assertTrue(set_timer.return_value.Run.called)
+    self.assertTrue(dump.called)
+    self.assertTrue(remove.called)
 
   @mock.patch.object(runner.download.Download, 'CheckUrl', autospec=True)
   def testVerifyUrls(self, dl):
