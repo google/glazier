@@ -69,6 +69,12 @@ Load BuildInfo data from disk and store permanently to the registry.
 
 Change the active Glazier config server at runtime.
 
+ChangeServer is a unique action in the sense that it alters the behavior of the
+configuration builder in real time. This action must come (logically) last in
+the input config; once reached, the config builder effectively restarts immediately
+with the new server address and root. No subsequent tasks in the original
+location will be handled.
+
 #### ChangeServer Arguments
 
 *   Format: List
@@ -94,7 +100,6 @@ Copy directories from source to destination.
 
     CopyDir: ['X:\Glazier', 'C:\Glazier\Old']
     CopyDir: ['X:\Glazier', 'C:\Glazier\Old', true]
-
 
 ### CopyFile/MultiCopyFile
 
@@ -252,14 +257,17 @@ Supports multiple packages via nested list structure.
 
 *   Format: List
     *   Arg1[str]: The first GooGet package to install
-      *   ArgA[str]: GooGet package name
-      *   ArgB[list]: All other arguments to googet.exe. This includes repo URLs, -reinstall, -redownload, etc.
-          * If the % character is used in ArgB, it will be replaced for the current build branch, taken from glazier/lib/buildinfo.
-      *   ArgC[str]: googet.exe location (optional)
-      *   ArgD[int]: Installation retry attemps (optional, defaults to 5)
-      *   ArgE[int]: Installation retry sleep interval in seconds (optional, defaults to 30)
+        *   ArgA[str]: GooGet package name
+        *   ArgB[list]: All other arguments to googet.exe. This includes repo
+            URLs, -reinstall, -redownload, etc.
+            *   If the % character is used in ArgB, it will be replaced for the
+                current build branch, taken from glazier/lib/buildinfo.
+        *   ArgC[str]: googet.exe location (optional)
+        *   ArgD[int]: Installation retry attemps (optional, defaults to 5)
+        *   ArgE[int]: Installation retry sleep interval in seconds (optional,
+            defaults to 30)
     *   Arg2[str]: The second GooGet package to install (optional)
-    * ...
+    *   ...
 
 #### Examples
 
@@ -356,8 +364,8 @@ Also available as MultiRegAdd for creating larger sets of registry keys.
         *   ArgD([str] or [int]: Key value
         *   ArgE[str]: Key type (REG_SZ or REG_DWORD)
         *   ArgF[bool]: Use 64bit Registry (Optional)
-    *  Arg2[list]: Second key to add (optional)
-    *  ...
+    *   Arg2[list]: Second key to add (optional)
+    *   ...
 
 #### Examples
 
@@ -370,6 +378,7 @@ Also available as MultiRegAdd for creating larger sets of registry keys.
 ### RegDel/MultiRegDel
 
 #### RegDel Arguments
+
 Delete a registry key.
 
 *   Format: List
@@ -386,8 +395,8 @@ Delete a registry key.
         *   ArgB[str]: Key path
         *   ArgC[str]: Key name
         *   ArgD[bool]: Use 64bit Registry (Optional)
-    *  Arg2[list]: Second key to add (optional)
-    *  ...
+    *   Arg2[list]: Second key to add (optional)
+    *   ...
 
 #### Examples
 

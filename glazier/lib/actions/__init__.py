@@ -71,6 +71,7 @@ ActionError = base.ActionError
 ValidationError = base.ValidationError
 
 RestartEvent = base.RestartEvent
+ServerChangeEvent = base.ServerChangeEvent
 ShutdownEvent = base.ShutdownEvent
 
 # Legacy naming

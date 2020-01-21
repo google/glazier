@@ -32,6 +32,8 @@ class ValidationError(Exception):
 # Event Types
 #
 
+# pylint: disable=g-bad-exception-name
+
 
 class PowerEvent(Exception):
 
@@ -51,7 +53,11 @@ class RestartEvent(PowerEvent):
 
 
 class ShutdownEvent(PowerEvent):
-  """Action reuqesting a host shutdown."""
+  """Action requesting a host shutdown."""
+
+
+class ServerChangeEvent(Exception):
+  """Action indicating a config server change."""
 
 
 class BaseAction(object):

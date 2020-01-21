@@ -132,7 +132,7 @@ class InstallerTest(absltest.TestCase):
     build_info = buildinfo.BuildInfo()
     d = installer.ChangeServer(
         ['http://new-server.example.com', '/new/conf/root'], build_info)
-    d.Run()
+    self.assertRaises(installer.ServerChangeEvent, d.Run)
     self.assertEqual(build_info.ConfigServer(), 'http://new-server.example.com')
     self.assertEqual(build_info.ActiveConfigPath(), '/new/conf/root')
 

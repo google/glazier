@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tests for glazier.lib.config.builder."""
 
 from absl.testing import absltest
+from glazier.lib import actions
 from glazier.lib import buildinfo
 from glazier.lib.config import builder
+from glazier.lib.config import files
 import mock
 
 
@@ -52,20 +53,14 @@ class ConfigBuilderTest(absltest.TestCase):
     self.assertFalse(self.cb._MatchPin(pins))
     # Inverse miss.
     bpm.side_effect = iter([True, False])
-    pins = {
-        'computer_model': ['!VMWare Virtual Platform'],
-        'os_code': ['win8']
-    }
+    pins = {'computer_model': ['!VMWare Virtual Platform'], 'os_code': ['win8']}
     self.assertFalse(self.cb._MatchPin(pins))
     # Empty set.
     pins = {}
     self.assertTrue(self.cb._MatchPin(pins))
     # Inverse miss + direct mismatch.
     bpm.side_effect = iter([False, False])
-    pins = {
-        'computer_model': ['VMWare Virtual Platform'],
-        'os_code': ['win8']
-    }
+    pins = {'computer_model': ['VMWare Virtual Platform'], 'os_code': ['win8']}
     self.assertFalse(self.cb._MatchPin(pins))
     # Error
     bpm.side_effect = buildinfo.Error
@@ -81,6 +76,35 @@ class ConfigBuilderTest(absltest.TestCase):
     self.cb._StoreControls(config, {})
     self.assertFalse(process.called)
     self.assertEqual(self.cb._task_list[0]['data'], config)
+
+  @mock.patch.object(builder.ConfigBuilder, '_Start', autospec=True)
+  @mock.patch.object(files, 'Dump', autospec=True)
+  def testStartWithRestart(self, dump, start):
+    start.side_effect = iter([actions.ServerChangeEvent('test'), None])
+    self.cb.Start('/task/list/path.yaml', '/root1')
+    start.assert_has_calls([
+        mock.call(self.cb, '/root1', 'build.yaml'),
+        mock.call(self.cb, '', 'build.yaml'),
+    ])
+    dump.assert_called_with('/task/list/path.yaml', [], mode='a')
+
+  @mock.patch.object(builder.ConfigBuilder, '_StoreControls', autospec=True)
+  @mock.patch.object(builder.download, 'PathCompile', autospec=True)
+  @mock.patch.object(builder.files, 'Read', autospec=True)
+  def testStartWithServerChange(self, read, path, store):
+    path.return_value = '/'
+    read.return_value = {
+        'controls': [{
+            'ServerChangeEvent': ['https://glazier.example.com', '/']
+        }]
+    }
+    store.side_effect = iter([actions.ServerChangeEvent('test')])
+    self.assertRaises(actions.ServerChangeEvent, self.cb._Start, '/task/path/',
+                      'list.yaml')
+    self.assertEqual(self.cb._task_list[0]['data']['SetTimer'],
+                     ['start_/task/path_list.yaml'])
+    self.assertEqual(self.cb._task_list[1]['data']['SetTimer'],
+                     ['stop_/task/path_list.yaml'])
 
 
 if __name__ == '__main__':

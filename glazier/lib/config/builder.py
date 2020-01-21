@@ -75,7 +75,12 @@ class ConfigBuilder(base.ConfigBase):
       in_file: The root configuration file name.
     """
     self._task_list = []
-    self._Start(in_path, in_file)
+    while True:
+      try:
+        self._Start(in_path, in_file)
+        break
+      except actions.ServerChangeEvent:
+        in_path = ''  # restart with a fresh path
     try:
       files.Dump(out_file, self._task_list, mode='a')
     except files.Error as e:
@@ -95,19 +100,29 @@ class ConfigBuilder(base.ConfigBase):
     except (files.Error, buildinfo.Error) as e:
       raise ConfigBuilderError(e)
     timer_start = 'start_{}_{}'.format(conf_path.rstrip('/'), conf_file)
+    active_path = copy.deepcopy(self._build_info.ActiveConfigPath())
     self._task_list.append({
-        'path': copy.deepcopy(self._build_info.ActiveConfigPath()),
-        'data': {'SetTimer': [timer_start]}
+        'path': active_path,
+        'data': {
+            'SetTimer': [timer_start]
+        }
     })
     controls = yaml_config['controls']
-    for control in controls:
-      if 'pin' not in control or self._MatchPin(control['pin']):
-        self._StoreControls(control, yaml_config.get('templates'))
-    timer_stop = 'stop_{}_{}'.format(conf_path.rstrip('/'), conf_file)
-    self._task_list.append({
-        'path': copy.deepcopy(self._build_info.ActiveConfigPath()),
-        'data': {'SetTimer': [timer_stop]}
-    })
+    try:
+      for control in controls:
+        if 'pin' not in control or self._MatchPin(control['pin']):
+          self._StoreControls(control, yaml_config.get('templates'))
+    except actions.ServerChangeEvent as e:
+      raise
+    finally:
+      # close out any timers before raising a server change
+      timer_stop = 'stop_{}_{}'.format(conf_path.rstrip('/'), conf_file)
+      self._task_list.append({
+          'path': active_path,
+          'data': {
+              'SetTimer': [timer_stop]
+          }
+      })
     self._build_info.ActiveConfigPath(pop=True)
 
   def _MatchPin(self, pins):

@@ -25,6 +25,7 @@ from glazier.lib.actions import file_system
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import RestartEvent
+from glazier.lib.actions.base import ServerChangeEvent
 from glazier.lib.actions.base import ValidationError
 from gwinpy.registry import registry
 import yaml
@@ -115,6 +116,7 @@ class ChangeServer(BaseAction):
   def Run(self):
     self._build_info.ConfigServer(set_to=str(self._args[0]))
     self._build_info.ActiveConfigPath(set_to=str(self._args[1]))
+    raise ServerChangeEvent('Action triggering server change.')
 
   def Validate(self):
     self._ListOfStringsValidator(self._args, 2)
