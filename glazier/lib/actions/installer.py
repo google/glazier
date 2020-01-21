@@ -86,8 +86,10 @@ class BuildInfoSave(BaseAction):
       input_keys: A dictionary of key/value pairs to be added to the registry.
     """
     reg = registry.Registry(root_key='HKLM')
-    reg_root = constants.REG_ROOT
     for registry_key in input_keys:
+      reg_root = constants.REG_ROOT
+      if 'TIMER_' in registry_key:
+        reg_root = r'%s\%s' % (constants.REG_ROOT, 'Timers')
       registry_value = input_keys[registry_key]
       reg.SetKeyValue(reg_root, registry_key, registry_value)
       logging.debug('Created registry value named %s with value %s.',

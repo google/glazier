@@ -112,15 +112,17 @@ class InstallerTest(absltest.TestCase):
     fs = fake_filesystem.FakeFilesystem()
     installer.open = fake_filesystem.FakeFileOpen(fs)
     installer.os = fake_filesystem.FakeOsModule(fs)
+    timer_root = r'%s\%s' % (installer.constants.REG_ROOT, 'Timers')
     fs.CreateFile(
         '/tmp/build_info.yaml',
-        contents='{BUILD: {opt 1: true, opt 2: some value, opt 3: 12345}}\n')
+        contents=
+        '{BUILD: {opt 1: true, TIMER_opt 2: some value, opt 3: 12345}}\n')
     build_info.CachePath.return_value = '/tmp'
     s = installer.BuildInfoSave(None, build_info)
     s.Run()
     reg.return_value.SetKeyValue.assert_has_calls([
         mock.call(installer.constants.REG_ROOT, 'opt 1', True),
-        mock.call(installer.constants.REG_ROOT, 'opt 2', 'some value'),
+        mock.call(timer_root, 'TIMER_opt 2', 'some value'),
         mock.call(installer.constants.REG_ROOT, 'opt 3', 12345),
     ],
                                                   any_order=True)
