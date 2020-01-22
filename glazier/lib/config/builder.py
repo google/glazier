@@ -183,6 +183,7 @@ class ConfigBuilder(base.ConfigBase):
           self._ProcessAction(element, control[element])
         else:
           self._task_list.append({
+              'server': copy.deepcopy(self._build_info.ConfigServer()),
               'path': copy.deepcopy(self._build_info.ActiveConfigPath()),
               'data': {element: control[element]}
           })

@@ -66,8 +66,9 @@ class ConfigRunner(base.ConfigBase):
           raise ConfigRunnerError('verify_urls failed for url %s' % url)
 
     while tasks:
-      entry = tasks[0]['data']
       self._build_info.ActiveConfigPath(set_to=tasks[0]['path'])
+      self._build_info.ConfigServer(set_to=tasks[0]['server'])
+      entry = tasks[0]['data']
       for element in entry:
         if element == 'policy':
           for line in entry['policy']:

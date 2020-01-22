@@ -42,9 +42,25 @@ class ConfigRunnerTest(absltest.TestCase):
   @mock.patch.object(runner.base.actions, 'pull', autospec=True)
   @mock.patch.object(runner.files, 'Dump', autospec=True)
   def testIteration(self, dump, pull, remove):
-    conf = [{'data': {'pull': 'val1'}, 'path': ['path1']},
-            {'data': {'pull': 'val2'}, 'path': ['path2']},
-            {'data': {'pull': 'val3'}, 'path': ['path3']}]
+    conf = [{
+        'data': {
+            'pull': 'val1'
+        },
+        'path': ['/path1'],
+        'server': 'https://glazier.example.com'
+    }, {
+        'data': {
+            'pull': 'val2'
+        },
+        'path': ['/path2'],
+        'server': 'https://glazier.example.com'
+    }, {
+        'data': {
+            'pull': 'val3'
+        },
+        'path': ['/path3'],
+        'server': 'https://glazier.example.com'
+    }]
     self.cr._ProcessTasks(conf)
     dump.assert_has_calls([
         mock.call(self.cr._task_list_path, conf[1:], mode='w'),
@@ -73,7 +89,13 @@ class ConfigRunnerTest(absltest.TestCase):
   @mock.patch.object(runner.ConfigRunner, '_ProcessAction', autospec=True)
   @mock.patch.object(runner.ConfigRunner, '_PopTask', autospec=True)
   def testRestartEvents(self, pop, action, restart):
-    conf = [{'data': {'Shutdown': ['25', 'Reason']}, 'path': ['path1']}]
+    conf = [{
+        'data': {
+            'Shutdown': ['25', 'Reason']
+        },
+        'path': ['path1'],
+        'server': 'https://glazier.example.com'
+    }]
     event = runner.base.actions.RestartEvent('Some reason', timeout=25)
     action.side_effect = event
     self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
@@ -92,7 +114,13 @@ class ConfigRunnerTest(absltest.TestCase):
   @mock.patch.object(runner.ConfigRunner, '_ProcessAction', autospec=True)
   @mock.patch.object(runner.ConfigRunner, '_PopTask', autospec=True)
   def testShutdownEvents(self, pop, action, shutdown):
-    conf = [{'data': {'Restart': ['25', 'Reason']}, 'path': ['path1']}]
+    conf = [{
+        'data': {
+            'Restart': ['25', 'Reason']
+        },
+        'path': ['path1'],
+        'server': 'https://glazier.example.com'
+    }]
     event = runner.base.actions.ShutdownEvent('Some reason', timeout=25)
     action.side_effect = event
     self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
@@ -114,7 +142,8 @@ class ConfigRunnerTest(absltest.TestCase):
         'data': {
             'SetTimer': ['Timer1']
         },
-        'path': ['/autobuild']
+        'path': ['/autobuild'],
+        'server': 'https://glazier.example.com'
     }])
 
   def testProcessWithInvalidCommand(self):
@@ -122,7 +151,8 @@ class ConfigRunnerTest(absltest.TestCase):
         'data': {
             'BadSetTimer': ['Timer1']
         },
-        'path': ['/autobuild']
+        'path': ['/autobuild'],
+        'server': 'https://glazier.example.com'
     }])
 
   @mock.patch.object(runner.files, 'Read', autospec=True)
@@ -140,7 +170,8 @@ class ConfigRunnerTest(absltest.TestCase):
         'data': {
             'SetTimer': ['TestTimer']
         },
-        'path': ['/autobuild']
+        'path': ['/autobuild'],
+        'server': 'https://glazier.example.com'
     }]
     self.cr.Start('/tmp/path/tasks.yaml')
     reader.assert_called_with('/tmp/path/tasks.yaml')
