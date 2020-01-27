@@ -49,6 +49,9 @@ WINPE_GOOGETROOT = '%s\\ProgramData\\GooGet' % WINPE_ROOT
 WINPE_KEY = r'SOFTWARE\Microsoft\Windows NT\CurrentVersion'
 WINPE_VALUE = 'EditionID'
 
+USB_BOOT_VOLUME = 'D:'
+USB_WIM = '%s\\sources\\boot.wim' % USB_BOOT_VOLUME
+
 USE_REG_64 = True
 
 ## Flags
