@@ -62,10 +62,16 @@ class SetUnattendTimeZone(BaseAction):
               'Attempting to get timezone from interface with IP %s and MAC %s',
               intf.ip_address, intf.mac_address)
           for dhcp_server in servers:
-            from_dhcp = dhcp.GetDhcpOption(
+            dhcp_response = dhcp.GetDhcpOption(
                 client_addr=intf.ip_address,
                 client_mac=intf.mac_address,
-                option=101, server_addr=dhcp_server).decode('UTF-8')
+                option=101, server_addr=dhcp_server)
+            try:
+              from_dhcp = dhcp_response.decode('utf-8')
+            except AttributeError:
+              logging.warning('could not decode dhcp response %s',
+                              dhcp_response)
+              from_dhcp = None
             logging.debug('DHCP server %s returned: %s', dhcp_server, from_dhcp)
             if from_dhcp:
               break
