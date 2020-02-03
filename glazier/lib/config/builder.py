@@ -101,11 +101,13 @@ class ConfigBuilder(base.ConfigBase):
       raise ConfigBuilderError(e)
     timer_start = 'start_{}_{}'.format(conf_path.rstrip('/'), conf_file)
     active_path = copy.deepcopy(self._build_info.ActiveConfigPath())
+    config_server = copy.deepcopy(self._build_info.ConfigServer())
     self._task_list.append({
         'path': active_path,
         'data': {
             'SetTimer': [timer_start]
-        }
+        },
+        'server': config_server
     })
     controls = yaml_config['controls']
     try:
@@ -121,7 +123,8 @@ class ConfigBuilder(base.ConfigBase):
           'path': active_path,
           'data': {
               'SetTimer': [timer_stop]
-          }
+          },
+          'server': config_server
       })
     self._build_info.ActiveConfigPath(pop=True)
 
@@ -183,9 +186,9 @@ class ConfigBuilder(base.ConfigBase):
           self._ProcessAction(element, control[element])
         else:
           self._task_list.append({
-              'server': copy.deepcopy(self._build_info.ConfigServer()),
               'path': copy.deepcopy(self._build_info.ActiveConfigPath()),
-              'data': {element: control[element]}
+              'data': {element: control[element]},
+              'server': copy.deepcopy(self._build_info.ConfigServer())
           })
       else:
         raise ConfigBuilderError('Unknown imaging action: %s' % str(element))
