@@ -146,6 +146,12 @@ class BuildInfoTest(absltest.TestCase):
     result = self.buildinfo.ConfigServer()
     self.assertEqual(result, return_value)
 
+  @mock.patch.object(buildinfo.identifier.ImageID, 'check_id', autospec=True)
+  def test_image_id(self, checkid):
+    checkid.return_value = '1A19SEL90000R90DZN7A-1234567'
+    result = self.buildinfo.ImageID()
+    self.assertEqual(result, '1A19SEL90000R90DZN7A-1234567')
+
   def testBuildPinMatch(self):
     with mock.patch.object(
         buildinfo.BuildInfo, 'ComputerModel', autospec=True) as mock_mod:

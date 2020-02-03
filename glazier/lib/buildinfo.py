@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Optional, Text
 
 from absl import flags
 from glazier.lib import constants
+from glazier.lib import identifier
 from glazier.lib import timers
 from glazier.lib.config import files
 from glazier.lib.spec import spec
@@ -104,6 +105,15 @@ class BuildInfo(object):
     if not self._glazier_server:
       self._glazier_server = FLAGS.config_server
     return self._glazier_server.rstrip('/')
+
+  def ImageID(self) -> Text:
+    """Optionally generate a unique image identifier.
+
+    Returns:
+      The image identifier as a string.
+    """
+    self._identifier = identifier.ImageID()
+    return self._identifier.check_id()
 
   @functools.lru_cache()
   def Release(self) -> Optional[Text]:
@@ -422,6 +432,7 @@ class BuildInfo(object):
             'encryption_type': str(self.EncryptionLevel()),
             'FQDN': str(self.Fqdn()),
             'isLaptop': str(self.IsLaptop()),
+            'ImageID': str(self.ImageID()),
             'Manufacturer': str(self.ComputerManufacturer()),
             'Model': str(self.ComputerModel()),
             'OS': str(self.ComputerOs()),

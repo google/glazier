@@ -20,10 +20,10 @@ from __future__ import print_function
 import logging
 import uuid
 
-from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib import winpe
 from gwinpy.registry import registry
+from gwinpy.wmi import hw_info
 
 
 class Error(Exception):
@@ -34,15 +34,7 @@ class ImageID(object):
   """Generate, log, and manage the unique image identifier."""
 
   def __init__(self):
-    self._build_info = buildinfo.BuildInfo()
-
-  def _generate_uuid(self):
-    """Generate a uuid.
-
-    Returns:
-      The uuid as a string.
-    """
-    return str(uuid.uuid4())[:7]
+    self._hw_info = hw_info.HWInfo()
 
   def _generate_id(self):
     """Generate the image identifier.
@@ -51,23 +43,10 @@ class ImageID(object):
       The image identifier as a string.
     """
     return ('%s-%s' %
-            (str(self._build_info.ComputerSerial()), self._generate_uuid()))
+            (str(self._hw_info.BiosSerial()), str(uuid.uuid4())[:7]))
 
-  def _need_id(self):
-    """Determine whether we need to generate a new image identifier.
-
-    Returns:
-      True if a image identifier is needed, otherwise false.
-    """
-    if winpe.check_winpe() and self.get_id() is None:
-      return True
-    else:
-      return False
-
-  def set_id(self):
+  def _set_id(self):
     """Set the image id registry key."""
-    if not self._need_id():
-      return
     image_id = self._generate_id()
     try:
       reg = registry.Registry(root_key='HKLM')
@@ -78,10 +57,11 @@ class ImageID(object):
           key_type='REG_SZ',
           use_64bit=constants.USE_REG_64)
       logging.info('Image identifier written to registry (%s).', image_id)
+      return image_id
     except registry.RegistryError as e:
       raise Error(str(e))
 
-  def get_id(self):
+  def _get_id(self):
     """Get the image ID from registry.
 
     Returns:
@@ -100,3 +80,18 @@ class ImageID(object):
       logging.warning('Image identifier not found in registry (%s).', str(e))
     return None
 
+  def check_id(self):
+    """Call set_id if image identifier is not set and in WinPE.
+
+    Returns:
+      Image identifier as a string if already set.
+
+    Raises:
+      Error: Could not determine image identifier.
+    """
+    image_id = self._get_id()
+    if image_id:
+      return image_id
+    if winpe.check_winpe():
+      return self._set_id()
+    raise Error('Could not determine image identifier.')
