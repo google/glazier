@@ -16,7 +16,7 @@
 """Functions for interacting with yaml configuration files."""
 
 import re
-from typing import Text
+from typing import Any, Text
 from glazier.lib import download
 from glazier.lib import file_util
 import yaml
@@ -48,7 +48,7 @@ def Remove(path: Text, backup: bool = True):
       raise Error('Failed to remove file (%s)' % str(e))
 
 
-def Dump(path: Text, data: Text, mode: Text = 'w'):
+def Dump(path: Text, data: Any, mode: Text = 'w'):
   """Write a config file containing some data.
 
   Args:
