@@ -69,5 +69,7 @@ flags.DEFINE_string('ntp_server', 'time.google.com',
                     'Server to use for synchronizing the local system time.')
 flags.DEFINE_list(
     'verify_urls',
-    [],
+    [
+        'https://www.catalog.update.microsoft.com/Home.aspx',
+    ],
     'Comma-separated list of URLs to verify are reachable at start')
