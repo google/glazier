@@ -17,7 +17,9 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+
 import logging
+from typing import Optional, Text
 import uuid
 
 from glazier.lib import constants
@@ -36,7 +38,7 @@ class ImageID(object):
   def __init__(self):
     self._hw_info = hw_info.HWInfo()
 
-  def _generate_id(self):
+  def _generate_id(self) -> Text:
     """Generate the image identifier.
 
     Returns:
@@ -45,7 +47,7 @@ class ImageID(object):
     return ('%s-%s' %
             (str(self._hw_info.BiosSerial()), str(uuid.uuid4())[:7]))
 
-  def _set_id(self):
+  def _set_id(self) -> Text:
     """Set the image id registry key."""
     image_id = self._generate_id()
     try:
@@ -61,7 +63,7 @@ class ImageID(object):
     except registry.RegistryError as e:
       raise Error(str(e))
 
-  def _get_id(self):
+  def _get_id(self) -> Optional[Text]:
     """Get the image ID from registry.
 
     Returns:
@@ -80,7 +82,7 @@ class ImageID(object):
       logging.warning('Image identifier not found in registry (%s).', str(e))
     return None
 
-  def check_id(self):
+  def check_id(self) -> Text:
     """Call set_id if image identifier is not set and in WinPE.
 
     Returns:
