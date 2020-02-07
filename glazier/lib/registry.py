@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import logging
 from typing import Optional, Text
 
 from glazier.lib import constants
@@ -26,6 +27,36 @@ from gwinpy.registry import registry
 
 class Error(Exception):
   pass
+
+
+def get_value(name: Text,
+              root: Optional[Text] = 'HKLM',
+              path: Optional[Text] = constants.REG_ROOT,
+              use_64bit: Optional[bool] = constants.USE_REG_64):
+  r"""Get a registry key value from registry.
+
+  Args:
+    name: Registry value name.
+    root: Registry root (HKCR\HKCU\HKLM\HKU). Defaults to HKLM.
+    path: Registry key path. Defaults to constants.REG_ROOT.
+    use_64bit: True for 64 bit registry. False for 32 bit.
+    Defaults to constants.USE_REG_64.
+
+  Returns:
+    The registry value a string or None.
+  """
+  try:
+    reg = registry.Registry(root_key=root)
+    regkey = reg.GetKeyValue(
+        key_path=path,
+        key_name=name,
+        use_64bit=use_64bit)
+    if regkey:
+      logging.info('Registry key "%s" found with value "%s".', name, regkey)
+      return regkey
+  except registry.RegistryError as e:
+    logging.warning('Registry key "%s" not found: %s.', name, str(e))
+  return None
 
 
 def set_value(name: Text, value: Text,
