@@ -78,6 +78,7 @@ class Timer(tk.Frame):
 
   def __init__(self, root, timeout=60):
     tk.Frame.__init__(self, root)
+    self.callback_id = None
     self.root = root
     self._counter = timeout
     self.countdown_1 = tk.Label(self, text='Build will start in...',
