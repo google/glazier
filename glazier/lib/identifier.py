@@ -17,8 +17,8 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-
 import logging
+import os
 from typing import Optional, Text
 import uuid
 
@@ -26,6 +26,8 @@ from glazier.lib import constants
 from glazier.lib import winpe
 from gwinpy.registry import registry
 from gwinpy.wmi import hw_info
+
+import yaml
 
 
 class Error(Exception):
@@ -47,21 +49,31 @@ class ImageID(object):
     return ('%s-%s' %
             (str(self._hw_info.BiosSerial()), str(uuid.uuid4())[:7]))
 
-  def _set_id(self) -> Text:
-    """Set the image id registry key."""
-    image_id = self._generate_id()
+  # TODO: Move to common registry wrapper lib.
+  def _write_reg(self, name: Text, value: Text):
+    """Writes a registry value.
+
+    Args:
+      name: Name of the registry key.
+      value: Value of the registry key.
+    """
     try:
       reg = registry.Registry(root_key='HKLM')
       reg.SetKeyValue(
           key_path=constants.REG_ROOT,
-          key_name='image_id',
-          key_value=image_id,
+          key_name=name,
+          key_value=value,
           key_type='REG_SZ',
           use_64bit=constants.USE_REG_64)
-      logging.info('Image identifier written to registry (%s).', image_id)
-      return image_id
+      logging.info('%s written to registry with value: %s.', name, value)
     except registry.RegistryError as e:
       raise Error(str(e))
+
+  def _set_id(self) -> Text:
+    """Set the image id registry key."""
+    image_id = self._generate_id()
+    self._write_reg('image_id', image_id)
+    return image_id
 
   def _get_id(self) -> Optional[Text]:
     """Get the image ID from registry.
@@ -76,24 +88,52 @@ class ImageID(object):
           key_name='image_id',
           use_64bit=constants.USE_REG_64)
       if regkey:
-        logging.info('Got image identifier from registry (%s).', regkey)
+        logging.info('Got image identifier from registry: %s.', regkey)
         return regkey
     except registry.RegistryError as e:
-      logging.warning('Image identifier not found in registry (%s).', str(e))
+      logging.warning('Image identifier not found in registry: %s.', str(e))
     return None
 
-  def check_id(self) -> Text:
+  def _check_file(self) -> Text:
     """Call set_id if image identifier is not set and in WinPE.
 
     Returns:
       Image identifier as a string if already set.
 
     Raises:
-      Error: Could not determine image identifier.
+      Error: Could not locate build info file.
+      Error: Could not determine image identifier from file.
+    """
+    # First boot into host needs to grab image_id from buildinfo file.
+    # It has not been written to registry yet.
+    path = os.path.join(constants.SYS_CACHE, 'build_info.yaml')
+    if os.path.exists(path):
+      with open(path) as handle:
+        try:
+          input_config = yaml.safe_load(handle)
+          image_id = input_config['BUILD']['image_id']
+          self._write_reg('image_id', image_id)
+          return image_id
+        except KeyError as e:
+          raise Error('Could not determine %s from file: %s.' % (e, path))
+    else:
+      raise Error('Could not locate build info file.')
+
+  def check_id(self) -> Text:
+    """Call set_id if image identifier is not set and in WinPE.
+
+    Check build_info (dumped via buildinfodump) in host if image_id does
+    not exist.
+
+    Returns:
+      Image identifier as a string if already set.
     """
     image_id = self._get_id()
     if image_id:
       return image_id
+
     if winpe.check_winpe():
       return self._set_id()
-    raise Error('Could not determine image identifier.')
+
+    return self._check_file()
+

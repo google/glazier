@@ -106,6 +106,7 @@ class BuildInfo(object):
       self._glazier_server = FLAGS.config_server
     return self._glazier_server.rstrip('/')
 
+  @functools.lru_cache()
   def ImageID(self) -> Text:
     """Optionally generate a unique image identifier.
 
@@ -432,7 +433,7 @@ class BuildInfo(object):
             'encryption_type': str(self.EncryptionLevel()),
             'FQDN': str(self.Fqdn()),
             'isLaptop': str(self.IsLaptop()),
-            'ImageID': str(self.ImageID()),
+            'image_id': str(self.ImageID()),
             'Manufacturer': str(self.ComputerManufacturer()),
             'Model': str(self.ComputerModel()),
             'OS': str(self.ComputerOs()),
