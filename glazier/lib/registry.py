@@ -29,10 +29,11 @@ class Error(Exception):
   pass
 
 
-def get_value(name: Text,
-              root: Optional[Text] = 'HKLM',
-              path: Optional[Text] = constants.REG_ROOT,
-              use_64bit: Optional[bool] = constants.USE_REG_64):
+def get_value(
+    name: Text,
+    root: Optional[Text] = 'HKLM',
+    path: Optional[Text] = constants.REG_ROOT,
+    use_64bit: Optional[bool] = constants.USE_REG_64) -> Optional[Text]:
   r"""Get a registry key value from registry.
 
   Args:
@@ -83,5 +84,29 @@ def set_value(name: Text, value: Text,
         key_value=value,
         key_type=reg_type,
         use_64bit=use_64bit)
+  except registry.RegistryError as e:
+    raise Error(str(e))
+
+
+def remove_value(name: Text,
+                 root: Optional[Text] = 'HKLM',
+                 path: Optional[Text] = constants.REG_ROOT,
+                 use_64bit: Optional[bool] = constants.USE_REG_64):
+  r"""Remove a registry value.
+
+  Args:
+    name: Registry value name.
+    root: Registry root (HKCR\HKCU\HKLM\HKU). Defaults to HKLM.
+    path: Registry key path. Defaults to constants.REG_ROOT.
+    use_64bit: True for 64 bit registry. False for 32 bit.
+    Defaults to constants.USE_REG_64.
+  """
+  try:
+    reg = registry.Registry(root_key=root)
+    reg.RemoveKeyValue(
+        key_path=path,
+        key_name=name,
+        use_64bit=use_64bit)
+    logging.info('Removed registry key "%s"', name)
   except registry.RegistryError as e:
     raise Error(str(e))

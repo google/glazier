@@ -63,5 +63,21 @@ class RegistryTest(absltest.TestCase):
     reg.return_value.SetKeyValue.side_effect = registry.registry.RegistryError
     self.assertRaises(registry.Error, registry.set_value, self.name, self.value)
 
+  @mock.patch.object(registry.registry, 'Registry', autospec=True)
+  def test_remove_value(self, mock_reg):
+    registry.remove_value(self.name)
+    mock_reg.assert_called_with('HKLM')
+    mock_reg.return_value.RemoveKeyValue.assert_has_calls([
+        mock.call(
+            key_path=registry.constants.REG_ROOT,
+            key_name=self.name,
+            use_64bit=registry.constants.USE_REG_64),
+    ])
+
+  @mock.patch.object(registry.registry, 'Registry', autospec=True)
+  def test_remove_value_error(self, reg):
+    reg.return_value.RemoveKeyValue.side_effect = registry.registry.RegistryError
+    self.assertRaises(registry.Error, registry.remove_value, self.name)
+
 if __name__ == '__main__':
   absltest.main()
