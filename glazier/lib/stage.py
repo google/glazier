@@ -27,12 +27,10 @@ from __future__ import print_function
 import datetime
 import logging
 from glazier.lib import constants
-from gwinpy.registry import registry
+from glazier.lib import registry
 
 STAGES_ROOT = constants.REG_ROOT + r'\Stages'
 ACTIVE_KEY = '_Active'
-# TODO: centralize registry settings
-USE_REG_64 = True
 
 
 class Error(Exception):
@@ -42,58 +40,41 @@ class Error(Exception):
 def exit_stage(stage_id):
   """Exit the current stage by setting the End value."""
   end = _utc_now().isoformat()
+  logging.info('Exiting stage %d as of %s', stage_id, end)
   try:
-    logging.info('Exiting stage %d as of %s', stage_id, end)
-    reg = registry.Registry(root_key='HKLM')
-    reg.SetKeyValue(
-        key_path=_stage_root(stage_id),
-        key_name='End',
-        key_value=str(end),
-        key_type='REG_SZ',
-        use_64bit=USE_REG_64)
-    reg.SetKeyValue(
-        key_path=STAGES_ROOT,
-        key_name=ACTIVE_KEY,
-        key_value='',
-        key_type='REG_SZ',
-        use_64bit=USE_REG_64)
-  except registry.RegistryError as e:
+    registry.set_value('End', str(end), 'HKLM', _stage_root(stage_id))
+    registry.set_value(ACTIVE_KEY, '', 'HKLM', STAGES_ROOT)
+  except registry.Error as e:
     raise Error(str(e))
 
 
 def get_active_stage():
   """Get the active build stage, if one exists."""
   try:
-    reg = registry.Registry(root_key='HKLM')
-    return reg.GetKeyValue(
-        key_path=STAGES_ROOT, key_name=ACTIVE_KEY, use_64bit=USE_REG_64)
-  except registry.RegistryError as e:
+    return registry.get_value(ACTIVE_KEY, 'HKLM', STAGES_ROOT)
+  except registry.Error as e:
     logging.error(str(e))
-  return None
 
 
 def get_active_time(stage_id):
   """Get the amount of time we've been in the current stage."""
-  reg = registry.Registry(root_key='HKLM')
-  start = _load_time(reg, stage_id, 'Start')
+  start = _load_time(stage_id, 'Start')
   if not start:
     raise Error('Stage %d does not contain a valid Start time.' % stage_id)
-  end = _load_time(reg, stage_id, 'End')
+  end = _load_time(stage_id, 'End')
   if not end:
     logging.info('Stage %d not complete. Using current time.', stage_id)
     end = _utc_now()
   return end - start
 
 
-def _load_time(reg, stage_id, key):
+def _load_time(stage_id, key):
   """Load a time string and convert it into a native datetime value."""
   val = None
   try:
-    val = reg.GetKeyValue(
-        key_path=_stage_root(stage_id), key_name=key, use_64bit=USE_REG_64)
-  except registry.RegistryError as e:
+    val = registry.get_value(key, 'HLKM', _stage_root(stage_id))
+  except registry.Error as e:
     logging.error(str(e))
-    return None
   if val:
     try:
       val = datetime.datetime.strptime(val, '%Y-%m-%dT%H:%M:%S.%f')
@@ -114,21 +95,9 @@ def set_stage(stage_id):
 
   start = _utc_now().isoformat()
   try:
-    logging.info('Entering stage %d as of %s', stage_id, start)
-    reg = registry.Registry(root_key='HKLM')
-    reg.SetKeyValue(
-        key_path=_stage_root(stage_id),
-        key_name='Start',
-        key_value=str(start),
-        key_type='REG_SZ',
-        use_64bit=USE_REG_64)
-    reg.SetKeyValue(
-        key_path=STAGES_ROOT,
-        key_name=ACTIVE_KEY,
-        key_value=str(stage_id),
-        key_type='REG_SZ',
-        use_64bit=USE_REG_64)
-  except registry.RegistryError as e:
+    registry.set_value('Start', str(start), 'HKLM', _stage_root(stage_id))
+    registry.set_value(ACTIVE_KEY, str(stage_id), 'HKLM', STAGES_ROOT)
+  except registry.Error as e:
     raise Error(str(e))
 
 
