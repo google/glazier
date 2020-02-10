@@ -75,6 +75,16 @@ class RegistryTest(absltest.TestCase):
     ])
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
+  @mock.patch.object(registry.logging, 'warning', autospec=True)
+  def test_remove_value_not_found(self, w, reg):
+    reg.return_value.RemoveKeyValue.side_effect = \
+        registry.registry.RegistryError('Test', errno=2)
+    registry.remove_value(self.name)
+    w.assert_called_with(r'Failed to delete non-existant registry key: '
+                         r'%s:\%s\%s', 'HKLM', registry.constants.REG_ROOT,
+                         self.name)
+
+  @mock.patch.object(registry.registry, 'Registry', autospec=True)
   def test_remove_value_error(self, reg):
     reg.return_value.RemoveKeyValue.side_effect = registry.registry.RegistryError
     self.assertRaises(registry.Error, registry.remove_value, self.name)

@@ -48,15 +48,17 @@ def get_value(
   """
   try:
     reg = registry.Registry(root_key=root)
-    regkey = reg.GetKeyValue(
+    value = reg.GetKeyValue(
         key_path=path,
         key_name=name,
         use_64bit=use_64bit)
-    if regkey:
-      logging.info('Registry key "%s" found with value "%s".', name, regkey)
-      return regkey
+    if value:
+      logging.info(r'Got registry value: %s:\%s\%s\%s.', root, path, name,
+                   value)
+      return value
   except registry.RegistryError as e:
-    logging.warning('Registry key "%s" not found: %s.', name, str(e))
+    logging.warning(r'Failed to get registry key: %s:\%s\%s (%s)', root, path,
+                    name, str(e))
   return None
 
 
@@ -84,6 +86,7 @@ def set_value(name: Text, value: Text,
         key_value=value,
         key_type=reg_type,
         use_64bit=use_64bit)
+    logging.debug(r'Set registry value: %s:\%s\%s\%s', root, path, name, value)
   except registry.RegistryError as e:
     raise Error(str(e))
 
@@ -107,6 +110,10 @@ def remove_value(name: Text,
         key_path=path,
         key_name=name,
         use_64bit=use_64bit)
-    logging.info('Removed registry key "%s"', name)
+    logging.info(r'Removed registry key: %s:\%s\%s', root, path, name)
   except registry.RegistryError as e:
-    raise Error(str(e))
+    if e.errno == 2:
+      logging.warning(r'Failed to delete non-existant registry key: %s:\%s\%s',
+                      root, path, name)
+    else:
+      raise Error(str(e))
