@@ -1,3 +1,4 @@
+# Lint as: python3
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,9 +15,11 @@
 
 """Actions to set imaging timers."""
 
+import logging
+
 from glazier.lib import constants
+from glazier.lib import registry
 from glazier.lib.actions.base import BaseAction
-from glazier.lib.actions.registry import RegAdd
 
 
 class Error(Exception):
@@ -28,19 +31,16 @@ class SetTimer(BaseAction):
 
   def Run(self):
     timer = str(self._args[0])
-    key_name = r'%s\%s' % (constants.REG_ROOT, 'Timers')
+    key_path = r'{0}\{1}'.format(constants.REG_ROOT, 'Timers')
 
     self._build_info.TimerSet(timer)
     value_name = 'TIMER_' + timer
     value_data = str(self._build_info.TimerGet(timer))
-    timer_key = ['HKLM',
-                 key_name,
-                 value_name,
-                 value_data,
-                 'REG_SZ']
-
-    ra = RegAdd(timer_key, self._build_info)
-    ra.Run()
+    try:
+      registry.set_value(value_name, value_data, 'HKLM', key_path)
+      logging.info('Set image timer: %s', timer)
+    except registry.Error as e:
+      raise Error(str(e))
 
   def Validate(self):
     self._ListOfStringsValidator(self._args)

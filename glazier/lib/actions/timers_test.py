@@ -15,46 +15,44 @@
 """Tests for glazier.lib.actions.timers."""
 
 from absl.testing import absltest
-from glazier.lib.actions import registry
+from glazier.lib import constants
 from glazier.lib.actions import timers
 from glazier.lib.actions.base import ValidationError
 import mock
+
+KEY_PATH = r'{0}\{1}'.format(constants.REG_ROOT, 'Timers')
+VALUE_NAME = 'build_yaml'
+VALUE_DATA = '2019-11-11 13:33:37.133337'
 
 
 class TimersTest(absltest.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  def testSetTimer(self, winreg, build_info):
-    args = ['Timer1']
-    build_info.TimerGet.return_value = '2019-11-11 13:33:37.133337'
-    st = timers.SetTimer(args, build_info)
+  @mock.patch.object(timers.registry, 'set_value', autospec=True)
+  def testSetTimer(self, sv, build_info):
+    build_info.TimerGet.return_value = VALUE_DATA
+    st = timers.SetTimer([VALUE_NAME], build_info)
     st.Run()
-    build_info.TimerSet.assert_called_with('Timer1')
-    key_name = r'%s\%s' % (timers.constants.REG_ROOT, 'Timers')
+    build_info.TimerSet.assert_called_with(VALUE_NAME)
+    sv.assert_called_with('TIMER_' + VALUE_NAME, VALUE_DATA, 'HKLM',
+                          KEY_PATH)
 
-    # Successfully add registry keys
-    args = [
-        'HKLM', key_name, 'TIMER_image_start',
-        '2019-11-11 13:33:37.133337',
-        'REG_SZ', False
-    ]
-    ra = timers.RegAdd(args, build_info)
-    ra.Run()
-
-    # Fail to add registry key
-    skv = winreg.return_value.SetKeyValue
-    skv.side_effect = registry.registry.RegistryError
-    self.assertRaises(registry.ActionError, ra.Run)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch.object(timers.registry, 'set_value', autospec=True)
+  def testSetTimerError(self, sv, build_info):
+    build_info.TimerGet.return_value = VALUE_DATA
+    sv.side_effect = timers.registry.Error
+    st = timers.SetTimer([VALUE_NAME], build_info)
+    self.assertRaises(timers.Error, st.Run)
 
   def testSetTimerValidate(self):
-    st = timers.SetTimer('Timer1', None)
+    st = timers.SetTimer(VALUE_NAME, None)
     self.assertRaises(ValidationError, st.Validate)
     st = timers.SetTimer([1, 2, 3], None)
     self.assertRaises(ValidationError, st.Validate)
     st = timers.SetTimer([1], None)
     self.assertRaises(ValidationError, st.Validate)
-    st = timers.SetTimer(['Timer1'], None)
+    st = timers.SetTimer([VALUE_NAME], None)
     st.Validate()
 
 
