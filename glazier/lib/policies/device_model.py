@@ -1,3 +1,4 @@
+# Lint as: python3
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +20,8 @@ from __future__ import division
 from __future__ import print_function
 import logging
 import re
+from typing import Text
+
 from glazier.lib.policies.base import BasePolicy
 from glazier.lib.policies.base import ImagingPolicyException
 
@@ -51,7 +54,7 @@ _UNSUPPORTED_NOTICE = ("""
 class DeviceModel(BasePolicy):
   """Verify that the device hardware is supported."""
 
-  def _ModelSupportPrompt(self, message, this_model):
+  def _ModelSupportPrompt(self, message: Text, this_model: Text) -> bool:
     """Prompts the user whether to halt an unsupported build.
 
     Args:
@@ -69,7 +72,7 @@ class DeviceModel(BasePolicy):
       return True
     return False
 
-  def Verify(self):
+  def Verify(self) -> bool:
     model = self._build_info.ComputerModel()
     logging.debug('Verifying hardware support tier for %s.', model)
     tier = self._build_info.SupportTier()
