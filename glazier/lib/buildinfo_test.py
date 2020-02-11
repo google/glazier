@@ -146,7 +146,7 @@ class BuildInfoTest(absltest.TestCase):
     result = self.buildinfo.ConfigServer()
     self.assertEqual(result, return_value)
 
-  @mock.patch.object(buildinfo.identifier.ImageID, 'check_id', autospec=True)
+  @mock.patch.object(buildinfo.identifier, 'check_id', autospec=True)
   def test_image_id(self, checkid):
     checkid.return_value = '1A19SEL90000R90DZN7A-1234567'
     result = self.buildinfo.ImageID()

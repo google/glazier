@@ -17,6 +17,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+import logging
 import os
 from typing import Text
 import uuid
@@ -33,67 +34,73 @@ class Error(Exception):
   pass
 
 
-class ImageID(object):
-  """Generate, log, and manage the unique image identifier."""
+def _generate_id() -> Text:
+  """Generate the image identifier.
 
-  def __init__(self):
-    self._hw_info = hw_info.HWInfo()
+  Returns:
+    The image identifier as a string.
+  """
+  hw = hw_info.HWInfo()
+  return ('%s-%s' %
+          (str(hw.BiosSerial()), str(uuid.uuid4())[:7]))
 
-  def _generate_id(self) -> Text:
-    """Generate the image identifier.
 
-    Returns:
-      The image identifier as a string.
-    """
-    return ('%s-%s' %
-            (str(self._hw_info.BiosSerial()), str(uuid.uuid4())[:7]))
-
-  def _set_id(self) -> Text:
-    """Set the image id registry key."""
-    image_id = self._generate_id()
+def _set_id() -> Text:
+  """Set the image id registry key."""
+  image_id = _generate_id()
+  try:
     registry.set_value('image_id', image_id)
-    return image_id
+  except registry.Error as e:
+    raise Error(str(e))
+  return image_id
 
-  def _check_file(self) -> Text:
-    """Call set_id if image identifier is not set and in WinPE.
 
-    Returns:
-      Image identifier as a string if already set.
+def _check_file() -> Text:
+  """Call set_id if image identifier is not set and in WinPE.
 
-    Raises:
-      Error: Could not locate build info file.
-      Error: Could not determine image identifier from file.
-    """
-    # First boot into host needs to grab image_id from buildinfo file.
-    # It has not been written to registry yet.
-    path = os.path.join(constants.SYS_CACHE, 'build_info.yaml')
-    if os.path.exists(path):
-      with open(path) as handle:
-        try:
-          input_config = yaml.safe_load(handle)
-          image_id = input_config['BUILD']['image_id']
-          registry.set_value('image_id', image_id)
-          return image_id
-        except KeyError as e:
-          raise Error('Could not determine %s from file: %s.' % (e, path))
-    else:
-      raise Error('Could not locate build info file.')
+  Returns:
+    Image identifier as a string if already set.
 
-  def check_id(self) -> Text:
-    """Call set_id if image identifier is not set and in WinPE.
+  Raises:
+    Error: Could not locate build info file.
+    Error: Could not determine image identifier from file.
+  """
+  # First boot into host needs to grab image_id from buildinfo file.
+  # It has not been written to registry yet.
+  path = os.path.join(constants.SYS_CACHE, 'build_info.yaml')
+  if os.path.exists(path):
+    with open(path) as handle:
+      try:
+        input_config = yaml.safe_load(handle)
+        image_id = input_config['BUILD']['image_id']
+        registry.set_value('image_id', image_id)
+        return image_id
+      except registry.Error as e:
+        raise Error(str(e))
+      except KeyError as e:
+        raise Error('Could not determine %s from file: %s.' % (e, path))
+  else:
+    raise Error('Could not locate build info file.')
 
-    Check build_info (dumped via buildinfodump) in host if image_id does
-    not exist.
 
-    Returns:
-      Image identifier as a string if already set.
-    """
+def check_id() -> Text:
+  """Call set_id if image identifier is not set and in WinPE.
+
+  Check build_info (dumped via buildinfodump) in host if image_id does
+  not exist.
+
+  Returns:
+    Image identifier as a string if already set.
+  """
+  image_id = None
+  try:
     image_id = registry.get_value('image_id')
-    if image_id:
-      return image_id
+  except registry.Error as e:
+    logging.error(str(e))
 
-    if winpe.check_winpe():
-      return self._set_id()
+  if image_id:
+    return image_id
+  if winpe.check_winpe():
+    return _set_id()
 
-    return self._check_file()
-
+  return _check_file()

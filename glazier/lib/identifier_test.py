@@ -36,7 +36,9 @@ class IdentifierTest(absltest.TestCase):
         identifier.hw_info.wmi_query, 'WMIQuery', autospec=True)
     self.addCleanup(mock_wmi.stop)
     mock_wmi.start()
-    self.identifier = identifier.ImageID()
+    self.fs = fake_filesystem.FakeFilesystem()
+    identifier.open = fake_filesystem.FakeFileOpen(self.fs)
+    identifier.os = fake_filesystem.FakeOsModule(self.fs)
 
   @mock.patch.object(
       identifier.hw_info.HWInfo, 'BiosSerial', autospec=True)
@@ -44,67 +46,79 @@ class IdentifierTest(absltest.TestCase):
   def test_generate_id(self, mock_uuid, mock_serial):
     mock_uuid.return_value = str(TEST_UUID)[:7]
     mock_serial.return_value = TEST_SERIAL
-    self.assertEqual(self.identifier._generate_id(), TEST_ID)
+    self.assertEqual(identifier._generate_id(), TEST_ID)
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
-  @mock.patch.object(identifier.ImageID, '_generate_id', autospec=True)
+  @mock.patch.object(identifier, '_generate_id', autospec=True)
   def test_set_id(self, genid, sv):
     genid.return_value = TEST_ID
-    self.identifier._set_id()
+    identifier._set_id()
     sv.assert_called_with('image_id', TEST_ID)
-    self.assertEqual(self.identifier._set_id(), TEST_ID)
+    self.assertEqual(identifier._set_id(), TEST_ID)
+
+  @mock.patch.object(identifier.registry, 'set_value', autospec=True)
+  def test_set_reg_error(self, sv):
+    sv.side_effect = identifier.registry.Error
+    self.assertRaises(identifier.Error, identifier._set_id)
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
   def test_check_file(self, sv):
-    fs = fake_filesystem.FakeFilesystem()
-    identifier.open = fake_filesystem.FakeFileOpen(fs)
-    identifier.os = fake_filesystem.FakeOsModule(fs)
-    fs.CreateFile(
+    self.fs.CreateFile(
         '/%s/build_info.yaml' % identifier.constants.SYS_CACHE,
         contents=
         '{BUILD: {opt 1: true, TIMER_opt 2: some value, image_id: 12345}}\n')
-    self.identifier._check_file()
+    identifier._check_file()
     sv.assert_called_with('image_id', 12345)
-    self.assertEqual(self.identifier._check_file(), 12345)
+    self.assertEqual(identifier._check_file(), 12345)
 
   def test_check_file_no_id(self):
-    fs = fake_filesystem.FakeFilesystem()
-    identifier.open = fake_filesystem.FakeFileOpen(fs)
-    identifier.os = fake_filesystem.FakeOsModule(fs)
-    fs.CreateFile(
+    self.fs.CreateFile(
         '/%s/build_info.yaml' % identifier.constants.SYS_CACHE,
         contents=
         '{BUILD: {opt 1: true, TIMER_opt 2: some value, image_num: 12345}}\n')
-    self.assertRaises(identifier.Error, self.identifier._check_file)
+    self.assertRaises(identifier.Error, identifier._check_file)
 
-  def test_check_file_error(self):
-    fs = fake_filesystem.FakeFilesystem()
-    identifier.open = fake_filesystem.FakeFileOpen(fs)
-    identifier.os = fake_filesystem.FakeOsModule(fs)
-    self.assertRaises(identifier.Error, self.identifier._check_file)
+  @mock.patch.object(identifier.registry, 'set_value', autospec=True)
+  def test_check_file_reg_error(self, sv):
+    self.fs.CreateFile(
+        '/%s/build_info.yaml' % identifier.constants.SYS_CACHE,
+        contents=
+        '{BUILD: {opt 1: true, TIMER_opt 2: some value, image_id: 12345}}\n')
+    sv.side_effect = identifier.registry.Error
+    self.assertRaises(identifier.Error, identifier._check_file)
+
+  def test_check_file_no_file(self):
+    self.assertRaises(identifier.Error, identifier._check_file)
 
   @mock.patch.object(identifier.registry, 'get_value', autospec=True)
   def test_check_id_get(self, gv):
     gv.return_value = TEST_ID
-    self.assertEqual(self.identifier.check_id(), TEST_ID)
+    self.assertEqual(identifier.check_id(), TEST_ID)
 
-  @mock.patch.object(identifier.ImageID, '_set_id', autospec=True)
+  @mock.patch.object(identifier.registry, 'get_value', autospec=True)
+  @mock.patch.object(identifier.winpe, 'check_winpe', autospec=True)
+  def test_check_id_get_error(self, wpe, gv):
+    wpe.return_value = False
+    gv.side_effect = identifier.registry.Error
+    self.assertRaises(identifier.Error, identifier.check_id)
+
+  @mock.patch.object(identifier, '_set_id', autospec=True)
   @mock.patch.object(identifier.registry, 'get_value', autospec=True)
   @mock.patch.object(identifier.winpe, 'check_winpe', autospec=True)
   def test_check_id_set(self, wpe, gv, setid):
     gv.return_value = None
     wpe.return_value = True
-    self.identifier.check_id()
+    identifier.check_id()
     self.assertTrue(setid.called)
 
-  @mock.patch.object(identifier.ImageID, '_check_file', autospec=True)
+  @mock.patch.object(identifier, '_check_file', autospec=True)
   @mock.patch.object(identifier.registry, 'get_value', autospec=True)
   @mock.patch.object(identifier.winpe, 'check_winpe', autospec=True)
   def test_check_id_file(self, wpe, gv, checkfile):
     gv.return_value = None
     wpe.return_value = False
     checkfile.return_value = TEST_ID
-    self.assertEqual(self.identifier.check_id(), TEST_ID)
+    self.assertEqual(identifier.check_id(), TEST_ID)
 
 if __name__ == '__main__':
   absltest.main()

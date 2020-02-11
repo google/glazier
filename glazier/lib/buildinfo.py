@@ -113,8 +113,7 @@ class BuildInfo(object):
     Returns:
       The image identifier as a string.
     """
-    self._identifier = identifier.ImageID()
-    return self._identifier.check_id()
+    return identifier.check_id()
 
   @functools.lru_cache()
   def Release(self) -> Optional[Text]:
