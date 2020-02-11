@@ -66,6 +66,7 @@ class AutoBuild(object):
 
   def RunBuild(self):
     """Perform the build."""
+
     task_list = self._SetupTaskList()
 
     if not os.path.exists(task_list):

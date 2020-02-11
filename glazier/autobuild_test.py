@@ -74,6 +74,5 @@ class BuildInfoTest(absltest.TestCase):
     runner.side_effect = autobuild.runner.ConfigRunnerError
     self.assertRaises(LogFatal, self.autobuild.RunBuild)
 
-
 if __name__ == '__main__':
   absltest.main()
