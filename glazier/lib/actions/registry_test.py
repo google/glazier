@@ -1,3 +1,4 @@
+# Lint as: python3
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,197 +16,143 @@
 """Tests for glazier.lib.actions.registry."""
 
 from absl.testing import absltest
+from glazier.lib import constants
 from glazier.lib.actions import registry
 import mock
+
+ROOT = 'HKLM'
+PATH = constants.REG_ROOT
+NAME = 'some_name'
+VALUE = 'some_data'
+TYPE = 'REG_SZ'
+USE_64 = constants.USE_REG_64
+ARGS = [ROOT, PATH, NAME, VALUE, TYPE]
 
 
 class RegistryTest(absltest.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  def testAdd(self, winreg, build_info):
+  @mock.patch.object(registry.registry, 'set_value', autospec=True)
+  def testAdd(self, sv, build_info):
     # Mock add registry keys
-    kpath = (r'SOFTWARE\Microsoft\Windows NT\CurrentVersion'
-             r'\SoftwareProtectionPlatform')
-    args = [
-        'HKLM', kpath, 'KeyManagementServiceName',
-        'kms-server.example.com',
-        'REG_SZ', False
-    ]
-    skv = winreg.return_value.SetKeyValue
-    ra = registry.RegAdd(args, build_info)
+    ra = registry.RegAdd(ARGS, build_info)
     ra.Run()
-    skv.assert_called_with(
-        key_path=kpath,
-        key_name='KeyManagementServiceName',
-        key_value='kms-server.example.com',
-        key_type='REG_SZ',
-        use_64bit=False)
+    sv.assert_called_with(NAME, VALUE, ROOT, PATH, TYPE, USE_64)
 
     # Registry error
-    skv.side_effect = registry.registry.RegistryError
+    sv.side_effect = registry.registry.Error
     self.assertRaises(registry.ActionError, ra.Run)
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
-  @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  def testMultiAdd(self, winreg, build_info):
-    # Mock add registry keys
-    kpath = (r'SOFTWARE\Microsoft\Windows NT\CurrentVersion'
-             r'\SoftwareProtectionPlatform')
-    args = [
-        'HKLM', kpath, 'KeyManagementServiceName', 'kms-server.example.com',
-        'REG_SZ', False
-    ]
-    skv = winreg.return_value.SetKeyValue
-    ra = registry.RegAdd(args, build_info)
+  @mock.patch.object(registry.registry, 'set_value', autospec=True)
+  def testMultiAdd(self, sv, build_info):
+    ra = registry.RegAdd(ARGS, build_info)
     ra.Run()
-    skv.assert_called_with(
-        key_path=kpath,
-        key_name='KeyManagementServiceName',
-        key_value='kms-server.example.com',
-        key_type='REG_SZ',
-        use_64bit=False)
+    sv.assert_called_with(NAME, VALUE, ROOT, PATH, TYPE, USE_64)
 
     # Missing arguments
-    args = [
-        'HKLM', kpath, 'KeyManagementServiceName', 'kms-server.example.com']
+    args = [ROOT, PATH, NAME, VALUE]
     ra = registry.RegAdd(args, build_info)
     self.assertRaises(registry.ActionError, ra.Run)
 
     # Multiple missing arguments
-    args = [
-        ['HKLM', kpath, 'KeyManagementServiceName', 'kms-server.example.com',
-         'REG_SZ'],
-        ['HKLM', kpath, 'KeyManagementServiceName', 'kms-server.example.com']
-    ]
+    args = [ARGS, [ROOT, PATH, NAME, VALUE]]
     ra = registry.MultiRegAdd(args, build_info)
     self.assertRaises(registry.ActionError, ra.Run)
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
-  @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  @mock.patch.object(registry.logging, 'warn', autospec=True)
-  def testDel(self, warn, winreg, build_info):
+  @mock.patch.object(registry.registry, 'remove_value', autospec=True)
+  def testDel(self, rv, build_info):
     # Variable definition
-    registry.WindowsError = Exception
+    args = [ROOT, PATH, NAME]
 
     # Mock delete registry keys
-    kpath = (r'SOFTWARE\Microsoft\Windows NT\CurrentVersion'
-             r'\SoftwareProtectionPlatform')
-    args = [
-        'HKLM', kpath, 'KeyManagementServiceName']
-    rkv = winreg.return_value.RemoveKeyValue
     rd = registry.RegDel(args, build_info)
+    rd.Run()
+    rv.assert_called_with(NAME, ROOT, PATH, USE_64)
 
     # Registry error
-    rkv.side_effect = registry.registry.RegistryError('Test')
+    rv.side_effect = registry.registry.Error
     self.assertRaises(registry.ActionError, rd.Run)
-
-    # Key not found
-    err = registry.registry.RegistryError('Test', errno=2)
-    rkv.side_effect = err
-    rd.Run()
-    warn.assert_called_with('Registry key %s not found', args)
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
-  @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  def testMultiDel(self, winreg, build_info):
+  @mock.patch.object(registry.registry, 'remove_value', autospec=True)
+  def testMultiDel(self, rv, build_info):
     # Mock delete registry keys
-    kpath = (r'SOFTWARE\Microsoft\Windows NT\CurrentVersion'
-             r'\SoftwareProtectionPlatform')
-    args = [
-        'HKLM', kpath, 'KeyManagementServiceName', False]
-    rkv = winreg.return_value.RemoveKeyValue
+    args = [ROOT, PATH, NAME, False]
     rd = registry.RegDel(args, build_info)
     rd.Run()
-    rkv.assert_called_with(
-        key_path=kpath,
-        key_name='KeyManagementServiceName',
-        use_64bit=False)
+    rv.assert_called_with(NAME, ROOT, PATH, False)
 
     # Missing arguments
-    args = [
-        'HKLM', kpath]
+    args = [ROOT, PATH]
     rd = registry.RegDel(args, build_info)
     self.assertRaises(registry.ActionError, rd.Run)
 
     # Multiple missing arguments
-    args = [
-        ['HKLM', kpath],
-        ['HKLM']
-    ]
+    args = [[ROOT, PATH], [ROOT]]
     rd = registry.MultiRegDel(args, build_info)
     self.assertRaises(registry.ActionError, rd.Run)
 
   def testAddValidation(self):
     # List not passed
-    r = registry.RegAdd('String', None)
+    r = registry.RegAdd(NAME, None)
     self.assertRaises(registry.ValidationError, r.Validate)
 
     # Too many args
-    r = registry.RegAdd(['HKLM', 'SOFTWARE/fake', 'foo', 'bar', 'REG_SZ', True,
-                         'baz'], None)
+    r = registry.RegAdd([ROOT, PATH, NAME, NAME, TYPE, True, NAME], None)
     self.assertRaises(registry.ValidationError, r.Validate)
 
     # Not enough args
-    r = registry.RegAdd(['SOFTWARE/fake', 'foo', 'bar', 'REG_SZ'], None)
+    r = registry.RegAdd([PATH, NAME, NAME, TYPE], None)
     self.assertRaises(registry.ValidationError, r.Validate)
 
     # Type error
-    r = registry.RegAdd(['HKLM', 'SOFTWARE/fake', 'foo', '1', 'REG_DWORD'],
-                        None)
+    r = registry.RegAdd([ROOT, PATH, NAME, '1', 'REG_DWORD'], None)
     self.assertRaises(registry.ValidationError, r.Validate)
 
     # Too many keys
-    r = registry.RegAdd([['HKLM', 'SOFTWARE/fake', 'foo', 1, 'REG_DWORD'],
-                         ['HKLM', 'SOFTWARE/boo', 'fake', 100, 'REG_DWORD']],
-                        None)
+    r = registry.RegAdd([
+        [ROOT, PATH, NAME, 1, TYPE],
+        [ROOT, PATH, NAME, 100, TYPE]], None)
     self.assertRaises(registry.ValidationError, r.Validate)
 
     # Valid calls
-    r = registry.RegAdd(['HKLM', 'SOFTWARE\fake', 'foo', 'bar', 'REG_SZ'],
-                        None)
+    r = registry.RegAdd([ROOT, PATH, NAME, VALUE, TYPE], None)
     r.Validate()
 
   def testMultiAddValidation(self):
     # Valid calls
-    r = registry.MultiRegAdd([
-        ['HKLM', 'SOFTWARE/fake', 'foo', 'bazzz', 'REG_SZ'],
-        ['HKLM', 'SOFTWARE/boo', 'fake', 100, 'REG_DWORD']
-    ], None)
+    r = registry.MultiRegAdd([ARGS, [ROOT, PATH, NAME, 100, 'REG_DWORD']], None)
     r.Validate()
 
   def testDelValidation(self):
     # List not passed
-    r = registry.RegDel('String', None)
+    r = registry.RegDel(NAME, None)
     self.assertRaises(registry.ValidationError, r.Validate)
 
     # Too many args
-    r = registry.RegDel(['HKLM', 'SOFTWARE/fake', 'foo', 'bar'], None)
+    r = registry.RegDel([ROOT, PATH, NAME, VALUE], None)
     self.assertRaises(registry.ValidationError, r.Validate)
 
     # Not enough args
-    r = registry.RegDel(['SOFTWARE/fake', 'foo'], None)
+    r = registry.RegDel([PATH, NAME], None)
     self.assertRaises(registry.ValidationError, r.Validate)
 
     # Too many keys
-    r = registry.RegDel([['HKLM', 'SOFTWARE/fake', 'foo'],
-                         ['HKLM', 'SOFTWARE/boo', 'fake']],
-                        None)
+    r = registry.RegDel([[ROOT, PATH, NAME], [ROOT, PATH, NAME]], None)
     self.assertRaises(registry.ValidationError, r.Validate)
 
     # Valid calls
-    r = registry.RegDel(['HKLM', 'SOFTWARE\fake', 'foo'], None)
+    r = registry.RegDel([ROOT, PATH, NAME], None)
     r.Validate()
 
   def testMultiDelValidation(self):
     # Valid calls
-    r = registry.MultiRegDel([
-        ['HKLM', 'SOFTWARE/fake', 'foo'],
-        ['HKLM', 'SOFTWARE/boo', 'fake']
-    ], None)
+    r = registry.MultiRegDel([[ROOT, PATH, NAME], [ROOT, PATH, NAME]], None)
     r.Validate()
 
 if __name__ == '__main__':
