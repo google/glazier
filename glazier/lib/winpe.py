@@ -18,8 +18,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from glazier.lib import constants
-from gwinpy.registry import registry
+from glazier.lib import registry
 
 
 class Error(Exception):
@@ -33,15 +32,11 @@ def check_winpe() -> bool:
     True for WinPE, else False.
   """
   try:
-    reg = registry.Registry(root_key='HKLM')
-    regkey = reg.GetKeyValue(
-        key_path=constants.WINPE_KEY,
-        key_name=constants.WINPE_VALUE,
-        use_64bit=constants.USE_REG_64)
-    if regkey == 'WindowsPE':
+    value = registry.get_value('EditionID', 'HKLM',
+                               r'SOFTWARE\Microsoft\Windows NT\CurrentVersion')
+    if value == 'WindowsPE':
       return True
     else:
       return False
-  except registry.RegistryError as e:
-    raise Error("Could not read WinPE registry key '%s\\%s'. %s" %
-                (constants.WINPE_KEY, constants.WINPE_VALUE, str(e)))
+  except registry.Error as e:
+    raise Error('Failed to detect image environment (%s)' % str(e))

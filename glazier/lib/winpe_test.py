@@ -25,23 +25,19 @@ import mock
 
 class WinPETest(absltest.TestCase):
 
-  @mock.patch.object(winpe.registry, 'Registry', autospec=True)
-  def testCheckWinPE(self, reg):
-    # WinPE
-    reg.return_value.GetKeyValue.return_value = 'WindowsPE'
+  @mock.patch.object(winpe.registry, 'get_value', autospec=True)
+  def test_check_winpe_true(self, gv):
+    gv.return_value = 'WindowsPE'
     self.assertEqual(winpe.check_winpe(), True)
-    reg.assert_called_with('HKLM')
-    reg.return_value.GetKeyValue.assert_called_with(
-        key_path=winpe.constants.WINPE_KEY,
-        key_name=winpe.constants.WINPE_VALUE,
-        use_64bit=winpe.constants.USE_REG_64)
 
-    # Host
-    reg.return_value.GetKeyValue.return_value = 'Enterprise'
+  @mock.patch.object(winpe.registry, 'get_value', autospec=True)
+  def test_check_winpe_false(self, gv):
+    gv.return_value = 'Enterprise'
     self.assertEqual(winpe.check_winpe(), False)
 
-    # RegistryError
-    reg.return_value.GetKeyValue.side_effect = winpe.registry.RegistryError
+  @mock.patch.object(winpe.registry, 'get_value', autospec=True)
+  def test_check_winpe_error(self, gv):
+    gv.side_effect = winpe.registry.Error
     self.assertRaises(winpe.Error, winpe.check_winpe)
 
 if __name__ == '__main__':
