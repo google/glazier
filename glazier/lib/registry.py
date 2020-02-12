@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 import logging
-from typing import Optional, Text
+from typing import Optional, Text, Union
 
 from glazier.lib import constants
 from gwinpy.registry import registry
@@ -62,7 +62,7 @@ def get_value(
   return None
 
 
-def set_value(name: Text, value: Text,
+def set_value(name: Text, value: Union[Text, int],
               root: Optional[Text] = 'HKLM',
               path: Optional[Text] = constants.REG_ROOT,
               reg_type: Optional[Text] = 'REG_SZ',
@@ -86,7 +86,8 @@ def set_value(name: Text, value: Text,
         key_value=value,
         key_type=reg_type,
         use_64bit=use_64bit)
-    logging.debug(r'Set registry value: %s:\%s\%s\%s', root, path, name, value)
+    logging.debug(r'Set registry value: %s:\%s\%s\%s', root, path, name,
+                  str(value))
   except registry.RegistryError as e:
     raise Error(str(e))
 
