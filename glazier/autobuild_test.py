@@ -59,12 +59,14 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
     self.assertFalse(autobuild.os.path.exists(tasklist))
 
+  @mock.patch.object(autobuild.title, 'set_title', autospec=True)
   @mock.patch.object(autobuild.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(autobuild.runner, 'ConfigRunner', autospec=True)
   @mock.patch.object(autobuild.builder, 'ConfigBuilder', autospec=True)
-  def testRunBuild(self, builder, runner, wpe):
+  def testRunBuild(self, builder, runner, wpe, st):
     wpe.return_value = False
     self.autobuild.RunBuild()
+    self.assertTrue(st.called)
 
     # ConfigBuilderError
     builder.side_effect = autobuild.builder.ConfigBuilderError

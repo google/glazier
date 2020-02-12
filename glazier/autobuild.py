@@ -21,6 +21,7 @@ from absl import flags
 from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib import logs
+from glazier.lib import title
 from glazier.lib import winpe
 from glazier.lib.config import builder
 from glazier.lib.config import runner
@@ -66,6 +67,8 @@ class AutoBuild(object):
 
   def RunBuild(self):
     """Perform the build."""
+    title.set_title()
+
     task_list = self._SetupTaskList()
 
     if not os.path.exists(task_list):
