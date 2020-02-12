@@ -53,8 +53,8 @@ def get_value(
         key_name=name,
         use_64bit=use_64bit)
     if value:
-      logging.info(r'Got registry value: %s:\%s\%s\%s.', root, path, name,
-                   value)
+      logging.debug(r'Got registry value: %s:\%s\%s\%s.', root, path, name,
+                    value)
       return value
   except registry.RegistryError as e:
     logging.warning(r'Failed to get registry key: %s:\%s\%s (%s)', root, path,
@@ -111,7 +111,7 @@ def remove_value(name: Text,
         key_path=path,
         key_name=name,
         use_64bit=use_64bit)
-    logging.info(r'Removed registry key: %s:\%s\%s', root, path, name)
+    logging.debug(r'Removed registry key: %s:\%s\%s', root, path, name)
   except registry.RegistryError as e:
     if e.errno == 2:
       logging.warning(r'Failed to delete non-existant registry key: %s:\%s\%s',
