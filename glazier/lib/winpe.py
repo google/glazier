@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import functools
 from glazier.lib import registry
 
 
@@ -25,6 +26,7 @@ class Error(Exception):
   pass
 
 
+@functools.lru_cache()
 def check_winpe() -> bool:
   """Verify image environment is WinPE or Host.
 

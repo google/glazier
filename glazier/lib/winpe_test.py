@@ -27,16 +27,19 @@ class WinPETest(absltest.TestCase):
 
   @mock.patch.object(winpe.registry, 'get_value', autospec=True)
   def test_check_winpe_true(self, gv):
+    winpe.check_winpe.cache_clear()
     gv.return_value = 'WindowsPE'
     self.assertEqual(winpe.check_winpe(), True)
 
   @mock.patch.object(winpe.registry, 'get_value', autospec=True)
   def test_check_winpe_false(self, gv):
+    winpe.check_winpe.cache_clear()
     gv.return_value = 'Enterprise'
     self.assertEqual(winpe.check_winpe(), False)
 
   @mock.patch.object(winpe.registry, 'get_value', autospec=True)
   def test_check_winpe_error(self, gv):
+    winpe.check_winpe.cache_clear()
     gv.side_effect = winpe.registry.Error
     self.assertRaises(winpe.Error, winpe.check_winpe)
 
