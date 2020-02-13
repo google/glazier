@@ -40,6 +40,7 @@ from glazier.lib import winpe
 from six.moves import urllib
 
 CHUNK_BYTE_SIZE = 65536
+SLEEP = 20
 
 FLAGS = flags.FLAGS
 
@@ -212,10 +213,12 @@ class BaseDownloader(object):
                               (url, file_stream.getcode()))
 
       if max_retries < 0 or attempt < max_retries:
-        logging.info('Sleeping for 20 seconds and then retrying the download.')
-        time.sleep(20)
+        logging.info('Sleeping for %d second(s) and then retrying the '
+                     'download.', SLEEP)
+        time.sleep(SLEEP)
       else:
-        raise DownloadError('Permanent failure for resource %s.' % url)
+        raise DownloadError('Permanent failure for resource %s after %d '
+                            'attempt(s).' % (url, max_retries))
 
   def CheckUrl(self, url, status_codes, max_retries=5):
     """Check a remote URL for availability.
@@ -319,12 +322,14 @@ class BaseDownloader(object):
         print('%s: %s' % (key, value))
       print('\n\n\n')
 
-  def _StreamToDisk(self, file_stream, show_progress=None):
+  def _StreamToDisk(self, file_stream, show_progress=None, max_retries=5):
     """Save a file stream to disk.
 
     Args:
       file_stream: The file stream returned by a successful urlopen()
       show_progress: Print download progress to stdout (overrides default).
+      max_retries:  The number of times to attempt to download a file if the
+      first attempt fails. A negative number implies infinite.
 
     Raises:
       DownloadError: Error retrieving file or saving to disk.
@@ -334,11 +339,21 @@ class BaseDownloader(object):
       progress = show_progress
 
     bytes_so_far = 0
-    try:
-      url = file_stream.geturl()
-      total_size = int(file_stream.headers.get('Content-Length').strip())
-    except AttributeError:
-      raise DownloadError('Unable to reach server URL.')
+    attempt = 0
+    while True:
+      attempt += 1
+      try:
+        url = file_stream.geturl()
+        total_size = int(file_stream.headers.get('Content-Length').strip())
+        break
+      except AttributeError:
+        if max_retries < 0 or attempt < max_retries:
+          logging.info('Sleeping for %d second(s) and retrying server URL.',
+                       SLEEP)
+          time.sleep(SLEEP)
+        else:
+          raise DownloadError('Failed to reach server URL after %d '
+                              'attempt(s).' % max_retries)
 
     try:
       with open(self._save_location, 'wb') as output_file:

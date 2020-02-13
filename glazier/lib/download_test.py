@@ -30,6 +30,8 @@ release=1.0
 branch=stable
 """
 
+SLEEP = 20
+
 
 class PathsTest(absltest.TestCase):
 
@@ -126,7 +128,7 @@ class DownloadTest(absltest.TestCase):
     urlopen.side_effect = iter([httperr, httperr, file_stream])
     self.assertRaises(download.DownloadError, self._dl._OpenStream, url,
                       max_retries=2)
-    sleep.assert_has_calls([mock.call(20), mock.call(20)])
+    sleep.assert_has_calls([mock.call(SLEEP), mock.call(SLEEP)])
 
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
@@ -167,7 +169,8 @@ class DownloadTest(absltest.TestCase):
     todisk.assert_called_with(self._dl, downf.return_value, False)
 
   @mock.patch.object(download.BaseDownloader, '_StoreDebugInfo', autospec=True)
-  def testStreamToDisk(self, store_info):
+  @mock.patch.object(download.time, 'sleep', autospec=True)
+  def testStreamToDisk(self, sleep, store_info):
     # setup
     http_stream = six.BytesIO()
     http_stream.write(b'First line.\nSecond line.\n')
@@ -229,6 +232,14 @@ class DownloadTest(absltest.TestCase):
     self.assertRaises(download.DownloadError, self._dl._StreamToDisk,
                       file_stream)
     store_info.assert_called_with(self._dl, file_stream, 'SocketErr')
+
+    # Retries
+    http_stream.seek(0)
+    file_stream.headers.get = lambda x: {'Content-Length': '100000'}[x]
+    self._dl._save_location = r'C:\download.txt'
+    self.assertRaises(download.DownloadError, self._dl._StreamToDisk,
+                      file_stream)
+    sleep.assert_has_calls([mock.call(SLEEP), mock.call(SLEEP)])
 
   @mock.patch.object(download.BaseDownloader, '_StoreDebugInfo', autospec=True)
   def testValidate(self, store_info):
