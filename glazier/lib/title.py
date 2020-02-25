@@ -22,8 +22,8 @@ import logging
 import os
 from typing import Optional, Text
 
+from glazier.lib import buildinfo
 from glazier.lib import constants
-from glazier.lib import identifier
 from glazier.lib import winpe
 
 
@@ -37,7 +37,8 @@ def _base_title() -> Optional[Text]:
   Returns:
     The base text for the title as a string.
   """
-  getid = identifier.check_id()
+  build_info = buildinfo.BuildInfo()
+  getid = build_info.ImageID()
   base = []
 
   if winpe.check_winpe():

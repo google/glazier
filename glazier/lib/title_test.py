@@ -29,53 +29,45 @@ TEST_ID = '1A19SEL90000R90DZN7A-1234567'
 
 class TitleTest(absltest.TestCase):
 
-  def setUp(self):
-    super(TitleTest, self).setUp()
-    # Pythoncom
-    mock_wmi = mock.patch.object(
-        title.identifier.hw_info.wmi_query, 'WMIQuery', autospec=True)
-    self.addCleanup(mock_wmi.stop)
-    mock_wmi.start()
-
-  @mock.patch.object(title.identifier, 'check_id', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_base_title_all(self, wpe, ci):
+  def test_base_title_all(self, wpe, ii):
     wpe.return_value = True
-    ci.return_value = TEST_ID
+    ii.return_value = TEST_ID
     title.constants.FLAGS.config_root_path = '/some/directory'
     self.assertEqual(title._base_title(),
                      'WinPE - some/directory - {}'.format(TEST_ID))
 
-  @mock.patch.object(title.identifier, 'check_id', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_base_title_wpe(self, wpe, ci):
+  def test_base_title_wpe(self, wpe, ii):
     wpe.return_value = True
     title.constants.FLAGS.config_root_path = None
-    ci.return_value = None
+    ii.return_value = None
     self.assertEqual(title._base_title(), 'WinPE')
 
-  @mock.patch.object(title.identifier, 'check_id', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_base_title_path(self, wpe, ci):
+  def test_base_title_path(self, wpe, ii):
     wpe.return_value = False
     title.constants.FLAGS.config_root_path = '/some/directory'
-    ci.return_value = None
+    ii.return_value = None
     self.assertEqual(title._base_title(), 'some/directory')
 
-  @mock.patch.object(title.identifier, 'check_id', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_base_title_id(self, wpe, ci):
+  def test_base_title_id(self, wpe, ii):
     wpe.return_value = False
-    ci.return_value = TEST_ID
+    ii.return_value = TEST_ID
     title.constants.FLAGS.config_root_path = None
     self.assertEqual(
         title._base_title(), TEST_ID)
 
-  @mock.patch.object(title.identifier, 'check_id', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_base_title_none(self, wpe, ci):
+  def test_base_title_none(self, wpe, ii):
     wpe.return_value = False
-    ci.return_value = None
+    ii.return_value = None
     title.constants.FLAGS.config_root_path = None
     self.assertEqual(title._base_title(), '')
 
@@ -103,11 +95,11 @@ class TitleTest(absltest.TestCase):
                      '{0} [{1}]'.format(PREFIX, TEST_ID))
 
   @mock.patch.object(title.os, 'system', autospec=True)
-  @mock.patch.object(title.identifier, 'check_id', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_set_title_string(self, wpe, ci, sys):
+  def test_set_title_string(self, wpe, ii, sys):
     wpe.return_value = False
-    ci.return_value = TEST_ID
+    ii.return_value = TEST_ID
     self.assertEqual(title.set_title(STRING),
                      '{0} [{1} - {2}]'.format(PREFIX, STRING, TEST_ID))
     sys.assert_called_with(
