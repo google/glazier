@@ -35,21 +35,22 @@ logging = logs.logging
 _FAILURE_MSG = ('%s\n\nInstaller cannot continue.')
 
 
+def _LogFatal(msg):
+  """Log a fatal error and exit.
+
+  Args:
+    msg: The error message to accompany the failure.
+  """
+  logging.fatal(_FAILURE_MSG, msg)
+  sys.exit(1)
+
+
 class AutoBuild(object):
   """The AutoBuild class manages the imaging process."""
 
   def __init__(self):
     logs.Setup()
     self._build_info = buildinfo.BuildInfo()
-
-  def _LogFatal(self, msg):
-    """Log a fatal error and exit.
-
-    Args:
-      msg: The error message to accompany the failure.
-    """
-    logging.fatal(_FAILURE_MSG, msg)
-    sys.exit(1)
 
   def _SetupTaskList(self):
     """Determines the location of the task list and erases if necessary."""
@@ -62,7 +63,7 @@ class AutoBuild(object):
       try:
         os.remove(location)
       except OSError as e:
-        self._LogFatal('Unable to remove task list.  %s' % e)
+        _LogFatal('Unable to remove task list.  %s' % e)
     return location
 
   def RunBuild(self):
@@ -77,18 +78,21 @@ class AutoBuild(object):
         b = builder.ConfigBuilder(self._build_info)
         b.Start(out_file=task_list, in_path=root_path)
       except builder.ConfigBuilderError as e:
-        self._LogFatal(str(e))
+        _LogFatal(str(e))
 
     try:
       r = runner.ConfigRunner(self._build_info)
       r.Start(task_list=task_list)
     except runner.ConfigRunnerError as e:
-      self._LogFatal(str(e))
+      _LogFatal(str(e))
 
 
 def main(unused_argv):
   ab = AutoBuild()
-  ab.RunBuild()
+  try:
+    ab.RunBuild()
+  except KeyboardInterrupt:
+    _LogFatal('KeyboardInterrupt detected, exiting.')
 
 
 if __name__ == '__main__':

@@ -31,26 +31,25 @@ class BuildInfoTest(absltest.TestCase):
     self.autobuild = autobuild.AutoBuild()
     autobuild.logging = logs.logging
     autobuild.logging.fatal.side_effect = LogFatal()
+    self.filesystem = fake_filesystem.FakeFilesystem()
+    autobuild.os = fake_filesystem.FakeOsModule(self.filesystem)
 
   def testLogFatal(self):
-    self.assertRaises(LogFatal, self.autobuild._LogFatal,
+    self.assertRaises(LogFatal, autobuild._LogFatal,
                       'failure is always an option')
     self.assertTrue(autobuild.logging.fatal.called)
 
   @mock.patch.object(autobuild.winpe, 'check_winpe', autospec=True)
   def testSetupTaskList(self, wpe):
-
     # Host
     tasklist = autobuild.constants.SYS_TASK_LIST
     wpe.return_value = False
-    filesystem = fake_filesystem.FakeFilesystem()
-    autobuild.os = fake_filesystem.FakeOsModule(filesystem)
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
     autobuild.FLAGS.preserve_tasks = True
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
 
     # WinPE
-    filesystem.CreateFile(autobuild.constants.WINPE_TASK_LIST)
+    self.filesystem.CreateFile(autobuild.constants.WINPE_TASK_LIST)
     wpe.return_value = True
     tasklist = autobuild.constants.WINPE_TASK_LIST
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
@@ -76,6 +75,10 @@ class BuildInfoTest(absltest.TestCase):
     runner.side_effect = autobuild.runner.ConfigRunnerError
     self.assertRaises(LogFatal, self.autobuild.RunBuild)
 
+  @mock.patch.object(autobuild, 'AutoBuild', autospec=True)
+  def testMainError(self, ab):
+    ab.return_value.RunBuild.side_effect = KeyboardInterrupt
+    self.assertRaises(LogFatal, autobuild.main, 'something')
 
 if __name__ == '__main__':
   absltest.main()
