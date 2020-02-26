@@ -213,8 +213,8 @@ class BaseDownloader(object):
                               (url, file_stream.getcode()))
 
       if max_retries < 0 or attempt < max_retries:
-        logging.info('Sleeping for %d second(s) and then retrying the '
-                     'download.', SLEEP)
+        logging.info('Attempt %d of %d: Sleeping for %d second(s) before '
+                     'retrying the download.', attempt, max_retries, SLEEP)
         time.sleep(SLEEP)
       else:
         raise DownloadError('Permanent failure for resource %s after %d '
@@ -322,7 +322,7 @@ class BaseDownloader(object):
         print('%s: %s' % (key, value))
       print('\n\n\n')
 
-  def _StreamToDisk(self, file_stream, show_progress=None, max_retries=5):
+  def _StreamToDisk(self, file_stream, show_progress=None, max_retries=15):
     """Save a file stream to disk.
 
     Args:
@@ -348,8 +348,8 @@ class BaseDownloader(object):
         break
       except AttributeError:
         if max_retries < 0 or attempt < max_retries:
-          logging.info('Sleeping for %d second(s) and retrying server URL.',
-                       SLEEP)
+          logging.info('Attempt %d of %d: Sleeping for %d second(s) before '
+                       'retrying server URL.', attempt, max_retries, SLEEP)
           time.sleep(SLEEP)
         else:
           raise DownloadError('Failed to reach server URL after %d '
