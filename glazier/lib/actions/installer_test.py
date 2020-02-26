@@ -106,13 +106,13 @@ class InstallerTest(absltest.TestCase):
     d.Run()
     build_info.Serialize.assert_called_with(r'C:\Cache\Dir/build_info.yaml')
 
-  @mock.patch.object(installer.registry, 'Registry', autospec=True)
+  @mock.patch.object(installer.registry, 'set_value', autospec=True)
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
-  def testBuildInfoSave(self, build_info, reg):
+  def testBuildInfoSave(self, build_info, sv):
     fs = fake_filesystem.FakeFilesystem()
     installer.open = fake_filesystem.FakeFileOpen(fs)
     installer.os = fake_filesystem.FakeOsModule(fs)
-    timer_root = r'%s\%s' % (installer.constants.REG_ROOT, 'Timers')
+    timer_root = r'{0}\{1}'.format(installer.constants.REG_ROOT, 'Timers')
     fs.CreateFile(
         '/tmp/build_info.yaml',
         contents=
@@ -120,13 +120,24 @@ class InstallerTest(absltest.TestCase):
     build_info.CachePath.return_value = '/tmp'
     s = installer.BuildInfoSave(None, build_info)
     s.Run()
-    reg.return_value.SetKeyValue.assert_has_calls([
-        mock.call(installer.constants.REG_ROOT, 'opt 1', True),
-        mock.call(timer_root, 'TIMER_opt 2', 'some value'),
-        mock.call(installer.constants.REG_ROOT, 'opt 3', 12345),
-    ],
-                                                  any_order=True)
+    sv.assert_has_calls([
+        mock.call('opt 1', True, 'HKLM', installer.constants.REG_ROOT),
+        mock.call('TIMER_opt 2', 'some value', 'HKLM', timer_root),
+        mock.call('opt 3', 12345, 'HKLM', installer.constants.REG_ROOT),
+    ], any_order=True)
     s.Run()
+
+  @mock.patch.object(installer.registry, 'set_value', autospec=True)
+  @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
+  def testBuildInfoSaveError(self, build_info, sv):
+    fs = fake_filesystem.FakeFilesystem()
+    installer.open = fake_filesystem.FakeFileOpen(fs)
+    installer.os = fake_filesystem.FakeOsModule(fs)
+    fs.CreateFile('/tmp/build_info.yaml', contents='{BUILD: {opt 1: true}}\n')
+    build_info.CachePath.return_value = '/tmp'
+    s = installer.BuildInfoSave(None, build_info)
+    sv.side_effect = installer.registry.Error
+    self.assertRaises(installer.ActionError, s.Run)
 
   def testChangeServer(self):
     build_info = buildinfo.BuildInfo()

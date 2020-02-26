@@ -20,6 +20,7 @@ import time
 from glazier.chooser import chooser
 from glazier.lib import constants
 from glazier.lib import log_copy
+from glazier.lib import registry
 from glazier.lib import stage
 from glazier.lib.actions import file_system
 from glazier.lib.actions.base import ActionError
@@ -27,7 +28,6 @@ from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import RestartEvent
 from glazier.lib.actions.base import ServerChangeEvent
 from glazier.lib.actions.base import ValidationError
-from gwinpy.registry import registry
 import yaml
 
 
@@ -80,21 +80,21 @@ class BuildInfoDump(BaseAction):
 class BuildInfoSave(BaseAction):
   """Save build information to the registry."""
 
-  def _WriteRegistry(self, input_keys):
+  def _WriteRegistry(self, reg_values):
     """Populates the registry with build_info settings for future reference.
 
     Args:
-      input_keys: A dictionary of key/value pairs to be added to the registry.
+      reg_values: A dictionary of key/value pairs to be added to the registry.
     """
-    reg = registry.Registry(root_key='HKLM')
-    for registry_key in input_keys:
-      reg_root = constants.REG_ROOT
-      if 'TIMER_' in registry_key:
-        reg_root = r'%s\%s' % (constants.REG_ROOT, 'Timers')
-      registry_value = input_keys[registry_key]
-      reg.SetKeyValue(reg_root, registry_key, registry_value)
-      logging.debug('Created registry value named %s with value %s.',
-                    registry_key, registry_value)
+    for value_name in reg_values:
+      key_path = constants.REG_ROOT
+      value_data = reg_values[value_name]
+      if 'TIMER_' in value_name:
+        key_path = r'{0}\{1}'.format(constants.REG_ROOT, 'Timers')
+      try:
+        registry.set_value(value_name, value_data, 'HKLM', key_path)
+      except registry.Error as e:
+        raise ActionError(str(e))
 
   def Run(self):
     path = os.path.join(self._build_info.CachePath(), 'build_info.yaml')
@@ -104,7 +104,7 @@ class BuildInfoSave(BaseAction):
         self._WriteRegistry(input_config['BUILD'])
       os.remove(path)
     else:
-      logging.debug('%s does not exist - skipping processing.', path)
+      logging.debug('%s does not exist - skipped processing.', path)
 
 
 class ChangeServer(BaseAction):
@@ -182,7 +182,7 @@ class Sleep(BaseAction):
 
   def Run(self):
     duration = int(self._args[0])
-    logging.debug('Sleeping for %d seconds.', duration)
+    logging.info('Sleeping for %d seconds before continuing...', duration)
     time.sleep(duration)
 
   def Validate(self):
