@@ -16,11 +16,12 @@
 
 import logging
 import logging.handlers
+from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib import winpe
 
 
-EVT_LOG_ID = 'GlazierBuildLog'
+DATE_FMT = '%m%d %H:%M:%S'
 
 
 class LogError(Exception):
@@ -36,27 +37,41 @@ def GetLogsPath():
 
 def Setup():
   """Sets up the logging environment."""
-  log_file = '%s\\%s' % (GetLogsPath(), constants.BUILD_LOG_FILE)
+  build_info = buildinfo.BuildInfo()
+  log_file = r'%s\%s' % (GetLogsPath(), constants.BUILD_LOG_FILE)
 
+  debug_fmt = ('%(levelname).1s%(asctime)s.%(msecs)03d %(process)d {} '
+               '%(filename)s:%(lineno)d]  %(message)s').format(
+                   build_info.ImageID())
+  info_fmt = '%(levelname).1s%(asctime)s %(filename)s:%(lineno)d] %(message)s'
+
+  debug_formatter = logging.Formatter(debug_fmt, datefmt=DATE_FMT)
+  info_formatter = logging.Formatter(info_fmt, datefmt=DATE_FMT)
+
+  # Set default logger
   logger = logging.getLogger()
   logger.setLevel(logging.DEBUG)
+  # Create empty list of handlers to enable multiple streams.
+  logger.handlers = []
 
-  # file
+  # Create console handler and set level
+  ch = logging.StreamHandler()
+  ch.setLevel(logging.INFO)
+  ch.setFormatter(info_formatter)
+  logger.addHandler(ch)
+
+  # Create file handler and set level
   try:
     fh = logging.FileHandler(log_file)
   except IOError:
     raise LogError('Failed to open log file %s.' % log_file)
-
-  formatter = logging.Formatter(
-      '%(asctime)s.%(msecs)03d\t%(filename)s:%(lineno)d] %(message)s',
-      datefmt='%Y-%m-%d %H:%M:%S')
-  fh.setFormatter(formatter)
   fh.setLevel(logging.DEBUG)
-
-  if not winpe.check_winpe():
-    event_handler = logging.handlers.NTEventLogHandler(EVT_LOG_ID)
-    event_handler.setLevel(logging.INFO)
-    logger.addHandler(event_handler)
-
-  # add the handlers to the logger
+  fh.setFormatter(debug_formatter)
   logger.addHandler(fh)
+
+  # Create Event Log handler and set level
+  if not winpe.check_winpe():
+    eh = logging.handlers.NTEventLogHandler('GlazierBuildLog')
+    eh.setLevel(logging.DEBUG)
+    eh.setFormatter(debug_formatter)
+    logger.addHandler(eh)

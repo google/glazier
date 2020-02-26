@@ -19,6 +19,9 @@ from glazier.lib import logs
 import mock
 
 
+TEST_ID = '1A19SEL90000R90DZN7A-1234567'
+
+
 class LoggingTest(absltest.TestCase):
 
   @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
@@ -31,15 +34,23 @@ class LoggingTest(absltest.TestCase):
     wpe.return_value = False
     self.assertEqual(logs.GetLogsPath(), logs.constants.SYS_LOGS_PATH)
 
+  @mock.patch.object(logs.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(logs.logging, 'FileHandler')
-  def testSetup(self, fh, wpe):
+  def testSetup(self, fh, wpe, ii):
+    ii.return_value = TEST_ID
     wpe.return_value = False
     logs.Setup()
-    fh.assert_called_with('%s\\glazier.log' % logs.constants.SYS_LOGS_PATH)
+    fh.assert_called_with(r'%s\glazier.log' % logs.constants.SYS_LOGS_PATH)
+
+  @mock.patch.object(logs.buildinfo.BuildInfo, 'ImageID', autospec=True)
+  @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(logs.logging, 'FileHandler')
+  def testSetupError(self, fh, wpe, ii):
+    ii.return_value = TEST_ID
+    wpe.return_value = False
     fh.side_effect = IOError
     self.assertRaises(logs.LogError, logs.Setup)
-
 
 if __name__ == '__main__':
   absltest.main()
