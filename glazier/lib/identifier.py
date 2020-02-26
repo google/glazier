@@ -42,7 +42,7 @@ def _generate_id() -> Text:
   """
   hw = hw_info.HWInfo()
   return ('%s-%s' %
-          (str(hw.BiosSerial()), str(uuid.uuid4())[:7]))
+          (str(hw.BiosSerial()), str(uuid.uuid4())[:7])).upper()
 
 
 def _set_id() -> Text:
