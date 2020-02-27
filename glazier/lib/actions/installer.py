@@ -182,14 +182,21 @@ class Sleep(BaseAction):
 
   def Run(self):
     duration = int(self._args[0])
-    logging.info('Sleeping for %d seconds before continuing...', duration)
+    converted_time = time.strftime('%H:%M:%S', time.gmtime(duration))
+
+    if len(self._args) > 1:
+      logging.info('Sleeping for %s (%s).', converted_time, str(self._args[1]))
+    else:
+      logging.info('Sleeping for %s before continuing...', converted_time)
     time.sleep(duration)
 
   def Validate(self):
     self._TypeValidator(self._args, list)
-    if len(self._args) is not 1:
+    if len(self._args) > 2:
       raise ValidationError('Invalid args length: %s' % self._args)
     self._TypeValidator(self._args[0], int)
+    if len(self._args) > 1:
+      self._TypeValidator(self._args[1], str)
 
 
 class StartStage(BaseAction):

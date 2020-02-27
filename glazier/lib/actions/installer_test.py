@@ -197,9 +197,15 @@ class InstallerTest(absltest.TestCase):
 
   @mock.patch.object(installer.time, 'sleep', autospec=True)
   def testSleep(self, sleep):
-    s = installer.Sleep([30], None)
+    s = installer.Sleep([1520], None)
     s.Run()
-    sleep.assert_called_with(30)
+    sleep.assert_called_with(1520)
+
+  @mock.patch.object(installer.time, 'sleep', autospec=True)
+  def testSleepString(self, sleep):
+    s = installer.Sleep([1234, 'Some Reason.'], None)
+    s.Run()
+    sleep.assert_called_with(1234)
 
   def testSleepValidate(self):
     s = installer.Sleep('30', None)
@@ -209,6 +215,8 @@ class InstallerTest(absltest.TestCase):
     s = installer.Sleep(['30'], None)
     self.assertRaises(installer.ValidationError, s.Validate)
     s = installer.Sleep([30], None)
+    s.Validate()
+    s = installer.Sleep([30, 'Some reason.'], None)
     s.Validate()
 
   @mock.patch.object(installer.chooser, 'Chooser', autospec=True)

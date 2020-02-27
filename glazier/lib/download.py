@@ -322,7 +322,7 @@ class BaseDownloader(object):
         print('%s: %s' % (key, value))
       print('\n\n\n')
 
-  def _StreamToDisk(self, file_stream, show_progress=None, max_retries=15):
+  def _StreamToDisk(self, file_stream, show_progress=None, max_retries=5):
     """Save a file stream to disk.
 
     Args:

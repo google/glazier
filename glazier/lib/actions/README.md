@@ -489,10 +489,12 @@ Pause the installer.
 
 *   Format: List
     *   Arg1[int]: Duration to sleep.
+    *   Arg2[str]: The reason/message for the sleep. (Optional)
 
 #### Examples
 
     Sleep: [30]
+    Sleep: [300, "Waiting for Group Policy to apply..."]
 
 ### StartStage
 
