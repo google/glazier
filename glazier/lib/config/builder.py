@@ -75,12 +75,7 @@ class ConfigBuilder(base.ConfigBase):
       in_file: The root configuration file name.
     """
     self._task_list = []
-    while True:
-      try:
-        self._Start(in_path, in_file)
-        break
-      except actions.ServerChangeEvent:
-        in_path = ''  # restart with a fresh path
+    self._Start(in_path, in_file)
     try:
       files.Dump(out_file, self._task_list, mode='a')
     except files.Error as e:
@@ -110,22 +105,9 @@ class ConfigBuilder(base.ConfigBase):
         'server': config_server
     })
     controls = yaml_config['controls']
-    try:
-      for control in controls:
-        if 'pin' not in control or self._MatchPin(control['pin']):
-          self._StoreControls(control, yaml_config.get('templates'))
-    except actions.ServerChangeEvent as e:
-      raise
-    finally:
-      # close out any timers before raising a server change
-      timer_stop = 'stop_{}_{}'.format(conf_path.rstrip('/'), conf_file)
-      self._task_list.append({
-          'path': active_path,
-          'data': {
-              'SetTimer': [timer_stop]
-          },
-          'server': config_server
-      })
+    for control in controls:
+      if 'pin' not in control or self._MatchPin(control['pin']):
+        self._StoreControls(control, yaml_config.get('templates'))
     self._build_info.ActiveConfigPath(pop=True)
 
   def _MatchPin(self, pins):

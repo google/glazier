@@ -14,10 +14,8 @@
 """Tests for glazier.lib.config.builder."""
 
 from absl.testing import absltest
-from glazier.lib import actions
 from glazier.lib import buildinfo
 from glazier.lib.config import builder
-from glazier.lib.config import files
 import mock
 
 
@@ -76,36 +74,6 @@ class ConfigBuilderTest(absltest.TestCase):
     self.cb._StoreControls(config, {})
     self.assertFalse(process.called)
     self.assertEqual(self.cb._task_list[0]['data'], config)
-
-  @mock.patch.object(builder.ConfigBuilder, '_Start', autospec=True)
-  @mock.patch.object(files, 'Dump', autospec=True)
-  def testStartWithRestart(self, dump, start):
-    start.side_effect = iter([actions.ServerChangeEvent('test'), None])
-    self.cb.Start('/task/list/path.yaml', '/root1')
-    start.assert_has_calls([
-        mock.call(self.cb, '/root1', 'build.yaml'),
-        mock.call(self.cb, '', 'build.yaml'),
-    ])
-    dump.assert_called_with('/task/list/path.yaml', [], mode='a')
-
-  @mock.patch.object(builder.ConfigBuilder, '_StoreControls', autospec=True)
-  @mock.patch.object(builder.download, 'PathCompile', autospec=True)
-  @mock.patch.object(builder.files, 'Read', autospec=True)
-  def testStartWithServerChange(self, read, path, store):
-    path.return_value = '/'
-    read.return_value = {
-        'controls': [{
-            'ServerChangeEvent': ['https://glazier.example.com', '/']
-        }]
-    }
-    store.side_effect = iter([actions.ServerChangeEvent('test')])
-    self.assertRaises(actions.ServerChangeEvent, self.cb._Start, '/task/path/',
-                      'list.yaml')
-    self.assertEqual(self.cb._task_list[0]['data']['SetTimer'],
-                     ['start_/task/path_list.yaml'])
-    self.assertEqual(self.cb._task_list[1]['data']['SetTimer'],
-                     ['stop_/task/path_list.yaml'])
-
 
 if __name__ == '__main__':
   absltest.main()

@@ -135,6 +135,23 @@ class ConfigRunnerTest(absltest.TestCase):
     shutdown.assert_called_with(10, 'Some other reason')
     self.assertFalse(pop.called)
 
+  @mock.patch.object(runner.files, 'Remove', autospec=True)
+  @mock.patch.object(runner.ConfigRunner, '_ProcessAction', autospec=True)
+  @mock.patch.object(runner.power, 'Restart', autospec=True)
+  def testServerChangeEvents(self, restart, action, rm):
+    conf = [{
+        'data': {
+            'ChangeServer': ['https://glazier.example.com', 'autobuild']
+        },
+        'path': ['path1'],
+        'server': 'https://glazier.example.com'
+    }]
+    event = runner.base.actions.ServerChangeEvent('test')
+    action.side_effect = event
+    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
+    self.assertTrue(rm.called)
+    self.assertTrue(restart.called)
+
   @mock.patch.object(runner.base.actions, 'SetTimer', autospec=True)
   def testProcessWithActionError(self, set_timer):
     set_timer.side_effect = runner.base.actions.ActionError

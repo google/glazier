@@ -92,6 +92,13 @@ class ConfigRunner(base.ConfigBase):
               self._PopTask(tasks)
             power.Shutdown(e.timeout, str(e))
             sys.exit(0)
+          # TODO: Close out YAML timer & don't require reboot.
+          except base.actions.ServerChangeEvent as e:
+            seconds = '10'
+            files.Remove(self._task_list_path)
+            power.Restart(seconds, 'Server change detected, rebooting in {} '
+                          'seconds...'.format(seconds))
+            sys.exit(0)
       self._PopTask(tasks)
 
   def _Policy(self, line):
