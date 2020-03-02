@@ -19,10 +19,9 @@ import logging
 import logging.handlers
 import shutil
 
-from glazier.lib import constants
 from glazier.lib import drive_map
 from glazier.lib import logs
-from gwinpy.registry import registry
+from glazier.lib import registry
 
 
 class LogCopyError(Exception):
@@ -58,7 +57,7 @@ class LogCopy(object):
     event_handler = logging.handlers.NTEventLogHandler('GlazierBuildLog')
     logger = logging.Logger('eventlogger')
     logger.addHandler(event_handler)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     try:
       with open(source_log, 'r') as f:
@@ -76,8 +75,11 @@ class LogCopy(object):
     Returns:
       The full text file log name (string).
     """
-    reg = registry.Registry(root_key='HKLM')
-    hostname = reg.GetKeyValue(constants.REG_ROOT, 'name')
+    try:
+      hostname = registry.get_value('name')
+    except registry.Error as e:
+      raise LogCopyError('Hostname could not be determined for log copy: %s'
+                         % str(e))
     destination_file_date = datetime.datetime.utcnow().replace(microsecond=0)
     destination_file_date = destination_file_date.isoformat()
     destination_file_date = destination_file_date.replace(':', '')

@@ -20,11 +20,8 @@ import sys
 
 from absl.testing import absltest
 
-from glazier.lib import constants
 from glazier.lib import log_copy
 from glazier.lib import winpe
-
-from gwinpy.registry import registry
 import mock
 
 
@@ -45,17 +42,21 @@ class LogCopyTest(absltest.TestCase):
 
   @mock.patch.object(log_copy.datetime, 'datetime', autospec=True)
   @mock.patch.object(log_copy.logging, 'FileHandler', autospec=True)
-  @mock.patch.object(registry, 'Registry', autospec=True)
-  def testGetLogFileName(self, reg, unused_log, dt):
+  @mock.patch.object(log_copy.registry, 'get_value', autospec=True)
+  def testGetLogFileName(self, gv, unused_log, dt):
     lc = log_copy.LogCopy()
-    reg.return_value.GetKeyValue.return_value = 'WORKSTATION1-W'
+    gv.return_value = 'WORKSTATION1-W'
     now = datetime.datetime.utcnow()
     out_date = now.replace(microsecond=0).isoformat().replace(':', '')
     dt.utcnow.return_value = now
     result = lc._GetLogFileName()
     self.assertEqual(result, r'l:\WORKSTATION1-W-' + out_date + '.log')
-    reg.assert_called_with(root_key='HKLM')
-    reg.return_value.GetKeyValue.assert_called_with(constants.REG_ROOT, 'name')
+    gv.assert_called_with('name')
+
+  @mock.patch.object(log_copy.registry, 'get_value', autospec=True)
+  def testGetLogFileNameError(self, gv):
+    gv.side_effect = log_copy.registry.Error
+    self.assertRaises(log_copy.LogCopyError, self.lc._GetLogFileName)
 
   @mock.patch.object(log_copy.LogCopy, '_EventLogUpload', autospec=True)
   def testEventLogCopy(self, event_up):
