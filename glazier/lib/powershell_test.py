@@ -47,6 +47,24 @@ class PowershellTest(absltest.TestCase):
     self.assertEqual(powershell._Powershell(),
                      powershell.constants.SYS_POWERSHELL)
 
+  @mock.patch.object(powershell, '_Powershell', autospec=True)
+  def testLaunchPsError(self, ps):
+    ps.return_value = powershell.constants.WINPE_POWERSHELL
+    self.assertRaises(powershell.PowerShellError,
+                      self.ps._LaunchPs, '-Something', ['-NoExit'])
+
+  @mock.patch.object(powershell.logging, 'debug', autospec=True)
+  @mock.patch.object(powershell, '_Powershell', autospec=True)
+  @mock.patch.object(powershell.subprocess, 'call', autospec=True)
+  def testLaunchPsEcho(self, call, ps, d):
+    ps.return_value = powershell.constants.WINPE_POWERSHELL
+    call.return_value = 0
+    self.psecho = powershell.PowerShell(echo_off=False)
+    self.psecho._LaunchPs('-File', [''], [0])
+    d.assert_called_with('Running Powershell: %s', 'X:\\Windows\\System32\\Wind'
+                         'owsPowerShell\\v1.0\\powershell.exe -NoProfile '
+                         '-NoLogo -File ')
+
   @mock.patch.object(powershell.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(powershell.subprocess, 'call', autospec=True)
   def testRunLocal(self, call, wpe):

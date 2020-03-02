@@ -19,7 +19,7 @@ import logging
 import os
 import subprocess
 
-from typing import List, Text
+from typing import List, Optional, Text
 
 from glazier.lib import constants
 from glazier.lib import resources
@@ -43,7 +43,9 @@ class PowerShell(object):
   def __init__(self, echo_off: bool = True):
     self.echo_off = echo_off
 
-  def _LaunchPs(self, op: Text, args: List[Text], ok_result: List[int]):
+  def _LaunchPs(self, op: Text,  # pylint: disable=dangerous-default-value
+                args: Optional[List[Text]] = [''],
+                ok_result: Optional[List[int]] = [0]):
     """Launch the powershell executable to run a script.
 
     Args:
@@ -55,15 +57,17 @@ class PowerShell(object):
       PowerShellError: failure to execute powershell command cleanly
     """
     if op not in ['-Command', '-File']:
-      raise PowerShellError('Unsupported operation type. [%s]' % op)
+      raise PowerShellError('Unsupported PowerShell parameter: %s' % op)
     if not ok_result:
       ok_result = [0]
     cmd = [_Powershell(), '-NoProfile', '-NoLogo', op] + args
+    string = ' '.join(map(str, cmd))
     if not self.echo_off:
-      logging.debug('Running Powershell:%s', cmd)
+      logging.debug('Running Powershell: %s', string)
     result = subprocess.call(cmd, shell=True)
     if result not in ok_result:
-      raise PowerShellError('Powershell command returned non-zero.\n%s' % cmd)
+      raise PowerShellError('Powershell command returned non-zero:\n%s' %
+                            string)
 
   def RunCommand(self, command: List[Text], ok_result: List[int] = None):
     """Run a powershell script on the local filesystem.

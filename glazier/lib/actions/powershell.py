@@ -33,7 +33,7 @@ class PSScript(BaseAction):
     ps = powershell.PowerShell(echo_off=True)
     c = cache.Cache()
 
-    logging.debug('Interpreting Powershell script %s', script)
+    logging.info('Interpreting Powershell script: %s', script)
     try:
       script = c.CacheFromLine(script, self._build_info)
     except cache.CacheError as e:
@@ -42,7 +42,7 @@ class PSScript(BaseAction):
     try:
       ps.RunLocal(script, args=ps_args)
     except powershell.PowerShellError as e:
-      raise ActionError('Failure executing Powershell script. [%s]' % e)
+      raise ActionError('Failure executing Powershell script: %s' % e)
 
   def Validate(self):
     self._TypeValidator(self._args, list)
