@@ -22,54 +22,92 @@ import mock
 class SystemTest(absltest.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testReboot(self, build_info):
+  def testRebootPop(self, build_info):
+    r = system.Reboot([30, 'reboot for reasons', True], build_info)
+    with self.assertRaises(system.RestartEvent) as evt:
+      r.Run()
+    ex = evt.exception
+    self.assertEqual(ex.timeout, '30')
+    self.assertEqual(str(ex), 'reboot for reasons')
+    self.assertEqual(ex.pop_next, True)
+
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  def testRebootReason(self, build_info):
     r = system.Reboot([30, 'reboot for reasons'], build_info)
     with self.assertRaises(system.RestartEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '30')
     self.assertEqual(str(ex), 'reboot for reasons')
+    self.assertEqual(ex.pop_next, False)
 
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  def testRebootTimeout(self, build_info):
     r = system.Reboot([10], build_info)
     with self.assertRaises(system.RestartEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '10')
     self.assertEqual(str(ex), 'unspecified')
+    self.assertEqual(ex.pop_next, False)
 
   def testRebootValidate(self):
-    r = system.Reboot(30, None)
-    self.assertRaises(system.ValidationError, r.Validate)
-    r = system.Reboot([], None)
+    r = system.Reboot(True, None)
     self.assertRaises(system.ValidationError, r.Validate)
     r = system.Reboot([30, 40], None)
     self.assertRaises(system.ValidationError, r.Validate)
+    r = system.Reboot([30, 'reasons', 'True'], None)
+    self.assertRaises(system.ValidationError, r.Validate)
+    r = system.Reboot([1, 2, 3, 4], None)
+    self.assertRaises(system.ValidationError, r.Validate)
+    r = system.Reboot([30, 'reasons', True], None)
+    r.Validate()
     r = system.Reboot([30, 'reasons'], None)
+    r.Validate()
+    r = system.Reboot([30], None)
     r.Validate()
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testShutdown(self, build_info):
-    r = system.Shutdown([15, 'reboot for reasons'], build_info)
+  def testShutdownPop(self, build_info):
+    r = system.Shutdown([15, 'shutdown for reasons', True], build_info)
     with self.assertRaises(system.ShutdownEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '15')
-    self.assertEqual(str(ex), 'reboot for reasons')
+    self.assertEqual(str(ex), 'shutdown for reasons')
+    self.assertEqual(ex.pop_next, True)
 
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  def testShutdownReason(self, build_info):
+    r = system.Shutdown([15, 'shutdown for reasons'], build_info)
+    with self.assertRaises(system.ShutdownEvent) as evt:
+      r.Run()
+    ex = evt.exception
+    self.assertEqual(ex.timeout, '15')
+    self.assertEqual(str(ex), 'shutdown for reasons')
+    self.assertEqual(ex.pop_next, False)
+
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  def testShutdownTimeout(self, build_info):
     r = system.Shutdown([1], build_info)
     with self.assertRaises(system.ShutdownEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '1')
     self.assertEqual(str(ex), 'unspecified')
+    self.assertEqual(ex.pop_next, False)
 
   def testShutdownValidate(self):
-    s = system.Shutdown(30, None)
-    self.assertRaises(system.ValidationError, s.Validate)
-    s = system.Shutdown([], None)
+    s = system.Shutdown(True, None)
     self.assertRaises(system.ValidationError, s.Validate)
     s = system.Shutdown([30, 40], None)
     self.assertRaises(system.ValidationError, s.Validate)
+    s = system.Shutdown([30, 'reasons', 'True'], None)
+    self.assertRaises(system.ValidationError, s.Validate)
+    s = system.Shutdown([1, 2, 3, 4], None)
+    self.assertRaises(system.ValidationError, s.Validate)
+    s = system.Shutdown([30, 'reasons', True], None)
+    s.Validate()
     s = system.Shutdown([30, 'reasons'], None)
     s.Validate()
     s = system.Shutdown([10], None)

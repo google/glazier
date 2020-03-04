@@ -41,11 +41,13 @@ class PowerEvent(Exception):
                message,
                timeout,
                retry_on_restart=False,
-               task_list_path=None):
+               task_list_path=None,
+               pop_next=False):
     super(PowerEvent, self).__init__(message)
     self.retry_on_restart = retry_on_restart
     self.task_list_path = task_list_path
     self.timeout = timeout
+    self.pop_next = pop_next
 
 
 class RestartEvent(PowerEvent):

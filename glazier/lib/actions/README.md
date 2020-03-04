@@ -416,11 +416,14 @@ Restart the host machine.
     *   Arg1[int]: The timeout delay until restart occurs.
     *   Arg2[str]: The reason/message for the restart to be displayed.
         (Optional)
+    *   Arg3[bool]: Whether to remove the next item in the task list as well.
+        (Optional)
 
 #### Examples
 
     Reboot: [30]
     Reboot: [10, "Restarting to finish installing drivers."]
+    Reboot: [10, "Restarting to finish installing drivers.", True]
 
 ### SetUnattendTimeZone
 
@@ -475,11 +478,14 @@ Shutdown the host machine.
     *   Arg1[int]: The timeout delay until shutdown occurs.
     *   Arg2[str]: The reason/message for the shutdown to be displayed.
         (Optional)
+    *   Arg3[bool]: Whether to remove the next item in the task list as well.
+        (Optional)
 
 #### Examples
 
     Shutdown: [30]
     Shutdown: [10, "Shutting down to save power."]
+    Shutdown: [10, "Shutting down to save power.", True]
 
 ### Sleep
 
