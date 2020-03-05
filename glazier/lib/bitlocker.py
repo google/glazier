@@ -54,14 +54,16 @@ class Bitlocker(object):
     """Enable TPM mode using Powershell (Win8 +)."""
     ps = powershell.PowerShell()
     try:
-      ps.RunCommand(['$ErrorActionPreference=\'Stop\'', ';', 'Enable-BitLocker',
-                     'C:', '-TpmProtector', '-UsedSpaceOnly',
-                     '-SkipHardwareTest ', '>>',
-                     r'%s\enable-bitlocker.txt' % constants.SYS_LOGS_PATH])
-      ps.RunCommand(['$ErrorActionPreference=\'Stop\'', ';',
-                     'Add-BitLockerKeyProtector', 'C:',
-                     '-RecoveryPasswordProtector', '>NUL'])
-    except powershell.PowerShellError as e:
+      ps.run_command([
+          '$ErrorActionPreference=\'Stop\'', ';', 'Enable-BitLocker', 'C:',
+          '-TpmProtector', '-UsedSpaceOnly', '-SkipHardwareTest ', '>>',
+          r'%s\enable-bitlocker.txt' % constants.SYS_LOGS_PATH
+      ])
+      ps.run_command([
+          '$ErrorActionPreference=\'Stop\'', ';', 'Add-BitLockerKeyProtector',
+          'C:', '-RecoveryPasswordProtector', '>NUL'
+      ])
+    except powershell.Error as e:
       raise BitlockerError('Error enabling Bitlocker via Powershell: %s.' %
                            str(e))
 

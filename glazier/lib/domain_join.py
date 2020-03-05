@@ -79,10 +79,10 @@ class DomainJoin(object):
       ps = powershell.PowerShell()
       try:
         logging.debug('Attempting to join the domain %s.', self._domain_name)
-        ps.RunLocal(
+        ps.run_local(
             r'%s\join-domain.ps1' % constants.SYS_CACHE,
             args=[self._username, self._password, self._domain_name])
-      except powershell.PowerShellError as e:
+      except powershell.Error as e:
         # Replace and mask password in error output.
         c = []
         error = str(e).split()
@@ -116,8 +116,8 @@ class DomainJoin(object):
         cmd += ['-OUPath', self._domain_ou]
       try:
         logging.debug('Attempting to join the domain %s.', self._domain_name)
-        ps.RunCommand(cmd)
-      except powershell.PowerShellError as e:
+        ps.run_command(cmd)
+      except powershell.Error as e:
         logging.error(
             'Domain join failed. Sleeping 5 minutes then trying again. (%s)', e)
         continue

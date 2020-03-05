@@ -32,117 +32,108 @@ class PowershellTest(absltest.TestCase):
     self.fs = fake_filesystem.FakeFilesystem()
     powershell.os = fake_filesystem.FakeOsModule(self.fs)
     powershell.resources.os = fake_filesystem.FakeOsModule(self.fs)
-    self.fs.CreateFile('/resources/bin/script.ps1')
+    self.path = '/resources/bin/script.ps1'
+    self.fs.CreateFile(self.path)
     self.ps = powershell.PowerShell()
 
   @mock.patch.object(powershell.winpe, 'check_winpe', autospec=True)
-  def testPowerShell(self, wpe):
-    # WinPE
+  def test_powershell_path_wpe(self, wpe):
     wpe.return_value = True
-    self.assertEqual(powershell._Powershell(),
+    self.assertEqual(powershell._powershell_path(),
                      powershell.constants.WINPE_POWERSHELL)
 
-    # Host
+  @mock.patch.object(powershell.winpe, 'check_winpe', autospec=True)
+  def test_powershell_path_host(self, wpe):
     wpe.return_value = False
-    self.assertEqual(powershell._Powershell(),
+    self.assertEqual(powershell._powershell_path(),
                      powershell.constants.SYS_POWERSHELL)
 
-  @mock.patch.object(powershell, '_Powershell', autospec=True)
-  def testLaunchPsError(self, ps):
-    ps.return_value = powershell.constants.WINPE_POWERSHELL
-    self.assertRaises(powershell.PowerShellError,
-                      self.ps._LaunchPs, '-Something', ['-NoExit'])
+  @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(powershell, '_powershell_path', autospec=True)
+  def test_launch_ps(self, pp, eb):
+    pp.return_value = powershell.constants.SYS_POWERSHELL
+    self.ps._launch_ps('-File', [self.path], [1337])
+    eb.assert_called_with(powershell.constants.SYS_POWERSHELL,
+                          ['-NoProfile', '-NoLogo', '-File', self.path],
+                          [1337], True)
 
-  @mock.patch.object(powershell.logging, 'debug', autospec=True)
-  @mock.patch.object(powershell, '_Powershell', autospec=True)
-  @mock.patch.object(powershell.subprocess, 'call', autospec=True)
-  def testLaunchPsEcho(self, call, ps, d):
-    ps.return_value = powershell.constants.WINPE_POWERSHELL
-    call.return_value = 0
-    self.psecho = powershell.PowerShell(echo_off=False)
-    self.psecho._LaunchPs('-File', [''], [0])
-    d.assert_called_with('Running Powershell: %s', 'X:\\Windows\\System32\\Wind'
-                         'owsPowerShell\\v1.0\\powershell.exe -NoProfile '
-                         '-NoLogo -File ')
+  def test_launch_ps_op_errer(self):
+    self.assertRaises(powershell.Error,
+                      self.ps._launch_ps, '-Something', ['-NoExit'])
 
-  @mock.patch.object(powershell.winpe, 'check_winpe', autospec=True)
-  @mock.patch.object(powershell.subprocess, 'call', autospec=True)
-  def testRunLocal(self, call, wpe):
-    wpe.return_value = False
-    args = ['-Arg1', '-Arg2']
-    call.return_value = 0
-    with self.assertRaises(powershell.PowerShellError):
-      self.ps.RunLocal('/resources/missing.ps1', args=args)
+  @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(powershell, '_powershell_path', autospec=True)
+  def test_launch_ps_no_log(self, pp, eb):
+    pp.return_value = powershell.constants.SYS_POWERSHELL
+    self.pslog = powershell.PowerShell(log=False)
+    self.pslog._launch_ps('-File', [self.path])
+    eb.assert_called_with(powershell.constants.SYS_POWERSHELL,
+                          ['-NoProfile', '-NoLogo', '-File', self.path],
+                          None, False)
 
-    self.ps.RunLocal('/resources/bin/script.ps1', args=args)
-    cmd = [
-        powershell._Powershell(), '-NoProfile', '-NoLogo', '-File',
-        '/resources/bin/script.ps1', '-Arg1', '-Arg2'
-    ]
-    call.assert_called_with(cmd, shell=True)
-    with self.assertRaises(powershell.PowerShellError):
-      self.ps.RunLocal('/resources/bin/script.ps1', args=args, ok_result=[100])
+  @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(powershell, '_powershell_path', autospec=True)
+  def test_launch_ps_error(self, pp, eb):
+    pp.return_value = powershell.constants.SYS_POWERSHELL
+    eb.side_effect = powershell.execute.Error
+    self.assertRaises(powershell.Error, self.ps._launch_ps, '-File',
+                      [self.path])
 
-  @mock.patch.object(powershell.winpe, 'check_winpe', autospec=True)
-  @mock.patch.object(powershell.subprocess, 'call', autospec=True)
-  def testRunCommand(self, call, wpe):
-    wpe.return_value = False
-    call.return_value = 0
-    self.ps.RunCommand(['Get-ChildItem', '-Recurse'])
-    cmd = [
-        powershell._Powershell(), '-NoProfile', '-NoLogo', '-Command',
-        'Get-ChildItem', '-Recurse'
-    ]
-    call.assert_called_with(cmd, shell=True)
-    with self.assertRaises(powershell.PowerShellError):
-      self.ps.RunCommand(['Get-ChildItem', '-Recurse'], ok_result=[100])
+  @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(powershell, '_powershell_path', autospec=True)
+  def test_run_command(self, pp, eb):
+    pp.return_value = powershell.constants.SYS_POWERSHELL
+    self.ps.run_command(['Get-ChildItem', '-Recurse'])
+    eb.assert_called_with(powershell.constants.SYS_POWERSHELL,
+                          ['-NoProfile', '-NoLogo', '-Command', 'Get-ChildItem',
+                           '-Recurse'], None, True)
 
   @flagsaver.flagsaver
-  @mock.patch.object(powershell.PowerShell, '_LaunchPs', autospec=True)
-  def testRunResource(self, launch):
+  @mock.patch.object(powershell.PowerShell, 'run_local', autospec=True)
+  def test_run_resource(self, rl):
     FLAGS.resource_path = '/test/resources'
     self.fs.CreateFile('/test/resources/bin/script.ps1')
-    self.ps.RunResource('bin/script.ps1', args=['>>', 'out.txt'], ok_result=[0])
-    launch.assert_called_with = '/test/resources/bin/script.ps1'
-    # Not Found
-    self.assertRaises(powershell.PowerShellError, self.ps.RunResource,
+    self.ps.run_resource('bin/script.ps1', ['>>', 'out.txt'], [1337])
+    rl.assert_called_with(self.ps, '/test/resources/bin/script.ps1',
+                          ['>>', 'out.txt'], [1337])
+
+  def test_get_res_path_error(self):
+    self.assertRaises(powershell.Error, self.ps.run_resource,
                       'missing.ps1')
-    # Validation
-    self.assertRaises(
-        AssertionError,
-        self.ps.RunResource,
-        'bin/script.ps1',
-        args='not a list')
-    self.assertRaises(
-        AssertionError,
-        self.ps.RunResource,
-        'bin/script.ps1',
-        args=[],
-        ok_result='0')
 
-  @mock.patch.object(powershell.winpe, 'check_winpe', autospec=True)
-  @mock.patch.object(powershell.subprocess, 'call', autospec=True)
-  def testSetExecutionPolicy(self, call, wpe):
-    wpe.return_value = False
-    call.return_value = 0
-    self.ps.SetExecutionPolicy(policy='RemoteSigned')
-    call.assert_called_with(
-        [
-            'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe',
-            '-NoProfile', '-NoLogo', '-Command', 'Set-ExecutionPolicy',
-            '-ExecutionPolicy', 'RemoteSigned'
-        ],
-        shell=True)
-    with self.assertRaisesRegex(powershell.PowerShellError,
-                                'Unknown execution policy.*'):
-      self.ps.SetExecutionPolicy(policy='RandomPolicy')
+  @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(powershell, '_powershell_path', autospec=True)
+  def test_run_local(self, pp, eb):
+    pp.return_value = powershell.constants.SYS_POWERSHELL
+    self.ps.run_local(self.path, ['-Arg1', '-Arg2'], [1337])
+    eb.assert_called_with(powershell.constants.SYS_POWERSHELL, [
+        '-NoProfile', '-NoLogo', '-File', self.path, '-Arg1',
+        '-Arg2'
+    ], [1337], True)
 
-  @mock.patch.object(powershell.winpe, 'check_winpe', autospec=True)
-  @mock.patch.object(powershell.subprocess, 'call', autospec=True)
-  def testStartShell(self, unused_call, wpe):
-    wpe.return_value = False
-    self.ps.StartShell()
+  @mock.patch.object(powershell.PowerShell, 'run_command', autospec=True)
+  def test_set_execution_policy(self, rc):
+    self.ps.set_execution_policy('RemoteSigned')
+    rc.assert_called_with(
+        self.ps, ['Set-ExecutionPolicy', '-ExecutionPolicy', 'RemoteSigned'])
 
+  def test_set_execution_policy_error(self):
+    self.assertRaises(powershell.Error, self.ps.set_execution_policy, 'Foo')
+
+  @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(powershell, '_powershell_path', autospec=True)
+  def test_start_shell(self, pp, eb):
+    pp.return_value = powershell.constants.SYS_POWERSHELL
+    self.ps.start_shell()
+    eb.assert_called_with(powershell.constants.SYS_POWERSHELL,
+                          ['-NoProfile', '-NoLogo'])
+
+  @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(powershell, '_powershell_path', autospec=True)
+  def test_start_shell_error(self, pp, eb):
+    pp.return_value = powershell.constants.SYS_POWERSHELL
+    eb.side_effect = powershell.execute.Error
+    self.assertRaises(powershell.Error, self.ps.start_shell)
 
 if __name__ == '__main__':
   absltest.main()

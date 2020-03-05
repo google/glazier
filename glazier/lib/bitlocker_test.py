@@ -22,7 +22,7 @@ import mock
 class BitlockerTest(absltest.TestCase):
 
   @mock.patch.object(
-      bitlocker.powershell.PowerShell, 'RunCommand', autospec=True)
+      bitlocker.powershell.PowerShell, 'run_command', autospec=True)
   def testPowershell(self, ps):
     bit = bitlocker.Bitlocker(mode='ps_tpm')
     bit.Enable()
@@ -36,7 +36,7 @@ class BitlockerTest(absltest.TestCase):
             'C:', '-RecoveryPasswordProtector', '>NUL'
         ])
     ])
-    ps.side_effect = bitlocker.powershell.PowerShellError
+    ps.side_effect = bitlocker.powershell.Error
     self.assertRaises(bitlocker.BitlockerError, bit.Enable)
 
   @mock.patch.object(bitlocker.subprocess, 'call', autospec=True)

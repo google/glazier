@@ -30,7 +30,7 @@ class PSScript(BaseAction):
     ps_args = None
     if len(self._args) > 1:
       ps_args = self._args[1]
-    ps = powershell.PowerShell(echo_off=True)
+    ps = powershell.PowerShell()
     c = cache.Cache()
 
     logging.info('Interpreting Powershell script: %s', script)
@@ -40,9 +40,9 @@ class PSScript(BaseAction):
       raise ActionError(e)
 
     try:
-      ps.RunLocal(script, args=ps_args)
-    except powershell.PowerShellError as e:
-      raise ActionError('Failure executing Powershell script: %s' % e)
+      ps.run_local(script, ps_args)
+    except powershell.Error as e:
+      raise ActionError(str(e))
 
   def Validate(self):
     self._TypeValidator(self._args, list)

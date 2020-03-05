@@ -27,7 +27,7 @@ class PowershellTest(absltest.TestCase):
     buildinfo.constants.FLAGS.config_server = 'https://glazier/'
 
   @mock.patch.object(
-      powershell.powershell.PowerShell, 'RunLocal', autospec=True)
+      powershell.powershell.PowerShell, 'run_local', autospec=True)
   @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
   def testPSScript(self, cache, run):
     bi = buildinfo.BuildInfo()
@@ -37,7 +37,7 @@ class PowershellTest(absltest.TestCase):
     cache.assert_called_with(mock.ANY, '#Some-Script.ps1', bi)
     run.assert_called_with(
         mock.ANY, r'C:\Cache\Some-Script.ps1', args=['-Flag1'])
-    run.side_effect = powershell.powershell.PowerShellError
+    run.side_effect = powershell.powershell.Error
     self.assertRaises(powershell.ActionError, ps.Run)
     # Cache error
     run.side_effect = None

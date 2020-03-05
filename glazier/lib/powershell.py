@@ -15,152 +15,130 @@
 
 """Run scripts with Windows Powershell."""
 
-import logging
 import os
-import subprocess
-
 from typing import List, Optional, Text
 
 from glazier.lib import constants
+from glazier.lib import execute
 from glazier.lib import resources
 from glazier.lib import winpe
 
 
-class PowerShellError(Exception):
+class Error(Exception):
   pass
 
 
-def _Powershell() -> Text:
+def _powershell_path() -> Text:
+  path = constants.SYS_POWERSHELL
   if winpe.check_winpe():
-    return constants.WINPE_POWERSHELL
-  else:
-    return constants.SYS_POWERSHELL
+    path = constants.WINPE_POWERSHELL
+  return path
 
 
 class PowerShell(object):
-  """Interact with the powershell interpreter to run scripts."""
+  """Interact with the PowerShell interpreter to run scripts."""
 
-  def __init__(self, echo_off: bool = True):
-    self.echo_off = echo_off
+  def __init__(self, log: bool = True):
+    self.log = log
 
-  def _LaunchPs(self, op: Text,  # pylint: disable=dangerous-default-value
-                args: Optional[List[Text]] = [''],
-                ok_result: Optional[List[int]] = [0]):
-    """Launch the powershell executable to run a script.
+  def _launch_ps(self,
+                 op: Text,
+                 args: List[Text],
+                 return_codes: Optional[List[int]] = None):
+    """Launch the PowerShell executable to run a script.
 
     Args:
       op: -Command or -File
-      args: any additional commandline args as a list
-      ok_result: a list of acceptable exit codes; default is 0
+      args: Additional commandline arguments.
+      return_codes: Acceptable exit/return codes. Defaults to 0.
 
     Raises:
-      PowerShellError: failure to execute powershell command cleanly
+      Error: PowerShell returned invalid exit code.
     """
     if op not in ['-Command', '-File']:
-      raise PowerShellError('Unsupported PowerShell parameter: %s' % op)
-    if not ok_result:
-      ok_result = [0]
-    cmd = [_Powershell(), '-NoProfile', '-NoLogo', op] + args
-    string = ' '.join(map(str, cmd))
-    if not self.echo_off:
-      logging.debug('Running Powershell: %s', string)
-    result = subprocess.call(cmd, shell=True)
-    if result not in ok_result:
-      raise PowerShellError('Powershell command returned non-zero:\n%s' %
-                            string)
+      raise Error('Unsupported PowerShell parameter: %s' % op)
 
-  def RunCommand(self, command: List[Text], ok_result: List[int] = None):
+    log = self.log
+
+    try:
+      execute.execute_binary(_powershell_path(),
+                             ['-NoProfile', '-NoLogo', op] + args, return_codes,
+                             log)
+    except execute.Error as e:
+      raise Error(str(e))
+
+  def run_command(self, command: List[Text], return_codes: List[int] = None):
     """Run a powershell script on the local filesystem.
 
     Args:
-      command: a list containing the command and all accompanying arguments
-      ok_result: a list of acceptable exit codes; default is 0
+      command: Command and all accompanying parameters.
+      return_codes: Acceptable exit/return codes. Defaults to 0.
     """
-    assert isinstance(command, list), 'command must be passed as a list'
-    if ok_result:
-      assert isinstance(ok_result,
-                        list), 'result codes must be passed as a list'
-    self._LaunchPs('-Command', command, ok_result)
+    self._launch_ps('-Command', command, return_codes)
 
-  def _GetResPath(self, path: Text) -> Text:
+  def _get_res_path(self, path: Text) -> Text:
     """Translate an installer resource path into a local path.
 
     Args:
-      path: the resource path string
+      path: Resource Path.
 
     Raises:
-      PowerShellError: unable to locate the requested resource
+      Error: Unable to locate the requested resource.
 
     Returns:
-      The local filesystem path as a string.
+      The local file path as a string.
     """
     r = resources.Resources()
     try:
       path = r.GetResourceFileName(path)
     except resources.FileNotFound as e:
-      raise PowerShellError(e)
+      raise Error(e)
     return os.path.normpath(path)
 
-  def RunResource(self,
-                  path: Text,
-                  args: List[Text] = None,
-                  ok_result: List[int] = None):
+  def run_resource(self,
+                   path: Text,
+                   args: List[Text] = None,
+                   return_codes: List[int] = None):
     """Run a Powershell script supplied as an installer resource file.
 
     Args:
-      path: relative path to a script under the installer resources directory
-      args: a list of any optional powershell arguments
-      ok_result: a list of acceptable exit codes; default is 0
+      path: Relative path to a script under the installer resources directory.
+      args: Optional PowerShell arguments.
+      return_codes: Acceptable exit/return codes. Defaults to 0.
     """
-    path = self._GetResPath(path)
-    if not args:
-      args = []
-    else:
-      assert isinstance(args, list), 'args must be passed as a list'
-    if ok_result:
-      assert isinstance(ok_result,
-                        list), 'result codes must be passed as a list'
-    self.RunLocal(path, args, ok_result)
+    path = self._get_res_path(path)
+    self.run_local(path, args, return_codes)
 
-  def RunLocal(self,
-               path: Text,
-               args: List[Text] = None,
-               ok_result: List[int] = None):
+  def run_local(self,
+                path: Text,
+                args: List[Text] = None,
+                return_codes: List[int] = None):
     """Run a powershell script on the local filesystem.
 
     Args:
-      path: a local filesystem path string
-      args: a list of any optional powershell arguments
-      ok_result: a list of acceptable exit codes; default is 0
-
-    Raises:
-      PowerShellError: Invalid path supplied for execution.
+      path: Local file path.
+      args: Optional PowerShell arguments.
+      return_codes: Acceptable exit/return codes. Defaults to 0.
     """
-    if not os.path.exists(path):
-      raise PowerShellError('Cannot find path to script. [%s]' % path)
-    if not args:
-      args = []
-    else:
-      assert isinstance(args, list), 'args must be passed as a list'
-    if ok_result:
-      assert isinstance(ok_result,
-                        list), 'result codes must be passed as a list'
-    self._LaunchPs('-File', [path] + args, ok_result)
+    self._launch_ps('-File', [path] + args, return_codes)
 
-  def SetExecutionPolicy(self, policy: Text):
+  def set_execution_policy(self, policy: Text):
     """Set the shell execution policy.
 
     Args:
-      policy: One of Restricted, RemoteSigned, AllSigned, Unrestricted
+      policy: One of Restricted, RemoteSigned, AllSigned, or Unrestricted.
 
     Raises:
-      PowerShellError: Attempting to set an unsupported policy.
+      Error: Attempting to set an unsupported policy.
     """
     if policy not in ['Restricted', 'RemoteSigned', 'AllSigned', 'Unrestricted'
                      ]:
-      raise PowerShellError('Unknown execution policy: %s' % policy)
-    self.RunCommand(['Set-ExecutionPolicy', '-ExecutionPolicy', policy])
+      raise Error('Unknown execution policy: %s' % policy)
+    self.run_command(['Set-ExecutionPolicy', '-ExecutionPolicy', policy])
 
-  def StartShell(self):
+  def start_shell(self):
     """Start the PowerShell interpreter."""
-    subprocess.call([_Powershell(), '-NoProfile', '-NoLogo'], shell=True)
+    try:
+      execute.execute_binary(_powershell_path(), ['-NoProfile', '-NoLogo'])
+    except execute.Error as e:
+      raise Error(str(e))
