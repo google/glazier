@@ -92,7 +92,8 @@ def main(unused_argv):
   try:
     ab.RunBuild()
   except KeyboardInterrupt:
-    _LogFatal('KeyboardInterrupt detected, exiting.')
+    logging.fatal('KeyboardInterrupt detected, exiting.')
+    sys.exit(1)
 
 
 if __name__ == '__main__':

@@ -19,7 +19,7 @@ from glazier import autobuild
 import mock
 
 
-class LogFatal(Exception):
+class LogFatalError(Exception):
   pass
 
 
@@ -30,14 +30,9 @@ class BuildInfoTest(absltest.TestCase):
     super(BuildInfoTest, self).setUp()
     self.autobuild = autobuild.AutoBuild()
     autobuild.logging = logs.logging
-    autobuild.logging.fatal.side_effect = LogFatal()
+    autobuild.logging.fatal.side_effect = LogFatalError()
     self.filesystem = fake_filesystem.FakeFilesystem()
     autobuild.os = fake_filesystem.FakeOsModule(self.filesystem)
-
-  def testLogFatal(self):
-    self.assertRaises(LogFatal, autobuild._LogFatal,
-                      'failure is always an option')
-    self.assertTrue(autobuild.logging.fatal.called)
 
   @mock.patch.object(autobuild.winpe, 'check_winpe', autospec=True)
   def testSetupTaskList(self, wpe):
@@ -69,16 +64,16 @@ class BuildInfoTest(absltest.TestCase):
 
     # ConfigBuilderError
     builder.side_effect = autobuild.builder.ConfigBuilderError
-    self.assertRaises(LogFatal, self.autobuild.RunBuild)
+    self.assertRaises(LogFatalError, self.autobuild.RunBuild)
     # ConfigRunnerError
     builder.side_effect = None
     runner.side_effect = autobuild.runner.ConfigRunnerError
-    self.assertRaises(LogFatal, self.autobuild.RunBuild)
+    self.assertRaises(LogFatalError, self.autobuild.RunBuild)
 
   @mock.patch.object(autobuild, 'AutoBuild', autospec=True)
   def testMainError(self, ab):
     ab.return_value.RunBuild.side_effect = KeyboardInterrupt
-    self.assertRaises(LogFatal, autobuild.main, 'something')
+    self.assertRaises(LogFatalError, autobuild.main, 'something')
 
 if __name__ == '__main__':
   absltest.main()
