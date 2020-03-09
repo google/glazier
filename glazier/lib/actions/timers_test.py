@@ -35,7 +35,7 @@ class TimersTest(absltest.TestCase):
     st.Run()
     build_info.TimerSet.assert_called_with(VALUE_NAME)
     sv.assert_called_with('TIMER_' + VALUE_NAME, VALUE_DATA, 'HKLM',
-                          KEY_PATH)
+                          KEY_PATH, log=False)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(timers.registry, 'set_value', autospec=True)

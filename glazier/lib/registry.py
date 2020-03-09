@@ -33,7 +33,8 @@ def get_value(
     name: Text,
     root: Optional[Text] = 'HKLM',
     path: Optional[Text] = constants.REG_ROOT,
-    use_64bit: Optional[bool] = constants.USE_REG_64) -> Optional[Text]:
+    use_64bit: Optional[bool] = constants.USE_REG_64,
+    log: Optional[bool] = True) -> Optional[Text]:
   r"""Get a registry key value from registry.
 
   Args:
@@ -42,6 +43,7 @@ def get_value(
     path: Registry key path. Defaults to constants.REG_ROOT.
     use_64bit: True for 64 bit registry. False for 32 bit.
     Defaults to constants.USE_REG_64.
+    log: Log the registry operation to the standard logger. Defaults to True.
 
   Returns:
     The registry value a string or None.
@@ -53,8 +55,9 @@ def get_value(
         key_name=name,
         use_64bit=use_64bit)
     if value:
-      logging.debug(r'Got registry value: %s:\%s\%s\%s.', root, path, name,
-                    value)
+      if log:
+        logging.debug(r'Got registry value: %s:\%s\%s\%s.', root, path, name,
+                      value)
       return value
   except registry.RegistryError as e:
     logging.warning(r'Failed to get registry key: %s:\%s\%s (%s)', root, path,
@@ -66,7 +69,8 @@ def set_value(name: Text, value: Union[Text, int],
               root: Optional[Text] = 'HKLM',
               path: Optional[Text] = constants.REG_ROOT,
               reg_type: Optional[Text] = 'REG_SZ',
-              use_64bit: Optional[bool] = constants.USE_REG_64):
+              use_64bit: Optional[bool] = constants.USE_REG_64,
+              log: Optional[bool] = True):
   r"""Set a registry value.
 
   Args:
@@ -77,6 +81,7 @@ def set_value(name: Text, value: Union[Text, int],
     reg_type: Registry value type (REG_DWORD\REG_SZ). Defaults to REG_SZ.
     use_64bit: True for 64 bit registry. False for 32 bit.
     Defaults to constants.USE_REG_64.
+    log: Log the registry operation to the standard logger. Defaults to True.
   """
   try:
     reg = registry.Registry(root_key=root)
@@ -86,8 +91,9 @@ def set_value(name: Text, value: Union[Text, int],
         key_value=value,
         key_type=reg_type,
         use_64bit=use_64bit)
-    logging.debug(r'Set registry value: %s:\%s\%s\%s', root, path, name,
-                  str(value))
+    if log:
+      logging.debug(r'Set registry value: %s:\%s\%s\%s', root, path, name,
+                    str(value))
   except registry.RegistryError as e:
     raise Error(str(e))
 
@@ -95,7 +101,8 @@ def set_value(name: Text, value: Union[Text, int],
 def remove_value(name: Text,
                  root: Optional[Text] = 'HKLM',
                  path: Optional[Text] = constants.REG_ROOT,
-                 use_64bit: Optional[bool] = constants.USE_REG_64):
+                 use_64bit: Optional[bool] = constants.USE_REG_64,
+                 log: Optional[bool] = True):
   r"""Remove a registry value.
 
   Args:
@@ -104,6 +111,7 @@ def remove_value(name: Text,
     path: Registry key path. Defaults to constants.REG_ROOT.
     use_64bit: True for 64 bit registry. False for 32 bit.
     Defaults to constants.USE_REG_64.
+    log: Log the registry operation to the standard logger. Defaults to True.
   """
   try:
     reg = registry.Registry(root_key=root)
@@ -111,7 +119,8 @@ def remove_value(name: Text,
         key_path=path,
         key_name=name,
         use_64bit=use_64bit)
-    logging.debug(r'Removed registry key: %s:\%s\%s', root, path, name)
+    if log:
+      logging.debug(r'Removed registry key: %s:\%s\%s', root, path, name)
   except registry.RegistryError as e:
     if e.errno == 2:
       logging.warning(r'Failed to delete non-existant registry key: %s:\%s\%s',

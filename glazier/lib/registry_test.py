@@ -46,10 +46,17 @@ class RegistryTest(absltest.TestCase):
     self.assertEqual(registry.get_value(self.name), None)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  def test_set_value(self, mock_reg):
+  @mock.patch.object(registry.logging, 'debug', autospec=True)
+  def test_get_value_silent(self, d, reg):
+    reg.return_value.GetKeyValue.return_value = self.value
+    registry.get_value(self.name, log=False)
+    self.assertFalse(d.called)
+
+  @mock.patch.object(registry.registry, 'Registry', autospec=True)
+  def test_set_value(self, reg):
     registry.set_value(self.name, self.value)
-    mock_reg.assert_called_with('HKLM')
-    mock_reg.return_value.SetKeyValue.assert_has_calls([
+    reg.assert_called_with('HKLM')
+    reg.return_value.SetKeyValue.assert_has_calls([
         mock.call(
             key_path=registry.constants.REG_ROOT,
             key_name=self.name,
@@ -64,10 +71,16 @@ class RegistryTest(absltest.TestCase):
     self.assertRaises(registry.Error, registry.set_value, self.name, self.value)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  def test_remove_value(self, mock_reg):
+  @mock.patch.object(registry.logging, 'debug', autospec=True)
+  def test_set_value_silent(self, d, unused_reg):
+    registry.set_value(self.name, self.value, log=False)
+    self.assertFalse(d.called)
+
+  @mock.patch.object(registry.registry, 'Registry', autospec=True)
+  def test_remove_value(self, reg):
     registry.remove_value(self.name)
-    mock_reg.assert_called_with('HKLM')
-    mock_reg.return_value.RemoveKeyValue.assert_has_calls([
+    reg.assert_called_with('HKLM')
+    reg.return_value.RemoveKeyValue.assert_has_calls([
         mock.call(
             key_path=registry.constants.REG_ROOT,
             key_name=self.name,
@@ -88,6 +101,12 @@ class RegistryTest(absltest.TestCase):
   def test_remove_value_error(self, reg):
     reg.return_value.RemoveKeyValue.side_effect = registry.registry.RegistryError
     self.assertRaises(registry.Error, registry.remove_value, self.name)
+
+  @mock.patch.object(registry.registry, 'Registry', autospec=True)
+  @mock.patch.object(registry.logging, 'debug', autospec=True)
+  def test_remove_value_silent(self, d, unused_reg):
+    registry.remove_value(self.name, log=False)
+    self.assertFalse(d.called)
 
 if __name__ == '__main__':
   absltest.main()

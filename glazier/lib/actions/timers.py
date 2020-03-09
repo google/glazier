@@ -37,7 +37,7 @@ class SetTimer(BaseAction):
     value_name = 'TIMER_' + timer
     value_data = str(self._build_info.TimerGet(timer))
     try:
-      registry.set_value(value_name, value_data, 'HKLM', key_path)
+      registry.set_value(value_name, value_data, 'HKLM', key_path, log=False)
       logging.info('Set image timer: %s', timer)
     except registry.Error as e:
       raise Error(str(e))

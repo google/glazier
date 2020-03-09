@@ -35,7 +35,8 @@ def check_winpe() -> bool:
   """
   try:
     value = registry.get_value('EditionID', 'HKLM',
-                               r'SOFTWARE\Microsoft\Windows NT\CurrentVersion')
+                               r'SOFTWARE\Microsoft\Windows NT\CurrentVersion',
+                               log=False)
     if value == 'WindowsPE':
       return True
     else:
