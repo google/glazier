@@ -15,6 +15,7 @@
 """Common process execution function wrappers."""
 
 import logging
+import os
 import subprocess
 from typing import List, Optional, Text
 
@@ -30,9 +31,9 @@ def execute_binary(binary: Text, args: Optional[List[Text]] = None,
 
   Args:
     binary: Full path the to binary.
-    args: Any additional command-line args as a list.
-    return_codes: a list of acceptable exit/return codes; Default to 0.
-    log: Whether to display log messages. Defaults to True.
+    args: Additional commandline arguments.
+    return_codes: Acceptable exit/return codes. Defaults to 0.
+    log: Display log messages. Defaults to True.
 
   Returns:
     Process return code if successfully exited.
@@ -40,6 +41,9 @@ def execute_binary(binary: Text, args: Optional[List[Text]] = None,
   Raises:
     Error: Command returned invalid exit code.
   """
+  if not os.path.exists(binary):
+    raise Error('Failed to locate binary: {}'.format(binary))
+
   cmd = [binary]
   if args:
     cmd += args
