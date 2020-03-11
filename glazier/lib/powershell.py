@@ -15,13 +15,12 @@
 
 """Run scripts with Windows Powershell."""
 
-import logging
 import os
-import subprocess
 
 from typing import List, Optional, Text
 
 from glazier.lib import constants
+from glazier.lib import execute
 from glazier.lib import resources
 from glazier.lib import winpe
 
@@ -40,12 +39,12 @@ def _Powershell() -> Text:
 class PowerShell(object):
   """Interact with the powershell interpreter to run scripts."""
 
-  def __init__(self, echo_off: bool = True):
+  def __init__(self, echo_off: bool = False):
     self.echo_off = echo_off
 
-  def _LaunchPs(self, op: Text,  # pylint: disable=dangerous-default-value
-                args: Optional[List[Text]] = [''],
-                ok_result: Optional[List[int]] = [0]):
+  def _LaunchPs(self, op: Text,
+                args: List[Text],
+                ok_result: Optional[List[int]] = None):
     """Launch the powershell executable to run a script.
 
     Args:
@@ -58,16 +57,14 @@ class PowerShell(object):
     """
     if op not in ['-Command', '-File']:
       raise PowerShellError('Unsupported PowerShell parameter: %s' % op)
-    if not ok_result:
-      ok_result = [0]
-    cmd = [_Powershell(), '-NoProfile', '-NoLogo', op] + args
-    string = ' '.join(map(str, cmd))
-    if not self.echo_off:
-      logging.debug('Running Powershell: %s', string)
-    result = subprocess.call(cmd, shell=True)
-    if result not in ok_result:
-      raise PowerShellError('Powershell command returned non-zero:\n%s' %
-                            string)
+
+    log = not self.echo_off
+
+    try:
+      execute.execute_binary(_Powershell(), ['-NoProfile', '-NoLogo',
+                                             op] + args, ok_result, log)
+    except execute.Error as e:
+      raise PowerShellError(str(e))
 
   def RunCommand(self, command: List[Text], ok_result: List[int] = None):
     """Run a powershell script on the local filesystem.
@@ -101,10 +98,8 @@ class PowerShell(object):
       raise PowerShellError(e)
     return os.path.normpath(path)
 
-  def RunResource(self,
-                  path: Text,
-                  args: List[Text] = None,
-                  ok_result: List[int] = None):
+  def RunResource(self, path: Text, args: List[Text],
+                  ok_result: Optional[List[int]] = None):
     """Run a Powershell script supplied as an installer resource file.
 
     Args:
@@ -122,9 +117,7 @@ class PowerShell(object):
                         list), 'result codes must be passed as a list'
     self.RunLocal(path, args, ok_result)
 
-  def RunLocal(self,
-               path: Text,
-               args: List[Text] = None,
+  def RunLocal(self, path: Text, args: List[Text],
                ok_result: List[int] = None):
     """Run a powershell script on the local filesystem.
 
@@ -163,4 +156,8 @@ class PowerShell(object):
 
   def StartShell(self):
     """Start the PowerShell interpreter."""
-    subprocess.call([_Powershell(), '-NoProfile', '-NoLogo'], shell=True)
+    log = not self.echo_off
+    try:
+      execute.execute_binary(_Powershell(), ['-NoProfile', '-NoLogo'], log=log)
+    except execute.Error as e:
+      raise PowerShellError(str(e))
