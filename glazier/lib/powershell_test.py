@@ -62,10 +62,10 @@ class PowershellTest(absltest.TestCase):
 
   @mock.patch.object(powershell, '_Powershell', autospec=True)
   @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
-  def testLaunchPsEcho(self, eb, path):
+  def testLaunchPsSilent(self, eb, path):
     path.return_value = powershell.constants.SYS_POWERSHELL
-    self.psecho = powershell.PowerShell(echo_off=True)
-    self.psecho._LaunchPs('-File', [self.path])
+    self.pssilent = powershell.PowerShell(log=False)
+    self.pssilent._LaunchPs('-File', [self.path])
     eb.assert_called_with(powershell.constants.SYS_POWERSHELL,
                           ['-NoProfile', '-NoLogo', '-File', self.path],
                           None, False)
@@ -75,8 +75,6 @@ class PowershellTest(absltest.TestCase):
   def testRunLocal(self, eb, path):
     path.return_value = powershell.constants.SYS_POWERSHELL
     args = ['-Arg1', '-Arg2']
-    with self.assertRaises(powershell.PowerShellError):
-      self.ps.RunLocal('/resources/missing.ps1', args=args)
 
     self.ps.RunLocal(self.path, args=args)
     eb.assert_called_with(powershell.constants.SYS_POWERSHELL,
@@ -104,18 +102,6 @@ class PowershellTest(absltest.TestCase):
     # Not Found
     self.assertRaises(powershell.PowerShellError, self.ps.RunResource,
                       'missing.ps1', args)
-    # Validation
-    self.assertRaises(
-        AssertionError,
-        self.ps.RunResource,
-        'bin/script.ps1',
-        args='not a list')
-    self.assertRaises(
-        AssertionError,
-        self.ps.RunResource,
-        'bin/script.ps1',
-        args=[],
-        ok_result='0')
 
   @mock.patch.object(powershell, '_Powershell', autospec=True)
   @mock.patch.object(powershell.PowerShell, 'RunCommand', autospec=True)
@@ -138,10 +124,10 @@ class PowershellTest(absltest.TestCase):
 
   @mock.patch.object(powershell, '_Powershell', autospec=True)
   @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
-  def testStartShellEchoOff(self, eb, path):
+  def testStartShellSilent(self, eb, path):
     path.return_value = powershell.constants.SYS_POWERSHELL
-    self.psecho = powershell.PowerShell(echo_off=True)
-    self.psecho.StartShell()
+    self.pssilent = powershell.PowerShell(log=False)
+    self.pssilent.StartShell()
     eb.assert_called_with(powershell.constants.SYS_POWERSHELL,
                           ['-NoProfile', '-NoLogo'], log=False)
 

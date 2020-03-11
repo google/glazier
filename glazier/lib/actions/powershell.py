@@ -30,7 +30,7 @@ class PSScript(BaseAction):
     ps_args = None
     if len(self._args) > 1:
       ps_args = self._args[1]
-    ps = powershell.PowerShell(echo_off=True)
+    ps = powershell.PowerShell(log=True)
     c = cache.Cache()
 
     logging.info('Interpreting Powershell script: %s', script)
