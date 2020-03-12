@@ -83,6 +83,20 @@ class PowershellTest(absltest.TestCase):
                           ['-NoProfile', '-NoLogo', '-File', self.path] + args,
                           None, True)
 
+  def testRunLocalValidate(self):
+    self.assertRaises(
+        AssertionError,
+        self.ps.RunLocal,
+        self.path,
+        args='not a list')
+
+    self.assertRaises(
+        AssertionError,
+        self.ps.RunLocal,
+        self.path,
+        args=[],
+        ok_result='0')
+
   @mock.patch.object(powershell, '_Powershell', autospec=True)
   @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
   def testRunCommand(self, eb, path):
@@ -91,6 +105,18 @@ class PowershellTest(absltest.TestCase):
     eb.assert_called_with(powershell.constants.SYS_POWERSHELL,
                           ['-NoProfile', '-NoLogo', '-Command', 'Get-ChildItem',
                            '-Recurse'], None, True)
+
+  def testRunCommandValidate(self):
+    self.assertRaises(
+        AssertionError,
+        self.ps.RunCommand,
+        self.path)
+
+    self.assertRaises(
+        AssertionError,
+        self.ps.RunCommand,
+        self.path,
+        ok_result='0')
 
   @flagsaver.flagsaver
   @mock.patch.object(powershell.PowerShell, 'RunLocal', autospec=True)
@@ -104,16 +130,21 @@ class PowershellTest(absltest.TestCase):
     # Not Found
     self.assertRaises(powershell.PowerShellError, self.ps.RunResource,
                       'missing.ps1', args)
-    # Validation
+
+  @flagsaver.flagsaver
+  def testRunResourceValidate(self):
+    FLAGS.resource_path = '/test/resources'
+    self.fs.CreateFile('/test/resources/bin/script.ps1')
     self.assertRaises(
         AssertionError,
         self.ps.RunResource,
-        'bin/script.ps1',
+        '/bin/script.ps1',
         args='not a list')
+
     self.assertRaises(
         AssertionError,
         self.ps.RunResource,
-        'bin/script.ps1',
+        '/bin/script.ps1',
         args=[],
         ok_result='0')
 

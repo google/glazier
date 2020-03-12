@@ -63,7 +63,8 @@ class PowerShell(object):
     except execute.Error as e:
       raise PowerShellError(str(e))
 
-  def RunCommand(self, command: List[Text], ok_result: List[int] = None):
+  def RunCommand(self, command: List[Text],
+                 ok_result: Optional[List[int]] = None):
     """Run a powershell script on the local filesystem.
 
     Args:
@@ -101,37 +102,30 @@ class PowerShell(object):
 
     Args:
       path: relative path to a script under the installer resources directory
-      args: a list of any optional powershell arguments
+      args: a list of additional powershell arguments
       ok_result: a list of acceptable exit codes; default is 0
     """
     path = self._GetResPath(path)
-    if not args:
-      args = []
-    else:
-      assert isinstance(args, list), 'args must be passed as a list'
+    assert isinstance(args, list), 'args must be passed as a list'
     if ok_result:
       assert isinstance(ok_result,
                         list), 'result codes must be passed as a list'
     self.RunLocal(path, args, ok_result)
 
   def RunLocal(self, path: Text, args: List[Text],
-               ok_result: List[int] = None):
+               ok_result: Optional[List[int]] = None):
     """Run a powershell script on the local filesystem.
 
     Args:
       path: a local filesystem path string
-      args: a list of any optional powershell arguments
+      args: a list of additional powershell arguments
       ok_result: a list of acceptable exit codes; default is 0
-
     Raises:
       PowerShellError: Invalid path supplied for execution.
     """
     if not os.path.exists(path):
       raise PowerShellError('Cannot find path to script. [%s]' % path)
-    if not args:
-      args = []
-    else:
-      assert isinstance(args, list), 'args must be passed as a list'
+    assert isinstance(args, list), 'args must be passed as a list'
     if ok_result:
       assert isinstance(ok_result,
                         list), 'result codes must be passed as a list'
