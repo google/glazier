@@ -62,10 +62,10 @@ class PowershellTest(absltest.TestCase):
 
   @mock.patch.object(powershell, '_Powershell', autospec=True)
   @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
-  def testLaunchPsEcho(self, eb, path):
+  def testLaunchPsSilent(self, eb, path):
     path.return_value = powershell.constants.SYS_POWERSHELL
-    self.psecho = powershell.PowerShell(echo_off=True)
-    self.psecho._LaunchPs('-File', [self.path])
+    self.pssilent = powershell.PowerShell(log=False)
+    self.pssilent._LaunchPs('-File', [self.path])
     eb.assert_called_with(powershell.constants.SYS_POWERSHELL,
                           ['-NoProfile', '-NoLogo', '-File', self.path],
                           None, False)
@@ -138,10 +138,10 @@ class PowershellTest(absltest.TestCase):
 
   @mock.patch.object(powershell, '_Powershell', autospec=True)
   @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
-  def testStartShellEchoOff(self, eb, path):
+  def testStartShellSilent(self, eb, path):
     path.return_value = powershell.constants.SYS_POWERSHELL
-    self.psecho = powershell.PowerShell(echo_off=True)
-    self.psecho.StartShell()
+    self.pssilent = powershell.PowerShell(log=False)
+    self.pssilent.StartShell()
     eb.assert_called_with(powershell.constants.SYS_POWERSHELL,
                           ['-NoProfile', '-NoLogo'], log=False)
 

@@ -16,7 +16,6 @@
 """Run scripts with Windows Powershell."""
 
 import os
-
 from typing import List, Optional, Text
 
 from glazier.lib import constants
@@ -39,8 +38,8 @@ def _Powershell() -> Text:
 class PowerShell(object):
   """Interact with the powershell interpreter to run scripts."""
 
-  def __init__(self, echo_off: bool = False):
-    self.echo_off = echo_off
+  def __init__(self, log: bool = True):
+    self.log = log
 
   def _LaunchPs(self, op: Text,
                 args: List[Text],
@@ -58,11 +57,9 @@ class PowerShell(object):
     if op not in ['-Command', '-File']:
       raise PowerShellError('Unsupported PowerShell parameter: %s' % op)
 
-    log = not self.echo_off
-
     try:
       execute.execute_binary(_Powershell(), ['-NoProfile', '-NoLogo',
-                                             op] + args, ok_result, log)
+                                             op] + args, ok_result, self.log)
     except execute.Error as e:
       raise PowerShellError(str(e))
 
@@ -156,8 +153,8 @@ class PowerShell(object):
 
   def StartShell(self):
     """Start the PowerShell interpreter."""
-    log = not self.echo_off
     try:
-      execute.execute_binary(_Powershell(), ['-NoProfile', '-NoLogo'], log=log)
+      execute.execute_binary(_Powershell(), ['-NoProfile', '-NoLogo'],
+                             log=self.log)
     except execute.Error as e:
       raise PowerShellError(str(e))
