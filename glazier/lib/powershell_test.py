@@ -75,9 +75,6 @@ class PowershellTest(absltest.TestCase):
   def testRunLocal(self, eb, path):
     path.return_value = powershell.constants.SYS_POWERSHELL
     args = ['-Arg1', '-Arg2']
-    with self.assertRaises(powershell.PowerShellError):
-      self.ps.RunLocal('/resources/missing.ps1', args=args)
-
     self.ps.RunLocal(self.path, args=args)
     eb.assert_called_with(powershell.constants.SYS_POWERSHELL,
                           ['-NoProfile', '-NoLogo', '-File', self.path] + args,

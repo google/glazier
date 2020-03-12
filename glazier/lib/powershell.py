@@ -120,11 +120,7 @@ class PowerShell(object):
       path: a local filesystem path string
       args: a list of additional powershell arguments
       ok_result: a list of acceptable exit codes; default is 0
-    Raises:
-      PowerShellError: Invalid path supplied for execution.
     """
-    if not os.path.exists(path):
-      raise PowerShellError('Cannot find path to script. [%s]' % path)
     assert isinstance(args, list), 'args must be passed as a list'
     if ok_result:
       assert isinstance(ok_result,
