@@ -27,7 +27,7 @@ class PSScript(BaseAction):
 
   def Run(self):
     script = self._args[0]
-    ps_args = None
+    ps_args = []
     if len(self._args) > 1:
       ps_args = self._args[1]
     ps = powershell.PowerShell(log=True)
