@@ -152,6 +152,35 @@ class BaseDownloader(object):
   def _GetHandlers(self):
     return [urllib.request.HTTPSHandler()]
 
+  def _AttemptResource(self, attempt, max_retries, resource):
+    r"""Loop logic for retrying failed requests.
+
+    Use logger to log messages to standard output streams, and print to write to
+    console without newlines by using the return (\r) character.
+
+    Args:
+      attempt: Incrementing number of attempts.
+      max_retries: Number of times to attempt to download a file if the
+        first attempt fails. A negative number implies infinite.
+      resource: Resource to attempt to reach.
+
+    Raises:
+      DownloadError: The resource was unreachable.
+    """
+    if max_retries < 0:
+      logging.info(
+          'Failed attempt %d of Unlimited: Sleeping for %d second(s) '
+          'before retrying the %s.', attempt, SLEEP, resource)
+      time.sleep(SLEEP)
+    elif attempt < max_retries:
+      logging.info(
+          'Failed attempt %d of %d: Sleeping for %d second(s) '
+          'before retrying the %s.', attempt, max_retries, SLEEP, resource)
+      time.sleep(SLEEP)
+    else:
+      raise DownloadError('Failed to reach %s after %d attempt(s).' %
+                          (resource, max_retries))
+
   def _OpenStream(self, url, max_retries=5, status_codes=None):
     """Opens a connection to a remote resource.
 
@@ -212,13 +241,7 @@ class BaseDownloader(object):
           raise DownloadError('Invalid return code for file %s. [%d]' %
                               (url, file_stream.getcode()))
 
-      if max_retries < 0 or attempt < max_retries:
-        logging.info('Attempt %d of %d: Sleeping for %d second(s) before '
-                     'retrying the download.', attempt, max_retries, SLEEP)
-        time.sleep(SLEEP)
-      else:
-        raise DownloadError('Permanent failure for resource %s after %d '
-                            'attempt(s).' % (url, max_retries))
+      self._AttemptResource(attempt, max_retries, 'file download')
 
   def CheckUrl(self, url, status_codes, max_retries=5):
     """Check a remote URL for availability.
@@ -347,13 +370,7 @@ class BaseDownloader(object):
         total_size = int(file_stream.headers.get('Content-Length').strip())
         break
       except AttributeError:
-        if max_retries < 0 or attempt < max_retries:
-          logging.info('Attempt %d of %d: Sleeping for %d second(s) before '
-                       'retrying server URL.', attempt, max_retries, SLEEP)
-          time.sleep(SLEEP)
-        else:
-          raise DownloadError('Failed to reach server URL after %d '
-                              'attempt(s).' % max_retries)
+        self._AttemptResource(attempt, max_retries, 'server URL')
 
     try:
       with open(self._save_location, 'wb') as output_file:

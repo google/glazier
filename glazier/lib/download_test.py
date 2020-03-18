@@ -100,10 +100,30 @@ class DownloadTest(absltest.TestCase):
     self.assertEqual(self._dl._ConvertBytes(56755555555), '52.86GB')
     self.assertEqual(self._dl._ConvertBytes(6785555555555), '6.17TB')
 
+  @mock.patch.object(download.logging, 'info', autospec=True)
+  @mock.patch.object(download.time, 'sleep', autospec=True)
+  def testAttemptResource(self, sleep, i):
+    self._dl._AttemptResource(1, 2, 'file download')
+    i.assert_called_with('Failed attempt %d of %d: Sleeping for %d second(s) '
+                         'before retrying the %s.', 1, 2, 20, 'file download')
+    sleep.assert_called_with(20)
+
+  @mock.patch.object(download.logging, 'info', autospec=True)
+  @mock.patch.object(download.time, 'sleep', autospec=True)
+  def testAttemptResourceUnlimited(self, sleep, i):
+    self._dl._AttemptResource(1, -1, 'file download')
+    i.assert_called_with(
+        'Failed attempt %d of Unlimited: Sleeping for %d second(s) before '
+        'retrying the %s.', 1, 20, 'file download')
+    sleep.assert_called_with(20)
+
+  def testAttemptResourceError(self):
+    self.assertRaises(download.DownloadError, self._dl._AttemptResource, 1, 1,
+                      'file download')
+
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
-  @mock.patch.object(download.time, 'sleep', autospec=True)
-  def testOpenStreamInternal(self, sleep, urlopen, wpe):
+  def testOpenStreamInternal(self, urlopen, wpe):
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
     url = 'https://www.example.com/build.yaml'
@@ -128,7 +148,6 @@ class DownloadTest(absltest.TestCase):
     urlopen.side_effect = iter([httperr, httperr, file_stream])
     self.assertRaises(download.DownloadError, self._dl._OpenStream, url,
                       max_retries=2)
-    sleep.assert_has_calls([mock.call(SLEEP), mock.call(SLEEP)])
 
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
@@ -169,8 +188,7 @@ class DownloadTest(absltest.TestCase):
     todisk.assert_called_with(self._dl, downf.return_value, False)
 
   @mock.patch.object(download.BaseDownloader, '_StoreDebugInfo', autospec=True)
-  @mock.patch.object(download.time, 'sleep', autospec=True)
-  def testStreamToDisk(self, sleep, store_info):
+  def testStreamToDisk(self, store_info):
     # setup
     http_stream = six.BytesIO()
     http_stream.write(b'First line.\nSecond line.\n')
@@ -239,7 +257,6 @@ class DownloadTest(absltest.TestCase):
     self._dl._save_location = r'C:\download.txt'
     self.assertRaises(download.DownloadError, self._dl._StreamToDisk,
                       file_stream)
-    sleep.assert_has_calls([mock.call(SLEEP), mock.call(SLEEP)])
 
   @mock.patch.object(download.BaseDownloader, '_StoreDebugInfo', autospec=True)
   def testValidate(self, store_info):
