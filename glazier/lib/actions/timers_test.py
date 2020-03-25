@@ -29,13 +29,15 @@ class TimersTest(absltest.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(timers.registry, 'set_value', autospec=True)
-  def testSetTimer(self, sv, build_info):
+  @mock.patch.object(timers.logging, 'info', autospec=True)
+  def testSetTimer(self, i, sv, build_info):
     build_info.TimerGet.return_value = VALUE_DATA
     st = timers.SetTimer([VALUE_NAME], build_info)
     st.Run()
     build_info.TimerSet.assert_called_with(VALUE_NAME)
     sv.assert_called_with('TIMER_' + VALUE_NAME, VALUE_DATA, 'HKLM',
                           KEY_PATH, log=False)
+    i.assert_called_with('Set image timer: %s (%s)', VALUE_NAME, VALUE_DATA)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(timers.registry, 'set_value', autospec=True)
