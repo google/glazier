@@ -30,7 +30,7 @@ class PSScript(BaseAction):
     ps_args = []
     if len(self._args) > 1:
       ps_args = self._args[1]
-    ps = powershell.PowerShell(log=True)
+    ps = powershell.PowerShell()
     c = cache.Cache()
 
     logging.info('Interpreting Powershell script: %s', script)
@@ -42,7 +42,30 @@ class PSScript(BaseAction):
     try:
       ps.RunLocal(script, args=ps_args)
     except powershell.PowerShellError as e:
-      raise ActionError('Failure executing Powershell script: %s' % e)
+      raise ActionError(str(e))
+
+  def Validate(self):
+    self._TypeValidator(self._args, list)
+    if not 1 <= len(self._args) <= 2:
+      raise ValidationError('Invalid args length: %s' % self._args)
+    self._TypeValidator(self._args[0], str)
+    if len(self._args) > 1:
+      self._TypeValidator(self._args[1], list)
+
+
+class PSCommand(BaseAction):
+  """Execute a Powershell script file."""
+
+  def Run(self):
+    command = self._args[0].split()
+    if len(self._args) > 1:
+      return_codes = self._args[1]
+    ps = powershell.PowerShell()
+
+    try:
+      ps.RunCommand(command, return_codes)
+    except powershell.PowerShellError as e:
+      raise ActionError(str(e))
 
   def Validate(self):
     self._TypeValidator(self._args, list)

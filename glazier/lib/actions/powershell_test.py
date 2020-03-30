@@ -58,6 +58,35 @@ class PowershellTest(absltest.TestCase):
     ps = powershell.PSScript(['#Some-Script.ps1', ['-Flags']], None)
     ps.Validate()
 
+  @mock.patch.object(
+      powershell.powershell.PowerShell, 'RunCommand', autospec=True)
+  def testPSCommand(self, run):
+    bi = buildinfo.BuildInfo()
+    ps = powershell.PSCommand(['Write-Verbose Foo -Verbose', [1337]],
+                              bi)
+    ps.Run()
+    run.assert_called_with(
+        mock.ANY, ['Write-Verbose', 'Foo', '-Verbose'], [1337])
+
+  @mock.patch.object(
+      powershell.powershell.PowerShell, 'RunCommand', autospec=True)
+  def testPSCommandError(self, run):
+    ps = powershell.PSCommand(['Write-Verbose Foo -Verbose', [1337]], None)
+    run.side_effect = powershell.powershell.PowerShellError
+    self.assertRaises(powershell.ActionError, ps.Run)
+
+  def testPSCommandValidate(self):
+    ps = powershell.PSCommand(30, None)
+    self.assertRaises(powershell.ValidationError, ps.Validate)
+    ps = powershell.PSCommand([], None)
+    self.assertRaises(powershell.ValidationError, ps.Validate)
+    ps = powershell.PSCommand([30, 40], None)
+    self.assertRaises(powershell.ValidationError, ps.Validate)
+    ps = powershell.PSCommand(['Write-Verbose Foo -Verbose'], None)
+    ps.Validate()
+    ps = powershell.PSCommand(['Write-Verbose Foo -Verbose', [1337]],
+                              None)
+    ps.Validate()
 
 if __name__ == '__main__':
   absltest.main()

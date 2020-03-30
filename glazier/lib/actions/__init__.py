@@ -52,6 +52,7 @@ LogCopy = installer.LogCopy
 MkDir = file_system.MkDir
 MultiCopyFile = file_system.MultiCopyFile
 PSScript = powershell.PSScript
+PSScript = powershell.PSCommand
 Reboot = system.Reboot
 RegAdd = registry.RegAdd
 MultiRegAdd = registry.MultiRegAdd

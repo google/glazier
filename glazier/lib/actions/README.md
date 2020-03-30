@@ -322,6 +322,23 @@ Make a directory.
 
     MkDir: ['C:\Glazier_Cache']
 
+### PSCommand
+
+Run a PowerShell command.
+
+#### Arguments
+
+*   Format: List
+    *   Arg1[str]: The PowerShell command to be run.
+    *   ArgB[list]: One or more integers indicating successful exit codes.
+            *   Default: [0]
+
+#### Examples
+
+    PSCommand: ['Write-Verbose Foo -Verbose']
+
+    PSCommand: ['Write-Verbose Foo -Verbose', [0, 1337]]
+
 ### PSScript
 
 Run a PowerShell script file using the local PowerShell interpreter.
