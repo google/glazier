@@ -43,13 +43,16 @@ class PowerShell(object):
 
   def _LaunchPs(self, op: Text,
                 args: List[Text],
-                ok_result: Optional[List[int]] = None):
+                ok_result: Optional[List[int]] = None) -> int:
     """Launch the powershell executable to run a script.
 
     Args:
       op: -Command or -File
       args: any additional commandline args as a list
       ok_result: a list of acceptable exit codes; default is 0
+
+    Returns:
+      Process returncode if successfully exited.
 
     Raises:
       PowerShellError: failure to execute powershell command cleanly
@@ -58,8 +61,9 @@ class PowerShell(object):
       raise PowerShellError('Unsupported PowerShell parameter: %s' % op)
 
     try:
-      execute.execute_binary(_Powershell(), ['-NoProfile', '-NoLogo',
-                                             op] + args, ok_result, self.log)
+      return execute.execute_binary(_Powershell(),
+                                    ['-NoProfile', '-NoLogo', op] + args,
+                                    ok_result, self.log)
     except execute.Error as e:
       raise PowerShellError(str(e))
 
@@ -113,13 +117,17 @@ class PowerShell(object):
     self.RunLocal(path, args, ok_result)
 
   def RunLocal(self, path: Text, args: List[Text],
-               ok_result: Optional[List[int]] = None):
+               ok_result: Optional[List[int]] = None) -> int:
     """Run a powershell script on the local filesystem.
 
     Args:
       path: a local filesystem path string
       args: a list of additional powershell arguments
       ok_result: a list of acceptable exit codes; default is 0
+
+    Returns:
+      Process returncode if successfully exited.
+
     Raises:
       PowerShellError: Invalid path supplied for execution.
     """
@@ -129,7 +137,7 @@ class PowerShell(object):
     if ok_result:
       assert isinstance(ok_result,
                         list), 'result codes must be passed as a list'
-    self._LaunchPs('-File', [path] + args, ok_result)
+    return self._LaunchPs('-File', [path] + args, ok_result)
 
   def SetExecutionPolicy(self, policy: Text):
     """Set the shell execution policy.

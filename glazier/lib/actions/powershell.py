@@ -1,3 +1,4 @@
+# Lint as: python3
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +16,12 @@
 """Actions for running Powershell scripts and commands."""
 
 import logging
+from typing import List, Optional, Text
 from glazier.lib import cache
 from glazier.lib import powershell
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
+from glazier.lib.actions.base import RestartEvent
 from glazier.lib.actions.base import ValidationError
 
 
@@ -28,8 +31,25 @@ class PSScript(BaseAction):
   def Run(self):
     script = self._args[0]
     ps_args = []
+    success_codes = [0]
+    reboot_codes = []
+    restart_retry = False
     if len(self._args) > 1:
       ps_args = self._args[1]
+    if len(self._args) > 2:
+      success_codes = self._args[2]
+    if len(self._args) > 3:
+      reboot_codes = self._args[3]
+    if len(self._args) > 4:
+      restart_retry = self._args[4]
+    self._Run(script, ps_args, success_codes, reboot_codes, restart_retry)
+
+  def _Run(self,
+           script: Text,
+           ps_args: Optional[List[Text]],
+           success_codes: Optional[List[int]],
+           reboot_codes: Optional[List[int]],
+           restart_retry: Optional[bool]):
     ps = powershell.PowerShell()
     c = cache.Cache()
 
@@ -40,17 +60,33 @@ class PSScript(BaseAction):
       raise ActionError(e)
 
     try:
-      ps.RunLocal(script, args=ps_args)
+      result = ps.RunLocal(script, args=ps_args)
     except powershell.PowerShellError as e:
       raise ActionError(str(e))
 
+    if result in reboot_codes:
+      raise RestartEvent('Restart triggered by exit code %d' % result, 5,
+                         retry_on_restart=restart_retry)
+    elif result not in success_codes:
+      raise ActionError('Command returned invalid exit code %d' % result)
+
   def Validate(self):
     self._TypeValidator(self._args, list)
-    if not 1 <= len(self._args) <= 2:
+    if not 1 <= len(self._args) <= 5:
       raise ValidationError('Invalid args length: %s' % self._args)
     self._TypeValidator(self._args[0], str)
-    if len(self._args) > 1:
+    if len(self._args) > 1:  # ps_args
       self._TypeValidator(self._args[1], list)
+    if len(self._args) > 2:  # success codes
+      self._TypeValidator(self._args[2], list)
+      for arg in self._args[2]:
+        self._TypeValidator(arg, int)
+    if len(self._args) > 3:  # reboot codes
+      self._TypeValidator(self._args[3], list)
+      for arg in self._args[3]:
+        self._TypeValidator(arg, int)
+    if len(self._args) > 4:  # retry on restart
+      self._TypeValidator(self._args[4], bool)
 
 
 class PSCommand(BaseAction):

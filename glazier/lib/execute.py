@@ -26,7 +26,7 @@ class Error(Exception):
 
 def execute_binary(binary: Text, args: Optional[List[Text]] = None,
                    return_codes: Optional[List[int]] = None,
-                   log: bool = True) -> Optional[int]:
+                   log: bool = True) -> int:
   """Execute a binary with optional parameters and return codes.
 
   Args:

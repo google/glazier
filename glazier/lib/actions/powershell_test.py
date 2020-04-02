@@ -1,3 +1,4 @@
+# Lint as: python3
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,16 +26,17 @@ class PowershellTest(absltest.TestCase):
   def setUp(self):
     super(PowershellTest, self).setUp()
     buildinfo.constants.FLAGS.config_server = 'https://glazier/'
+    self.bi = buildinfo.BuildInfo()
 
   @mock.patch.object(
       powershell.powershell.PowerShell, 'RunLocal', autospec=True)
   @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
   def testPSScript(self, cache, run):
-    bi = buildinfo.BuildInfo()
     cache.return_value = r'C:\Cache\Some-Script.ps1'
-    ps = powershell.PSScript(['#Some-Script.ps1', ['-Flag1']], bi)
+    ps = powershell.PSScript(['#Some-Script.ps1', ['-Flag1']], self.bi)
+    run.return_value = 0
     ps.Run()
-    cache.assert_called_with(mock.ANY, '#Some-Script.ps1', bi)
+    cache.assert_called_with(mock.ANY, '#Some-Script.ps1', self.bi)
     run.assert_called_with(
         mock.ANY, r'C:\Cache\Some-Script.ps1', args=['-Flag1'])
     run.side_effect = powershell.powershell.PowerShellError
@@ -44,18 +46,69 @@ class PowershellTest(absltest.TestCase):
     cache.side_effect = powershell.cache.CacheError
     self.assertRaises(powershell.ActionError, ps.Run)
 
-  def testPSScriptValidate(self):
+  @mock.patch.object(
+      powershell.powershell.PowerShell, 'RunLocal', autospec=True)
+  @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
+  def testPSScriptSuccessCodes(self, cache, run):
+    cache.return_value = r'C:\Cache\Some-Script.ps1'
+    ps = powershell.PSScript(['#Some-Script.ps1', ['-Flag1'], [1337, 1338]],
+                             self.bi)
+    run.return_value = 0
+    self.assertRaises(powershell.ActionError, ps.Run)
+    run.return_value = 1337
+    ps.Run()
+
+  @mock.patch.object(
+      powershell.powershell.PowerShell, 'RunLocal', autospec=True)
+  @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
+  def testPSScriptRebootNoRetry(self, cache, run):
+    cache.return_value = r'C:\Cache\Some-Script.ps1'
+    ps = powershell.PSScript(
+        ['#Some-Script.ps1', ['-Flag1'], [0], [1337, 1338]], self.bi)
+    run.return_value = 1337
+    self.assertRaises(powershell.RestartEvent, ps.Run)
+
+  @mock.patch.object(
+      powershell.powershell.PowerShell, 'RunLocal', autospec=True)
+  @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
+  def testPSScriptRebootRetry(self, cache, run):
+    cache.return_value = r'C:\Cache\Some-Script.ps1'
+    ps = powershell.PSScript(
+        ['#Some-Script.ps1', ['-Flag1'], [0], [1337, 1338], True], self.bi)
+    run.return_value = 1337
+    self.assertRaises(powershell.RestartEvent, ps.Run)
+    cache.assert_called_with(mock.ANY, '#Some-Script.ps1', self.bi)
+
+  def testPSScriptValidateType(self):
     ps = powershell.PSScript(30, None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
+
+    ps = powershell.PSScript(['#Some-Script.ps1', '-Verbose'], None)
+    self.assertRaises(powershell.ValidationError, ps.Validate)
+
+    ps = powershell.PSScript(['#Some-Script.ps1', ['-Verbose'], 0], None)
+    self.assertRaises(powershell.ValidationError, ps.Validate)
+
+    ps = powershell.PSScript(
+        ['#Some-Script.ps1', ['-Verbose'], [0], 1337], None)
+    self.assertRaises(powershell.ValidationError, ps.Validate)
+
+    ps = powershell.PSScript(
+        ['#Some-Script.ps1', ['-Verbose'], [0], [1337], 'True'], None)
+    self.assertRaises(powershell.ValidationError, ps.Validate)
+
+  def testPSScriptValidateLen(self):
     ps = powershell.PSScript([], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
-    ps = powershell.PSScript([30, 40], None)
+
+    ps = powershell.PSScript([1, 2, 3, 4, 5, 6], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
-    ps = powershell.PSScript(['#Some-Script.ps1'], None)
-    ps.Validate()
-    ps = powershell.PSScript(['#Some-Script.ps1', '-Flags'], None)
-    self.assertRaises(powershell.ValidationError, ps.Validate)
-    ps = powershell.PSScript(['#Some-Script.ps1', ['-Flags']], None)
+
+  def testPSScriptValidate(self):
+    ps = powershell.PSScript([
+        '#Some-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0],
+        [1337, 1338], True
+    ], None)
     ps.Validate()
 
   @mock.patch.object(
