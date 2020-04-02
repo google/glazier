@@ -34,14 +34,14 @@ class PSScript(BaseAction):
     success_codes = [0]
     reboot_codes = []
     restart_retry = False
-    if len(self._args) > 1:
+    if len(self._args) > 1:  # ps_args
       ps_args = self._args[1]
-    if len(self._args) > 2:
+    if len(self._args) > 2:  # success codes
       success_codes = self._args[2]
-    if len(self._args) > 3:
+    if len(self._args) > 3:  # reboot code
       reboot_codes = self._args[3]
     if len(self._args) > 4:
-      restart_retry = self._args[4]
+      restart_retry = self._args[4]   # retry on restart
     self._Run(script, ps_args, success_codes, reboot_codes, restart_retry)
 
   def _Run(self,
@@ -94,12 +94,13 @@ class PSCommand(BaseAction):
 
   def Run(self):
     command = self._args[0].split()
+    success_codes = [0]
     if len(self._args) > 1:
-      return_codes = self._args[1]
+      success_codes = self._args[1]
     ps = powershell.PowerShell()
 
     try:
-      ps.RunCommand(command, return_codes)
+      ps.RunCommand(command, success_codes)
     except powershell.PowerShellError as e:
       raise ActionError(str(e))
 
