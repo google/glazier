@@ -46,6 +46,15 @@ class RegistryTest(absltest.TestCase):
     self.assertEqual(registry.get_value(self.name), None)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
+  @mock.patch.object(registry.logging, 'warning', autospec=True)
+  @mock.patch.object(registry.logging, 'debug', autospec=True)
+  def test_get_value_none_silent(self, d, w, reg):
+    reg.return_value.GetKeyValue.side_effect = registry.registry.RegistryError
+    registry.get_value(self.name, log=False)
+    self.assertFalse(w.called)
+    self.assertTrue(d.called)
+
+  @mock.patch.object(registry.registry, 'Registry', autospec=True)
   @mock.patch.object(registry.logging, 'debug', autospec=True)
   def test_get_value_silent(self, d, reg):
     reg.return_value.GetKeyValue.return_value = self.value
