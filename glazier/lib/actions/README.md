@@ -346,14 +346,32 @@ Run a PowerShell script file using the local PowerShell interpreter.
 #### Arguments
 
 *   Format: List
-    *   Arg1[str]: The script file name or path to be run.
-    *   Arg2[list]: A list of flags to be supplied to the script. (Optional)
+      *   Arg1[str]: The script file name or path to be run..
+      *   Arg2[list]: A list of strings to be passed to the script as parameters.
+          * Default: []
+      *   Arg3[list]: One or more integers indicating successful exit codes.
+          *   Default: [0]
+      *   Arg4[list]: One or more integers indicating a reboot is required.
+          *   Default: []
+      *   Arg5[bool]: Rerun after a reboot occurs. A reboot code must be
+          provided and returned by the execution.
+            *   Default: False
 
 #### Examples
 
-    PSScript: ['#Sample-Script.ps1']
-
-    PSScript: ['C:\Sample-Script2.ps1', ['-Flag1', 123, '-Flag2']]
+```yaml
+    PSScript: [
+      # Specify only the PowerShell script.
+      ['#Sample-Script.ps1']
+      # Additional parameters.
+      ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue']]
+      # 0 or 1 as successful exit codes.
+      ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1]]
+      # 1337 will trigger a restart.
+      ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1], [1337]]
+      # True will rerun the command after restart.
+      ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1], [1337], True]
+```
 
 ### RegAdd/MultiRegAdd
 
