@@ -60,8 +60,7 @@ def get_value(
                       value)
       return value
   except registry.RegistryError as e:
-    logging.warning(r'Failed to get registry key: %s:\%s\%s (%s)', root, path,
-                    name, str(e))
+    logging.warning(str(e))
   return None
 
 
