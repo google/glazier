@@ -38,6 +38,7 @@ class ExecuteTest(absltest.TestCase):
     popen_instance.stdout = io.BytesIO(b'foo\nbar')
     execute.execute_binary(self.binary, ['arg1', 'arg2'])
     popen.assert_called_with([self.binary, 'arg1', 'arg2'],
+                             shell=False,
                              stdout=execute.subprocess.PIPE,
                              stderr=execute.subprocess.STDOUT,
                              universal_newlines=True)
@@ -49,6 +50,7 @@ class ExecuteTest(absltest.TestCase):
     popen_instance.stdout = io.BytesIO(b'foo\nbar')
     execute.execute_binary(self.binary)
     popen.assert_called_with([self.binary],
+                             shell=False,
                              stdout=execute.subprocess.PIPE,
                              stderr=execute.subprocess.STDOUT,
                              universal_newlines=True)
@@ -60,6 +62,7 @@ class ExecuteTest(absltest.TestCase):
     popen_instance.stdout = io.BytesIO(b'foo\nbar')
     execute.execute_binary(self.binary, return_codes=[1337, 1338])
     popen.assert_called_with([self.binary],
+                             shell=False,
                              stdout=execute.subprocess.PIPE,
                              stderr=execute.subprocess.STDOUT,
                              universal_newlines=True)
@@ -90,9 +93,25 @@ class ExecuteTest(absltest.TestCase):
     execute.execute_binary(self.binary, log=False)
     i.assert_called_with('Executing: %s', self.binary)
     popen.assert_called_with([self.binary],
+                             shell=False,
                              stdout=execute.subprocess.PIPE,
                              stderr=execute.subprocess.STDOUT,
                              universal_newlines=True)
+
+  @mock.patch.object(execute.logging, 'info', autospec=True)
+  @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
+  def test_execute_binary_shell(self, popen, i):
+    popen_instance = popen.return_value
+    popen_instance.returncode = 0
+    popen_instance.stdout = io.BytesIO(b'foo\nbar')
+    execute.execute_binary(self.binary, shell=True)
+    i.assert_called_with('Executing: %s', self.binary)
+    popen.assert_called_with([self.binary],
+                             shell=True,
+                             stdout=None,
+                             stderr=None,
+                             universal_newlines=True)
+
 
 if __name__ == '__main__':
   absltest.main()

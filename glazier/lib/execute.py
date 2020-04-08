@@ -26,6 +26,7 @@ class Error(Exception):
 
 def execute_binary(binary: Text, args: Optional[List[Text]] = None,
                    return_codes: Optional[List[int]] = None,
+                   shell: bool = False,
                    log: bool = True) -> int:
   """Execute a binary with optional parameters and return codes.
 
@@ -33,6 +34,7 @@ def execute_binary(binary: Text, args: Optional[List[Text]] = None,
     binary: Full path the to binary.
     args: Additional commandline arguments.
     return_codes: Acceptable exit/return codes. Defaults to 0.
+    shell: Log to console only. Defaults to False and ignores log value.
     log: Display log messages. Defaults to True.
 
   Returns:
@@ -51,23 +53,30 @@ def execute_binary(binary: Text, args: Optional[List[Text]] = None,
 
   if not return_codes:
     return_codes = [0]
+
   logging.info('Executing: %s', string)
 
+  stdout = subprocess.PIPE
+  stderr = subprocess.STDOUT
+  if shell:
+    stdout = None
+    stderr = None
   try:
-    process = subprocess.Popen(cmd,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT,
+    process = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, shell=shell,
                                universal_newlines=True)
   except WindowsError as e:  # pylint: disable=undefined-variable
     raise Error('Failed to execute: %s (%s)' % (string, str(e)))
 
-  # Log output to standard logger
-  while True:
-    output = process.stdout.readline()
-    if not output and process.poll() is not None:
-      break
-    if output and log:
-      logging.info(output.strip())
+  # Optionally log output to standard logger
+  if shell:
+    process.wait()
+  else:
+    while True:
+      output = process.stdout.readline()
+      if output and log:
+        logging.info(output.strip())
+      elif process.poll() is not None:
+        break
 
   if process.returncode not in return_codes:
     raise Error("Executing '{0}' returned invalid exit code: {1}".format(
