@@ -114,12 +114,56 @@ class PowershellTest(absltest.TestCase):
   @mock.patch.object(
       powershell.powershell.PowerShell, 'RunCommand', autospec=True)
   def testPSCommand(self, run):
-    bi = buildinfo.BuildInfo()
-    ps = powershell.PSCommand(['Write-Verbose Foo -Verbose', [1337]],
-                              bi)
+    ps = powershell.PSCommand(['Write-Verbose Foo -Verbose', [1337]], self.bi)
+    run.return_value = 1337
     ps.Run()
     run.assert_called_with(
         mock.ANY, ['Write-Verbose', 'Foo', '-Verbose'], [1337])
+
+  @mock.patch.object(
+      powershell.powershell.PowerShell, 'RunCommand', autospec=True)
+  def testPSCommandSuccessError(self, run):
+    ps = powershell.PSCommand(['Write-Verbose Foo -Verbose', [0]], self.bi)
+    run.return_value = 1337
+    self.assertRaises(powershell.ActionError, ps.Run)
+
+  @mock.patch.object(
+      powershell.powershell.PowerShell, 'RunCommand', autospec=True)
+  @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
+  def testPSCommandCache(self, cache, run):
+    cache.return_value = r'C:\Cache\Some-Script.ps1'
+    ps = powershell.PSCommand(['#Some-Script.ps1 -confirm:$false'], self.bi)
+    run.return_value = 0
+    ps.Run()
+    run.assert_called_with(mock.ANY,
+                           ['C:\\Cache\\Some-Script.ps1', '-confirm:$false'],
+                           [0])
+    cache.assert_called_with(mock.ANY, '#Some-Script.ps1', self.bi)
+
+  @mock.patch.object(
+      powershell.powershell.PowerShell, 'RunCommand', autospec=True)
+  @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
+  def testPSCommandCacheError(self, cache, run):
+    ps = powershell.PSCommand(['#Some-Script.ps1 -confirm:$false'], self.bi)
+    run.side_effect = None
+    cache.side_effect = powershell.cache.CacheError
+    self.assertRaises(powershell.ActionError, ps.Run)
+
+  @mock.patch.object(
+      powershell.powershell.PowerShell, 'RunCommand', autospec=True)
+  def testPSCommandRebootNoRetry(self, run):
+    ps = powershell.PSCommand(['Write-Verbose Foo -Verbose', [0], [1337, 1338]],
+                              self.bi)
+    run.return_value = 1337
+    self.assertRaises(powershell.RestartEvent, ps.Run)
+
+  @mock.patch.object(
+      powershell.powershell.PowerShell, 'RunCommand', autospec=True)
+  def testPSCommandRebootRetry(self, run):
+    ps = powershell.PSCommand(
+        ['Write-Verbose Foo -Verbose', [0], [1337, 1338], True], self.bi)
+    run.return_value = 1337
+    self.assertRaises(powershell.RestartEvent, ps.Run)
 
   @mock.patch.object(
       powershell.powershell.PowerShell, 'RunCommand', autospec=True)
@@ -134,6 +178,10 @@ class PowershellTest(absltest.TestCase):
     ps = powershell.PSCommand([], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
     ps = powershell.PSCommand([30, 40], None)
+    ps = powershell.PSCommand(['Write-Verbose Foo -Verbose', [0], 1337], None)
+    self.assertRaises(powershell.ValidationError, ps.Validate)
+    ps = powershell.PSCommand(
+        ['Write-Verbose Foo -Verbose', [0], [1337], 'True'], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
     ps = powershell.PSCommand(['Write-Verbose Foo -Verbose'], None)
     ps.Validate()

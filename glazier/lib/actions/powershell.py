@@ -95,19 +95,52 @@ class PSCommand(BaseAction):
   def Run(self):
     command = self._args[0].split()
     success_codes = [0]
+    reboot_codes = []
+    restart_retry = False
     if len(self._args) > 1:
       success_codes = self._args[1]
+    if len(self._args) > 2:  # reboot code
+      reboot_codes = self._args[2]
+    if len(self._args) > 3:  # retry on restart
+      restart_retry = self._args[3]
     ps = powershell.PowerShell()
+    c = cache.Cache()
+
+    # PSCommand can be used to run PowerShell scripts in specific scenarios
+    # such as passing switch parameters not working when being passed via
+    # powershell.exe -File.
+    if '.ps1' in command[0]:
+      logging.info('Interpreting Powershell script: %s', command[0])
+      try:
+        command[0] = c.CacheFromLine(command[0], self._build_info)
+      except cache.CacheError as e:
+        raise ActionError(e)
 
     try:
-      ps.RunCommand(command, success_codes)
+      result = ps.RunCommand(command, success_codes)
     except powershell.PowerShellError as e:
       raise ActionError(str(e))
 
+    if result in reboot_codes:
+      raise RestartEvent(
+          'Restart triggered by exit code %d' % result,
+          5,
+          retry_on_restart=restart_retry)
+    elif result not in success_codes:
+      raise ActionError('Command returned invalid exit code %d' % result)
+
   def Validate(self):
     self._TypeValidator(self._args, list)
-    if not 1 <= len(self._args) <= 2:
+    if not 1 <= len(self._args) <= 4:
       raise ValidationError('Invalid args length: %s' % self._args)
     self._TypeValidator(self._args[0], str)
     if len(self._args) > 1:
       self._TypeValidator(self._args[1], list)
+      for arg in self._args[1]:  # success codes
+        self._TypeValidator(arg, int)
+    if len(self._args) > 2:  # reboot codes
+      self._TypeValidator(self._args[2], list)
+      for arg in self._args[2]:
+        self._TypeValidator(arg, int)
+    if len(self._args) > 3:  # retry on restart
+      self._TypeValidator(self._args[3], bool)
