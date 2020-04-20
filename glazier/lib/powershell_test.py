@@ -113,10 +113,7 @@ class PowershellTest(absltest.TestCase):
         self.path)
 
     self.assertRaises(
-        AssertionError,
-        self.ps.RunCommand,
-        self.path,
-        ok_result='0')
+        AssertionError, self.ps.RunCommand, [self.path], ok_result='0')
 
   @flagsaver.flagsaver
   @mock.patch.object(powershell.PowerShell, 'RunLocal', autospec=True)

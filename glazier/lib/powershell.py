@@ -67,19 +67,23 @@ class PowerShell(object):
     except execute.Error as e:
       raise PowerShellError(str(e))
 
-  def RunCommand(self, command: List[Text],
-                 ok_result: Optional[List[int]] = None):
+  def RunCommand(self,
+                 command: List[Text],
+                 ok_result: Optional[List[int]] = None) -> int:
     """Run a powershell script on the local filesystem.
 
     Args:
       command: a list containing the command and all accompanying arguments
       ok_result: a list of acceptable exit codes; default is 0
+
+    Returns:
+      Process returncode if successfully exited.
     """
     assert isinstance(command, list), 'command must be passed as a list'
     if ok_result:
       assert isinstance(ok_result,
                         list), 'result codes must be passed as a list'
-    self._LaunchPs('-Command', command, ok_result)
+    return self._LaunchPs('-Command', command, ok_result)
 
   def _GetResPath(self, path: Text) -> Text:
     """Translate an installer resource path into a local path.
