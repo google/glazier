@@ -37,8 +37,8 @@ class PowershellTest(absltest.TestCase):
     run.return_value = 0
     ps.Run()
     cache.assert_called_with(mock.ANY, '#Some-Script.ps1', self.bi)
-    run.assert_called_with(
-        mock.ANY, r'C:\Cache\Some-Script.ps1', args=['-Flag1'])
+    run.assert_called_with(mock.ANY, r'C:\Cache\Some-Script.ps1', ['-Flag1'],
+                           [0])
     run.side_effect = powershell.powershell.PowerShellError
     self.assertRaises(powershell.ActionError, ps.Run)
     # Cache error
@@ -67,6 +67,8 @@ class PowershellTest(absltest.TestCase):
         ['#Some-Script.ps1', ['-Flag1'], [0], [1337, 1338]], self.bi)
     run.return_value = 1337
     self.assertRaises(powershell.RestartEvent, ps.Run)
+    run.assert_called_with(mock.ANY, r'C:\Cache\Some-Script.ps1', ['-Flag1'],
+                           [0, 1337, 1338])
 
   @mock.patch.object(
       powershell.powershell.PowerShell, 'RunLocal', autospec=True)
@@ -77,6 +79,8 @@ class PowershellTest(absltest.TestCase):
         ['#Some-Script.ps1', ['-Flag1'], [0], [1337, 1338], True], self.bi)
     run.return_value = 1337
     self.assertRaises(powershell.RestartEvent, ps.Run)
+    run.assert_called_with(mock.ANY, r'C:\Cache\Some-Script.ps1', ['-Flag1'],
+                           [0, 1337, 1338])
     cache.assert_called_with(mock.ANY, '#Some-Script.ps1', self.bi)
 
   def testPSScriptValidateType(self):

@@ -59,8 +59,12 @@ class PSScript(BaseAction):
     except cache.CacheError as e:
       raise ActionError(e)
 
+    ok_result = success_codes
+    if reboot_codes:
+      ok_result = success_codes + reboot_codes
+
     try:
-      result = ps.RunLocal(script, args=ps_args)
+      result = ps.RunLocal(script, ps_args, ok_result)
     except powershell.PowerShellError as e:
       raise ActionError(str(e))
 
