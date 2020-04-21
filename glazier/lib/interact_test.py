@@ -32,6 +32,11 @@ class InteractTest(absltest.TestCase):
     raw.side_effect = iter(['invalid-name', '', '  ', 'username1'])
     self.assertEqual(interact.PromptCertUser(), 'username1')
 
+  @mock.patch('glazier.lib.interact.input', autospec=True)
+  def testPromptDomainUser(self, raw):
+    raw.side_effect = iter(['invalid-name', '', '  ', 'username1'])
+    self.assertEqual(interact.PromptDomainUser(), 'username1')
+
   @mock.patch.object(interact.time, 'sleep', autospec=True)
   def testKeystroke(self, sleep):
     msvcrt = mock.Mock()

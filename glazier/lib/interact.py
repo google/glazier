@@ -52,6 +52,19 @@ def PromptCertUser() -> Text:
   return username
 
 
+def PromptDomainUser() -> Text:
+  """Prompt the user for their username to be used for domain join.
+
+  Returns:
+    The username string entered by the user.
+  """
+  username = False
+  while not username:
+    username = Prompt('Enter username for domain join: ',
+                      validator='^[a-zA-Z0-9]+$')
+  return username
+
+
 def Keystroke(message: Text,
               validator: Text = '.*',
               timeout: int = 30) -> Optional[Text]:
