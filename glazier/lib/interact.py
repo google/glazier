@@ -26,42 +26,24 @@ from typing import Optional, Text
 from six.moves import input
 
 
-def GetUsername() -> Text:
+def GetUsername(purpose: Optional[Text] = None) -> Text:
   """Prompt the user for their username.
 
-  Returns:
-    The username string entered by the user.
-  """
-  username = False
-  while not username:
-    username = Prompt('Please enter your username: ',
-                      validator='^[a-zA-Z0-9]+$')
-  return username
-
-
-def PromptCertUser() -> Text:
-  """Prompt the user for their username to be used for certificate installation.
+  Args:
+    purpose: Additional string to include when prompting for username.
 
   Returns:
     The username string entered by the user.
   """
-  username = False
+  username = None
+
+  prompt_string = 'Please enter your username: '
+  if purpose:
+    prompt_string = 'Please enter your username for {}: '.format(purpose)
+
   while not username:
-    username = Prompt('Enter username for certificate install: ',
-                      validator='^[a-zA-Z0-9]+$')
-  return username
+    username = Prompt(prompt_string, validator='^[a-zA-Z0-9]+$')
 
-
-def PromptDomainUser() -> Text:
-  """Prompt the user for their username to be used for domain join.
-
-  Returns:
-    The username string entered by the user.
-  """
-  username = False
-  while not username:
-    username = Prompt('Enter username for domain join: ',
-                      validator='^[a-zA-Z0-9]+$')
   return username
 
 

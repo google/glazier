@@ -22,20 +22,18 @@ import mock
 
 class InteractTest(absltest.TestCase):
 
-  @mock.patch('glazier.lib.interact.input', autospec=True)
+  @mock.patch.object(interact, 'input', autospec=True)
   def testGetUsername(self, raw):
     raw.side_effect = iter(['invalid-name', '', '  ', 'username1'])
     self.assertEqual(interact.GetUsername(), 'username1')
 
-  @mock.patch('glazier.lib.interact.input', autospec=True)
-  def testPromptCertUser(self, raw):
-    raw.side_effect = iter(['invalid-name', '', '  ', 'username1'])
-    self.assertEqual(interact.PromptCertUser(), 'username1')
-
-  @mock.patch('glazier.lib.interact.input', autospec=True)
-  def testPromptDomainUser(self, raw):
-    raw.side_effect = iter(['invalid-name', '', '  ', 'username1'])
-    self.assertEqual(interact.PromptDomainUser(), 'username1')
+  @mock.patch.object(interact, 'Prompt', autospec=True)
+  def testGetUsernamePurpose(self, prompt):
+    prompt.return_value = 'username1'
+    self.assertEqual(interact.GetUsername('domain join'), 'username1')
+    prompt.assert_called_with(
+        'Please enter your username for domain join: ',
+        validator='^[a-zA-Z0-9]+$')
 
   @mock.patch.object(interact.time, 'sleep', autospec=True)
   def testKeystroke(self, sleep):
@@ -63,7 +61,7 @@ class InteractTest(absltest.TestCase):
     result = interact.Keystroke('mesg', validator='[0-9]')
     self.assertEqual(result, None)
 
-  @mock.patch('glazier.lib.interact.input', autospec=True)
+  @mock.patch.object(interact, 'input', autospec=True)
   def testPrompt(self, raw):
     raw.return_value = 'user*name'
     result = interact.Prompt('mesg', '^\\w+$')
