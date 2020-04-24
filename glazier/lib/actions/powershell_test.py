@@ -16,12 +16,16 @@
 """Tests for glazier.lib.actions.powershell."""
 
 from absl.testing import absltest
+from absl.testing import parameterized
 from glazier.lib import buildinfo
 from glazier.lib.actions import powershell
 import mock
 
+COMMAND = 'Write-Verbose Foo -Verbose'
+TOKENIZED_COMMAND = ['Write-Verbose', 'Foo', '-Verbose']
 
-class PowershellTest(absltest.TestCase):
+
+class PowershellTest(parameterized.TestCase):
 
   def setUp(self):
     super(PowershellTest, self).setUp()
@@ -83,6 +87,7 @@ class PowershellTest(absltest.TestCase):
                            [0, 1337, 1338])
     cache.assert_called_with(mock.ANY, '#Some-Script.ps1', self.bi)
 
+  # TODO : Parameterize this test, similar to PSCommand.
   def testPSScriptValidateType(self):
     ps = powershell.PSScript(30, None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
@@ -108,6 +113,7 @@ class PowershellTest(absltest.TestCase):
     ps = powershell.PSScript([1, 2, 3, 4, 5, 6], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
 
+  # TODO : Use fail() to make an explicit assertion. go/pytotw/006
   def testPSScriptValidate(self):
     ps = powershell.PSScript([
         '#Some-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0],
@@ -118,31 +124,66 @@ class PowershellTest(absltest.TestCase):
   @mock.patch.object(
       powershell.powershell.PowerShell, 'RunCommand', autospec=True)
   def testPSCommand(self, run):
-    bi = buildinfo.BuildInfo()
-    ps = powershell.PSCommand(['Write-Verbose Foo -Verbose', [1337]],
-                              bi)
+    ps = powershell.PSCommand([COMMAND, [1337]], self.bi)
+    run.return_value = 1337
     ps.Run()
-    run.assert_called_with(
-        mock.ANY, ['Write-Verbose', 'Foo', '-Verbose'], [1337])
+    run.assert_called_with(mock.ANY, TOKENIZED_COMMAND, [1337])
 
   @mock.patch.object(
       powershell.powershell.PowerShell, 'RunCommand', autospec=True)
   def testPSCommandError(self, run):
-    ps = powershell.PSCommand(['Write-Verbose Foo -Verbose', [1337]], None)
+    ps = powershell.PSCommand([COMMAND, [1337]], None)
     run.side_effect = powershell.powershell.PowerShellError
     self.assertRaises(powershell.ActionError, ps.Run)
 
-  def testPSCommandValidate(self):
-    ps = powershell.PSCommand(30, None)
+  @mock.patch.object(
+      powershell.powershell.PowerShell, 'RunCommand', autospec=True)
+  def testPSCommandSuccessError(self, run):
+    ps = powershell.PSCommand([COMMAND, [0]], self.bi)
+    run.return_value = 1337
+    self.assertRaises(powershell.ActionError, ps.Run)
+
+  @mock.patch.object(
+      powershell.powershell.PowerShell, 'RunCommand', autospec=True)
+  def testPSCommandRebootNoRetry(self, run):
+    ps = powershell.PSCommand([COMMAND, [0], [1337, 1338]], self.bi)
+    run.return_value = 1337
+    self.assertRaises(powershell.RestartEvent, ps.Run)
+    run.assert_called_with(mock.ANY, TOKENIZED_COMMAND, [0, 1337, 1338])
+
+  @mock.patch.object(
+      powershell.powershell.PowerShell, 'RunCommand', autospec=True)
+  def testPSCommandRebootRetry(self, run):
+    ps = powershell.PSCommand([COMMAND, [0], [1337, 1338], True], self.bi)
+    run.return_value = 1337
+    with self.assertRaises(powershell.RestartEvent) as cm:
+      ps.Run()
+    exception = cm.exception
+    self.assertEqual(exception.retry_on_restart, True)
+    run.assert_called_with(mock.ANY, TOKENIZED_COMMAND, [0, 1337, 1338])
+
+  @parameterized.named_parameters(
+      ('command_type', 30, [0], [1337], True),
+      ('success_code_type', COMMAND, 0, [1337], True),
+      ('reboot_code_type', COMMAND, [0], 1337, True),
+      ('retry_on_restart_type', COMMAND, [0], [1337], 'True'))
+  def testPSCommandValidateType(self, command, success_codes, reboot_codes,
+                                retry_on_restart):
+    ps = powershell.PSCommand(
+        [command, success_codes, reboot_codes, retry_on_restart], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
+
+  def testPSCommandValidateNotEnough(self):
     ps = powershell.PSCommand([], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
-    ps = powershell.PSCommand([30, 40], None)
+
+  def testPSCommandValidateTooMany(self):
+    ps = powershell.PSCommand([COMMAND, [0], [1337, 1338], True, True], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
-    ps = powershell.PSCommand(['Write-Verbose Foo -Verbose'], None)
-    ps.Validate()
-    ps = powershell.PSCommand(['Write-Verbose Foo -Verbose', [1337]],
-                              None)
+
+  # TODO : Use fail() to make an explicit assertion. go/pytotw/006
+  def testPSCommandValidate(self):
+    ps = powershell.PSCommand([COMMAND, [0], [1337, 1338], True], None)
     ps.Validate()
 
 if __name__ == '__main__':
