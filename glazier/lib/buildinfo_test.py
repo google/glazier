@@ -272,6 +272,18 @@ class BuildInfoTest(absltest.TestCase):
     FLAGS.glazier_spec_os = 'windows-10-test'
     self.assertEqual(self.buildinfo.ComputerOs(), 'windows-10-test')
 
+  @flagsaver.flagsaver
+  def testLabSpecFlagsTrue(self):
+    FLAGS.glazier_spec = 'flag'
+    FLAGS.glazier_spec_lab = 'True'
+    self.assertEqual(self.buildinfo.Lab(), True)
+
+  @flagsaver.flagsaver
+  def testLabSpecFlagsFalse(self):
+    FLAGS.glazier_spec = 'flag'
+    FLAGS.glazier_spec_lab = ''
+    self.assertEqual(self.buildinfo.Lab(), False)
+
   @mock.patch.object(buildinfo.hw_info.HWInfo, 'BiosSerial', autospec=True)
   def testComputerSerial(self, bios_serial):
     bios_serial.return_value = '5KD1BP1'

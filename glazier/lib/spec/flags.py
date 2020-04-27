@@ -22,6 +22,8 @@ flags.DEFINE_string('glazier_spec_hostname', '',
                     'Host name for this installation.')
 flags.DEFINE_string('glazier_spec_fqdn', '',
                     'Host FQDN for this installation.')
+flags.DEFINE_string('glazier_spec_lab', '',
+                    'Whether the machine lives in an imaging lab.')
 flags.DEFINE_string('glazier_spec_os', '',
                     'Operating system code for this image.')
 
@@ -39,3 +41,8 @@ def GetFqdn():
 def GetHostname():
   """Get the desired hostname via flags."""
   return FLAGS.glazier_spec_hostname
+
+
+def GetLab():
+  """Get the lab state via flags."""
+  return FLAGS.glazier_spec_lab

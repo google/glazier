@@ -402,6 +402,17 @@ class BuildInfo(object):
     return ni.Interfaces()
 
   @functools.lru_cache()
+  def Lab(self) -> bool:
+    """Get state of lab pin.
+
+    Returns:
+      Boolean state of lab pin.
+    """
+    if spec.GetModule().GetLab().lower() == 'true':
+      return True
+    return False
+
+  @functools.lru_cache()
   def OsCode(self) -> Text:
     """Return the OS code associated with this build.
 
@@ -433,6 +444,7 @@ class BuildInfo(object):
             'FQDN': str(self.Fqdn()),
             'isLaptop': str(self.IsLaptop()),
             'image_id': str(self.ImageID()),
+            'lab': str(self.Lab()),
             'Manufacturer': str(self.ComputerManufacturer()),
             'Model': str(self.ComputerModel()),
             'OS': str(self.ComputerOs()),

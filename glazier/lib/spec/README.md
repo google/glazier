@@ -5,3 +5,4 @@ specification:
 
 *   Desired operating system
 *   Desired host name
+*   Whether or not to execute experimental image pins
