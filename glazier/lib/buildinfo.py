@@ -240,6 +240,7 @@ class BuildInfo(object):
         'encryption_type': self.EncryptionLevel,
         'graphics': self.VideoControllersByName,
         'os_code': self.OsCode,
+        'lab': self.Lab,
     }
 
   def CachePath(self):
