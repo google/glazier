@@ -21,6 +21,9 @@ from glazier.lib import buildinfo
 from glazier.lib.actions import powershell
 import mock
 
+SCRIPT = '#Some-Script.ps1'
+SCRIPT_PATH = r'C:\Cache\Some-Script.ps1'
+ARGS = ['-Verbose', '-InformationAction', 'Continue']
 COMMAND = 'Write-Verbose Foo -Verbose'
 TOKENIZED_COMMAND = ['Write-Verbose', 'Foo', '-Verbose']
 
@@ -36,13 +39,12 @@ class PowershellTest(parameterized.TestCase):
       powershell.powershell.PowerShell, 'RunLocal', autospec=True)
   @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
   def testPSScript(self, cache, run):
-    cache.return_value = r'C:\Cache\Some-Script.ps1'
-    ps = powershell.PSScript(['#Some-Script.ps1', ['-Flag1']], self.bi)
+    cache.return_value = SCRIPT_PATH
+    ps = powershell.PSScript([SCRIPT, ARGS], self.bi)
     run.return_value = 0
     ps.Run()
-    cache.assert_called_with(mock.ANY, '#Some-Script.ps1', self.bi)
-    run.assert_called_with(mock.ANY, r'C:\Cache\Some-Script.ps1', ['-Flag1'],
-                           [0])
+    cache.assert_called_with(mock.ANY, SCRIPT, self.bi)
+    run.assert_called_with(mock.ANY, SCRIPT_PATH, ARGS, [0])
     run.side_effect = powershell.powershell.PowerShellError
     self.assertRaises(powershell.ActionError, ps.Run)
     # Cache error
@@ -54,9 +56,8 @@ class PowershellTest(parameterized.TestCase):
       powershell.powershell.PowerShell, 'RunLocal', autospec=True)
   @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
   def testPSScriptSuccessCodes(self, cache, run):
-    cache.return_value = r'C:\Cache\Some-Script.ps1'
-    ps = powershell.PSScript(['#Some-Script.ps1', ['-Flag1'], [1337, 1338]],
-                             self.bi)
+    cache.return_value = SCRIPT_PATH
+    ps = powershell.PSScript([SCRIPT, ARGS, [1337, 1338]], self.bi)
     run.return_value = 0
     self.assertRaises(powershell.ActionError, ps.Run)
     run.return_value = 1337
@@ -66,44 +67,33 @@ class PowershellTest(parameterized.TestCase):
       powershell.powershell.PowerShell, 'RunLocal', autospec=True)
   @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
   def testPSScriptRebootNoRetry(self, cache, run):
-    cache.return_value = r'C:\Cache\Some-Script.ps1'
-    ps = powershell.PSScript(
-        ['#Some-Script.ps1', ['-Flag1'], [0], [1337, 1338]], self.bi)
+    cache.return_value = SCRIPT_PATH
+    ps = powershell.PSScript([SCRIPT, ARGS, [0], [1337, 1338]], self.bi)
     run.return_value = 1337
     self.assertRaises(powershell.RestartEvent, ps.Run)
-    run.assert_called_with(mock.ANY, r'C:\Cache\Some-Script.ps1', ['-Flag1'],
-                           [0, 1337, 1338])
+    run.assert_called_with(mock.ANY, SCRIPT_PATH, ARGS, [0, 1337, 1338])
 
   @mock.patch.object(
       powershell.powershell.PowerShell, 'RunLocal', autospec=True)
   @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
   def testPSScriptRebootRetry(self, cache, run):
-    cache.return_value = r'C:\Cache\Some-Script.ps1'
-    ps = powershell.PSScript(
-        ['#Some-Script.ps1', ['-Flag1'], [0], [1337, 1338], True], self.bi)
+    cache.return_value = SCRIPT_PATH
+    ps = powershell.PSScript([SCRIPT, ARGS, [0], [1337, 1338], True], self.bi)
     run.return_value = 1337
     self.assertRaises(powershell.RestartEvent, ps.Run)
-    run.assert_called_with(mock.ANY, r'C:\Cache\Some-Script.ps1', ['-Flag1'],
-                           [0, 1337, 1338])
-    cache.assert_called_with(mock.ANY, '#Some-Script.ps1', self.bi)
+    run.assert_called_with(mock.ANY, SCRIPT_PATH, ARGS, [0, 1337, 1338])
+    cache.assert_called_with(mock.ANY, SCRIPT, self.bi)
 
-  # TODO : Parameterize this test, similar to PSCommand.
-  def testPSScriptValidateType(self):
-    ps = powershell.PSScript(30, None)
-    self.assertRaises(powershell.ValidationError, ps.Validate)
-
-    ps = powershell.PSScript(['#Some-Script.ps1', '-Verbose'], None)
-    self.assertRaises(powershell.ValidationError, ps.Validate)
-
-    ps = powershell.PSScript(['#Some-Script.ps1', ['-Verbose'], 0], None)
-    self.assertRaises(powershell.ValidationError, ps.Validate)
-
+  @parameterized.named_parameters(
+      ('command_type', 30, ARGS, [0], [1337], True),
+      ('args_type', SCRIPT, '-Verbose', [0], [1337], True),
+      ('success_code_type', SCRIPT, ARGS, 0, [1337], True),
+      ('reboot_code_type', SCRIPT, ARGS, [0], 1337, True),
+      ('retry_on_restart_type', SCRIPT, ARGS, [0], [1337], 'True'))
+  def testPSScriptValidateType(self, script, ps_args, success_codes,
+                               reboot_codes, retry_on_restart):
     ps = powershell.PSScript(
-        ['#Some-Script.ps1', ['-Verbose'], [0], 1337], None)
-    self.assertRaises(powershell.ValidationError, ps.Validate)
-
-    ps = powershell.PSScript(
-        ['#Some-Script.ps1', ['-Verbose'], [0], [1337], 'True'], None)
+        [script, ps_args, success_codes, reboot_codes, retry_on_restart], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
 
   def testPSScriptValidateLen(self):
@@ -115,10 +105,7 @@ class PowershellTest(parameterized.TestCase):
 
   # TODO : Use fail() to make an explicit assertion. go/pytotw/006
   def testPSScriptValidate(self):
-    ps = powershell.PSScript([
-        '#Some-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0],
-        [1337, 1338], True
-    ], None)
+    ps = powershell.PSScript([SCRIPT, ARGS, [0], [1337, 1338], True], None)
     ps.Validate()
 
   @mock.patch.object(
