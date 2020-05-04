@@ -29,27 +29,20 @@ class PSScript(BaseAction):
   """Execute a Powershell script file."""
 
   def Run(self):
-    script = self._args[0]
-    ps_args = []
-    success_codes = [0]
-    reboot_codes = []
-    restart_retry = False
-    if len(self._args) > 1:  # ps_args
+    script: Text = self._args[0]
+    ps_args: Optional[List[Text]] = []
+    success_codes: Optional[List[int]] = [0]
+    reboot_codes: Optional[List[int]] = []
+    restart_retry: Optional[bool] = False
+    if len(self._args) > 1:
       ps_args = self._args[1]
-    if len(self._args) > 2:  # success codes
+    if len(self._args) > 2:
       success_codes = self._args[2]
-    if len(self._args) > 3:  # reboot code
+    if len(self._args) > 3:
       reboot_codes = self._args[3]
     if len(self._args) > 4:
-      restart_retry = self._args[4]   # retry on restart
-    self._Run(script, ps_args, success_codes, reboot_codes, restart_retry)
+      restart_retry = self._args[4]
 
-  def _Run(self,
-           script: Text,
-           ps_args: Optional[List[Text]],
-           success_codes: Optional[List[int]],
-           reboot_codes: Optional[List[int]],
-           restart_retry: Optional[bool]):
     ps = powershell.PowerShell()
     c = cache.Cache()
 
@@ -59,14 +52,8 @@ class PSScript(BaseAction):
     except cache.CacheError as e:
       raise ActionError(e)
 
-    # A new list is necessary to not mutate success_codes or reboot_codes, which
-    # are checked separately against result (below).
-    ok_result = success_codes
-    if reboot_codes:
-      ok_result = success_codes + reboot_codes
-
     try:
-      result = ps.RunLocal(script, ps_args, ok_result)
+      result = ps.RunLocal(script, ps_args, success_codes + reboot_codes)
     except powershell.PowerShellError as e:
       raise ActionError(str(e))
 
@@ -98,29 +85,22 @@ class PSScript(BaseAction):
 class PSCommand(BaseAction):
   """Execute a Powershell command."""
 
-  # TODO : Add pytype checking
   def Run(self):
-    command = self._args[0].split()
-    success_codes = [0]
-    reboot_codes = []
-    restart_retry = False
+    command: List[Text] = self._args[0].split()
+    success_codes: Optional[List[int]] = [0]
+    reboot_codes: Optional[List[int]] = []
+    restart_retry: Optional[bool] = False
     if len(self._args) > 1:
       success_codes = self._args[1]
-    if len(self._args) > 2:  # reboot code
+    if len(self._args) > 2:
       reboot_codes = self._args[2]
     if len(self._args) > 3:
-      restart_retry = self._args[3]  # retry on restart
+      restart_retry = self._args[3]
 
     ps = powershell.PowerShell()
 
-    # A new list is necessary to not mutate success_codes or reboot_codes, which
-    # are checked separately against result (below).
-    ok_result = success_codes
-    if reboot_codes:
-      ok_result = success_codes + reboot_codes
-
     try:
-      result = ps.RunCommand(command, ok_result)
+      result = ps.RunCommand(command, success_codes + reboot_codes)
     except powershell.PowerShellError as e:
       raise ActionError(str(e))
 
