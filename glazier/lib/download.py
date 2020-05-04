@@ -313,7 +313,6 @@ class BaseDownloader(object):
     if bytes_so_far >= total_size:
       sys.stdout.write('\n')
 
-
   def _StoreDebugInfo(self, file_stream, socket_error=None):
     """Gathers debug information for use when file downloads fail.
 

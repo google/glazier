@@ -31,6 +31,7 @@ branch=stable
 """
 
 SLEEP = 20
+TEST_URL = 'https://www.example.com/build.yaml'
 
 
 class PathsTest(absltest.TestCase):
@@ -126,7 +127,7 @@ class DownloadTest(absltest.TestCase):
   def testOpenStreamInternal(self, urlopen, wpe):
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
-    url = 'https://www.example.com/build.yaml'
+    url = TEST_URL
     httperr = download.urllib.error.HTTPError('Error', None, None, None, None)
     urlerr = download.urllib.error.URLError('Error')
     wpe.return_value = False
@@ -158,22 +159,17 @@ class DownloadTest(absltest.TestCase):
 
     # match
     urlopen.side_effect = iter([file_stream])
-    self.assertTrue(
-        self._dl.CheckUrl(
-            'https://www.example.com/build.yaml', status_codes=[200]))
+    self.assertTrue(self._dl.CheckUrl(TEST_URL, status_codes=[200]))
     # miss
     urlopen.side_effect = iter([file_stream])
     self.assertFalse(
-        self._dl.CheckUrl(
-            'https://www.example.com/build.yaml',
-            max_retries=1,
-            status_codes=[201]))
+        self._dl.CheckUrl(TEST_URL, max_retries=1, status_codes=[201]))
 
   @mock.patch.object(download.BaseDownloader, '_StreamToDisk', autospec=True)
   @mock.patch.object(download.BaseDownloader, '_OpenStream', autospec=True)
   @mock.patch.object(download.tempfile, 'NamedTemporaryFile', autospec=True)
   def testDownloadFileTemp(self, tempf, downf, todisk):
-    url = 'https://www.example.com/build.yaml'
+    url = TEST_URL
     path = r'C:\Windows\Temp\tmpblahblah'
     tempf.return_value.name = path
     self._dl.DownloadFileTemp(url, max_retries=5)
@@ -196,7 +192,7 @@ class DownloadTest(absltest.TestCase):
     download.CHUNK_BYTE_SIZE = 5
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
-    file_stream.geturl.return_value = 'https://www.example.com/build.yaml'
+    file_stream.geturl.return_value = TEST_URL
     file_stream.headers.get = lambda x: {'Content-Length': '25'}[x]
     file_stream.read = http_stream.read
     # success
