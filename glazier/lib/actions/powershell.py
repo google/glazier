@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Actions for running Powershell scripts and commands."""
+"""Actions for running PowerShell scripts and commands."""
 
 import logging
 from typing import List, Optional, Text
@@ -26,7 +26,7 @@ from glazier.lib.actions.base import ValidationError
 
 
 class PSScript(BaseAction):
-  """Execute a Powershell script file."""
+  """Execute a PowerShell script file."""
 
   def Run(self):
     script: Text = self._args[0]
@@ -43,17 +43,15 @@ class PSScript(BaseAction):
     if len(self._args) > 4:
       restart_retry = self._args[4]
 
-    ps = powershell.PowerShell()
-    c = cache.Cache()
-
-    logging.info('Interpreting Powershell script: %s', script)
+    logging.info('Interpreting PowerShell script: %s', script)
     try:
-      script = c.CacheFromLine(script, self._build_info)
+      script = cache.Cache().CacheFromLine(script, self._build_info)
     except cache.CacheError as e:
       raise ActionError(e)
 
     try:
-      result = ps.RunLocal(script, ps_args, success_codes + reboot_codes)
+      result = powershell.PowerShell().RunLocal(script, ps_args,
+                                                success_codes + reboot_codes)
     except powershell.PowerShellError as e:
       raise ActionError(str(e))
 
@@ -83,7 +81,7 @@ class PSScript(BaseAction):
 
 
 class PSCommand(BaseAction):
-  """Execute a Powershell command."""
+  """Execute a PowerShell command."""
 
   def Run(self):
     command: List[Text] = self._args[0].split()
@@ -97,10 +95,22 @@ class PSCommand(BaseAction):
     if len(self._args) > 3:
       restart_retry = self._args[3]
 
-    ps = powershell.PowerShell()
+    # TODO: Remove once updated PowerShell is used in the image.
+    # PSScript (which calls powershell.exe -File) does not accept non-string
+    # parameters. Instead, if the command string starts with a PowerShell
+    # script, cache it's location and run the script using powershell.exe
+    # -Command. See link below for more context.
+    # https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_powershell_exe?view=powershell-5.1#-file----filepath-args
+    if command[0].endswith('.ps1'):
+      logging.info('Interpreting PowerShell script: %s', command[0])
+      try:
+        command[0] = cache.Cache().CacheFromLine(command[0], self._build_info)
+      except cache.CacheError as e:
+        raise ActionError(e)
 
     try:
-      result = ps.RunCommand(command, success_codes + reboot_codes)
+      result = powershell.PowerShell().RunCommand(command,
+                                                  success_codes + reboot_codes)
     except powershell.PowerShellError as e:
       raise ActionError(str(e))
 

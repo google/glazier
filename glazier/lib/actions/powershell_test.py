@@ -132,6 +132,27 @@ class PowershellTest(parameterized.TestCase):
 
   @mock.patch.object(
       powershell.powershell.PowerShell, 'RunCommand', autospec=True)
+  @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
+  def testPSCommandCache(self, cache, run):
+    cache.return_value = SCRIPT_PATH
+    ps = powershell.PSCommand([SCRIPT + ' -confirm:$false'], self.bi)
+    run.return_value = 0
+    ps.Run()
+    run.assert_called_with(mock.ANY, [SCRIPT_PATH, '-confirm:$false'], [0])
+    cache.assert_called_with(mock.ANY, SCRIPT, self.bi)
+
+  @mock.patch.object(
+      powershell.powershell.PowerShell, 'RunCommand', autospec=True)
+  @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
+  def testPSCommandCacheError(self, cache, run):
+    ps = powershell.PSCommand([SCRIPT + ' -confirm:$false'], self.bi)
+    run.side_effect = None
+    cache.side_effect = powershell.cache.CacheError
+    with self.assertRaises(powershell.ActionError):
+      ps.Run()
+
+  @mock.patch.object(
+      powershell.powershell.PowerShell, 'RunCommand', autospec=True)
   def testPSCommandRebootNoRetry(self, run):
     ps = powershell.PSCommand([COMMAND, [0], [1337, 1338]], self.bi)
     run.return_value = 1337
