@@ -92,7 +92,7 @@ class PowershellTest(parameterized.TestCase):
     ps = powershell.PSScript([SCRIPT, ARGS, [0], [], False, True], self.bi)
     ps_lib.return_value.RunLocal.return_value = 0
     ps.Run()
-    ps_lib.assert_called_with(True, None)
+    ps_lib.assert_called_with(True, True)
 
   @mock.patch.object(
       powershell.powershell, 'PowerShell', autospec=True)
@@ -200,7 +200,7 @@ class PowershellTest(parameterized.TestCase):
     ps = powershell.PSCommand([COMMAND, [0], [], False, True], self.bi)
     ps_lib.return_value.RunCommand.return_value = 0
     ps.Run()
-    ps_lib.assert_called_with(True, None)
+    ps_lib.assert_called_with(True, True)
 
   @mock.patch.object(
       powershell.powershell, 'PowerShell', autospec=True)

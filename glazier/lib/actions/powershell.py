@@ -34,8 +34,8 @@ class PSScript(BaseAction):
     success_codes: Optional[List[int]] = [0]
     reboot_codes: Optional[List[int]] = []
     restart_retry: Optional[bool] = False
-    shell: Optional[bool] = None
-    log: Optional[bool] = None
+    shell: Optional[bool] = False
+    log: Optional[bool] = True
     if len(self._args) > 1:
       ps_args = self._args[1]
     if len(self._args) > 2:
@@ -98,8 +98,8 @@ class PSCommand(BaseAction):
     success_codes: Optional[List[int]] = [0]
     reboot_codes: Optional[List[int]] = []
     restart_retry: Optional[bool] = False
-    shell: Optional[bool] = None
-    log: Optional[bool] = None
+    shell: Optional[bool] = False
+    log: Optional[bool] = True
     if len(self._args) > 1:
       success_codes = self._args[1]
     if len(self._args) > 2:
