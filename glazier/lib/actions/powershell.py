@@ -34,6 +34,8 @@ class PSScript(BaseAction):
     success_codes: Optional[List[int]] = [0]
     reboot_codes: Optional[List[int]] = []
     restart_retry: Optional[bool] = False
+    shell: Optional[bool] = None
+    log: Optional[bool] = None
     if len(self._args) > 1:
       ps_args = self._args[1]
     if len(self._args) > 2:
@@ -42,6 +44,10 @@ class PSScript(BaseAction):
       reboot_codes = self._args[3]
     if len(self._args) > 4:
       restart_retry = self._args[4]
+    if len(self._args) > 5:
+      shell = self._args[5]
+    if len(self._args) > 6:
+      log = self._args[6]
 
     logging.info('Interpreting PowerShell script: %s', script)
     try:
@@ -50,8 +56,8 @@ class PSScript(BaseAction):
       raise ActionError(e)
 
     try:
-      result = powershell.PowerShell().RunLocal(script, ps_args,
-                                                success_codes + reboot_codes)
+      result = powershell.PowerShell(shell, log).RunLocal(
+          script, ps_args, success_codes + reboot_codes)
     except powershell.PowerShellError as e:
       raise ActionError(str(e))
 
@@ -63,7 +69,7 @@ class PSScript(BaseAction):
 
   def Validate(self):
     self._TypeValidator(self._args, list)
-    if not 1 <= len(self._args) <= 5:
+    if not 1 <= len(self._args) <= 7:
       raise ValidationError('Invalid args length: %s' % self._args)
     self._TypeValidator(self._args[0], str)
     if len(self._args) > 1:  # ps_args
@@ -78,6 +84,10 @@ class PSScript(BaseAction):
         self._TypeValidator(arg, int)
     if len(self._args) > 4:  # retry on restart
       self._TypeValidator(self._args[4], bool)
+    if len(self._args) > 5:  # shell
+      self._TypeValidator(self._args[5], bool)
+    if len(self._args) > 6:  # log
+      self._TypeValidator(self._args[6], bool)
 
 
 class PSCommand(BaseAction):
@@ -88,12 +98,18 @@ class PSCommand(BaseAction):
     success_codes: Optional[List[int]] = [0]
     reboot_codes: Optional[List[int]] = []
     restart_retry: Optional[bool] = False
+    shell: Optional[bool] = None
+    log: Optional[bool] = None
     if len(self._args) > 1:
       success_codes = self._args[1]
     if len(self._args) > 2:
       reboot_codes = self._args[2]
     if len(self._args) > 3:
       restart_retry = self._args[3]
+    if len(self._args) > 4:
+      shell = self._args[4]
+    if len(self._args) > 5:
+      log = self._args[5]
 
     # TODO: Remove once updated PowerShell is used in the image.
     # PSScript (which calls powershell.exe -File) does not accept non-string
@@ -109,8 +125,8 @@ class PSCommand(BaseAction):
         raise ActionError(e)
 
     try:
-      result = powershell.PowerShell().RunCommand(command,
-                                                  success_codes + reboot_codes)
+      result = powershell.PowerShell(shell, log).RunCommand(
+          command, success_codes + reboot_codes)
     except powershell.PowerShellError as e:
       raise ActionError(str(e))
 
@@ -124,7 +140,7 @@ class PSCommand(BaseAction):
 
   def Validate(self):
     self._TypeValidator(self._args, list)
-    if not 1 <= len(self._args) <= 4:
+    if not 1 <= len(self._args) <= 6:
       raise ValidationError('Invalid args length: %s' % self._args)
     self._TypeValidator(self._args[0], str)
     if len(self._args) > 1:
@@ -137,3 +153,7 @@ class PSCommand(BaseAction):
         self._TypeValidator(arg, int)
     if len(self._args) > 3:  # retry on restart
       self._TypeValidator(self._args[3], bool)
+    if len(self._args) > 4:  # shell
+      self._TypeValidator(self._args[4], bool)
+    if len(self._args) > 5:  # log
+      self._TypeValidator(self._args[5], bool)

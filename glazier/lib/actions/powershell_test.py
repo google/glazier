@@ -84,16 +84,39 @@ class PowershellTest(parameterized.TestCase):
     run.assert_called_with(mock.ANY, SCRIPT_PATH, ARGS, [0, 1337, 1338])
     cache.assert_called_with(mock.ANY, SCRIPT, self.bi)
 
+  @mock.patch.object(
+      powershell.powershell, 'PowerShell', autospec=True)
+  @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
+  def testPSScriptShell(self, cache, ps_lib):
+    cache.return_value = SCRIPT_PATH
+    ps = powershell.PSScript([SCRIPT, ARGS, [0], [], False, True], self.bi)
+    ps_lib.return_value.RunLocal.return_value = 0
+    ps.Run()
+    ps_lib.assert_called_with(True, None)
+
+  @mock.patch.object(
+      powershell.powershell, 'PowerShell', autospec=True)
+  @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
+  def testPSScriptLog(self, cache, ps_lib):
+    cache.return_value = SCRIPT_PATH
+    ps = powershell.PSScript([SCRIPT, ARGS, [0], [], False, True, False],
+                             self.bi)
+    ps_lib.return_value.RunLocal.return_value = 0
+    ps.Run()
+    ps_lib.assert_called_with(True, False)
+
   @parameterized.named_parameters(
-      ('command_type', 30, ARGS, [0], [1337], True),
-      ('args_type', SCRIPT, '-Verbose', [0], [1337], True),
-      ('success_code_type', SCRIPT, ARGS, 0, [1337], True),
-      ('reboot_code_type', SCRIPT, ARGS, [0], 1337, True),
-      ('retry_on_restart_type', SCRIPT, ARGS, [0], [1337], 'True'))
+      ('command_type', 30, ARGS, [0], [1337], True, False, True),
+      ('args_type', SCRIPT, '-Verbose', [0], [1337], True, False, True),
+      ('success_code_type', SCRIPT, ARGS, 0, [1337], True, False, True),
+      ('reboot_code_type', SCRIPT, ARGS, [0], 1337, True, False, True),
+      ('retry_on_restart_type', SCRIPT, ARGS, [0], [1337], 'True', False, True),
+      ('shell_type', SCRIPT, ARGS, [0], [1337], True, 'False', True),
+      ('log_type', SCRIPT, ARGS, [0], [1337], True, False, 'True'))
   def testPSScriptValidateType(self, script, ps_args, success_codes,
-                               reboot_codes, retry_on_restart):
-    ps = powershell.PSScript(
-        [script, ps_args, success_codes, reboot_codes, retry_on_restart], None)
+                               reboot_codes, retry_on_restart, shell, log):
+    ps = powershell.PSScript([script, ps_args, success_codes, reboot_codes,
+                              retry_on_restart, shell, log], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
 
   def testPSScriptValidateLen(self):
@@ -105,7 +128,8 @@ class PowershellTest(parameterized.TestCase):
 
   # TODO : Use fail() to make an explicit assertion. go/pytotw/006
   def testPSScriptValidate(self):
-    ps = powershell.PSScript([SCRIPT, ARGS, [0], [1337, 1338], True], None)
+    ps = powershell.PSScript([SCRIPT, ARGS, [0], [1337, 1338], True, False,
+                              True], None)
     ps.Validate()
 
   @mock.patch.object(
@@ -170,15 +194,33 @@ class PowershellTest(parameterized.TestCase):
     self.assertEqual(exception.retry_on_restart, True)
     run.assert_called_with(mock.ANY, TOKENIZED_COMMAND, [0, 1337, 1338])
 
+  @mock.patch.object(
+      powershell.powershell, 'PowerShell', autospec=True)
+  def testPSCommandShell(self, ps_lib):
+    ps = powershell.PSCommand([COMMAND, [0], [], False, True], self.bi)
+    ps_lib.return_value.RunCommand.return_value = 0
+    ps.Run()
+    ps_lib.assert_called_with(True, None)
+
+  @mock.patch.object(
+      powershell.powershell, 'PowerShell', autospec=True)
+  def testPSCommandLog(self, ps_lib):
+    ps = powershell.PSCommand([COMMAND, [0], [], False, True, False], self.bi)
+    ps_lib.return_value.RunCommand.return_value = 0
+    ps.Run()
+    ps_lib.assert_called_with(True, False)
+
   @parameterized.named_parameters(
-      ('command_type', 30, [0], [1337], True),
-      ('success_code_type', COMMAND, 0, [1337], True),
-      ('reboot_code_type', COMMAND, [0], 1337, True),
-      ('retry_on_restart_type', COMMAND, [0], [1337], 'True'))
+      ('command_type', 30, [0], [1337], True, False, True),
+      ('success_code_type', COMMAND, 0, [1337], True, False, True),
+      ('reboot_code_type', COMMAND, [0], 1337, True, False, True),
+      ('retry_on_restart_type', COMMAND, [0], [1337], 'True', False, True),
+      ('shell_type', COMMAND, [0], [1337], True, 'False', True),
+      ('log_type', COMMAND, [0], [1337], True, False, 'True'))
   def testPSCommandValidateType(self, command, success_codes, reboot_codes,
-                                retry_on_restart):
-    ps = powershell.PSCommand(
-        [command, success_codes, reboot_codes, retry_on_restart], None)
+                                retry_on_restart, shell, log):
+    ps = powershell.PSCommand([command, success_codes, reboot_codes,
+                               retry_on_restart, shell, log], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
 
   def testPSCommandValidateNotEnough(self):
@@ -186,12 +228,14 @@ class PowershellTest(parameterized.TestCase):
     self.assertRaises(powershell.ValidationError, ps.Validate)
 
   def testPSCommandValidateTooMany(self):
-    ps = powershell.PSCommand([COMMAND, [0], [1337, 1338], True, True], None)
+    ps = powershell.PSCommand([COMMAND, [0], [1337, 1338], True, True, True,
+                               True], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
 
   # TODO : Use fail() to make an explicit assertion. go/pytotw/006
   def testPSCommandValidate(self):
-    ps = powershell.PSCommand([COMMAND, [0], [1337, 1338], True], None)
+    ps = powershell.PSCommand([COMMAND, [0], [1337, 1338], True, False, True],
+                              None)
     ps.Validate()
 
 if __name__ == '__main__':

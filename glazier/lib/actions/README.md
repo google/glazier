@@ -330,14 +330,35 @@ Run a PowerShell command.
 
 *   Format: List
     *   Arg1[str]: The PowerShell command to be run.
-    *   ArgB[list]: One or more integers indicating successful exit codes.
-            *   Default: [0]
+    *   Arg2[list]: One or more integers indicating successful exit codes.
+          *   Default: [0]
+    *   Arg3[list]: One or more integers indicating a reboot is required.
+        *   Default: []
+    *   Arg4[bool]: Rerun after a reboot occurs. A reboot code must be
+        provided and returned by the execution.
+          *   Default: False
+    *   Arg5[bool]: Log console output ONLY to the shell. Ignores log=True.
+        *   Default: False
+    *   Arg6[bool]: Log messages to Python stdout. Only valid if shell=False.
+          *   Default: True
 
 #### Examples
 
-    PSCommand: ['Write-Verbose Foo -Verbose']
-
-    PSCommand: ['Write-Verbose Foo -Verbose', [0, 1337]]
+```yaml
+    PSCommand:
+      # Specify only the PowerShell script.
+      ['Write-Verbose Foo -Verbose']
+      # 0 or 1 as successful exit codes.
+      ['Write-Verbose Foo -Verbose', [0, 1]]
+      # 1337 will trigger a restart.
+      ['Write-Verbose Foo -Verbose', [0, 1], [1337]]
+      # True will rerun the command after restart.
+      ['Write-Verbose Foo -Verbose', [0, 1], [1337], True]
+      # True will ONLY log PowerShell output to console.
+      ['Write-Verbose Foo -Verbose', [0, 1], [1337], True, True]
+      # Will not any log PowerShell output.
+      ['Write-Verbose Foo -Verbose', [0, 1], [1337], True, False, False]
+```
 
 ### PSScript
 
@@ -355,12 +376,16 @@ Run a PowerShell script file using the local PowerShell interpreter.
           *   Default: []
       *   Arg5[bool]: Rerun after a reboot occurs. A reboot code must be
           provided and returned by the execution.
-            *   Default: False
+          *   Default: False
+      *   Arg6[bool]: Log console output ONLY to the shell. Ignores log=True.
+          *   Default: False
+      *   Arg7[bool]: Log messages to Python stdout. Only valid if shell=False.
+          *   Default: True
 
 #### Examples
 
 ```yaml
-    PSScript: [
+    PSScript:
       # Specify only the PowerShell script.
       ['#Sample-Script.ps1']
       # Additional parameters.
@@ -371,6 +396,10 @@ Run a PowerShell script file using the local PowerShell interpreter.
       ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1], [1337]]
       # True will rerun the command after restart.
       ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1], [1337], True]
+      # True will ONLY log PowerShell output to console.
+      ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1], [1337], True, True]
+      # Will not any log PowerShell output.
+      ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1], [1337], True, False, False]
 ```
 
 ### RegAdd/MultiRegAdd

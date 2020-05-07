@@ -38,7 +38,8 @@ def _Powershell() -> Text:
 class PowerShell(object):
   """Interact with the powershell interpreter to run scripts."""
 
-  def __init__(self, log: bool = True):
+  def __init__(self, shell: Optional[bool] = False, log: Optional[bool] = True):
+    self.shell = shell
     self.log = log
 
   def _LaunchPs(self, op: Text,
@@ -63,7 +64,7 @@ class PowerShell(object):
     try:
       return execute.execute_binary(_Powershell(),
                                     ['-NoProfile', '-NoLogo', op] + args,
-                                    ok_result, self.log)
+                                    ok_result, self.shell, self.log)
     except execute.Error as e:
       raise PowerShellError(str(e))
 
@@ -161,6 +162,6 @@ class PowerShell(object):
     """Start the PowerShell interpreter."""
     try:
       execute.execute_binary(_Powershell(), ['-NoProfile', '-NoLogo'],
-                             log=self.log)
+                             shell=self.shell, log=self.log)
     except execute.Error as e:
       raise PowerShellError(str(e))
