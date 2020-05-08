@@ -101,10 +101,10 @@ class InstallerTest(absltest.TestCase):
 
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
   def testBuildInfoDump(self, build_info):
-    build_info.CachePath.return_value = r'C:\Cache\Dir'
     d = installer.BuildInfoDump(None, build_info)
     d.Run()
-    build_info.Serialize.assert_called_with(r'C:\Cache\Dir/build_info.yaml')
+    build_info.Serialize.assert_called_with('{}/build_info.yaml'.format(
+        installer.constants.SYS_CACHE))
 
   @mock.patch.object(installer.registry, 'set_value', autospec=True)
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
@@ -114,10 +114,9 @@ class InstallerTest(absltest.TestCase):
     installer.os = fake_filesystem.FakeOsModule(fs)
     timer_root = r'{0}\{1}'.format(installer.constants.REG_ROOT, 'Timers')
     fs.CreateFile(
-        '/tmp/build_info.yaml',
-        contents=
-        '{BUILD: {opt 1: true, TIMER_opt 2: some value, opt 3: 12345}}\n')
-    build_info.CachePath.return_value = '/tmp'
+        '{}/build_info.yaml'.format(installer.constants.SYS_CACHE),
+        contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, opt 3: 12345}}\n'
+    )
     s = installer.BuildInfoSave(None, build_info)
     s.Run()
     sv.assert_has_calls([
@@ -127,17 +126,13 @@ class InstallerTest(absltest.TestCase):
     ], any_order=True)
     s.Run()
 
-  @mock.patch.object(installer.registry, 'set_value', autospec=True)
+  @mock.patch.object(installer.logging, 'debug', autospec=True)
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
-  def testBuildInfoSaveError(self, build_info, sv):
-    fs = fake_filesystem.FakeFilesystem()
-    installer.open = fake_filesystem.FakeFileOpen(fs)
-    installer.os = fake_filesystem.FakeOsModule(fs)
-    fs.CreateFile('/tmp/build_info.yaml', contents='{BUILD: {opt 1: true}}\n')
-    build_info.CachePath.return_value = '/tmp'
-    s = installer.BuildInfoSave(None, build_info)
-    sv.side_effect = installer.registry.Error
-    self.assertRaises(installer.ActionError, s.Run)
+  def testBuildInfoSaveError(self, build_info, d):
+    installer.BuildInfoSave(None, build_info).Run()
+    d.assert_called_with(
+        '%s does not exist - skipped processing.',
+        '{}/build_info.yaml'.format(installer.constants.SYS_CACHE))
 
   def testChangeServer(self):
     build_info = buildinfo.BuildInfo()

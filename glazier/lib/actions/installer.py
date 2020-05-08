@@ -73,7 +73,7 @@ class BuildInfoDump(BaseAction):
   """Dump build information to disk."""
 
   def Run(self):
-    path = os.path.join(self._build_info.CachePath(), 'build_info.yaml')
+    path = os.path.join(constants.SYS_CACHE, 'build_info.yaml')
     self._build_info.Serialize(path)
 
 
@@ -97,7 +97,7 @@ class BuildInfoSave(BaseAction):
         raise ActionError(str(e))
 
   def Run(self):
-    path = os.path.join(self._build_info.CachePath(), 'build_info.yaml')
+    path = os.path.join(constants.SYS_CACHE, 'build_info.yaml')
     if os.path.exists(path):
       with open(path) as handle:
         input_config = yaml.safe_load(handle)
