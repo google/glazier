@@ -1,3 +1,4 @@
+# Lint as: python3
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,9 +36,12 @@ import sys
 import tempfile
 import time
 
+from typing import Optional, Text
+
 from absl import flags
 from glazier.lib import winpe
 from six.moves import urllib
+
 
 CHUNK_BYTE_SIZE = 65536
 SLEEP = 20
@@ -45,7 +49,7 @@ SLEEP = 20
 FLAGS = flags.FLAGS
 
 
-def Transform(string, build_info):
+def Transform(string: Text, build_info) -> Text:
   r"""Transforms abbreviated file names to absolute file paths.
 
   Short name support:
@@ -68,7 +72,9 @@ def Transform(string, build_info):
   return string
 
 
-def PathCompile(build_info, file_name=None, base=None):
+def PathCompile(build_info,
+                file_name: Optional[Text] = None,
+                base: Optional[Text] = None) -> Text:
   """Compile the active path from the base path and the active conf path.
 
     Attempt to do a reasonable job of joining path components with single
@@ -117,13 +123,13 @@ class DownloadError(Exception):
 class BaseDownloader(object):
   """Downloads files over HTTPS."""
 
-  def __init__(self, show_progress=False):
+  def __init__(self, show_progress: bool = False):
     self._debug_info = {}
     self._save_location = None
     self._default_show_progress = show_progress
     self._ca_cert_file = None
 
-  def _ConvertBytes(self, num_bytes):
+  def _ConvertBytes(self, num_bytes: int) -> Text:
     """Converts number of bytes to a human readable format.
 
     Args:

@@ -1,3 +1,4 @@
+# Lint as: python3
 # Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +15,7 @@
 
 """Tests for glazier.lib.download."""
 
+from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
 from pyfakefs import fake_filesystem
@@ -30,6 +32,7 @@ release=1.0
 branch=stable
 """
 
+FLAGS = flags.FLAGS
 SLEEP = 20
 TEST_URL = 'https://www.example.com/build.yaml'
 
@@ -44,7 +47,6 @@ class PathsTest(absltest.TestCase):
   @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
   def testTransform(self, binpath, relpath):
     # pylint: disable=line-too-long
-    # common_typos_disable
     relpath.return_value = 'https://glazier'
     binpath.return_value = 'https://glazier/bin/'
 
@@ -165,24 +167,6 @@ class DownloadTest(absltest.TestCase):
     self.assertFalse(
         self._dl.CheckUrl(TEST_URL, max_retries=1, status_codes=[201]))
 
-  @mock.patch.object(download.BaseDownloader, '_StreamToDisk', autospec=True)
-  @mock.patch.object(download.BaseDownloader, '_OpenStream', autospec=True)
-  @mock.patch.object(download.tempfile, 'NamedTemporaryFile', autospec=True)
-  def testDownloadFileTemp(self, tempf, downf, todisk):
-    url = TEST_URL
-    path = r'C:\Windows\Temp\tmpblahblah'
-    tempf.return_value.name = path
-    self._dl.DownloadFileTemp(url, max_retries=5)
-    downf.assert_called_with(self._dl, url, 5)
-    todisk.assert_called_with(self._dl, downf.return_value, False)
-    self.assertEqual(self._dl._save_location, path)
-    self._dl.DownloadFileTemp(url, max_retries=5, show_progress=True)
-    downf.assert_called_with(self._dl, url, 5)
-    todisk.assert_called_with(self._dl, downf.return_value, True)
-    self._dl.DownloadFileTemp(url, max_retries=5, show_progress=False)
-    downf.assert_called_with(self._dl, url, 5)
-    todisk.assert_called_with(self._dl, downf.return_value, False)
-
   @mock.patch.object(download.BaseDownloader, '_StoreDebugInfo', autospec=True)
   def testStreamToDisk(self, store_info):
     # setup
@@ -279,7 +263,6 @@ class DownloadTest(absltest.TestCase):
         '58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae801')
     result = self._dl.VerifyShaHash(r'C:\input.ini', test_sha256)
     self.assertFalse(result)
-
 
 
 if __name__ == '__main__':
