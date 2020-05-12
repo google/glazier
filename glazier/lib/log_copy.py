@@ -1,3 +1,4 @@
+# Lint as: python3
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """This copies the build log around places."""
 
-import datetime
 import logging
 import logging.handlers
 import shutil
+from typing import Text
 
 from glazier.lib import drive_map
+from glazier.lib import gtime
 from glazier.lib import logs
 from glazier.lib import registry
 
@@ -29,19 +30,19 @@ class LogCopyError(Exception):
 
 
 class LogCopyCredentials(object):
+  """Supplies credentials for the log copy destination share."""
 
   def __init__(self):
     self._username = None
     self._password = None
 
-  def GetUsername(self):
+  def GetUsername(self) -> Text:
     """Override to provide share credentials."""
     return self._username
 
-  def GetPassword(self):
+  def GetPassword(self) -> Text:
     """Override to provide share credentials."""
     return self._password
-
 
 
 class LogCopy(object):
@@ -52,7 +53,7 @@ class LogCopy(object):
     path = '%s\\log_copy.log' % logs.GetLogsPath()
     self._logging.addHandler(logging.FileHandler(path))
 
-  def _EventLogUpload(self, source_log):
+  def _EventLogUpload(self, source_log: Text):
     """Upload the log file contents to the local EventLog."""
     event_handler = logging.handlers.NTEventLogHandler('GlazierBuildLog')
     logger = logging.Logger('eventlogger')
@@ -78,14 +79,14 @@ class LogCopy(object):
     try:
       hostname = registry.get_value('name')
     except registry.Error as e:
-      raise LogCopyError('Hostname could not be determined for log copy: %s'
-                         % str(e))
-    destination_file_date = datetime.datetime.utcnow().replace(microsecond=0)
+      raise LogCopyError('Hostname could not be determined for log copy: %s' %
+                         str(e))
+    destination_file_date = gtime.now().replace(microsecond=0)
     destination_file_date = destination_file_date.isoformat()
     destination_file_date = destination_file_date.replace(':', '')
     return 'l:\\' + hostname + '-' + destination_file_date + '.log'
 
-  def _ShareUpload(self, source_log, share):
+  def _ShareUpload(self, source_log: Text, share: Text):
     """Copy the log file to a network file share.
 
     Args:
@@ -95,7 +96,6 @@ class LogCopy(object):
     Raises:
       LogCopyError: Failure to mount share and copy log.
     """
-
     creds = LogCopyCredentials()
     username = creds.GetUsername()
     password = creds.GetPassword()
@@ -112,10 +112,10 @@ class LogCopy(object):
     else:
       raise LogCopyError('Drive mapping failed.')
 
-  def EventLogCopy(self, source_log):
+  def EventLogCopy(self, source_log: Text):
     """Copy a log file to EventLog."""
     self._EventLogUpload(source_log)
 
-  def ShareCopy(self, source_log, share):
+  def ShareCopy(self, source_log: Text, share: Text):
     """Copy a log file via CIFS."""
     self._ShareUpload(source_log, share)

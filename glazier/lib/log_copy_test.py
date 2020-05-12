@@ -40,7 +40,7 @@ class LogCopyTest(absltest.TestCase):
     self.win32wnet = mock.Mock()
     sys.modules['win32wnet'] = self.win32wnet
 
-  @mock.patch.object(log_copy.datetime, 'datetime', autospec=True)
+  @mock.patch.object(log_copy.gtime, 'now', autospec=True)
   @mock.patch.object(log_copy.logging, 'FileHandler', autospec=True)
   @mock.patch.object(log_copy.registry, 'get_value', autospec=True)
   def testGetLogFileName(self, gv, unused_log, dt):
@@ -48,7 +48,7 @@ class LogCopyTest(absltest.TestCase):
     gv.return_value = 'WORKSTATION1-W'
     now = datetime.datetime.utcnow()
     out_date = now.replace(microsecond=0).isoformat().replace(':', '')
-    dt.utcnow.return_value = now
+    dt.return_value = now
     result = lc._GetLogFileName()
     self.assertEqual(result, r'l:\WORKSTATION1-W-' + out_date + '.log')
     gv.assert_called_with('name')
