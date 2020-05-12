@@ -1,3 +1,4 @@
+# Lint as: python3
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +15,13 @@
 
 """Store points in time to be used for metrics."""
 
-import datetime
+import typing
+from typing import Dict, Optional, Text
+
+from glazier.lib import gtime
+
+if typing.TYPE_CHECKING:
+  import datetime
 
 
 class Timers(object):
@@ -23,7 +30,7 @@ class Timers(object):
   def __init__(self):
     self._time_store = {}
 
-  def Get(self, name):
+  def Get(self, name: Text) -> Optional['datetime.datetime']:
     """Get the stored value of a single timer.
 
     Args:
@@ -36,7 +43,7 @@ class Timers(object):
       return self._time_store[name]
     return None
 
-  def GetAll(self):
+  def GetAll(self) -> Dict[Text, 'datetime.datetime']:
     """Get the dictionary of all stored timers.
 
     Returns:
@@ -44,15 +51,7 @@ class Timers(object):
     """
     return self._time_store
 
-  def Now(self):
-    """Get the current time using the default timer method.
-
-    Returns:
-      A datetime object.
-    """
-    return datetime.datetime.utcnow()
-
-  def Set(self, name, at_time=None):
+  def Set(self, name: Text, at_time: 'datetime.datetime' = None):
     """Set a timer at a specific time.
 
     Defaults to the current time in UTC.
@@ -64,4 +63,4 @@ class Timers(object):
     if at_time:
       self._time_store[name] = at_time
     else:
-      self._time_store[name] = self.Now()
+      self._time_store[name] = gtime.now()

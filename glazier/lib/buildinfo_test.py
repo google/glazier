@@ -556,10 +556,10 @@ class BuildInfoTest(absltest.TestCase):
     self.assertIn('TIMER_timer_1', parsed['BUILD'])
     self.assertEqual(parsed['BUILD']['USER_choice_two'], 'value2')
 
-  @mock.patch.object(buildinfo.timers.datetime, 'datetime', autospec=True)
+  @mock.patch.object(buildinfo.timers.gtime, 'now', autospec=True)
   def testTimers(self, dt):
     now = datetime.datetime.utcnow()
-    dt.utcnow.return_value = now
+    dt.return_value = now
     self.buildinfo.TimerSet('test_timer_1')
     self.assertEqual(self.buildinfo.TimerGet('test_timer_2'), None)
     self.assertEqual(self.buildinfo.TimerGet('test_timer_1'), now)

@@ -17,7 +17,6 @@
 import datetime
 from absl.testing import absltest
 from glazier.lib import timers
-import mock
 
 
 class TimersTest(absltest.TestCase):
@@ -25,12 +24,6 @@ class TimersTest(absltest.TestCase):
   def setUp(self):
     super(TimersTest, self).setUp()
     self.t = timers.Timers()
-
-  @mock.patch.object(timers.datetime, 'datetime', autospec=True)
-  def testNow(self, dt):
-    now = datetime.datetime.utcnow()
-    dt.utcnow.return_value = now
-    self.assertEqual(self.t.Now(), now)
 
   def testGetAll(self):
     time_2 = datetime.datetime.now()
