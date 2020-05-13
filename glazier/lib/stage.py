@@ -26,18 +26,26 @@ from __future__ import print_function
 
 import datetime
 import logging
+from typing import Optional, Text
+
+from absl import flags
 from glazier.lib import constants
 from glazier.lib import registry
 
+FLAGS = flags.FLAGS
 STAGES_ROOT = constants.REG_ROOT + r'\Stages'
 ACTIVE_KEY = '_Active'
+
+flags.DEFINE_integer(
+    'stage_timeout_minutes', 60 * 24 * 7,
+    'Time in minutes until an active stage is considered expired.')
 
 
 class Error(Exception):
   pass
 
 
-def exit_stage(stage_id):
+def exit_stage(stage_id: int):
   """Exit the current stage by setting the End value."""
   end = _utc_now().isoformat()
   logging.info('Exiting stage %d as of %s', stage_id, end)
@@ -48,15 +56,28 @@ def exit_stage(stage_id):
     raise Error(str(e))
 
 
-def get_active_stage():
+def _check_expiration(stage_id: int):
+  expiration = datetime.timedelta(minutes=FLAGS.stage_timeout_minutes)
+  time_in_stage = get_active_time(stage_id)
+  if time_in_stage > expiration:
+    raise Error('active stage %d has expired' % stage_id)
+
+
+def get_active_stage() -> Optional[int]:
   """Get the active build stage, if one exists."""
+  val = None
   try:
-    return registry.get_value(ACTIVE_KEY, 'HKLM', STAGES_ROOT)
+    val = registry.get_value(ACTIVE_KEY, 'HKLM', STAGES_ROOT)
   except registry.Error as e:
     logging.error(str(e))
+  if not val:
+    return None
+  val = int(val)
+  _check_expiration(val)
+  return val
 
 
-def get_active_time(stage_id):
+def get_active_time(stage_id: int) -> datetime.timedelta:
   """Get the amount of time we've been in the current stage."""
   start = _load_time(stage_id, 'Start')
   if not start:
@@ -68,23 +89,20 @@ def get_active_time(stage_id):
   return end - start
 
 
-def _load_time(stage_id, key):
+def _load_time(stage_id: int, key: Text) -> Optional[datetime.datetime]:
   """Load a time string and convert it into a native datetime value."""
   val = None
   try:
-    val = registry.get_value(key, 'HLKM', _stage_root(stage_id))
-  except registry.Error as e:
+    v = registry.get_value(key, 'HLKM', _stage_root(stage_id))
+    if v:
+      val = datetime.datetime.strptime(v, '%Y-%m-%dT%H:%M:%S.%f')
+  except (registry.Error, ValueError) as e:
     logging.error(str(e))
-  if val:
-    try:
-      val = datetime.datetime.strptime(val, '%Y-%m-%dT%H:%M:%S.%f')
-    except ValueError as e:
-      logging.error(str(e))
-      return None
+    return None
   return val
 
 
-def set_stage(stage_id):
+def set_stage(stage_id: int):
   """Sets or updates the current build stage."""
   if not isinstance(stage_id, int):
     raise Error('Invalid stage type; got: %s, want: int' % type(stage_id))
@@ -101,7 +119,7 @@ def set_stage(stage_id):
     raise Error(str(e))
 
 
-def _stage_root(stage_id):
+def _stage_root(stage_id: int) -> Text:
   return r'%s\%d' % (STAGES_ROOT, stage_id)
 
 

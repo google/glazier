@@ -19,9 +19,14 @@ from __future__ import division
 from __future__ import print_function
 
 import datetime
+from absl import flags
 from absl.testing import absltest
+from absl.testing import flagsaver
 from glazier.lib import stage
 import mock
+
+
+FLAGS = flags.FLAGS
 
 
 class StageTest(absltest.TestCase):
@@ -40,10 +45,12 @@ class StageTest(absltest.TestCase):
     self.assertRaises(stage.Error, stage.exit_stage, 3)
 
   @mock.patch.object(stage.registry, 'get_value', autospec=True)
-  def test_get_active_stage(self, gv):
+  @mock.patch.object(stage, '_check_expiration', autospec=True)
+  def test_get_active_stage(self, check, gv):
     gv.return_value = '5'
-    self.assertEqual(stage.get_active_stage(), '5')
+    self.assertEqual(stage.get_active_stage(), 5)
     gv.assert_called_with('_Active', 'HKLM', stage.STAGES_ROOT)
+    check.assert_called_with(5)
 
   @mock.patch.object(stage.registry, 'get_value', autospec=True)
   def test_get_active_stage_none(self, gv):
@@ -111,12 +118,13 @@ class StageTest(absltest.TestCase):
     ])
 
   @mock.patch.object(stage, 'exit_stage', autospec=True)
-  @mock.patch.object(stage.registry, 'get_value', autospec=True)
-  @mock.patch.object(stage.registry.registry, 'Registry', autospec=True)
-  def test_set_stage_next(self, unused_reg, gv, exit_stage):
-    gv.return_value = '1'
+  @mock.patch.object(stage, 'get_active_stage', autospec=True)
+  @mock.patch.object(stage.registry, 'set_value', autospec=True)
+  def test_set_stage_next(self, reg, get_active, exit_stage):
+    get_active.return_value = 1
     stage.set_stage(2)
-    exit_stage.assert_called_with('1')
+    exit_stage.assert_called_with(1)
+    reg.assert_called_with('_Active', '2', 'HKLM', stage.STAGES_ROOT)
 
   @mock.patch.object(stage, 'get_active_stage', autospec=True)
   @mock.patch.object(stage.registry, 'set_value', autospec=True)
@@ -127,6 +135,18 @@ class StageTest(absltest.TestCase):
 
   def test_exit_stage_invalid_type(self):
     self.assertRaises(stage.Error, stage.set_stage, 'ABC')
+
+  @flagsaver.flagsaver
+  @mock.patch.object(stage, 'get_active_time', autospec=True)
+  def test_stage_expiration(self, get_active):
+    end = stage._utc_now()
+    start = end - datetime.timedelta(minutes=90)
+    get_active.return_value = (end - start)
+    FLAGS.stage_timeout_minutes = 120
+    stage._check_expiration(3)
+    FLAGS.stage_timeout_minutes = 60
+    self.assertRaises(stage.Error, stage._check_expiration, 3)
+    get_active.assert_called_with(stage_id=3)
 
 
 if __name__ == '__main__':
