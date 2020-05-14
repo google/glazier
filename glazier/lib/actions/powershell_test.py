@@ -25,7 +25,7 @@ SCRIPT = '#Some-Script.ps1'
 SCRIPT_PATH = r'C:\Cache\Some-Script.ps1'
 ARGS = ['-Verbose', '-InformationAction', 'Continue']
 COMMAND = 'Write-Verbose Foo -Verbose'
-TOKENIZED_COMMAND = ['Write-Verbose', 'Foo', '-Verbose']
+TOKENIZED_COMMAND = ['Write-Verbose', 'Foo', '-Verbose', '; exit $LASTEXITCODE']
 
 
 class PowershellTest(parameterized.TestCase):
@@ -162,7 +162,8 @@ class PowershellTest(parameterized.TestCase):
     ps = powershell.PSCommand([SCRIPT + ' -confirm:$false'], self.bi)
     run.return_value = 0
     ps.Run()
-    run.assert_called_with(mock.ANY, [SCRIPT_PATH, '-confirm:$false'], [0])
+    run.assert_called_with(
+        mock.ANY, [SCRIPT_PATH, '-confirm:$false', '; exit $LASTEXITCODE'], [0])
     cache.assert_called_with(mock.ANY, SCRIPT, self.bi)
 
   @mock.patch.object(

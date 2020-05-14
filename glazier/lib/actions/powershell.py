@@ -125,8 +125,10 @@ class PSCommand(BaseAction):
         raise ActionError(e)
 
     try:
+      # Exit $LASTEXITCODE is necessary because PowerShell.exe -Command only
+      # exits 0 or 1 by default.
       result = powershell.PowerShell(shell, log).RunCommand(
-          command, success_codes + reboot_codes)
+          command + ['; exit $LASTEXITCODE'], success_codes + reboot_codes)
     except powershell.PowerShellError as e:
       raise ActionError(str(e))
 
