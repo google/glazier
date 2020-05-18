@@ -85,8 +85,8 @@ class BaseAction(object):
 
   def Validate(self):
     """Override this function to implement validation of actions."""
-    logging.warn('Validation not implemented for action %s.',
-                 self.__class__.__name__)
+    logging.warning('Validation not implemented for action %s.',
+                    self.__class__.__name__)
 
   def _ListOfStringsValidator(self, args, length=1, max_length=None):
     if not max_length:
