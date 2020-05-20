@@ -24,7 +24,7 @@ from typing import Optional, Text
 
 from glazier.lib import buildinfo
 from glazier.lib import constants
-from glazier.lib import winpe
+from glazier.lib import reg_util
 
 
 class Error(Exception):
@@ -41,7 +41,7 @@ def _base_title() -> Optional[Text]:
   getid = build_info.ImageID()
   base = []
 
-  if winpe.check_winpe():
+  if reg_util.check_winpe():
     base.append('WinPE')
   if constants.FLAGS.config_root_path:
     base.append(constants.FLAGS.config_root_path.strip('/'))

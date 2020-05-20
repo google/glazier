@@ -125,7 +125,7 @@ class DownloadTest(absltest.TestCase):
     self.assertRaises(download.DownloadError, self._dl._AttemptResource, 1, 1,
                       'file download')
 
-  @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(download.reg_util, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
   def testOpenStreamInternal(self, urlopen, wpe):
     file_stream = mock.Mock()
@@ -153,7 +153,7 @@ class DownloadTest(absltest.TestCase):
     self.assertRaises(download.DownloadError, self._dl._OpenStream, url,
                       max_retries=2)
 
-  @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(download.reg_util, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
   def testCheckUrl(self, urlopen, wpe):
     file_stream = mock.Mock()

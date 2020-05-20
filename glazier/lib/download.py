@@ -40,7 +40,7 @@ from typing import Optional, Text
 
 from absl import flags
 from glazier.lib import beyondcorp
-from glazier.lib import winpe
+from glazier.lib import reg_util
 from six.moves import urllib
 
 
@@ -222,7 +222,7 @@ class BaseDownloader(object):
     while True:
       try:
         attempt += 1
-        if winpe.check_winpe():
+        if reg_util.check_winpe():
           file_stream = urllib.request.urlopen(url, cafile=self._ca_cert_file)
         else:
           file_stream = urllib.request.urlopen(url)

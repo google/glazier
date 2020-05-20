@@ -21,7 +21,7 @@ import mock
 
 class PowerTest(absltest.TestCase):
 
-  @mock.patch.object(power.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(power.reg_util, 'check_winpe', autospec=True)
   @mock.patch.object(power.subprocess, 'call', autospec=True)
   def testRestart(self, call, wpe):
     # Use WinPE paths
@@ -40,7 +40,7 @@ class PowerTest(absltest.TestCase):
                             '-c "Reboot fixes everything." -f' %
                             power.constants.SYS_SYSTEM32)
 
-  @mock.patch.object(power.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(power.reg_util, 'check_winpe', autospec=True)
   @mock.patch.object(power.subprocess, 'call', autospec=True)
   def testShutdown(self, call, wpe):
     # Use WinPE paths

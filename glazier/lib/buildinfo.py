@@ -24,8 +24,8 @@ from absl import flags
 from glazier.lib import beyondcorp
 from glazier.lib import constants
 from glazier.lib import identifier
+from glazier.lib import reg_util
 from glazier.lib import timers
-from glazier.lib import winpe
 from glazier.lib.config import files
 from glazier.lib.spec import spec
 from gwinpy.wmi import hw_info
@@ -263,7 +263,7 @@ class BuildInfo(object):
     Returns:
       The path to the local build cache as a string.
     """
-    if winpe.check_winpe():
+    if reg_util.check_winpe():
       return constants.WINPE_CACHE
     return constants.SYS_CACHE
 

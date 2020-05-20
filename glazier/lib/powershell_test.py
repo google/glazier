@@ -36,7 +36,7 @@ class PowershellTest(absltest.TestCase):
     self.fs.CreateFile(self.path)
     self.ps = powershell.PowerShell()
 
-  @mock.patch.object(powershell.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(powershell.reg_util, 'check_winpe', autospec=True)
   def testPowerShell(self, wpe):
     # WinPE
     wpe.return_value = True

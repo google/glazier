@@ -34,7 +34,7 @@ class BuildInfoTest(absltest.TestCase):
     self.filesystem = fake_filesystem.FakeFilesystem()
     autobuild.os = fake_filesystem.FakeOsModule(self.filesystem)
 
-  @mock.patch.object(autobuild.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(autobuild.reg_util, 'check_winpe', autospec=True)
   def testSetupTaskList(self, wpe):
     # Host
     tasklist = autobuild.constants.SYS_TASK_LIST
@@ -54,7 +54,7 @@ class BuildInfoTest(absltest.TestCase):
     self.assertFalse(autobuild.os.path.exists(tasklist))
 
   @mock.patch.object(autobuild.title, 'set_title', autospec=True)
-  @mock.patch.object(autobuild.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(autobuild.reg_util, 'check_winpe', autospec=True)
   @mock.patch.object(autobuild.runner, 'ConfigRunner', autospec=True)
   @mock.patch.object(autobuild.builder, 'ConfigBuilder', autospec=True)
   @mock.patch.object(autobuild.buildinfo.BuildInfo, 'BeyondCorp', autospec=True)

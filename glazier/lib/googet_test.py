@@ -34,7 +34,7 @@ class GooGetTest(absltest.TestCase):
     self.flags = ['whatever', '-reinstall', 'http://example.com/team-%',
                   r'http://example.co.uk/secure-%\%', r'http://%.jp/%\%']
 
-  @mock.patch.object(googet.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(googet.reg_util, 'check_winpe', autospec=True)
   @mock.patch.object(googet.subprocess, 'call', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   @mock.patch.object(time, 'sleep', return_value=None)

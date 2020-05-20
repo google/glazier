@@ -20,8 +20,8 @@ from typing import List, Optional, Text
 
 from glazier.lib import constants
 from glazier.lib import execute
+from glazier.lib import reg_util
 from glazier.lib import resources
-from glazier.lib import winpe
 
 
 class PowerShellError(Exception):
@@ -29,7 +29,7 @@ class PowerShellError(Exception):
 
 
 def _Powershell() -> Text:
-  if winpe.check_winpe():
+  if reg_util.check_winpe():
     return constants.WINPE_POWERSHELL
   else:
     return constants.SYS_POWERSHELL

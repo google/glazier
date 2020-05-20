@@ -229,12 +229,12 @@ class BuildInfoTest(absltest.TestCase):
     self.assertFalse(self.buildinfo.BuildPinMatch('USER_locale', []))
     self.assertFalse(self.buildinfo.BuildPinMatch('USER_missing', ['na']))
 
-  @mock.patch.object(buildinfo.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(buildinfo.reg_util, 'check_winpe', autospec=True)
   def testCachePath(self, wpe):
     wpe.return_value = False
     self.assertEqual(self.buildinfo.CachePath(), buildinfo.constants.SYS_CACHE)
 
-  @mock.patch.object(buildinfo.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(buildinfo.reg_util, 'check_winpe', autospec=True)
   def testCachePathWinPE(self, wpe):
     wpe.return_value = True
     self.assertEqual(self.buildinfo.CachePath(),

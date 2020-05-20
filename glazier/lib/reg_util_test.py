@@ -92,6 +92,24 @@ class RegUtilTest(absltest.TestCase):
     sv.side_effect = reg_util.registry.Error
     self.assertRaises(reg_util.Error, reg_util.set_hostname)
 
+  @mock.patch.object(reg_util.registry, 'get_value', autospec=True)
+  def test_check_winpe_true(self, gv):
+    reg_util.check_winpe.cache_clear()
+    gv.return_value = 'WindowsPE'
+    self.assertEqual(reg_util.check_winpe(), True)
+
+  @mock.patch.object(reg_util.registry, 'get_value', autospec=True)
+  def test_check_winpe_false(self, gv):
+    reg_util.check_winpe.cache_clear()
+    gv.return_value = 'Enterprise'
+    self.assertEqual(reg_util.check_winpe(), False)
+
+  @mock.patch.object(reg_util.registry, 'get_value', autospec=True)
+  def test_check_winpe_error(self, gv):
+    reg_util.check_winpe.cache_clear()
+    gv.side_effect = reg_util.registry.Error
+    self.assertRaises(reg_util.Error, reg_util.check_winpe)
+
 
 if __name__ == '__main__':
   absltest.main()

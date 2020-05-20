@@ -23,10 +23,9 @@ from typing import Text
 import uuid
 
 from glazier.lib import constants
+from glazier.lib import reg_util
 from glazier.lib import registry
-from glazier.lib import winpe
 from gwinpy.wmi import hw_info
-
 import yaml
 
 
@@ -100,7 +99,7 @@ def check_id() -> Text:
 
   if image_id:
     return image_id
-  if winpe.check_winpe():
+  if reg_util.check_winpe():
     return _set_id()
 
   return _check_file()

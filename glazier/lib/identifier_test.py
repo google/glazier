@@ -96,7 +96,7 @@ class IdentifierTest(absltest.TestCase):
     self.assertEqual(identifier.check_id(), TEST_ID)
 
   @mock.patch.object(identifier.registry, 'get_value', autospec=True)
-  @mock.patch.object(identifier.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(identifier.reg_util, 'check_winpe', autospec=True)
   def test_check_id_get_error(self, wpe, gv):
     wpe.return_value = False
     gv.side_effect = identifier.registry.Error
@@ -104,7 +104,7 @@ class IdentifierTest(absltest.TestCase):
 
   @mock.patch.object(identifier, '_set_id', autospec=True)
   @mock.patch.object(identifier.registry, 'get_value', autospec=True)
-  @mock.patch.object(identifier.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(identifier.reg_util, 'check_winpe', autospec=True)
   def test_check_id_set(self, wpe, gv, setid):
     gv.return_value = None
     wpe.return_value = True
@@ -113,7 +113,7 @@ class IdentifierTest(absltest.TestCase):
 
   @mock.patch.object(identifier, '_check_file', autospec=True)
   @mock.patch.object(identifier.registry, 'get_value', autospec=True)
-  @mock.patch.object(identifier.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(identifier.reg_util, 'check_winpe', autospec=True)
   def test_check_id_file(self, wpe, gv, checkfile):
     gv.return_value = None
     wpe.return_value = False

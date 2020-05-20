@@ -18,7 +18,7 @@ import logging
 import logging.handlers
 from glazier.lib import buildinfo
 from glazier.lib import constants
-from glazier.lib import winpe
+from glazier.lib import reg_util
 
 
 DATE_FMT = '%m%d %H:%M:%S'
@@ -30,7 +30,7 @@ class LogError(Exception):
 
 def GetLogsPath():
   path = constants.SYS_LOGS_PATH
-  if winpe.check_winpe():
+  if reg_util.check_winpe():
     path = constants.WINPE_LOGS_PATH
   return path
 
@@ -70,7 +70,7 @@ def Setup():
   logger.addHandler(fh)
 
   # Create Event Log handler and set level
-  if not winpe.check_winpe():
+  if not reg_util.check_winpe():
     eh = logging.handlers.NTEventLogHandler('GlazierBuildLog')
     eh.setLevel(logging.DEBUG)
     eh.setFormatter(debug_formatter)

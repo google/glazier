@@ -19,11 +19,11 @@ import subprocess
 from typing import Text
 
 from glazier.lib import constants
-from glazier.lib import winpe
+from glazier.lib import reg_util
 
 
 def _System32() -> Text:
-  if winpe.check_winpe():
+  if reg_util.check_winpe():
     return constants.WINPE_SYSTEM32
   else:
     return constants.SYS_SYSTEM32

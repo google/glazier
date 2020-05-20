@@ -106,3 +106,24 @@ def set_hostname(hostname: Optional[Text] = None) -> Text:
     raise Error(str(e))
 
   return hostname
+
+
+@functools.lru_cache()
+def check_winpe() -> bool:
+  """Verify image environment is WinPE or Host.
+
+  Returns:
+    True for WinPE, else False.
+  """
+  try:
+    value = registry.get_value(
+        'EditionID',
+        'HKLM',
+        r'SOFTWARE\Microsoft\Windows NT\CurrentVersion',
+        log=False)
+    if value == 'WindowsPE':
+      return True
+    else:
+      return False
+  except registry.Error as e:
+    raise Error('Failed to detect image environment (%s)' % str(e))

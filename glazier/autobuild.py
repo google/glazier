@@ -21,8 +21,8 @@ from absl import flags
 from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib import logs
+from glazier.lib import reg_util
 from glazier.lib import title
-from glazier.lib import winpe
 from glazier.lib.config import builder
 from glazier.lib.config import runner
 
@@ -55,7 +55,7 @@ class AutoBuild(object):
   def _SetupTaskList(self):
     """Determines the location of the task list and erases if necessary."""
     location = constants.SYS_TASK_LIST
-    if winpe.check_winpe():
+    if reg_util.check_winpe():
       location = constants.WINPE_TASK_LIST
     logging.debug('Using task list at %s', location)
     if not FLAGS.preserve_tasks and os.path.exists(location):

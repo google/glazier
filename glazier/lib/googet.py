@@ -24,7 +24,7 @@ import typing
 from typing import List, Text
 
 from glazier.lib import constants
-from glazier.lib import winpe
+from glazier.lib import reg_util
 
 if typing.TYPE_CHECKING:
   from glazier.lib import buildinfo
@@ -93,7 +93,7 @@ class GooGetInstall(object):
     return flags
 
   def _GooGet(self) -> Text:
-    if winpe.check_winpe():
+    if reg_util.check_winpe():
       return str(constants.WINPE_GOOGETROOT)
     else:
       return str(constants.SYS_GOOGETROOT)
