@@ -292,6 +292,24 @@ class BuildInfoTest(absltest.TestCase):
     FLAGS.glazier_spec_lab = ''
     self.assertEqual(self.buildinfo.Lab(), False)
 
+  @mock.patch.object(
+      buildinfo.beyondcorp.BeyondCorp, 'CheckBeyondCorp', autospec=True)
+  @flagsaver.flagsaver
+  def testBeyondCorpPinTrue(self, cbc):
+    cbc.return_value = True
+    self.assertTrue(self.buildinfo.BuildPinMatch('beyond_corp', ['True']))
+    self.assertEqual(self.buildinfo.BeyondCorp(), True)
+
+  @mock.patch.object(
+      buildinfo.beyondcorp.BeyondCorp, 'CheckBeyondCorp', autospec=True)
+  @flagsaver.flagsaver
+  def testBeyondCorpPinFalse(self, cbc):
+    cbc.return_value = False
+    self.assertTrue(self.buildinfo.BuildPinMatch('beyond_corp', ['!True']))
+    self.assertEqual(self.buildinfo.BeyondCorp(), False)
+    self.assertTrue(self.buildinfo.BuildPinMatch('beyond_corp', ['False']))
+    self.assertEqual(self.buildinfo.BeyondCorp(), False)
+
   @mock.patch.object(buildinfo.hw_info.HWInfo, 'BiosSerial', autospec=True)
   def testComputerSerial(self, bios_serial):
     bios_serial.return_value = '5KD1BP1'

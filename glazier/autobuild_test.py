@@ -57,7 +57,9 @@ class BuildInfoTest(absltest.TestCase):
   @mock.patch.object(autobuild.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(autobuild.runner, 'ConfigRunner', autospec=True)
   @mock.patch.object(autobuild.builder, 'ConfigBuilder', autospec=True)
-  def testRunBuild(self, builder, runner, wpe, st):
+  @mock.patch.object(autobuild.buildinfo.BuildInfo, 'BeyondCorp', autospec=True)
+  def testRunBuild(self, bc, builder, runner, wpe, st):
+    bc.return_value = False
     wpe.return_value = False
     self.autobuild.RunBuild()
     self.assertTrue(st.called)

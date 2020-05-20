@@ -39,6 +39,7 @@ import time
 from typing import Optional, Text
 
 from absl import flags
+from glazier.lib import beyondcorp
 from glazier.lib import winpe
 from six.moves import urllib
 
@@ -128,6 +129,7 @@ class BaseDownloader(object):
     self._save_location = None
     self._default_show_progress = show_progress
     self._ca_cert_file = None
+    self._beyondcorp = beyondcorp.BeyondCorp()
 
   def _ConvertBytes(self, num_bytes: int) -> Text:
     """Converts number of bytes to a human readable format.
@@ -279,6 +281,9 @@ class BaseDownloader(object):
       show_progress: Print download progress to stdout (overrides default).
     """
     self._save_location = save_location
+    if self._beyondcorp.CheckBeyondCorp():
+      url = self._SetUrl(url)
+      max_retries = -1
     file_stream = self._OpenStream(url, max_retries)
     self._StreamToDisk(file_stream, show_progress)
 
@@ -297,6 +302,9 @@ class BaseDownloader(object):
     destination = tempfile.NamedTemporaryFile()
     self._save_location = destination.name
     destination.close()
+    if self._beyondcorp.CheckBeyondCorp():
+      url = self._SetUrl(url)
+      max_retries = -1
     file_stream = self._OpenStream(url, max_retries)
     self._StreamToDisk(file_stream, show_progress)
     return self._save_location
@@ -318,6 +326,27 @@ class BaseDownloader(object):
 
     if bytes_so_far >= total_size:
       sys.stdout.write('\n')
+
+  def _SetUrl(self, url: Text):
+    """Simple helper function to determine signed URL.
+
+    Args:
+      url: the url we want to download from.
+
+    Returns:
+      A string with the applicable URLs
+
+    Raises:
+      DownloadError: Failed to obtain SignedURL.
+    """
+    if not FLAGS.use_signed_url:
+      return url
+    config_server = '%s%s' % (FLAGS.config_server, '/')
+    try:
+      return self._beyondcorp.GetSignedUrl(
+          url[url.startswith(config_server) and len(config_server):])
+    except beyondcorp.BCError as e:
+      raise DownloadError(e)
 
   def _StoreDebugInfo(self, file_stream, socket_error=None):
     """Gathers debug information for use when file downloads fail.

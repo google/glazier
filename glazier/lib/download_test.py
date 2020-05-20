@@ -19,6 +19,7 @@ from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
 from pyfakefs import fake_filesystem
+from glazier.lib import beyondcorp
 from glazier.lib import buildinfo
 from glazier.lib import download
 
@@ -166,6 +167,26 @@ class DownloadTest(absltest.TestCase):
     urlopen.side_effect = iter([file_stream])
     self.assertFalse(
         self._dl.CheckUrl(TEST_URL, max_retries=1, status_codes=[201]))
+
+  @mock.patch.object(download.BaseDownloader, '_StreamToDisk', autospec=True)
+  @mock.patch.object(download.BaseDownloader, '_OpenStream', autospec=True)
+  @mock.patch.object(download.tempfile, 'NamedTemporaryFile', autospec=True)
+  @mock.patch.object(beyondcorp.BeyondCorp, 'CheckBeyondCorp', autospec=True)
+  def testDownloadFileTemp(self, cbc, tempf, downf, todisk):
+    cbc.return_value = False
+    url = TEST_URL
+    path = r'C:\Windows\Temp\tmpblahblah'
+    tempf.return_value.name = path
+    self._dl.DownloadFileTemp(url, max_retries=5)
+    downf.assert_called_with(self._dl, url, 5)
+    todisk.assert_called_with(self._dl, downf.return_value, False)
+    self.assertEqual(self._dl._save_location, path)
+    self._dl.DownloadFileTemp(url, max_retries=5, show_progress=True)
+    downf.assert_called_with(self._dl, url, 5)
+    todisk.assert_called_with(self._dl, downf.return_value, True)
+    self._dl.DownloadFileTemp(url, max_retries=5, show_progress=False)
+    downf.assert_called_with(self._dl, url, 5)
+    todisk.assert_called_with(self._dl, downf.return_value, False)
 
   @mock.patch.object(download.BaseDownloader, '_StoreDebugInfo', autospec=True)
   def testStreamToDisk(self, store_info):

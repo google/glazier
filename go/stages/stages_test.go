@@ -14,6 +14,7 @@
 package stages
 
 import (
+	"fmt"
 	"testing"
 
 	"golang.org/x/sys/windows/registry"
@@ -23,17 +24,20 @@ const (
 	testStageRoot = `SOFTWARE\Glazier\Testing`
 )
 
-func createTestKey(testID string) error {
+func createTestKeys(subKeys ...string) error {
 	k, _, err := registry.CreateKey(registry.LOCAL_MACHINE, testStageRoot, registry.CREATE_SUB_KEY)
 	if err != nil {
 		return err
 	}
 	defer k.Close()
-	testK, _, err := registry.CreateKey(k, testID, registry.CREATE_SUB_KEY)
-	if err != nil {
-		return err
+	for _, id := range subKeys {
+		sk, _, err := registry.CreateKey(k, id, registry.CREATE_SUB_KEY)
+		if err != nil {
+			return err
+		}
+		defer sk.Close()
+		k = sk
 	}
-	defer testK.Close()
 	return nil
 }
 
@@ -47,14 +51,14 @@ func TestGetActiveStageNoRootKey(t *testing.T) {
 	if err != nil {
 		t.Errorf("%s(): raised unexpected error %v", testID, err)
 	}
-	if stage != 0 {
-		t.Errorf("%s(): got %d, want %d", testID, stage, 0)
+	if stage != "0" {
+		t.Errorf("%s(): got %s, want %s", testID, stage, "0")
 	}
 }
 
 func TestGetActiveStageNoActiveKey(t *testing.T) {
 	testID := "TestGetActiveStageNoActiveKey"
-	if err := createTestKey(testID); err != nil {
+	if err := createTestKeys(testID); err != nil {
 		t.Fatal(err)
 	}
 	defer cleanupTestKey()
@@ -63,8 +67,8 @@ func TestGetActiveStageNoActiveKey(t *testing.T) {
 	if err != nil {
 		t.Errorf("%s(): raised unexpected error %v", testID, err)
 	}
-	if stage != 0 {
-		t.Errorf("%s(): got %d, want %d", testID, stage, 0)
+	if stage != "0" {
+		t.Errorf("%s(): got %s, want %s", testID, stage, "0")
 	}
 }
 
@@ -72,7 +76,7 @@ func TestGetActiveStageInProgress(t *testing.T) {
 	testID := "TestGetActiveStageInProgress"
 	subKey := testStageRoot + `\` + testID
 
-	if err := createTestKey(testID); err != nil {
+	if err := createTestKeys(testID); err != nil {
 		t.Fatal(err)
 	}
 	defer cleanupTestKey()
@@ -90,8 +94,8 @@ func TestGetActiveStageInProgress(t *testing.T) {
 	if err != nil {
 		t.Errorf("%s(): raised unexpected error %v", testID, err)
 	}
-	if stage != 2 {
-		t.Errorf("%s(): got %d, want %d", testID, stage, 2)
+	if stage != "2" {
+		t.Errorf("%s(): got %s, want %s", testID, stage, "2")
 	}
 }
 
@@ -99,7 +103,7 @@ func TestGetActiveStageTypeError(t *testing.T) {
 	testID := "TestGetActiveStageTypeHandling"
 	subKey := testStageRoot + `\` + testID
 
-	if err := createTestKey(testID); err != nil {
+	if err := createTestKeys(testID); err != nil {
 		t.Fatal(err)
 	}
 	defer cleanupTestKey()
@@ -114,6 +118,62 @@ func TestGetActiveStageTypeError(t *testing.T) {
 	k.Close()
 
 	if _, err := getActiveStage(subKey); err == nil {
+		t.Errorf("%s(): failed to raise expected error", testID)
+	}
+}
+
+func TestGetActiveTime(t *testing.T) {
+	testID := "TestGetActiveTime"
+	testKey := fmt.Sprintf(`%s\%s`, testStageRoot, testID)
+	stageKey := fmt.Sprintf(`%s\%d`, testKey, 5)
+
+	if err := createTestKeys(testID, "5"); err != nil {
+		t.Fatal(err)
+	}
+	defer cleanupTestKey()
+
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE, stageKey, registry.WRITE)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = k.SetStringValue("Start", "2019-11-06T17:37:43.279253"); err != nil {
+		t.Fatal(err)
+	}
+	k.Close()
+	_, err = getActiveTime(testKey, "5")
+	if err != nil {
+		t.Errorf("%s(): raised unexpected error %v", testID, err)
+	}
+}
+
+func TestGetActiveTimeParseError(t *testing.T) {
+	testID := "TestGetActiveTimeParseError"
+	testKey := fmt.Sprintf(`%s\%s`, testStageRoot, testID)
+	stageKey := fmt.Sprintf(`%s\%d`, testKey, 5)
+
+	if err := createTestKeys(testID, "5"); err != nil {
+		t.Fatal(err)
+	}
+	defer cleanupTestKey()
+
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE, stageKey, registry.WRITE)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = k.SetStringValue("Start", "20191106V17:37:43"); err != nil {
+		t.Fatal(err)
+	}
+	k.Close()
+	_, err = getActiveTime(testKey, "5")
+	if err == nil {
+		t.Errorf("%s(): failed to raise expected error", testID)
+	}
+}
+
+func TestGetActiveTimeNoKey(t *testing.T) {
+	testID := "TestGetActiveTimeNoKey"
+	_, err := getActiveTime(testStageRoot, "3")
+	if err == nil {
 		t.Errorf("%s(): failed to raise expected error", testID)
 	}
 }

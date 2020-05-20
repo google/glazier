@@ -69,6 +69,7 @@ class AutoBuild(object):
   def RunBuild(self):
     """Perform the build."""
     title.set_title()
+    self._build_info.BeyondCorp()
 
     task_list = self._SetupTaskList()
 

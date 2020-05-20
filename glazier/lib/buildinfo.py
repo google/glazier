@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Text
 
 
 from absl import flags
+from glazier.lib import beyondcorp
 from glazier.lib import constants
 from glazier.lib import identifier
 from glazier.lib import timers
@@ -241,8 +242,19 @@ class BuildInfo(object):
         'encryption_type': self.EncryptionLevel,
         'graphics': self.VideoControllersByName,
         'os_code': self.OsCode,
+        'beyond_corp': self.BeyondCorp,
         'lab': self.Lab,
     }
+
+  @functools.lru_cache()
+  def BeyondCorp(self) -> bool:
+    """Cache whether the image is running Beyond Corp.
+
+    Returns:
+      True or False bool returned from beyondcorp lib.
+    """
+    self._beyondcorp = beyondcorp.BeyondCorp()
+    return self._beyondcorp.CheckBeyondCorp()
 
   @functools.lru_cache()
   def CachePath(self):
@@ -440,6 +452,7 @@ class BuildInfo(object):
 
     build_data = {
         'BUILD': {
+            'beyond_corp': str(self.BeyondCorp()),
             'Binary Path': str(self.BinaryPath()),
             'branch': str(self.Branch()),
             'build_timestamp': str(time.strftime('%m/%d/%Y %H:%M:%S')),
