@@ -25,7 +25,7 @@ class DriversTest(absltest.TestCase):
   @mock.patch.object(BuildInfo, 'ReleasePath')
   @mock.patch('glazier.lib.download.Download.VerifyShaHash', autospec=True)
   @mock.patch('glazier.lib.download.Download.DownloadFile', autospec=True)
-  @mock.patch.object(drivers, 'Execute', autospec=True)
+  @mock.patch.object(drivers.execute, 'execute_binary', autospec=True)
   @mock.patch.object(drivers.file_util, 'CreateDirectories', autospec=True)
   def testDriverWIM(self, mkdir, exe, dl, sha, rpath):
     bi = BuildInfo()
@@ -52,9 +52,9 @@ class DriversTest(absltest.TestCase):
         show_progress=True)
     sha.assert_called_with(mock.ANY, local, sha_256)
     cache = drivers.constants.SYS_CACHE
-    exe.assert_called_with([[('X:\\Windows\\System32\\dism.exe /Unmount-Image '
-                              '/MountDir:%s\\Drivers\\ /Discard' % cache)]],
-                           mock.ANY)
+    exe.assert_called_with(('X:\\Windows\\System32\\dism.exe /Unmount-Image '
+                            '/MountDir:%s\\Drivers\\ /Discard' % cache),
+                           shell=True)
     mkdir.assert_called_with('%s\\Drivers\\' % cache)
 
     # Invalid format
@@ -64,14 +64,17 @@ class DriversTest(absltest.TestCase):
     conf['data']['driver'][0][1] = 'C:\\W54x-Win10-Storage.wim'
 
     # Mount Fail
-    exe.return_value.Run.side_effect = drivers.ActionError()
-    self.assertRaises(drivers.ActionError, dw.Run)
+    exe.side_effect = drivers.execute.Error
+    with self.assertRaises(drivers.ActionError):
+      dw.Run()
     # Dism Fail
-    exe.return_value.Run.side_effect = iter([0, drivers.ActionError()])
-    self.assertRaises(drivers.ActionError, dw.Run)
+    exe.side_effect = iter([0, drivers.execute.Error])
+    with self.assertRaises(drivers.ActionError):
+      dw.Run()
     # Unmount Fail
-    exe.return_value.Run.side_effect = iter([0, 0, drivers.ActionError()])
-    self.assertRaises(drivers.ActionError, dw.Run)
+    exe.side_effect = iter([0, 0, drivers.execute.Error])
+    with self.assertRaises(drivers.ActionError):
+      dw.Run()
 
   def testDriverWIMValidate(self):
     g = drivers.DriverWIM('String', None)

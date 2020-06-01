@@ -17,11 +17,11 @@
 import logging
 import os
 from glazier.lib import constants
+from glazier.lib import execute
 from glazier.lib import file_util
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import ValidationError
-from glazier.lib.actions.files import Execute
 from glazier.lib.actions.files import Get
 
 
@@ -83,12 +83,11 @@ class DriverWIM(BaseAction):
     Raises:
       ConfigRunnerError: Error during driver application.
     """
-    dism = ['{} /Image:c: /Add-Driver /Driver:{} /Recurse'.format(
-        constants.WINPE_DISM, mount_dir)]
-    ex = Execute([dism], self._build_info)
+    dism = '{} /Image:c: /Add-Driver /Driver:{} /Recurse'.format(
+        constants.WINPE_DISM, mount_dir)
     try:
-      ex.Run()
-    except ActionError as e:
+      execute.execute_binary(dism, shell=True)
+    except execute.Error as e:
       raise ActionError('Error applying drivers to image from %s. (%s)' %
                         (mount_dir, e))
 
@@ -106,29 +105,25 @@ class DriverWIM(BaseAction):
     mount_dir = '%s\\Drivers\\' % constants.SYS_CACHE
 
     # dism commands
-    mount = [
-        '{} /Mount-Image /ImageFile:{} /MountDir:{} /ReadOnly /Index:1'.format(
-            constants.WINPE_DISM, wim_file, mount_dir)
-    ]
-    unmount = ['{} /Unmount-Image /MountDir:{} /Discard'.format(
-        constants.WINPE_DISM, mount_dir)]
+    mount = '{} /Mount-Image /ImageFile:{} /MountDir:{} /ReadOnly /Index:1'.format(
+        constants.WINPE_DISM, wim_file, mount_dir)
+    unmount = '{} /Unmount-Image /MountDir:{} /Discard'.format(
+        constants.WINPE_DISM, mount_dir)
 
     # create mount directory
     file_util.CreateDirectories(mount_dir)
 
     # mount image
-    ex = Execute([mount], self._build_info)
     try:
-      ex.Run()
-    except ActionError as e:
+      execute.execute_binary(mount, shell=True)
+    except execute.Error as e:
       raise ActionError('Unable to mount image %s. (%s)' % (wim_file, e))
 
     logging.info('Applying %s image to main disk.', wim_file)
     self._AddDriver(mount_dir)
 
     # Unmount after running
-    ex = Execute([unmount], self._build_info)
     try:
-      ex.Run()
-    except ActionError as e:
+      execute.execute_binary(unmount, shell=True)
+    except execute.Error as e:
       raise ActionError('Error unmounting image. Unable to continue. (%s)' % e)
