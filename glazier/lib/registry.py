@@ -56,7 +56,7 @@ def get_value(
         use_64bit=use_64bit)
     if value:
       if log:
-        logging.debug(r'Got registry value: %s:\%s\%s\%s.', root, path, name,
+        logging.debug(r'Got registry value: %s:\%s\%s = %s.', root, path, name,
                       value)
       return value
   except registry.RegistryError as e:
@@ -91,7 +91,7 @@ def set_value(name: Text, value: Union[Text, int],
         key_type=reg_type,
         use_64bit=use_64bit)
     if log:
-      logging.debug(r'Set registry value: %s:\%s\%s\%s', root, path, name,
+      logging.debug(r'Set registry value: %s:\%s\%s = %s', root, path, name,
                     str(value))
   except registry.RegistryError as e:
     raise Error(str(e))
