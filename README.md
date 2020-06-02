@@ -4,7 +4,7 @@
 |----------------|------------|------|---------|-------------|
 [![Google Groups - Glazier](https://img.shields.io/badge/Support-Google%20Groups-blue)](https://groups.google.com/forum/#!forum/glazier-discuss) | [![Travis CI Build Status](https://img.shields.io/travis/google/glazier)](https://travis-ci.org/google/glazier) | [![Contributing](https://img.shields.io/badge/contributions-welcome-brightgreen)](https://github.com/google/glazier/blob/master/CONTRIBUTING.md) | [![Open Issues](https://img.shields.io/github/issues/google/glazier)](https://github.com/google/glazier/issues) | [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://github.com/google/glazier/blob/master/LICENSE)
 
-Gla·zier /ˈɡlāZHər/ *noun*: a person who installs windows.
+[Gla·zier](https://en.wikipedia.org/wiki/Glazing_(window)) /ˈɡlāZHər/ *noun*: a person who installs windows.
 
 Glazier is a tool developed at Google for automating Windows operating system deployments.
 
