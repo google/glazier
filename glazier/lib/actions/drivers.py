@@ -83,10 +83,11 @@ class DriverWIM(BaseAction):
     Raises:
       ConfigRunnerError: Error during driver application.
     """
-    dism = '{} /Image:c: /Add-Driver /Driver:{} /Recurse'.format(
-        constants.WINPE_DISM, mount_dir)
     try:
-      execute.execute_binary(dism, shell=True)
+      execute.execute_binary(
+          constants.WINPE_DISM,
+          ['/Image:c:', '/Add-Driver', f'/Driver:{mount_dir}', '/Recurse'],
+          shell=True)
     except execute.Error as e:
       raise ActionError('Error applying drivers to image from %s. (%s)' %
                         (mount_dir, e))
@@ -104,18 +105,17 @@ class DriverWIM(BaseAction):
     """
     mount_dir = '%s\\Drivers\\' % constants.SYS_CACHE
 
-    # dism commands
-    mount = '{} /Mount-Image /ImageFile:{} /MountDir:{} /ReadOnly /Index:1'.format(
-        constants.WINPE_DISM, wim_file, mount_dir)
-    unmount = '{} /Unmount-Image /MountDir:{} /Discard'.format(
-        constants.WINPE_DISM, mount_dir)
-
     # create mount directory
     file_util.CreateDirectories(mount_dir)
 
     # mount image
     try:
-      execute.execute_binary(mount, shell=True)
+      execute.execute_binary(
+          constants.WINPE_DISM, [
+              '/Mount-Image', f'/ImageFile:{wim_file}',
+              f'/MountDir:{mount_dir}', '/ReadOnly', '/Index:1'
+          ],
+          shell=True)
     except execute.Error as e:
       raise ActionError('Unable to mount image %s. (%s)' % (wim_file, e))
 
@@ -124,6 +124,9 @@ class DriverWIM(BaseAction):
 
     # Unmount after running
     try:
-      execute.execute_binary(unmount, shell=True)
+      execute.execute_binary(
+          constants.WINPE_DISM,
+          ['/Unmount-Image', f'/MountDir:{mount_dir}', '/Discard'],
+          shell=True)
     except execute.Error as e:
       raise ActionError('Error unmounting image. Unable to continue. (%s)' % e)

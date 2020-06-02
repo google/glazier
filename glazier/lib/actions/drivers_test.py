@@ -52,9 +52,12 @@ class DriversTest(absltest.TestCase):
         show_progress=True)
     sha.assert_called_with(mock.ANY, local, sha_256)
     cache = drivers.constants.SYS_CACHE
-    exe.assert_called_with(('X:\\Windows\\System32\\dism.exe /Unmount-Image '
-                            '/MountDir:%s\\Drivers\\ /Discard' % cache),
-                           shell=True)
+    exe.assert_called_with(
+        'X:\\Windows\\System32\\dism.exe', [
+            '/Unmount-Image', f'/MountDir:{cache}\\Drivers\\',
+            '/Discard'
+        ],
+        shell=True)
     mkdir.assert_called_with('%s\\Drivers\\' % cache)
 
     # Invalid format
