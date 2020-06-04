@@ -50,7 +50,7 @@ class Cache(object):
       The local disk path as a string.
     """
     file_name = url.split('/').pop()
-    destination = os.path.join(cache_path, file_name)
+    destination = os.path.join(cache_path + os.sep, file_name)
     return destination
 
   def _FindDownload(self, line: Text) -> Optional[Text]:

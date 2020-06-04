@@ -69,9 +69,9 @@ class CacheTest(absltest.TestCase):
 
   def testDestinationPath(self):
     path = self.cache._DestinationPath(
-        r'C:\Cache\Path', 'http://some.web.address/folder/other/'
+        'C:', 'http://some.web.address/folder/other/'
         'an_installer.msi')
-    self.assertEqual(path, os.path.join(r'C:\Cache\Path', 'an_installer.msi'))
+    self.assertEqual(path, os.path.join('C:', 'an_installer.msi'))
 
   def testFindDownload(self):
     line_test = self.cache._FindDownload('powershell -file '
