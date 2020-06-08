@@ -51,7 +51,7 @@ class PSScript(BaseAction):
 
     logging.info('Interpreting PowerShell script: %s', script)
     try:
-      script = cache.Cache().CacheFromLine(script, self._build_info)
+      script = cache.Cache().CacheFromLine(script, self._build_info)  # pytype: disable=annotation-type-mismatch
     except cache.CacheError as e:
       raise ActionError(e)
 
