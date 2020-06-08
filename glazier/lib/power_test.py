@@ -29,7 +29,7 @@ class PowerTest(absltest.TestCase):
 
     power.Restart(60, 'Reboot fixes everything.')
     call.assert_called_with('%s\\shutdown.exe -r -t 60 '
-                            '-c "Reboot fixes everything." -f' %
+                            '-c "Reboot fixes everything."' %
                             power.constants.WINPE_SYSTEM32)
 
     # Use hosts paths
@@ -37,7 +37,7 @@ class PowerTest(absltest.TestCase):
 
     power.Restart(60, 'Reboot fixes everything.')
     call.assert_called_with('%s\\shutdown.exe -r -t 60 '
-                            '-c "Reboot fixes everything." -f' %
+                            '-c "Reboot fixes everything."' %
                             power.constants.SYS_SYSTEM32)
 
   @mock.patch.object(power.winpe, 'check_winpe', autospec=True)
@@ -48,7 +48,7 @@ class PowerTest(absltest.TestCase):
 
     power.Shutdown(30, 'Because I said so.')
     call.assert_called_with('%s\\shutdown.exe -s -t 30 '
-                            '-c "Because I said so." -f' %
+                            '-c "Because I said so."' %
                             power.constants.WINPE_SYSTEM32)
 
     # Use hosts paths
@@ -56,7 +56,7 @@ class PowerTest(absltest.TestCase):
 
     power.Shutdown(30, 'Because I said so.')
     call.assert_called_with('%s\\shutdown.exe -s -t 30 '
-                            '-c "Because I said so." -f' %
+                            '-c "Because I said so."' %
                             power.constants.SYS_SYSTEM32)
 
 if __name__ == '__main__':

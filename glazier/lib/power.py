@@ -37,8 +37,8 @@ def Shutdown(timeout: Text, reason: Text):
     reason: Reason why the machine is being shut down.  This will be displayed
       to the user and written to the Windows event log.
   """
-  subprocess.call(r'%s\shutdown.exe -s -t %s -c "%s" -f'
-                  % (_System32(), timeout, reason))
+  subprocess.call(r'%s\shutdown.exe -s -t %s -c "%s"' %
+                  (_System32(), timeout, reason))
 
 
 def Restart(timeout: Text, reason: Text):
@@ -49,5 +49,5 @@ def Restart(timeout: Text, reason: Text):
     reason: Reason why the machine is being restarted. This will be displayed
       to the user and written to the Windows event log.
   """
-  subprocess.call(r'%s\shutdown.exe -r -t %s -c "%s" -f'
-                  % (_System32(), timeout, reason))
+  subprocess.call(r'%s\shutdown.exe -r -t %s -c "%s"' %
+                  (_System32(), timeout, reason))
