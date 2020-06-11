@@ -17,11 +17,11 @@
 import logging
 import os
 from glazier.lib import constants
+from glazier.lib import execute
 from glazier.lib import file_util
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import ValidationError
-from glazier.lib.actions.files import Execute
 from glazier.lib.actions.files import Get
 
 
@@ -88,17 +88,16 @@ class UpdateMSU(BaseAction):
     # create scratch directory
     file_util.CreateDirectories(scratch_dir)
 
-    # dism commands
-    update = [
-        '{} /image:c:\\ /Add-Package /PackagePath:{} /ScratchDir:{}'.format(
-            constants.WINPE_DISM, msu_file, scratch_dir)
-    ]
-
     logging.info('Applying %s image to main disk.', msu_file)
 
     # Apply updates to  image
-    ex = Execute([update], self._build_info)
     try:
-      ex.Run()
-    except ActionError as e:
-      raise ActionError('Unable to process update %s. (%s)' % (msu_file, e))
+      execute.execute_binary(
+          constants.WINPE_DISM, [
+              '/image:c:\\', '/Add-Package'
+              f'/PackagePath:{msu_file}'
+              f'/ScratchDir:{scratch_dir}'
+          ],
+          shell=True)
+    except execute.Error as e:
+      raise ActionError('Failed to process update %s: %s' % (msu_file, e))

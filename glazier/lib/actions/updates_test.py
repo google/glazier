@@ -25,7 +25,7 @@ class UpdatesTest(absltest.TestCase):
   @mock.patch.object(BuildInfo, 'ReleasePath')
   @mock.patch('glazier.lib.download.Download.VerifyShaHash', autospec=True)
   @mock.patch('glazier.lib.download.Download.DownloadFile', autospec=True)
-  @mock.patch.object(updates, 'Execute', autospec=True)
+  @mock.patch.object(updates.execute, 'execute_binary', autospec=True)
   @mock.patch.object(updates.file_util, 'CreateDirectories', autospec=True)
   def testUpdateMSU(self, mkdir, exe, dl, sha, rpath):
     bi = BuildInfo()
@@ -49,10 +49,12 @@ class UpdatesTest(absltest.TestCase):
         show_progress=True)
     sha.assert_called_with(mock.ANY, local, sha_256)
     cache = updates.constants.SYS_CACHE
-    exe.assert_called_with([[(
-        'X:\\Windows\\System32\\dism.exe /image:c:\\ '
-        '/Add-Package /PackagePath:c:\\KB2990941-v3-x64.msu '
-        '/ScratchDir:%s\\Updates\\' % cache)]], mock.ANY)
+    exe.assert_called_with(
+        'X:\\Windows\\System32\\dism.exe', [
+            '/image:c:\\',
+            f'/Add-Package/PackagePath:c:\\KB2990941-v3-x64.msu/ScratchDir:{cache}\\Updates\\'
+        ],
+        shell=True)
     mkdir.assert_called_with('%s\\Updates\\' % cache)
 
     # Invalid format
@@ -62,8 +64,9 @@ class UpdatesTest(absltest.TestCase):
     conf['data']['update'][0][1] = 'C:\\Windows6.1-KB2990941-v3-x64.msu'
 
     # Dism Fail
-    exe.return_value.Run.side_effect = updates.ActionError()
-    self.assertRaises(updates.ActionError, um.Run)
+    exe.side_effect = updates.execute.Error
+    with self.assertRaises(updates.ActionError):
+      um.Run()
 
   def testUpdateMSUValidate(self):
     g = updates.UpdateMSU('String', None)
