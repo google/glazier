@@ -15,11 +15,11 @@
 """Actions for interacting with files (text, zip, exe, etc)."""
 
 import logging
-import subprocess
-import time
+from typing import List, Optional, Text
 import zipfile
 from glazier.lib import cache
 from glazier.lib import download
+from glazier.lib import execute
 from glazier.lib import file_util
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
@@ -30,40 +30,30 @@ from glazier.lib.actions.base import ValidationError
 class Execute(BaseAction):
   """Run an executable."""
 
-  def _Run(self, command, success_codes, reboot_codes, restart_retry):
-    c = cache.Cache()
+  def _Run(self, command: Text, success_codes: Optional[List[int]],
+           reboot_codes: Optional[List[int]], restart_retry: Optional[bool]):
     logging.debug('Interpreting command %s', command)
     try:
-      command = c.CacheFromLine(command, self._build_info)
+      command = cache.Cache().CacheFromLine(command, self._build_info)
     except cache.CacheError as e:
       raise ActionError(e)
+
     logging.info('Executing command %s', command)
     try:
-      result = subprocess.Popen(command,
-                                shell=True,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT)
-      while True:
-        output = result.stdout.readline()
-        if not output and result.poll() is not None:
-          break
-        if output:
-          logging.info(output.strip().decode('UTF-8'))
-
-    except WindowsError as e:  # pylint: disable=undefined-variable
-      raise ActionError('Failed to execute command %s (%s)' % (command, str(e)))
+      command = command.split(' ')
+      result = execute.execute_binary(command[0], command[1:])
+    except execute.Error as e:
+      raise ActionError(e)
     except KeyboardInterrupt:
-      logging.debug('Child received KeyboardInterrupt. Ignoring.')
+      raise ActionError('KeyboardInterrupt detected, exiting.')
 
-    if result.returncode in reboot_codes:
+    if result in reboot_codes:
       raise RestartEvent(
-          'Restart triggered by exit code %d' % result.returncode,
+          'Restart triggered by exit code %d' % result,
           5,
           retry_on_restart=restart_retry)
-    elif result.returncode not in success_codes:
-      raise ActionError('Command returned invalid exit code %d' %
-                        result.returncode)
-    time.sleep(5)
+    elif result not in success_codes:
+      raise ActionError('Command returned invalid exit code %d' % result)
 
   def Run(self):
     for cmd in self._args:
