@@ -74,6 +74,7 @@ class BuildInfoDump(BaseAction):
 
   def Run(self):
     path = os.path.join(constants.SYS_CACHE, 'build_info.yaml')
+    logging.debug('Dumping build information to file: %s', path)
     self._build_info.Serialize(path)
 
 
