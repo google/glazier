@@ -81,9 +81,6 @@ class ExecuteTest(absltest.TestCase):
     popen.side_effect = execute.WindowsError
     self.assertRaises(execute.Error, execute.execute_binary, self.binary)
 
-  def test_execute_binary_no_file(self):
-    self.assertRaises(execute.Error, execute.execute_binary, r'C:\bar.exe')
-
   @mock.patch.object(execute.logging, 'info', autospec=True)
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
   def test_execute_binary_silent(self, popen, i):

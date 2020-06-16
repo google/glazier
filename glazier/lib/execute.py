@@ -15,7 +15,6 @@
 """Common process execution function wrappers."""
 
 import logging
-import os
 import subprocess
 from typing import List, Optional, Text
 
@@ -43,10 +42,8 @@ def execute_binary(binary: Text, args: Optional[List[Text]] = None,
   Raises:
     Error: Command returned invalid exit code.
   """
-  if not os.path.exists(binary):
-    raise Error('Failed to locate binary: {}'.format(binary))
-
-  cmd = [binary]
+  # If there is a quote in the binary, remove it.
+  cmd = [binary.replace('"', '')]
   if args:
     cmd += args
   string = ' '.join(map(str, cmd))
@@ -65,7 +62,7 @@ def execute_binary(binary: Text, args: Optional[List[Text]] = None,
     process = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, shell=shell,
                                universal_newlines=True)
   except WindowsError as e:  # pylint: disable=undefined-variable
-    raise Error('Failed to execute: %s (%s)' % (string, str(e)))
+    raise Error('Failed to execute "%s": %s' % (string, str(e)))
 
   # Optionally log output to standard logger
   if shell:
