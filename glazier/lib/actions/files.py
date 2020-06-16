@@ -15,7 +15,8 @@
 """Actions for interacting with files (text, zip, exe, etc)."""
 
 import logging
-from typing import List, Optional, Text
+import shlex
+from typing import List, Text
 import zipfile
 from glazier.lib import cache
 from glazier.lib import download
@@ -30,50 +31,48 @@ from glazier.lib.actions.base import ValidationError
 class Execute(BaseAction):
   """Run an executable."""
 
-  def _Run(self, command: Text, success_codes: Optional[List[int]],
-           reboot_codes: Optional[List[int]], restart_retry: Optional[bool]):
-    logging.debug('Interpreting command %s', command)
+  def _Run(self, command: Text, success_codes: List[int],
+           reboot_codes: List[int], restart_retry: bool, shell: bool):
+    logging.debug('Interpreting command: %s', command)
     try:
-      command = cache.Cache().CacheFromLine(command, self._build_info)
+      command_cache = cache.Cache().CacheFromLine(command, self._build_info)
     except cache.CacheError as e:
       raise ActionError(e)
 
-    logging.info('Executing command %s', command)
     try:
-      command = command.split(' ')
-      result = execute.execute_binary(command[0], command[1:])
-    except execute.Error as e:
+      command_list = shlex.split(command_cache, posix=False)
+      result = execute.execute_binary(
+          command_list[0],
+          command_list[1:],
+          success_codes + reboot_codes,
+          shell=shell)
+    except (execute.Error, ValueError) as e:
       raise ActionError(e)
     except KeyboardInterrupt:
       raise ActionError('KeyboardInterrupt detected, exiting.')
 
     if result in reboot_codes:
       raise RestartEvent(
-          'Restart triggered by exit code %d' % result,
+          'Restart triggered by exit code: %d' % result,
           5,
           retry_on_restart=restart_retry)
     elif result not in success_codes:
-      raise ActionError('Command returned invalid exit code %d' % result)
+      raise ActionError('Command returned invalid exit code: %d' % result)
 
   def Run(self):
     for cmd in self._args:
       command = cmd[0]
-      success_codes = [0]
-      reboot_codes = []
-      restart_retry = False
-      if len(cmd) > 1 and cmd[1]:
-        success_codes = cmd[1]
-      if len(cmd) > 2 and cmd[2]:
-        reboot_codes = cmd[2]
-      if len(cmd) > 3:
-        restart_retry = cmd[3]
-      self._Run(command, success_codes, reboot_codes, restart_retry)
+      success_codes = cmd[1] if len(cmd) > 1 else [0]
+      reboot_codes = cmd[2] if len(cmd) > 2 else []
+      restart_retry = cmd[3] if len(cmd) > 3 else False
+      shell = cmd[4] if len(cmd) > 4 else False
+      self._Run(command, success_codes, reboot_codes, restart_retry, shell)
 
   def Validate(self):
     self._TypeValidator(self._args, list)
     for cmd_arg in self._args:
       self._TypeValidator(cmd_arg, list)
-      if not 1 <= len(cmd_arg) <= 4:
+      if not 1 <= len(cmd_arg) <= 5:
         raise ValidationError('Invalid args length: %s' % cmd_arg)
       self._TypeValidator(cmd_arg[0], str)  # cmd
       if len(cmd_arg) > 1:  # success codes
@@ -86,6 +85,8 @@ class Execute(BaseAction):
           self._TypeValidator(arg, int)
       if len(cmd_arg) > 3:  # retry on restart
         self._TypeValidator(cmd_arg[3], bool)
+      if len(cmd_arg) > 4:  # shell
+        self._TypeValidator(cmd_arg[4], bool)
 
 
 class Get(BaseAction):

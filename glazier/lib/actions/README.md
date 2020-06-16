@@ -181,6 +181,8 @@ program executions occurring as part of a typical imaging process.
         *   ArgD[bool]: Rerun after a reboot occurs. A reboot code must be
             provided and returned by the execution.)
             *   Default: False
+        *   ArgE[bool]: Log console output ONLY to the shell.
+            *   Default: False
     *   Arg2[list]: The second command to execute. (optional)
     *   ...
 

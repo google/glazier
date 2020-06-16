@@ -31,14 +31,17 @@ class FilesTest(absltest.TestCase):
         self.filesystem)
     files.WindowsError = Exception
 
+  # TODO: Split into separate tests.
   @mock.patch.object(files.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(files.shlex, 'split', autospec=True)
   @mock.patch.object(files.cache.Cache, 'CacheFromLine', autospec=True)
-  def testExecute(self, cache, eb):
+  def testExecute(self, cache, split, eb):
     bi = buildinfo.BuildInfo()
     cache.side_effect = iter(['cmd.exe /c', 'explorer.exe'])
     eb.return_value = 0
     e = files.Execute([['cmd.exe /c', [0]], ['explorer.exe']], bi)
     e.Run()
+    self.assertTrue(split.called)
 
     # success codes
     cache.side_effect = None
@@ -64,6 +67,10 @@ class FilesTest(absltest.TestCase):
     self.assertEqual(exception.retry_on_restart, True)
     cache.assert_called_with(mock.ANY, 'cmd.exe /c #script.bat', bi)
 
+    # Shell
+    files.Execute([['cmd.exe /c #script.bat', [4], [0], True, True]], bi).Run()
+    eb.assert_called_with(mock.ANY, mock.ANY, [4, 0], shell=True)
+
     # KeyboardInterrupt
     eb.side_effect = KeyboardInterrupt
     with self.assertRaises(files.ActionError):
@@ -74,11 +81,17 @@ class FilesTest(absltest.TestCase):
     with self.assertRaises(files.ActionError):
       e.Run()
 
+    # ValueError
+    split.side_effect = ValueError
+    with self.assertRaises(files.ActionError):
+      e.Run()
+
     # Cache error
     cache.side_effect = files.cache.CacheError
     with self.assertRaises(files.ActionError):
       e.Run()
 
+  # TODO: Paramaterize and add cm for these tests (go/pytotw/011).
   def testExecuteValidation(self):
     e = files.Execute([['cmd.exe', [0], [2], False], ['explorer.exe']], None)
     e.Validate()
@@ -96,6 +109,9 @@ class FilesTest(absltest.TestCase):
     self.assertRaises(files.ValidationError, e.Validate)
     e = files.Execute([['cmd.exe', [0], [2], 'True'], ['explorer.exe']], None)
     self.assertRaises(files.ValidationError, e.Validate)
+    with self.assertRaises(files.ValidationError):
+      files.Execute([['cmd.exe', [0], [2], False, 'True'], ['explorer.exe']],
+                    None).Validate()
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
   @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
