@@ -193,8 +193,10 @@ program executions occurring as part of a typical imaging process.
       ['C:\Windows\System32\netsh.exe interface teredo set state disabled'],
       # 0 or 1 are successful exit codes, 3010 will trigger a restart.
       ['C:\Windows\System32\msiexec.exe /i @Drivers/HP/zbook/HP_Hotkey_Support_6_2_20_8.msi /qn /norestart', [0,1], [3010]],
-      # 0 is a successful exit code, 2 will trigger a restart, and 'True' will rerun the command after the restart.
+      # 0 is a successful exit code, 2 will trigger a restart, and True will rerun the command after the restart.
       ['C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #secureboot.ps1', [0], [2], True]
+      # 0 is a successful exit code, 2 will trigger a restart, and True will ONLY log output to console.
+      ['C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #secureboot.ps1', [0], [2], False. True]
     ]
 
 ### ExitWinPE
