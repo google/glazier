@@ -16,6 +16,8 @@
 
 import os
 import sys
+import traceback
+
 from absl import app
 from absl import flags
 from glazier.lib import buildinfo
@@ -35,13 +37,17 @@ logging = logs.logging
 _FAILURE_MSG = ('%s\n\nInstaller cannot continue.')
 
 
-def _LogFatal(msg):
+def _LogFatal(msg, code=None):
   """Log a fatal error and exit.
 
   Args:
     msg: The error message to accompany the failure.
+    code: Error code to append to the failure message.
   """
-  logging.fatal(_FAILURE_MSG, msg)
+  string = _FAILURE_MSG
+  if code:
+    string = _FAILURE_MSG + '#' + str(code)
+  logging.fatal(string, msg)
   sys.exit(1)
 
 
@@ -95,6 +101,8 @@ def main(unused_argv):
   except KeyboardInterrupt:
     logging.fatal('KeyboardInterrupt detected, exiting.')
     sys.exit(1)
+  except Exception:  # pylint: disable=broad-except
+    _LogFatal(traceback.format_exc(), 4000)
 
 
 if __name__ == '__main__':

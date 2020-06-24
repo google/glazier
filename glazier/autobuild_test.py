@@ -34,6 +34,18 @@ class BuildInfoTest(absltest.TestCase):
     self.filesystem = fake_filesystem.FakeFilesystem()
     autobuild.os = fake_filesystem.FakeOsModule(self.filesystem)
 
+  def testLogFatal(self):
+    with self.assertRaises(LogFatalError):
+      autobuild._LogFatal('image failed')
+    autobuild.logging.fatal.assert_called_with(f'{autobuild._FAILURE_MSG}',
+                                               'image failed')
+
+  def testLogFatalCode(self):
+    with self.assertRaises(LogFatalError):
+      autobuild._LogFatal('image failed', 1234)
+    autobuild.logging.fatal.assert_called_with(f'{autobuild._FAILURE_MSG}#1234',
+                                               'image failed')
+
   @mock.patch.object(autobuild.winpe, 'check_winpe', autospec=True)
   def testSetupTaskList(self, wpe):
     # Host
@@ -76,6 +88,13 @@ class BuildInfoTest(absltest.TestCase):
   def testMainError(self, ab):
     ab.return_value.RunBuild.side_effect = KeyboardInterrupt
     self.assertRaises(LogFatalError, autobuild.main, 'something')
+
+  @mock.patch.object(autobuild, 'AutoBuild', autospec=True)
+  def testMainException(self, ab):
+    ab.return_value.RunBuild.side_effect = Exception
+    with self.assertRaises(LogFatalError):
+      autobuild.main('something')
+
 
 if __name__ == '__main__':
   absltest.main()
