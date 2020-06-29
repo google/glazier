@@ -64,6 +64,7 @@ SetupCache = file_system.SetupCache
 ShowChooser = installer.ShowChooser
 Shutdown = system.Shutdown
 Sleep = installer.Sleep
+StartStage = installer.StartStage
 Unzip = files.Unzip
 UpdateMSU = updates.UpdateMSU
 Warn = abort.Warn
