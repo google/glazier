@@ -19,6 +19,7 @@ import logging
 import socket
 from typing import Optional, Text
 
+from glazier.lib import constants
 from glazier.lib import interact
 from glazier.lib import registry
 
@@ -35,7 +36,7 @@ def get_username() -> Optional[Text]:
     username as a string.
   """
   try:
-    return registry.get_value('Username')
+    return registry.get_value('Username', path=constants.REG_ROOT)
   except registry.Error as e:
     logging.error(str(e))
 
@@ -59,7 +60,7 @@ def set_username(username: Optional[Text] = None,
   if not username:
     username = interact.GetUsername(prompt)
   try:
-    registry.set_value('Username', username)
+    registry.set_value('Username', username, path=constants.REG_ROOT)
   except registry.Error as e:
     raise Error(str(e))
 
@@ -74,7 +75,7 @@ def get_hostname() -> Optional[Text]:
     The hostname as a string, obtained from the registry value 'name'.
   """
   try:
-    hostname = registry.get_value('Name')
+    hostname = registry.get_value('Name', path=constants.REG_ROOT)
   except registry.Error as e:
     logging.error(str(e))
   else:
@@ -101,7 +102,7 @@ def set_hostname(hostname: Optional[Text] = None) -> Text:
   hostname = hostname.strip()
 
   try:
-    registry.set_value('Name', hostname)
+    registry.set_value('Name', hostname, path=constants.REG_ROOT)
   except registry.Error as e:
     raise Error(str(e))
 

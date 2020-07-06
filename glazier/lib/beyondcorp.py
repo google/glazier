@@ -74,13 +74,13 @@ class BeyondCorp(object):
 
     if FLAGS.use_signed_url:
       try:
-        registry.set_value('beyond_corp', 'True')
+        registry.set_value('beyond_corp', 'True', path=constants.REG_ROOT)
         return True
       except registry.Error as e:
         raise BCError(str(e))
     else:
       try:
-        bc = registry.get_value('beyond_corp')
+        bc = registry.get_value('beyond_corp', path=constants.REG_ROOT)
         if bc:
           if bc.lower() == 'true':
             return True
@@ -90,7 +90,7 @@ class BeyondCorp(object):
         logging.warning(str(e))
 
     try:
-      registry.set_value('beyond_corp', 'False')
+      registry.set_value('beyond_corp', 'False', path=constants.REG_ROOT)
     except registry.Error as e:
       raise BCError(str(e))
     return False

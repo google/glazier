@@ -15,7 +15,10 @@
 """Tests for glazier.lib.identity."""
 
 from absl.testing import absltest
+
+from glazier.lib import constants
 from glazier.lib import identity
+
 import mock
 
 USERNAME = 'bert'
@@ -43,19 +46,19 @@ class RegUtilTest(absltest.TestCase):
     prompt.return_value = USERNAME
     self.assertEqual(identity.set_username(prompt='domain join'), USERNAME)
     prompt.assert_called_with('domain join')
-    sv.assert_called_with('Username', USERNAME)
+    sv.assert_called_with('Username', USERNAME, path=constants.REG_ROOT)
 
   @mock.patch.object(identity.interact, 'GetUsername', autospec=True)
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
   def test_set_username_none(self, sv, prompt):
     prompt.return_value = USERNAME
     self.assertEqual(identity.set_username(), USERNAME)
-    sv.assert_called_with('Username', USERNAME)
+    sv.assert_called_with('Username', USERNAME, path=constants.REG_ROOT)
 
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
   def test_set_username(self, sv):
     self.assertEqual(identity.set_username(USERNAME), USERNAME)
-    sv.assert_called_with('Username', USERNAME)
+    sv.assert_called_with('Username', USERNAME, path=constants.REG_ROOT)
 
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
   def test_set_username_error(self, sv):
@@ -80,12 +83,12 @@ class RegUtilTest(absltest.TestCase):
   def test_set_hostname_none(self, sv, gh):
     gh.return_value = HOSTNAME
     self.assertEqual(identity.set_hostname(), HOSTNAME)
-    sv.assert_called_with('Name', HOSTNAME)
+    sv.assert_called_with('Name', HOSTNAME, path=constants.REG_ROOT)
 
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
   def test_set_hostname(self, sv):
     self.assertEqual(identity.set_hostname(HOSTNAME), HOSTNAME)
-    sv.assert_called_with('Name', HOSTNAME)
+    sv.assert_called_with('Name', HOSTNAME, path=constants.REG_ROOT)
 
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
   def test_set_hostname_error(self, sv):

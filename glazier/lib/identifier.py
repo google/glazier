@@ -49,7 +49,7 @@ def _set_id() -> Text:
   """Set the image id registry key."""
   image_id = _generate_id()
   try:
-    registry.set_value('image_id', image_id)
+    registry.set_value('image_id', image_id, path=constants.REG_ROOT)
   except registry.Error as e:
     raise Error(str(e))
   return image_id
@@ -73,7 +73,7 @@ def _check_file() -> Text:
       try:
         input_config = yaml.safe_load(handle)
         image_id = input_config['BUILD']['image_id']
-        registry.set_value('image_id', image_id)
+        registry.set_value('image_id', image_id, path=constants.REG_ROOT)
         return image_id
       except registry.Error as e:
         raise Error(str(e))
@@ -94,7 +94,7 @@ def check_id() -> Text:
   """
   image_id = None
   try:
-    image_id = registry.get_value('image_id')
+    image_id = registry.get_value('image_id', path=constants.REG_ROOT)
   except registry.Error as e:
     logging.error(str(e))
 

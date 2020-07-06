@@ -19,6 +19,7 @@ import logging.handlers
 import shutil
 from typing import Text
 
+from glazier.lib import constants
 from glazier.lib import drive_map
 from glazier.lib import gtime
 from glazier.lib import logs
@@ -77,7 +78,7 @@ class LogCopy(object):
       The full text file log name (string).
     """
     try:
-      hostname = registry.get_value('name')
+      hostname = registry.get_value('name', path=constants.REG_ROOT)
     except registry.Error as e:
       raise LogCopyError('Hostname could not be determined for log copy: %s' %
                          str(e))

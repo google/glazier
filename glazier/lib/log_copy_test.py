@@ -20,6 +20,7 @@ import sys
 
 from absl.testing import absltest
 
+from glazier.lib import constants
 from glazier.lib import log_copy
 from glazier.lib import winpe
 import mock
@@ -51,7 +52,7 @@ class LogCopyTest(absltest.TestCase):
     dt.return_value = now
     result = lc._GetLogFileName()
     self.assertEqual(result, r'l:\WORKSTATION1-W-' + out_date + '.log')
-    gv.assert_called_with('name')
+    gv.assert_called_with('name', path=constants.REG_ROOT)
 
   @mock.patch.object(log_copy.registry, 'get_value', autospec=True)
   def testGetLogFileNameError(self, gv):

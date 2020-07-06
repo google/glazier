@@ -20,7 +20,10 @@ from __future__ import print_function
 
 from absl.testing import absltest
 from pyfakefs import fake_filesystem
+
+from glazier.lib import constants
 from glazier.lib import identifier
+
 import mock
 
 TEST_UUID = identifier.uuid.UUID('12345678123456781234567812345678')
@@ -53,7 +56,7 @@ class IdentifierTest(absltest.TestCase):
   def test_set_id(self, genid, sv):
     genid.return_value = TEST_ID
     identifier._set_id()
-    sv.assert_called_with('image_id', TEST_ID)
+    sv.assert_called_with('image_id', TEST_ID, path=constants.REG_ROOT)
     self.assertEqual(identifier._set_id(), TEST_ID)
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
@@ -68,7 +71,7 @@ class IdentifierTest(absltest.TestCase):
         contents=
         '{BUILD: {opt 1: true, TIMER_opt 2: some value, image_id: 12345}}\n')
     identifier._check_file()
-    sv.assert_called_with('image_id', 12345)
+    sv.assert_called_with('image_id', 12345, path=constants.REG_ROOT)
     self.assertEqual(identifier._check_file(), 12345)
 
   def test_check_file_no_id(self):
