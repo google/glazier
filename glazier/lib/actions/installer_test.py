@@ -123,7 +123,8 @@ class InstallerTest(absltest.TestCase):
         mock.call('opt 1', True, 'HKLM', installer.constants.REG_ROOT),
         mock.call('TIMER_opt 2', 'some value', 'HKLM', timer_root),
         mock.call('opt 3', 12345, 'HKLM', installer.constants.REG_ROOT),
-    ], any_order=True)
+    ],
+                        any_order=True)
     s.Run()
 
   @mock.patch.object(installer.logging, 'debug', autospec=True)
@@ -232,6 +233,20 @@ class InstallerTest(absltest.TestCase):
     set_stage.assert_called_with(1)
 
   @mock.patch.object(installer.stage, 'set_stage', autospec=True)
+  @mock.patch.object(installer.stage, 'exit_stage', autospec=True)
+  def testStartNonTerminalStage(self, exit_stage, set_stage):
+    installer.StartStage([50, False], None).Run()
+    set_stage.assert_called_with(50)
+    self.assertFalse(exit_stage.called)
+
+  @mock.patch.object(installer.stage, 'set_stage', autospec=True)
+  @mock.patch.object(installer.stage, 'exit_stage', autospec=True)
+  def testStartTerminalStage(self, exit_stage, set_stage):
+    installer.StartStage([100, True], None).Run()
+    set_stage.assert_called_with(100)
+    exit_stage.assert_called_with(100)
+
+  @mock.patch.object(installer.stage, 'set_stage', autospec=True)
   def testStartStageException(self, set_stage):
     set_stage.side_effect = stage.Error('Test')
     ss = installer.StartStage([2], None)
@@ -243,6 +258,8 @@ class InstallerTest(absltest.TestCase):
     s = installer.StartStage([1, 2, 3], None)
     self.assertRaises(installer.ValidationError, s.Validate)
     s = installer.StartStage(['30'], None)
+    self.assertRaises(installer.ValidationError, s.Validate)
+    s = installer.StartStage([30, 'Hello'], None)
     self.assertRaises(installer.ValidationError, s.Validate)
     s = installer.StartStage([30], None)
     s.Validate()

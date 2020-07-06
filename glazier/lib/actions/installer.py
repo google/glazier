@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Actions for managing the installer."""
 
 import logging
@@ -127,11 +126,11 @@ class ExitWinPE(BaseAction):
   """Exit the WinPE environment to start host configuration."""
 
   def Run(self):
-    cp = file_system.CopyFile([constants.WINPE_TASK_LIST,
-                               constants.SYS_TASK_LIST], self._build_info)
+    cp = file_system.CopyFile(
+        [constants.WINPE_TASK_LIST, constants.SYS_TASK_LIST], self._build_info)
     cp.Run()
-    cp = file_system.CopyFile([constants.WINPE_BUILD_LOG,
-                               constants.SYS_BUILD_LOG], self._build_info)
+    cp = file_system.CopyFile(
+        [constants.WINPE_BUILD_LOG, constants.SYS_BUILD_LOG], self._build_info)
     cp.Run()
     raise RestartEvent(
         'Leaving WinPE', timeout=10, task_list_path=constants.SYS_TASK_LIST)
@@ -206,11 +205,16 @@ class StartStage(BaseAction):
   def Run(self):
     try:
       stage.set_stage(int(self._args[0]))
+      # Terminal stages exit immediately; the build should be complete.
+      if len(self._args) > 1 and self._args[1]:
+        stage.exit_stage(int(self._args[0]))
     except stage.Error as e:
       raise ActionError(str(e))
 
   def Validate(self):
     self._TypeValidator(self._args, list)
-    if len(self._args) != 1:
+    if len(self._args) > 2:
       raise ValidationError('Invalid args length: %s' % self._args)
     self._TypeValidator(self._args[0], int)
+    if len(self._args) > 1:
+      self._TypeValidator(self._args[1], bool)

@@ -581,6 +581,7 @@ through the imaging process.
 
 *   Format: List
     *   Arg1[int]: Stage number
+    *   Arg2[bool]: If True, indicates a terminal stage (the last stage of the build). The action will set both the start and end time on the stage, assuming no subsequent stages are yet to come. (optional)
 
 #### Examples
 
