@@ -14,9 +14,9 @@
 """Unit tests for autobuild."""
 
 from absl.testing import absltest
-from pyfakefs import fake_filesystem
 from glazier import autobuild
 import mock
+from pyfakefs import fake_filesystem
 
 
 class LogFatalError(Exception):
@@ -56,7 +56,7 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
 
     # WinPE
-    self.filesystem.CreateFile(autobuild.constants.WINPE_TASK_LIST)
+    self.filesystem.create_file(autobuild.constants.WINPE_TASK_LIST)
     wpe.return_value = True
     tasklist = autobuild.constants.WINPE_TASK_LIST
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
