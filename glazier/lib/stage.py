@@ -26,7 +26,7 @@ from __future__ import print_function
 
 import datetime
 import logging
-from typing import Optional, Text
+from typing import Optional, Text, Tuple
 
 from absl import flags
 from glazier.lib import constants
@@ -79,14 +79,48 @@ def get_active_stage() -> Optional[int]:
 
 def get_active_time(stage_id: int) -> datetime.timedelta:
   """Get the amount of time we've been in the current stage."""
-  start = _load_time(stage_id, 'Start')
+  start, end = _get_start_end(stage_id)
   if not start:
     raise Error('Stage %d does not contain a valid Start time.' % stage_id)
-  end = _load_time(stage_id, 'End')
   if not end:
     logging.info('Stage %d not complete. Using current time.', stage_id)
     end = _utc_now()
   return end - start
+
+
+def get_status() -> str:
+  """Get the interpreted build status.
+
+  Returns:
+    str
+
+    * Unknown: The stage cannot be determined.
+    * Complete: Glazier is comlete.
+    * Running: Glazier is active.
+    * Expired: Glazier started, but has not completed all stages within the
+        allowed time limit.
+  """
+  stage_id = get_active_stage()
+  if not stage_id:
+    return 'Unknown'
+  start, end = _get_start_end(stage_id)
+  if not start:
+    return 'Unknown'
+  if start and end:
+    return 'Complete'
+  try:
+    _check_expiration(stage_id)
+  except Error:
+    return 'Expired'
+  return 'Running'
+
+
+def _get_start_end(
+    stage_id: int
+) -> Tuple[Optional[datetime.datetime], Optional[datetime.datetime]]:
+  start = _load_time(stage_id, 'Start')
+  end = _load_time(stage_id, 'End')
+  return start, end
 
 
 def _load_time(stage_id: int, key: Text) -> Optional[datetime.datetime]:
