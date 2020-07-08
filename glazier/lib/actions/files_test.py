@@ -14,11 +14,13 @@
 
 """Tests for glazier.lib.actions.files."""
 from absl.testing import absltest
-from pyfakefs import fake_filesystem
-from pyfakefs import fake_filesystem_shutil
+
 from glazier.lib import buildinfo
 from glazier.lib.actions import files
+
 import mock
+from pyfakefs import fake_filesystem
+from pyfakefs import fake_filesystem_shutil
 
 
 class FilesTest(absltest.TestCase):
@@ -123,7 +125,7 @@ class FilesTest(absltest.TestCase):
     local = r'/tmp/autobuild.par'
     test_sha256 = (
         '58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800')
-    self.filesystem.CreateFile(
+    self.filesystem.create_file(
         r'/tmp/autobuild.par.sha256', contents=test_sha256)
     down_file.return_value = True
     conf = [[remote, local]]
@@ -151,7 +153,7 @@ class FilesTest(absltest.TestCase):
     self.assertRaises(files.ActionError, g.Run)
     down_file.side_effect = None
     # file_util.Error
-    self.filesystem.CreateFile('/directory')
+    self.filesystem.create_file('/directory')
     g = files.Get([[remote, '/directory/file.txt']], bi)
     self.assertRaises(files.ActionError, g.Run)
     # good hash

@@ -15,9 +15,11 @@
 """Tests for glazier.chooser.chooser."""
 
 from absl.testing import absltest
-from pyfakefs import fake_filesystem
+
 from glazier.chooser import chooser
+
 import mock
+from pyfakefs import fake_filesystem
 
 _TEST_CONF = [{
     'name':
@@ -119,7 +121,7 @@ class ChooserTest(absltest.TestCase):
 
     self.fs = fake_filesystem.FakeFilesystem()
     chooser.resources.os = fake_filesystem.FakeOsModule(self.fs)
-    self.fs.CreateFile('/resources/logo.gif')
+    self.fs.create_file('/resources/logo.gif')
 
   @mock.patch.object(chooser.fields, 'Timer', autospec=True)
   def testDislpay(self, timer):

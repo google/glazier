@@ -15,13 +15,14 @@
 """Tests for glazier.lib.config.runner."""
 
 from absl.testing import absltest
-from pyfakefs import fake_filesystem
-from pyfakefs import fake_filesystem_shutil
+
 from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib.config import runner
 
 import mock
+from pyfakefs import fake_filesystem
+from pyfakefs import fake_filesystem_shutil
 
 
 class ConfigRunnerTest(absltest.TestCase):

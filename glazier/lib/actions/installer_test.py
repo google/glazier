@@ -15,11 +15,13 @@
 
 
 from absl.testing import absltest
-from pyfakefs import fake_filesystem
+
 from glazier.lib import buildinfo
 from glazier.lib import stage
 from glazier.lib.actions import installer
+
 import mock
+from pyfakefs import fake_filesystem
 
 
 class InstallerTest(absltest.TestCase):
@@ -113,7 +115,7 @@ class InstallerTest(absltest.TestCase):
     installer.open = fake_filesystem.FakeFileOpen(fs)
     installer.os = fake_filesystem.FakeOsModule(fs)
     timer_root = r'{0}\{1}'.format(installer.constants.REG_ROOT, 'Timers')
-    fs.CreateFile(
+    fs.create_file(
         '{}/build_info.yaml'.format(installer.constants.SYS_CACHE),
         contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, opt 3: 12345}}\n'
     )

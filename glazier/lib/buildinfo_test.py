@@ -72,7 +72,7 @@ class BuildInfoTest(absltest.TestCase):
     super(BuildInfoTest, self).setUp()
     # fake filesystem
     self.filesystem = fake_filesystem.FakeFilesystem()
-    self.filesystem.CreateDirectory('/dev')
+    self.filesystem.create_dir('/dev')
     buildinfo.os = fake_filesystem.FakeOsModule(self.filesystem)
     buildinfo.open = fake_filesystem.FakeFileOpen(self.filesystem)
     # setup

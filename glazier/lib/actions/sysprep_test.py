@@ -59,7 +59,7 @@ class SysprepTest(absltest.TestCase):
   def setUp(self):
     super(SysprepTest, self).setUp()
     fs = fake_filesystem.FakeFilesystem()
-    fs.CreateDirectory('/windows/panther')
+    fs.create_dir('/windows/panther')
     fs.create_file('/windows/panther/unattend.xml', contents=UNATTEND_XML)
     self.fake_open = fake_filesystem.FakeFileOpen(fs)
     sysprep.os = fake_filesystem.FakeOsModule(fs)

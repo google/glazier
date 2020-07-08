@@ -27,7 +27,7 @@ class CacheTest(absltest.TestCase):
     super(CacheTest, self).setUp()
     self.cache = cache.Cache()
     fs = fake_filesystem.FakeFilesystem()
-    fs.CreateDirectory(r'C:\Directory')
+    fs.create_dir(r'C:\Directory')
     os_module = fake_filesystem.FakeOsModule(fs)
     self.mock_open = fake_filesystem.FakeFileOpen(fs)
     cache.os = os_module

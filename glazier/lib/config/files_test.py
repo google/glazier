@@ -15,10 +15,12 @@
 """Tests for glazier.lib.config.files."""
 
 from absl.testing import absltest
-from pyfakefs import fake_filesystem
+
 from glazier.lib import file_util
 from glazier.lib.config import files
+
 import mock
+from pyfakefs import fake_filesystem
 
 
 class FilesTest(absltest.TestCase):
@@ -39,8 +41,8 @@ class FilesTest(absltest.TestCase):
 
   @mock.patch.object(files.download.Download, 'DownloadFileTemp', autospec=True)
   def testRead(self, download):
-    self.filesystem.CreateFile('/tmp/downloaded1.yaml', contents='data: set1')
-    self.filesystem.CreateFile('/tmp/downloaded2.yaml', contents='data: set2')
+    self.filesystem.create_file('/tmp/downloaded1.yaml', contents='data: set1')
+    self.filesystem.create_file('/tmp/downloaded2.yaml', contents='data: set2')
     download.return_value = '/tmp/downloaded1.yaml'
     result = files.Read(
         'https://glazier-server.example.com/unstable/dir/test-build.yaml')
@@ -76,7 +78,7 @@ class FilesTest(absltest.TestCase):
         files.Error, files.Remove, '/test/file/name.yaml', backup=True)
 
   def testYamlReader(self):
-    self.filesystem.CreateFile(
+    self.filesystem.create_file(
         '/foo/bar/baz.txt', contents='- item4\n- item5\n- item6')
     result = files._YamlReader('/foo/bar/baz.txt')
     self.assertEqual(result[1], 'item5')

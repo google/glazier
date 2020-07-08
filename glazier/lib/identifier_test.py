@@ -19,16 +19,16 @@ from __future__ import division
 from __future__ import print_function
 
 from absl.testing import absltest
-from pyfakefs import fake_filesystem
 
 from glazier.lib import constants
 from glazier.lib import identifier
 
 import mock
+from pyfakefs import fake_filesystem
 
 TEST_UUID = identifier.uuid.UUID('12345678123456781234567812345678')
 TEST_SERIAL = '1A19SEL90000R90DZN7A'
-TEST_ID = TEST_SERIAL+'-'+str(TEST_UUID)[:7]
+TEST_ID = TEST_SERIAL + '-' + str(TEST_UUID)[:7]
 
 
 class IdentifierTest(absltest.TestCase):
@@ -43,8 +43,7 @@ class IdentifierTest(absltest.TestCase):
     identifier.open = fake_filesystem.FakeFileOpen(self.fs)
     identifier.os = fake_filesystem.FakeOsModule(self.fs)
 
-  @mock.patch.object(
-      identifier.hw_info.HWInfo, 'BiosSerial', autospec=True)
+  @mock.patch.object(identifier.hw_info.HWInfo, 'BiosSerial', autospec=True)
   @mock.patch.object(identifier.uuid, 'uuid4', autospec=True)
   def test_generate_id(self, mock_uuid, mock_serial):
     mock_uuid.return_value = str(TEST_UUID)[:7]
@@ -66,27 +65,27 @@ class IdentifierTest(absltest.TestCase):
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
   def test_check_file(self, sv):
-    self.fs.CreateFile(
+    self.fs.create_file(
         '/%s/build_info.yaml' % identifier.constants.SYS_CACHE,
-        contents=
-        '{BUILD: {opt 1: true, TIMER_opt 2: some value, image_id: 12345}}\n')
+        contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, image_id: 12345}}\n'
+    )
     identifier._check_file()
     sv.assert_called_with('image_id', 12345, path=constants.REG_ROOT)
     self.assertEqual(identifier._check_file(), 12345)
 
   def test_check_file_no_id(self):
-    self.fs.CreateFile(
+    self.fs.create_file(
         '/%s/build_info.yaml' % identifier.constants.SYS_CACHE,
-        contents=
-        '{BUILD: {opt 1: true, TIMER_opt 2: some value, image_num: 12345}}\n')
+        contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, image_num: 12345}}\n'
+    )
     self.assertRaises(identifier.Error, identifier._check_file)
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
   def test_check_file_reg_error(self, sv):
-    self.fs.CreateFile(
+    self.fs.create_file(
         '/%s/build_info.yaml' % identifier.constants.SYS_CACHE,
-        contents=
-        '{BUILD: {opt 1: true, TIMER_opt 2: some value, image_id: 12345}}\n')
+        contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, image_id: 12345}}\n'
+    )
     sv.side_effect = identifier.registry.Error
     self.assertRaises(identifier.Error, identifier._check_file)
 
@@ -122,6 +121,7 @@ class IdentifierTest(absltest.TestCase):
     wpe.return_value = False
     checkfile.return_value = TEST_ID
     self.assertEqual(identifier.check_id(), TEST_ID)
+
 
 if __name__ == '__main__':
   absltest.main()

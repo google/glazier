@@ -15,8 +15,10 @@
 """Tests for glazier.lib.file_util."""
 
 from absl.testing import absltest
-from pyfakefs import fake_filesystem
+
 from glazier.lib import file_util
+
+from pyfakefs import fake_filesystem
 
 
 class FileUtilTest(absltest.TestCase):
@@ -28,14 +30,14 @@ class FileUtilTest(absltest.TestCase):
     file_util.open = fake_filesystem.FakeFileOpen(self.filesystem)
 
   def testCreateDirectories(self):
-    self.filesystem.CreateFile('/test')
+    self.filesystem.create_file('/test')
     self.assertRaises(file_util.Error, file_util.CreateDirectories,
                       '/test/file.txt')
     file_util.CreateDirectories('/tmp/test/path/file.log')
     self.assertTrue(self.filesystem.Exists('/tmp/test/path'))
 
   def testRemove(self):
-    self.filesystem.CreateFile('/test/file.txt')
+    self.filesystem.create_file('/test/file.txt')
     file_util.Remove('/test/file.txt')
     self.assertFalse(self.filesystem.Exists('/test/file.txt'))
     file_util.Remove('/test/file2.txt')  # should succeed silently

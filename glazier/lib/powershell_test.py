@@ -18,9 +18,10 @@ from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
 
-from pyfakefs import fake_filesystem
 from glazier.lib import powershell
+
 import mock
+from pyfakefs import fake_filesystem
 
 FLAGS = flags.FLAGS
 
@@ -33,7 +34,7 @@ class PowershellTest(absltest.TestCase):
     powershell.os = fake_filesystem.FakeOsModule(self.fs)
     powershell.resources.os = fake_filesystem.FakeOsModule(self.fs)
     self.path = '/resources/bin/script.ps1'
-    self.fs.CreateFile(self.path)
+    self.fs.create_file(self.path)
     self.ps = powershell.PowerShell()
 
   @mock.patch.object(powershell.winpe, 'check_winpe', autospec=True)
@@ -119,7 +120,7 @@ class PowershellTest(absltest.TestCase):
   @mock.patch.object(powershell.PowerShell, 'RunLocal', autospec=True)
   def testRunResource(self, launch):
     FLAGS.resource_path = '/test/resources'
-    self.fs.CreateFile('/test/resources/bin/script.ps1')
+    self.fs.create_file('/test/resources/bin/script.ps1')
     args = ['>>', 'out.txt']
     self.ps.RunResource('bin/script.ps1', args=args)
     launch.assert_called_with(self.ps, '/test/resources/bin/script.ps1', args,
@@ -131,7 +132,7 @@ class PowershellTest(absltest.TestCase):
   @flagsaver.flagsaver
   def testRunResourceValidate(self):
     FLAGS.resource_path = '/test/resources'
-    self.fs.CreateFile('/test/resources/bin/script.ps1')
+    self.fs.create_file('/test/resources/bin/script.ps1')
     self.assertRaises(
         AssertionError,
         self.ps.RunResource,
