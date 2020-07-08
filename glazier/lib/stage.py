@@ -127,7 +127,7 @@ def _load_time(stage_id: int, key: Text) -> Optional[datetime.datetime]:
   """Load a time string and convert it into a native datetime value."""
   val = None
   try:
-    v = registry.get_value(key, 'HLKM', _stage_root(stage_id))
+    v = registry.get_value(key, 'HKLM', _stage_root(stage_id))
     if v:
       val = datetime.datetime.strptime(v, '%Y-%m-%dT%H:%M:%S.%f')
   except (registry.Error, ValueError) as e:
