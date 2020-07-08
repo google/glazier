@@ -16,9 +16,9 @@
 
 import os
 from absl.testing import absltest
-from pyfakefs import fake_filesystem
 from glazier.lib import cache
 import mock
+from pyfakefs import fake_filesystem
 
 
 class CacheTest(absltest.TestCase):
@@ -76,12 +76,12 @@ class CacheTest(absltest.TestCase):
   def testFindDownload(self):
     line_test = self.cache._FindDownload('powershell -file '
                                          r'C:\run_some_file.ps1')
-    self.assertEqual(line_test, None)
+    self.assertIsNone(line_test)
     line_test = self.cache._FindDownload('msiexec /i @installer.msi /qa')
     self.assertEqual(line_test, '@installer.msi')
     line_test = self.cache._FindDownload(r'C:\install_some_program.exe '
                                          '/i ARGS=FOO')
-    self.assertEqual(line_test, None)
+    self.assertIsNone(line_test)
     line_test = self.cache._FindDownload(
         'some_executable.exe /conf=#remote.conf /flag1 /flag1')
     self.assertEqual(line_test, '#remote.conf')

@@ -22,10 +22,10 @@ import json
 
 from absl.testing import absltest
 from absl.testing import flagsaver
-from pyfakefs import fake_filesystem
 from glazier.lib import beyondcorp
 from glazier.lib import registry
 import mock
+from pyfakefs import fake_filesystem
 from requests.models import Response
 
 _TEST_SEED = '{"Seed": {"Seed": "seed_contents"}, "Signature": "Signature"}'
@@ -53,8 +53,9 @@ class BeyondcorpTest(absltest.TestCase):
     self.addCleanup(mock_wmi.stop)
     mock_wmi.start()
     self.filesystem = fake_filesystem.FakeFilesystem()
-    self.filesystem.CreateFile(r'C:\seed.json', contents=_TEST_SEED)
-    self.filesystem.CreateFile(beyondcorp.constants.USB_WIM, contents=_TEST_WIM)
+    self.filesystem.create_file(r'C:\seed.json', contents=_TEST_SEED)
+    self.filesystem.create_file(
+        beyondcorp.constants.USB_WIM, contents=_TEST_WIM)
     beyondcorp.os = fake_filesystem.FakeOsModule(self.filesystem)
     beyondcorp.open = fake_filesystem.FakeFileOpen(self.filesystem)
     self.beyondcorp = beyondcorp.BeyondCorp()

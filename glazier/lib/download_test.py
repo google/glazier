@@ -18,12 +18,12 @@
 from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
-from pyfakefs import fake_filesystem
 from glazier.lib import beyondcorp
 from glazier.lib import buildinfo
 from glazier.lib import download
 
 import mock
+from pyfakefs import fake_filesystem
 import six
 
 
@@ -92,7 +92,7 @@ class DownloadTest(absltest.TestCase):
     self._dl = download.BaseDownloader()
     # filesystem
     self.filesystem = fake_filesystem.FakeFilesystem()
-    self.filesystem.CreateFile(r'C:\input.ini', contents=_TEST_INI)
+    self.filesystem.create_file(r'C:\input.ini', contents=_TEST_INI)
     download.os = fake_filesystem.FakeOsModule(self.filesystem)
     download.open = fake_filesystem.FakeFileOpen(self.filesystem)
 

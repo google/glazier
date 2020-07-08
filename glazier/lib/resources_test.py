@@ -15,9 +15,11 @@
 """Tests for glazier.lib.resources."""
 
 from absl.testing import absltest
-from pyfakefs import fake_filesystem
+
 from glazier.lib import resources
+
 import mock
+from pyfakefs import fake_filesystem
 
 
 class ResourcesTest(absltest.TestCase):
@@ -26,8 +28,8 @@ class ResourcesTest(absltest.TestCase):
     super(ResourcesTest, self).setUp()
     self.fs = fake_filesystem.FakeFilesystem()
     resources.os = fake_filesystem.FakeOsModule(self.fs)
-    self.fs.CreateFile('/test/file.txt')
-    self.fs.CreateFile('/test2/resources/file.txt')
+    self.fs.create_file('/test/file.txt')
+    self.fs.create_file('/test2/resources/file.txt')
 
   def testGetResourceFileName(self):
     r = resources.Resources('/test')

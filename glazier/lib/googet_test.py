@@ -17,12 +17,12 @@
 import time
 
 from absl.testing import absltest
-from pyfakefs import fake_filesystem
 
 from glazier.lib import buildinfo
 from glazier.lib import googet
 
 import mock
+from pyfakefs import fake_filesystem
 
 
 class GooGetTest(absltest.TestCase):
@@ -51,7 +51,7 @@ class GooGetTest(absltest.TestCase):
     # Filesystem
     self.filesystem = fake_filesystem.FakeFilesystem()
     googet.os = fake_filesystem.FakeOsModule(self.filesystem)
-    self.filesystem.CreateFile(path)
+    self.filesystem.create_file(path)
 
     call.return_value = 0
 

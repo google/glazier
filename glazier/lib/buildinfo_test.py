@@ -21,10 +21,10 @@ from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
 
-from pyfakefs import fake_filesystem
 from glazier.lib import buildinfo
 from gwinpy.wmi.hw_info import DeviceId
 import mock
+from pyfakefs import fake_filesystem
 import yaml
 
 FLAGS = flags.FLAGS
@@ -416,7 +416,7 @@ class BuildInfoTest(absltest.TestCase):
         'https://glazier-server.example.com/unstable/release-id.yaml')
     self.buildinfo.Release.cache_clear()
     fread.return_value = {'no_release_id': '1234'}
-    self.assertEqual(self.buildinfo.Release(), None)
+    self.assertIsNone(self.buildinfo.Release())
     self.buildinfo.Release.cache_clear()
     # read error
     fread.side_effect = buildinfo.files.Error
@@ -579,7 +579,7 @@ class BuildInfoTest(absltest.TestCase):
     now = datetime.datetime.utcnow()
     dt.return_value = now
     self.buildinfo.TimerSet('test_timer_1')
-    self.assertEqual(self.buildinfo.TimerGet('test_timer_2'), None)
+    self.assertIsNone(self.buildinfo.TimerGet('test_timer_2'))
     self.assertEqual(self.buildinfo.TimerGet('test_timer_1'), now)
 
   @mock.patch.object(
