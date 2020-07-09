@@ -164,7 +164,7 @@ class BeyondCorp(object):
                     'Signed URL.')
 
     hwinfo = hw_info.HWInfo()
-    drive_letter = self._GetDisk(constants.USB_VOLUME_LABEL)
+    drive_letter = self._GetDisk(constants.USB_VOLUME_LABEL).strip(':')
 
     data = self._ReadFile()
     data = {
