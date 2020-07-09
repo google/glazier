@@ -47,8 +47,7 @@ WINPE_POWERSHELL = ('%s\\WindowsPowerShell\\v1.0\\powershell.exe' %
                     WINPE_SYSTEM32)
 WINPE_GOOGETROOT = '%s\\ProgramData\\GooGet' % WINPE_ROOT
 
-USB_BOOT_VOLUME = 'D:'
-USB_WIM = '%s\\sources\\boot.wim' % USB_BOOT_VOLUME
+USB_VOLUME_LABEL = 'BEYONDCORP'
 
 USE_REG_64 = True
 

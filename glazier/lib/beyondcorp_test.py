@@ -30,6 +30,7 @@ from requests.models import Response
 
 _TEST_SEED = '{"Seed": {"Seed": "seed_contents"}, "Signature": "Signature"}'
 _TEST_WIM = 'test_wim'
+_TEST_WIM_PATH = r'D:\sources\boot.wim'
 _TEST_WIM_HASH = b'xxaroj1bgT5sObhJ0HwOtqpn+Nx0gO/Wz5wATtYK7Tk='
 DECODED_HASH = _TEST_WIM_HASH.decode('utf-8')
 
@@ -49,13 +50,12 @@ class BeyondcorpTest(absltest.TestCase):
     super(BeyondcorpTest, self).setUp()
     self.__saved_flags = flagsaver.save_flag_values()
     mock_wmi = mock.patch.object(
-        beyondcorp.hw_info.wmi_query, 'WMIQuery', autospec=True)
+        beyondcorp.wmi_query, 'WMIQuery', autospec=True)
     self.addCleanup(mock_wmi.stop)
-    mock_wmi.start()
+    self.mock_wmi = mock_wmi.start()
     self.filesystem = fake_filesystem.FakeFilesystem()
     self.filesystem.create_file(r'C:\seed.json', contents=_TEST_SEED)
-    self.filesystem.create_file(
-        beyondcorp.constants.USB_WIM, contents=_TEST_WIM)
+    self.filesystem.create_file(_TEST_WIM_PATH, contents=_TEST_WIM)
     beyondcorp.os = fake_filesystem.FakeOsModule(self.filesystem)
     beyondcorp.open = fake_filesystem.FakeFileOpen(self.filesystem)
     self.beyondcorp = beyondcorp.BeyondCorp()
@@ -79,9 +79,11 @@ class BeyondcorpTest(absltest.TestCase):
     with self.assertRaises(beyondcorp.BCError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
+  @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
   @mock.patch.object(beyondcorp.hw_info.HWInfo, 'MacAddresses', autospec=True)
   @mock.patch.object(beyondcorp.requests, 'post', autospec=True)
-  def testSignedUrl(self, req, mac):
+  def testSignedUrl(self, req, mac, drive):
+    drive.return_value = 'D'
     mac.return_value = ['00:00:00:00:00:00']
     req.return_value = _CreateSignResponse(200, 'Success', DECODED_HASH)
     beyondcorp.FLAGS.use_signed_url = True
@@ -99,9 +101,11 @@ class BeyondcorpTest(absltest.TestCase):
         '}' % _TEST_WIM_HASH.decode('utf-8'))
     self.assertEqual(sign, _TEST_WIM_HASH.decode('utf-8'))
 
+  @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
   @mock.patch.object(beyondcorp.hw_info.HWInfo, 'MacAddresses', autospec=True)
   @mock.patch.object(beyondcorp.requests, 'post', autospec=True)
-  def testSignedUrlFail(self, req, mac):
+  def testSignedUrlFail(self, req, mac, drive):
+    drive.return_value = 'D'
     mac.return_value = ['00:00:00:00:00:00']
     req.return_value = _CreateSignResponse(200, 'Success', DECODED_HASH)
     beyondcorp.FLAGS.use_signed_url = True
@@ -124,9 +128,11 @@ class BeyondcorpTest(absltest.TestCase):
     with self.assertRaises(beyondcorp.BCError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
+  @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
   @mock.patch.object(beyondcorp.hw_info.HWInfo, 'MacAddresses', autospec=True)
   @mock.patch.object(beyondcorp.requests, 'post', autospec=True)
-  def testSignedUrlConnectionError(self, req, mac):
+  def testSignedUrlConnectionError(self, req, mac, drive):
+    drive.return_value = 'D'
     mac.return_value = ['00:00:00:00:00:00']
     req.return_value = _CreateSignResponse(200, 'Success', DECODED_HASH)
     beyondcorp.FLAGS.use_signed_url = True
@@ -183,10 +189,20 @@ class BeyondcorpTest(absltest.TestCase):
     sv.side_effect = registry.Error
     self.assertRaises(beyondcorp.BCError, self.beyondcorp.CheckBeyondCorp)
 
-  def test_GetHash(self):
+  def testGetDisk(self):
+    self.mock_wmi.return_value.Query.return_value = [mock.Mock(Name='D')]
     self.assertEqual(
-        _TEST_WIM_HASH,
-        self.beyondcorp._GetHash(beyondcorp.constants.USB_WIM))
+        self.beyondcorp._GetDisk(beyondcorp.constants.USB_VOLUME_LABEL), 'D')
+
+  def testGetDiskNone(self):
+    self.mock_wmi.return_value.Query.return_value = [mock.Mock(Name=None)]
+    with self.assertRaises(beyondcorp.BCError):
+      self.beyondcorp._GetDisk(beyondcorp.constants.USB_VOLUME_LABEL)
+
+  def testGetDiskError(self):
+    self.mock_wmi.return_value.Query.side_effect = beyondcorp.wmi_query.WmiError
+    with self.assertRaises(beyondcorp.BCError):
+      self.beyondcorp._GetDisk(beyondcorp.constants.USB_VOLUME_LABEL)
 
 
 if __name__ == '__main__':

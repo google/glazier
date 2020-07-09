@@ -34,6 +34,7 @@ from absl import flags
 from glazier.lib import constants
 from glazier.lib import registry
 from gwinpy.wmi import hw_info
+from gwinpy.wmi import wmi_query
 import requests
 
 FLAGS = flags.FLAGS
@@ -115,6 +116,34 @@ class BeyondCorp(object):
         fb = f.read(block_size)
     return base64.b64encode(hasher.digest())
 
+  def _GetDisk(self, label: Text) -> Text:
+    """Leverages the drive label to define the drive letter.
+
+    The BeyondCorp USB device is not gaurenteed to be on a certain drive letter.
+
+    Args:
+      label: Drive label to use when querying for drive letter.
+
+    Raises:
+      BCError: Error executing WMI query.
+      BCError: BeyondCorp drive letter was empty.
+
+    Returns:
+      Drive letter for the drive that contains the seed.
+    """
+    query = f'SELECT Name FROM win32_logicaldisk WHERE volumename="{label}"'
+    try:
+      drive_letter = wmi_query.WMIQuery().Query(query)[0].Name
+    except wmi_query.WmiError as e:
+      raise BCError(f'Failed to query WMI for BeyondCorp drive letter: {e}')
+
+    if not drive_letter:
+      raise BCError('BeyondCorp drive letter was empty.')
+
+    logging.debug('BeyondCorp Drive letter = %s', drive_letter)
+
+    return drive_letter
+
   def GetSignedUrl(self, relative_path: Text) -> Text:
     """Passes data the sign endpoint to retrieve signed URL.
 
@@ -135,13 +164,20 @@ class BeyondCorp(object):
                     'Signed URL.')
 
     hwinfo = hw_info.HWInfo()
+    drive_letter = self._GetDisk(constants.USB_VOLUME_LABEL)
+
     data = self._ReadFile()
     data = {
-        'Path': relative_path,
-        'Mac': hwinfo.MacAddresses(),
-        'Seed': data['Seed'],
-        'Signature': data['Signature'],
-        'Hash': self._GetHash(constants.USB_WIM).decode('utf-8')
+        'Path':
+            relative_path,
+        'Mac':
+            hwinfo.MacAddresses(),
+        'Seed':
+            data['Seed'],
+        'Signature':
+            data['Signature'],
+        'Hash':
+            self._GetHash(fr'{drive_letter}:\sources\boot.wim').decode('utf-8')
     }
 
     req = json.dumps(
