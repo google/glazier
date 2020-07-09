@@ -57,6 +57,7 @@ Reboot = system.Reboot
 RegAdd = registry.RegAdd
 MultiRegAdd = registry.MultiRegAdd
 RegDel = registry.RegDel
+RmDir = file_system.RmDir
 MultiRegDel = registry.MultiRegDel
 SetTimer = timers.SetTimer
 SetUnattendTimeZone = sysprep.SetUnattendTimeZone

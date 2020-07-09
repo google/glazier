@@ -493,6 +493,20 @@ Restart the host machine.
     Reboot: [10, "Restarting to finish installing drivers."]
     Reboot: [10, "Restarting to finish installing drivers.", True]
 
+### RmDir
+
+Remove one or more directories.
+
+#### Arguments
+
+*   Format: List
+    *  Arg1[Str]: First directory to be removed
+    *  ...
+
+#### Examples
+
+    RmDir: ['C:\Glazier_Cache', 'D:\Glazier_Cache']
+
 ### SetUnattendTimeZone
 
 Attempts to detect the timezone via DHCP and configures any \<TimeZone\> fields

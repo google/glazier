@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tests for glazier.lib.actions.file_system."""
 
 from absl.testing import absltest
@@ -100,6 +99,15 @@ class FileSystemTest(absltest.TestCase):
     self.assertRaises(file_system.ValidationError, md.Validate)
     md = file_system.MkDir(['/tmp/some/dir'], None)
     md.Validate()
+
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  def testRmDirValidate(self, build_info):
+    with self.assertRaises(file_system.ValidationError):
+      file_system.RmDir([], build_info).Validate()
+    with self.assertRaises(file_system.ValidationError):
+      file_system.RmDir([12345], build_info).Validate()
+    file_system.RmDir([r'D:\Glazier'], build_info).Validate()
+    file_system.RmDir([r'C:\Glazier', r'D:\Glazier'], build_info).Validate()
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testSetupCache(self, build_info):

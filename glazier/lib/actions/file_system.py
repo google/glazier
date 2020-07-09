@@ -134,6 +134,21 @@ class MkDir(FileSystem):
     self._ListOfStringsValidator(self._args)
 
 
+class RmDir(FileSystem):
+  """Remove one or more directories."""
+
+  def Run(self):
+    for path in self._args:
+      logging.info('Removing directory: %s', path)
+      try:
+        shutil.rmtree(path)
+      except (shutil.Error, OSError) as e:
+        raise ActionError('Unable to remove directory %s: %s' % (path, str(e)))
+
+  def Validate(self):
+    self._ListOfStringsValidator(self._args, max_length=100)
+
+
 class SetupCache(FileSystem):
   """Create the imaging cache directory."""
 
