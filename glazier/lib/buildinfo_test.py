@@ -114,11 +114,37 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(self.buildinfo._chooser_responses['USER_core_ps_shell'],
                      True)
 
+  @flagsaver.flagsaver
+  def testBinaryServerFromFlag(self):
+    FLAGS.binary_server = 'https://glazier-server.example.com'
+    self.assertEqual(self.buildinfo.BinaryServer(),
+                     'https://glazier-server.example.com')
+
+  def testBinaryServerChanges(self):
+    r = self.buildinfo.BinaryServer(
+        set_to='https://glazier-server-1.example.com')
+    self.assertEqual(r, 'https://glazier-server-1.example.com')
+    # remains the same
+    self.assertEqual(self.buildinfo.BinaryServer(),
+                     'https://glazier-server-1.example.com')
+    # changes
+    r = self.buildinfo.BinaryServer(
+        set_to='https://glazier-server-2.example.com/')
+    self.assertEqual(r, 'https://glazier-server-2.example.com')
+    # remains the same
+    self.assertEqual(self.buildinfo.BinaryServer(),
+                     'https://glazier-server-2.example.com')
+
+  @flagsaver.flagsaver
+  def testBinaryServerFallback(self):
+    FLAGS.config_server = 'https://glazier-server-3.example.com'
+    self.assertEqual(self.buildinfo.BinaryServer(),
+                     'https://glazier-server-3.example.com')
+
   @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
   def testConfigPath(self, mock_bin):
     mock_bin.return_value = 'https://glazier-server.example.com/bin/'
-    result = self.buildinfo.BinaryPath()
-    self.assertEqual(result, mock_bin.return_value)
+    self.assertEqual(self.buildinfo.BinaryPath(), mock_bin.return_value)
 
   @flagsaver.flagsaver
   def testConfigServerFromFlag(self):
@@ -143,8 +169,7 @@ class BuildInfoTest(absltest.TestCase):
 
   def testConfigServer(self):
     return_value = 'https://glazier-server.example.com'
-    result = self.buildinfo.ConfigServer()
-    self.assertEqual(result, return_value)
+    self.assertEqual(self.buildinfo.ConfigServer(), return_value)
 
   @mock.patch.object(buildinfo.identifier, 'check_id', autospec=True)
   def test_image_id(self, checkid):
