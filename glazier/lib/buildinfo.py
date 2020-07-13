@@ -45,6 +45,7 @@ class BuildInfo(object):
 
   def __init__(self):
     self._active_conf_path = []
+    self._binary_server = ''
     self._chooser_pending = []
     self._chooser_responses = {}
     self._glazier_server = ''
@@ -82,16 +83,34 @@ class BuildInfo(object):
   # Image Configuration Functions
   #
 
-  def BinaryPath(self):
+  def BinaryPath(self) -> Text:
     """Determines the path to the folder containing all binaries for build.
 
     Returns:
       The versioned base path to the current build as a string.
     """
-    server = self.ConfigServer() or ''
+    server = self.BinaryServer() or ''
     path = FLAGS.binary_root_path.strip('/')
     path = '%s/%s/' % (server, path)
     return path
+
+  def BinaryServer(self, set_to: Text = '') -> Text:
+    """Get (or set) the binary server address.
+
+    Args:
+      set_to: Update the internal server address.
+
+    Returns:
+      The binary server without any trailing slashes.
+    """
+    if set_to:
+      self._binary_server = set_to
+    if not self._binary_server:
+      if FLAGS.binary_server:
+        self._binary_server = FLAGS.binary_server
+      else:  # backward compatibility
+        self._binary_server = self.ConfigServer()
+    return self._binary_server.rstrip('/')
 
   def ConfigServer(self, set_to: Text = '') -> Text:
     """Get (or set) the config server address.

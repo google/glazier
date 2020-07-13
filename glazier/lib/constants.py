@@ -55,10 +55,11 @@ USE_REG_64 = True
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('binary_root_path', '/bin', 'Path to the binary storage.')
+flags.DEFINE_string('binary_server', '', 'Root URL for binary build files.')
 flags.DEFINE_string('config_root_path', '',
                     'Path to the root of the configuration directory.')
 flags.DEFINE_string('config_server', 'https://glazier-server.example.com',
-                    'Root URL for all build data.')
+                    'Root URL for configuration build data.')
 
 flags.DEFINE_enum('environment', 'Host', ['Host', 'WinPE'],
                   'The running host environment.')
