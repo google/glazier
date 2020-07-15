@@ -169,7 +169,7 @@ class BuildInfo(object):
       The versioned base path to the current build as a string.
     """
     path = self.ConfigServer() or ''
-    if self.Branch():
+    if FLAGS.config_branches and self.Branch():
       path += '/%s' % str(self.Branch())
     path += '/'
     return path
