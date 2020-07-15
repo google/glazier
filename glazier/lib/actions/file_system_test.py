@@ -32,8 +32,8 @@ class FileSystemTest(absltest.TestCase):
       cd = file_system.CopyDir([r'/stage', r'/root/copied'], build_info)
       cd.Validate()
       cd.Run()
-      self.assertTrue(patcher.fs.Exists(r'/root/copied/file1.txt'))
-      self.assertTrue(patcher.fs.Exists(r'/root/copied/file2.txt'))
+      self.assertTrue(patcher.fs.exists(r'/root/copied/file1.txt'))
+      self.assertTrue(patcher.fs.exists(r'/root/copied/file2.txt'))
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testCopyDirWithRemove(self, build_info):
@@ -44,8 +44,8 @@ class FileSystemTest(absltest.TestCase):
       cd = file_system.CopyDir([r'/stage', r'/root/copied', True], build_info)
       cd.Validate()
       cd.Run()
-      self.assertTrue(patcher.fs.Exists(r'/root/copied/file1.txt'))
-      self.assertTrue(patcher.fs.Exists(r'/root/copied/file2.txt'))
+      self.assertTrue(patcher.fs.exists(r'/root/copied/file1.txt'))
+      self.assertTrue(patcher.fs.exists(r'/root/copied/file2.txt'))
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testCopyDirException(self, build_info):
@@ -73,8 +73,8 @@ class FileSystemTest(absltest.TestCase):
       src2 = r'/stage/file2.txt'
       dst2 = r'/windows/glazier/other.log'
       file_system.MultiCopyFile([[src1, dst1], [src2, dst2]], build_info).Run()
-      self.assertTrue(patcher.fs.Exists(r'/windows/glazier/glazier.log'))
-      self.assertTrue(patcher.fs.Exists(r'/windows/glazier/other.log'))
+      self.assertTrue(patcher.fs.exists(r'/windows/glazier/glazier.log'))
+      self.assertTrue(patcher.fs.exists(r'/windows/glazier/other.log'))
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testCopyFileBadPath(self, build_info):
@@ -135,8 +135,8 @@ class FileSystemTest(absltest.TestCase):
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testRmDir(self, build_info):
     with Patcher() as patcher:
-      patcher.fs.CreateDirectory(r'/test1')
-      patcher.fs.CreateDirectory(r'/test2')
+      patcher.fs.create_dir(r'/test1')
+      patcher.fs.create_dir(r'/test2')
       self.assertTrue(file_system.os.path.exists('/test2'))
       file_system.RmDir(['/test1', '/test2'], build_info).Run()
       self.assertFalse(file_system.os.path.exists('/test2'))

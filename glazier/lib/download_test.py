@@ -248,7 +248,7 @@ class DownloadTest(absltest.TestCase):
       self.assertRaises(download.DownloadError, self._dl._StreamToDisk, None)
     # IOError
     http_stream.seek(0)
-    self.filesystem.CreateDirectory(r'C:\Windows')
+    self.filesystem.create_dir(r'C:\Windows')
     self._dl._save_location = r'C:\Windows'
     self.assertRaises(download.DownloadError, self._dl._StreamToDisk,
                       file_stream)
