@@ -21,10 +21,6 @@
       A certificate file containing permitted root certs for SSL validation.
 
 """
-
-from __future__ import absolute_import
-from __future__ import print_function
-
 import hashlib
 import logging
 import os
@@ -36,13 +32,16 @@ import sys
 import tempfile
 import time
 
-from typing import Optional, Text
+import typing
+from typing import List, Optional, Text
 
 from absl import flags
 from glazier.lib import beyondcorp
 from glazier.lib import winpe
 from six.moves import urllib
 
+if typing.TYPE_CHECKING:
+  import http.client
 
 CHUNK_BYTE_SIZE = 65536
 SLEEP = 20
@@ -189,7 +188,11 @@ class BaseDownloader(object):
       raise DownloadError('Failed to reach %s after %d attempt(s).' %
                           (resource, max_retries))
 
-  def _OpenStream(self, url, max_retries=5, status_codes=None):
+  def _OpenStream(
+      self,
+      url: Text,
+      max_retries: int = 5,
+      status_codes: Optional[List[int]] = None) -> 'http.client.HTTPResponse':
     """Opens a connection to a remote resource.
 
     Args:
@@ -251,7 +254,10 @@ class BaseDownloader(object):
 
       self._AttemptResource(attempt, max_retries, 'file download')
 
-  def CheckUrl(self, url, status_codes, max_retries=5):
+  def CheckUrl(self,
+               url: Text,
+               status_codes: List[int],
+               max_retries: int = 5) -> bool:
     """Check a remote URL for availability.
 
     Args:
@@ -269,8 +275,11 @@ class BaseDownloader(object):
       logging.error(e)
     return False
 
-  def DownloadFile(self, url, save_location, max_retries=5,
-                   show_progress=False):
+  def DownloadFile(self,
+                   url: Text,
+                   save_location: Text,
+                   max_retries: int = 5,
+                   show_progress: bool = False):
     """Downloads a file to temporary storage.
 
     Args:
@@ -287,7 +296,10 @@ class BaseDownloader(object):
     file_stream = self._OpenStream(url, max_retries)
     self._StreamToDisk(file_stream, show_progress)
 
-  def DownloadFileTemp(self, url, max_retries=5, show_progress=False):
+  def DownloadFileTemp(self,
+                       url: Text,
+                       max_retries: int = 5,
+                       show_progress: bool = False) -> Text:
     """Downloads a file to temporary storage.
 
     Args:
@@ -309,7 +321,7 @@ class BaseDownloader(object):
     self._StreamToDisk(file_stream, show_progress)
     return self._save_location
 
-  def _DownloadChunkReport(self, bytes_so_far, total_size):
+  def _DownloadChunkReport(self, bytes_so_far: int, total_size: int):
     """Prints download progress information.
 
     Args:
@@ -327,7 +339,7 @@ class BaseDownloader(object):
     if bytes_so_far >= total_size:
       sys.stdout.write('\n')
 
-  def _SetUrl(self, url: Text):
+  def _SetUrl(self, url: Text) -> Text:
     """Simple helper function to determine signed URL.
 
     Args:
@@ -348,22 +360,20 @@ class BaseDownloader(object):
     except beyondcorp.BCError as e:
       raise DownloadError(e)
 
-  def _StoreDebugInfo(self, file_stream, socket_error=None):
+  def _StoreDebugInfo(self,
+                      file_stream: 'http.client.HTTPResponse',
+                      socket_error: Optional[Text] = None):
     """Gathers debug information for use when file downloads fail.
 
     Args:
       file_stream:  The file stream object of the file being downloaded.
       socket_error: Store the error raised from the socket class with
         other debug info.
-
-    Returns:
-      debug_info:  A dictionary containing various pieces of debugging
-          information.
     """
     if socket_error:
       self._debug_info['socket_error'] = socket_error
     if file_stream:
-      for header in file_stream.info().header_items():
+      for header in file_stream.info().items():
         self._debug_info[header[0]] = header[1]
     self._debug_info['current_time'] = time.strftime(
         '%A, %d %B %Y %H:%M:%S UTC')
@@ -379,7 +389,10 @@ class BaseDownloader(object):
         print('%s: %s' % (key, value))
       print('\n\n\n')
 
-  def _StreamToDisk(self, file_stream, show_progress=None, max_retries=5):
+  def _StreamToDisk(self,
+                    file_stream: 'http.client.HTTPResponse',
+                    show_progress: bool = None,
+                    max_retries: int = 5):
     """Save a file stream to disk.
 
     Args:
@@ -426,7 +439,8 @@ class BaseDownloader(object):
     self._Validate(file_stream, total_size)
     file_stream.close()
 
-  def _Validate(self, file_stream, expected_size):
+  def _Validate(self, file_stream: 'http.client.HTTPResponse',
+                expected_size: int):
     """Validate the downloaded file.
 
     Args:
@@ -447,7 +461,7 @@ class BaseDownloader(object):
                  (actual_file_size, expected_size))
       raise DownloadError(message)
 
-  def VerifyShaHash(self, file_path, expected):
+  def VerifyShaHash(self, file_path: Text, expected: Text) -> bool:
     """Verifies the SHA256 hash of a file.
 
     Arguments:
@@ -490,4 +504,3 @@ class BaseDownloader(object):
 
 # Set our downloader of choice
 Download = BaseDownloader
-

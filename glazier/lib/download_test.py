@@ -55,15 +55,29 @@ class PathsTest(absltest.TestCase):
                                 self.buildinfo)
     self.assertEqual(result, 'sccm.x86_64.1.00.1337#13371337.exe')
 
-    result = download.Transform(r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #My-Script.ps1 -Verbose', self.buildinfo)
-    self.assertEqual(result, r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File https://glazier/My-Script.ps1 -Verbose')
+    result = download.Transform(
+        r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #My-Script.ps1 -Verbose',
+        self.buildinfo)
+    self.assertEqual(
+        result,
+        r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File https://glazier/My-Script.ps1 -Verbose'
+    )
 
-    result = download.Transform(r'@Corp/install/1.0.0/installer.exe sccm.x86_64.1.00.1337\@13371337.exe',
-                                self.buildinfo)
-    self.assertEqual(result, 'https://glazier/bin/Corp/install/1.0.0/installer.exe sccm.x86_64.1.00.1337@13371337.exe')
+    result = download.Transform(
+        r'@Corp/install/1.0.0/installer.exe sccm.x86_64.1.00.1337\@13371337.exe',
+        self.buildinfo)
+    self.assertEqual(
+        result,
+        'https://glazier/bin/Corp/install/1.0.0/installer.exe sccm.x86_64.1.00.1337@13371337.exe'
+    )
 
-    result = download.Transform(r'C:\Windows\System32\msiexec.exe /i @Google/Chrome/1.3.3.7/googlechromestandaloneenterprise64.msi /qb /norestart', self.buildinfo)
-    self.assertEqual(result, r'C:\Windows\System32\msiexec.exe /i https://glazier/bin/Google/Chrome/1.3.3.7/googlechromestandaloneenterprise64.msi /qb /norestart')
+    result = download.Transform(
+        r'C:\Windows\System32\msiexec.exe /i @Google/Chrome/1.3.3.7/googlechromestandaloneenterprise64.msi /qb /norestart',
+        self.buildinfo)
+    self.assertEqual(
+        result,
+        r'C:\Windows\System32\msiexec.exe /i https://glazier/bin/Google/Chrome/1.3.3.7/googlechromestandaloneenterprise64.msi /qb /norestart'
+    )
 
     result = download.Transform('nothing _ here', self.buildinfo)
     self.assertEqual(result, 'nothing _ here')
@@ -108,8 +122,9 @@ class DownloadTest(absltest.TestCase):
   @mock.patch.object(download.time, 'sleep', autospec=True)
   def testAttemptResource(self, sleep, i):
     self._dl._AttemptResource(1, 2, 'file download')
-    i.assert_called_with('Failed attempt %d of %d: Sleeping for %d second(s) '
-                         'before retrying the %s.', 1, 2, 20, 'file download')
+    i.assert_called_with(
+        'Failed attempt %d of %d: Sleeping for %d second(s) '
+        'before retrying the %s.', 1, 2, 20, 'file download')
     sleep.assert_called_with(20)
 
   @mock.patch.object(download.logging, 'info', autospec=True)
@@ -150,8 +165,8 @@ class DownloadTest(absltest.TestCase):
     # retries
     file_stream.getcode.return_value = 200
     urlopen.side_effect = iter([httperr, httperr, file_stream])
-    self.assertRaises(download.DownloadError, self._dl._OpenStream, url,
-                      max_retries=2)
+    self.assertRaises(
+        download.DownloadError, self._dl._OpenStream, url, max_retries=2)
 
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
@@ -230,8 +245,7 @@ class DownloadTest(absltest.TestCase):
       # HTTP Header returned nothing (NoneType)
       http_stream.seek(0)
       report.reset_mock()
-      self.assertRaises(download.DownloadError, self._dl._StreamToDisk,
-                        None)
+      self.assertRaises(download.DownloadError, self._dl._StreamToDisk, None)
     # IOError
     http_stream.seek(0)
     self.filesystem.CreateDirectory(r'C:\Windows')
