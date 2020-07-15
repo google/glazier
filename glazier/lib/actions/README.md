@@ -326,11 +326,11 @@ Make a directory.
 
     MkDir: ['C:\Glazier_Cache']
 
-### PSCommand
+### PSCommand/MultiPSCommand
 
 Run a PowerShell command.
 
-#### Arguments
+#### PSCommand Arguments
 
 *   Format: List
     *   Arg1[str]: The PowerShell command to be run.
@@ -346,29 +346,45 @@ Run a PowerShell command.
     *   Arg6[bool]: Log messages to Python stdout. Only valid if shell=False.
           *   Default: True
 
+#### MultiPSCommand Arguments
+
+*    Format: List of Lists
+     *  Arg1[List]: First [PSCommand Argument](#pscommand-arguments) list.
+     *  Arg2[List]: Second [PSCommand Argument](#pscommand-arguments) list.
+     *  ...
+
 #### Examples
 
 ```yaml
-    PSCommand:
-      # Specify only the PowerShell script.
-      ['Write-Verbose Foo -Verbose']
-      # 0 or 1 as successful exit codes.
-      ['Write-Verbose Foo -Verbose', [0, 1]]
-      # 1337 will trigger a restart.
-      ['Write-Verbose Foo -Verbose', [0, 1], [1337]]
-      # True will rerun the command after restart.
-      ['Write-Verbose Foo -Verbose', [0, 1], [1337], True]
-      # True will ONLY log PowerShell output to console.
-      ['Write-Verbose Foo -Verbose', [0, 1], [1337], True, True]
-      # Will not any log PowerShell output.
-      ['Write-Verbose Foo -Verbose', [0, 1], [1337], True, False, False]
+    # Specify only the PowerShell script.
+    PSCommand: ['Write-Verbose Foo -Verbose']
+
+    # 0 or 1 as successful exit codes.
+    PSCommand: ['Write-Verbose Foo -Verbose', [0, 1]]
+
+    # 1337 will trigger a restart.
+    PSCommand: ['Write-Verbose Foo -Verbose', [0, 1], [1337]]
+
+    # True will rerun the command after restart.
+    PSCommand: ['Write-Verbose Foo -Verbose', [0, 1], [1337], True]
+
+    # True will ONLY log PowerShell output to console.
+    PSCommand: ['Write-Verbose Foo -Verbose', [0, 1], [1337], True, True]
+
+    # Will not any log PowerShell output.
+    PSCommand: ['Write-Verbose Foo -Verbose', [0, 1], [1337], True, False, False]
+
+    MultiPSCommand:
+      - ['Write-Information "Setting Execution Policy"']
+      - ['Set-ExecutionPolicy -ExecutionPolicy RemoteSigned', [0], [1337]]
+
 ```
 
-### PSScript
+### PSScript/MultiPSScript
 
 Run a PowerShell script file using the local PowerShell interpreter.
 
-#### Arguments
+#### PSScript Arguments
 
 *   Format: List
       *   Arg1[str]: The script file name or path to be run..
@@ -386,24 +402,42 @@ Run a PowerShell script file using the local PowerShell interpreter.
       *   Arg7[bool]: Log messages to Python stdout. Only valid if shell=False.
           *   Default: True
 
+
+#### MultiPSScript Arguments
+
+*    Format: List of Lists
+     *  Arg1[List]: First [PSScript argument](#psscript-arguments) list.
+     *  Arg2[List]: Second [PSScript argument](#psscript-arguments) list.
+     *  ...
+
 #### Examples
 
 ```yaml
-    PSScript:
-      # Specify only the PowerShell script.
-      ['#Sample-Script.ps1']
-      # Additional parameters.
-      ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue']]
-      # 0 or 1 as successful exit codes.
-      ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1]]
-      # 1337 will trigger a restart.
-      ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1], [1337]]
-      # True will rerun the command after restart.
-      ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1], [1337], True]
-      # True will ONLY log PowerShell output to console.
-      ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1], [1337], True, True]
-      # Will not any log PowerShell output.
-      ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1], [1337], True, False, False]
+    # Specify only the PowerShell script.
+    PSScript: ['#Sample-Script.ps1']
+
+    # Additional parameters.
+    PSScript: ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue']]
+
+    # 0 or 1 as successful exit codes.
+    PSScript: ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1]]
+
+    # 1337 will trigger a restart.
+    PSScript: ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1], [1337]]
+
+    # True will rerun the command after restart.
+    PSScript: ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1], [1337], True]
+
+    # True will ONLY log PowerShell output to console.
+    PSScript: ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1], [1337], True, True]
+
+    # Will not any log PowerShell output.
+    PSScript: ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1], [1337], True, False, False]
+
+    MultiPSScript:
+      - ['#Sample-Script.ps1']
+      - ['#Sample-Script.ps1', ['-Verbose', '-InformationAction', 'Continue'], [0,1], [1337], True, False, False]
+
 ```
 
 ### RegAdd/MultiRegAdd

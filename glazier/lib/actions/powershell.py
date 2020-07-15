@@ -16,7 +16,7 @@
 """Actions for running PowerShell scripts and commands."""
 
 import logging
-from typing import List, Optional, Text
+from typing import List, Text
 from glazier.lib import cache
 from glazier.lib import powershell
 from glazier.lib.actions.base import ActionError
@@ -30,12 +30,12 @@ class PSScript(BaseAction):
 
   def Run(self):
     script: Text = self._args[0]
-    ps_args: Optional[List[Text]] = []
-    success_codes: Optional[List[int]] = [0]
-    reboot_codes: Optional[List[int]] = []
-    restart_retry: Optional[bool] = False
-    shell: Optional[bool] = False
-    log: Optional[bool] = True
+    ps_args: List[Text] = []
+    success_codes: List[int] = [0]
+    reboot_codes: List[int] = []
+    restart_retry: bool = False
+    shell: bool = False
+    log: bool = True
     if len(self._args) > 1:
       ps_args = self._args[1]
     if len(self._args) > 2:
@@ -90,16 +90,35 @@ class PSScript(BaseAction):
       self._TypeValidator(self._args[6], bool)
 
 
+class MultiPSScript(BaseAction):
+  """Executes PSScript on multiple sets of scripts."""
+
+  def Run(self):
+    for arg in self._args:
+      try:
+        PSScript(arg, self._build_info).Run()
+      except IndexError:
+        raise ActionError(f'Unable to determine PowerShell scripts from {arg}')
+
+  def Validate(self):
+    try:
+      self._TypeValidator(self._args, list)
+    except ValidationError as e:
+      raise ActionError(e)
+    for arg in self._args:
+      PSScript(arg, self._build_info).Validate()
+
+
 class PSCommand(BaseAction):
   """Execute a PowerShell command."""
 
   def Run(self):
     command: List[Text] = self._args[0].split()
-    success_codes: Optional[List[int]] = [0]
-    reboot_codes: Optional[List[int]] = []
-    restart_retry: Optional[bool] = False
-    shell: Optional[bool] = False
-    log: Optional[bool] = True
+    success_codes: List[int] = [0]
+    reboot_codes: List[int] = []
+    restart_retry: bool = False
+    shell: bool = False
+    log: bool = True
     if len(self._args) > 1:
       success_codes = self._args[1]
     if len(self._args) > 2:
@@ -117,7 +136,7 @@ class PSCommand(BaseAction):
     # script, cache it's location and run the script using powershell.exe
     # -Command. See link below for more context.
     # https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_powershell_exe?view=powershell-5.1#-file----filepath-args
-    if command[0].endswith('.ps1'):
+    if command[0] and command[0].endswith('.ps1'):
       logging.info('Interpreting PowerShell script: %s', command[0])
       try:
         command[0] = cache.Cache().CacheFromLine(command[0], self._build_info)
@@ -159,3 +178,22 @@ class PSCommand(BaseAction):
       self._TypeValidator(self._args[4], bool)
     if len(self._args) > 5:  # log
       self._TypeValidator(self._args[5], bool)
+
+
+class MultiPSCommand(BaseAction):
+  """Executes PSCommand on multiple sets of commands."""
+
+  def Run(self):
+    for arg in self._args:
+      try:
+        PSCommand(arg, self._build_info).Run()
+      except IndexError:
+        raise ActionError(f'Unable to determine PowerShell commands from {arg}')
+
+  def Validate(self):
+    try:
+      self._TypeValidator(self._args, list)
+    except ValidationError as e:
+      raise ActionError(e)
+    for arg in self._args:
+      PSCommand(arg, self._build_info).Validate()
