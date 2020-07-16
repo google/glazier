@@ -67,6 +67,14 @@ class CacheTest(absltest.TestCase):
     self.assertRaises(cache.CacheError, self.cache.CacheFromLine,
                       '@%s' % remote2, build_info)
 
+  @mock.patch.object(cache.download, 'Transform', autospec=True)
+  def testCacheFromLineLocal(self, transform):
+    line_in = 'powershell.exe -file @path/to/script.ps1'
+    line_out = 'powershell.exe -file C:/glazier/path/to/script.ps1'
+    transform.return_value = 'C:/glazier/path/to/script.ps1'
+    result = self.cache.CacheFromLine(line_in, mock.Mock())
+    self.assertEqual(result, line_out)
+
   def testDestinationPath(self):
     path = self.cache._DestinationPath(
         'C:', 'http://some.web.address/folder/other/'
