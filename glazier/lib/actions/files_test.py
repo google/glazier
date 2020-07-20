@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tests for glazier.lib.actions.files."""
 from absl.testing import absltest
 
@@ -118,9 +117,7 @@ class FilesTest(absltest.TestCase):
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
   @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
-  @mock.patch.object(files.download.Download, 'VerifyShaHash', autospec=True)
-  def testGet(self, verify, down_file, r_path):
-    bi = buildinfo.BuildInfo()
+  def testGet(self, down_file, r_path):
     r_path.return_value = 'https://glazier-server.example.com/'
     remote = '@glazier/1.0/autobuild.par'
     local = r'/tmp/autobuild.par'
@@ -129,67 +126,113 @@ class FilesTest(absltest.TestCase):
     self.filesystem.create_file(
         r'/tmp/autobuild.par.sha256', contents=test_sha256)
     down_file.return_value = True
-    conf = [[remote, local]]
-    g = files.Get(conf, bi)
-    g.Run()
+    files.Get([[remote, local]], buildinfo.BuildInfo()).Run()
     down_file.assert_called_with(
         mock.ANY,
         'https://glazier-server.example.com/bin/glazier/1.0/autobuild.par',
         local,
         show_progress=True)
-    # Relative Paths
-    conf = [['autobuild.bat', '/tmp/autobuild.bat']]
-    g = files.Get(conf, bi)
-    g.Run()
+
+  @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
+  def testGetDownloadErr(self, down_file, r_path):
+    r_path.return_value = 'https://glazier-server.example.com/'
+    remote = '@glazier/1.0/autobuild.par'
+    local = r'/tmp/autobuild.par'
+    down_file.side_effect = files.download.DownloadError('Error')
+    with self.assertRaises(files.ActionError):
+      files.Get([[remote, local]], buildinfo.BuildInfo()).Run()
+
+  @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
+  def testGetMkdirErr(self, down_file, r_path):
+    r_path.return_value = 'https://glazier-server.example.com/'
+    remote = '@glazier/1.0/autobuild.par'
+    self.filesystem.create_file('/directory')
+    down_file.side_effect = files.download.DownloadError('Error')
+    with self.assertRaises(files.ActionError):
+      files.Get([[remote, '/directory/file.txt']], buildinfo.BuildInfo()).Run()
+
+  @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
+  def testGetRelativePath(self, down_file, r_path):
+    r_path.return_value = 'https://glazier-server.example.com/'
+    self.filesystem.create_file(
+        r'/tmp/autobuild.par.sha256',
+        contents='58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800'
+    )
+    down_file.return_value = True
+    files.Get([['autobuild.bat', '/tmp/autobuild.bat']],
+              buildinfo.BuildInfo()).Run()
     down_file.assert_called_with(
         mock.ANY,
         'https://glazier-server.example.com/autobuild.bat',
         '/tmp/autobuild.bat',
         show_progress=True)
-    down_file.return_value = None
-    # DownloadError
-    err = files.download.DownloadError('Error')
-    down_file.side_effect = err
-    g = files.Get([[remote, local]], bi)
-    self.assertRaises(files.ActionError, g.Run)
-    down_file.side_effect = None
-    # file_util.Error
-    self.filesystem.create_file('/directory')
-    g = files.Get([[remote, '/directory/file.txt']], bi)
-    self.assertRaises(files.ActionError, g.Run)
-    # good hash
+
+  @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
+  @mock.patch.object(files.download.Download, 'VerifyShaHash', autospec=True)
+  def testGetHashMatch(self, verify, down_file, r_path):
+    r_path.return_value = 'https://glazier-server.example.com/'
+    local = r'/tmp/autobuild.par'
+    test_sha256 = (
+        '58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800')
+    self.filesystem.create_file(
+        r'/tmp/autobuild.par.sha256', contents=test_sha256)
+    down_file.return_value = True
     verify.return_value = True
-    g = files.Get([[remote, local, test_sha256]], bi)
-    g.Run()
+    files.Get([['@glazier/1.0/autobuild.par', local, test_sha256]],
+              buildinfo.BuildInfo()).Run()
     verify.assert_called_with(mock.ANY, local, test_sha256)
-    # bad hash
+
+  @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
+  @mock.patch.object(files.download.Download, 'VerifyShaHash', autospec=True)
+  def testGetHashMismatch(self, verify, down_file, r_path):
+    r_path.return_value = 'https://glazier-server.example.com/'
+    test_sha256 = (
+        '58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800')
+    self.filesystem.create_file(
+        r'/tmp/autobuild.par.sha256', contents=test_sha256)
+    down_file.return_value = True
     verify.return_value = False
-    g = files.Get([[remote, local, test_sha256]], bi)
-    self.assertRaises(files.ActionError, g.Run)
-    # none hash
-    verify.reset_mock()
-    conf = [[remote, local, '']]
-    g = files.Get(conf, bi)
-    g.Run()
+    with self.assertRaises(files.ActionError):
+      files.Get(
+          [['@glazier/1.0/autobuild.par', r'/tmp/autobuild.par', test_sha256]],
+          buildinfo.BuildInfo()).Run()
+
+  @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
+  @mock.patch.object(files.download.Download, 'VerifyShaHash', autospec=True)
+  def testGetNoHash(self, verify, down_file, r_path):
+    r_path.return_value = 'https://glazier-server.example.com/'
+    test_sha256 = (
+        '58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800')
+    self.filesystem.create_file(
+        r'/tmp/autobuild.par.sha256', contents=test_sha256)
+    down_file.return_value = True
+    files.Get([['@glazier/1.0/autobuild.par', r'/tmp/autobuild.par', '']],
+              buildinfo.BuildInfo()).Run()
     self.assertFalse(verify.called)
 
   def testGetValidate(self):
-    g = files.Get('String', None)
-    self.assertRaises(files.ValidationError, g.Validate)
-    g = files.Get([[1, 2, 3]], None)
-    self.assertRaises(files.ValidationError, g.Validate)
-    g = files.Get([[1, '/tmp/out/path']], None)
-    self.assertRaises(files.ValidationError, g.Validate)
-    g = files.Get([['/tmp/src.zip', 2]], None)
-    self.assertRaises(files.ValidationError, g.Validate)
-    g = files.Get([['https://glazier/bin/src.zip', '/tmp/out/src.zip']], None)
-    g.Validate()
-    g = files.Get(
-        [['https://glazier/bin/src.zip', '/tmp/out/src.zip', '12345']], None)
-    g.Validate()
-    g = files.Get([['https://glazier/bin/src.zip', '/tmp/out/src.zip', '12345',
-                    '67890']], None)
-    self.assertRaises(files.ValidationError, g.Validate)
+    with self.assertRaises(files.ValidationError):
+      files.Get('String', None).Validate()
+    with self.assertRaises(files.ValidationError):
+      files.Get([[1, 2, 3]], None).Validate()
+    with self.assertRaises(files.ValidationError):
+      files.Get([[1, '/tmp/out/path']], None).Validate()
+    with self.assertRaises(files.ValidationError):
+      files.Get([['/tmp/src.zip', 2]], None).Validate()
+    files.Get([['https://glazier/bin/src.zip', '/tmp/out/src.zip']],
+              None).Validate()
+    files.Get([['https://glazier/bin/src.zip', '/tmp/out/src.zip', '12345']],
+              None).Validate()
+    with self.assertRaises(files.ValidationError):
+      files.Get([[
+          'https://glazier/bin/src.zip', '/tmp/out/src.zip', '12345', '67890'
+      ]], None).Validate()
 
   @mock.patch.object(files.file_util, 'CreateDirectories', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
