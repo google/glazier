@@ -18,29 +18,42 @@ from absl.testing import absltest
 
 from glazier.lib import file_util
 
-from pyfakefs import fake_filesystem
+from pyfakefs.fake_filesystem_unittest import Patcher
 
 
 class FileUtilTest(absltest.TestCase):
 
-  def setUp(self):
-    super(FileUtilTest, self).setUp()
-    self.filesystem = fake_filesystem.FakeFilesystem()
-    file_util.os = fake_filesystem.FakeOsModule(self.filesystem)
-    file_util.open = fake_filesystem.FakeFileOpen(self.filesystem)
+  def testCopy(self):
+    with Patcher() as patcher:
+      patcher.fs.create_dir(r'/stage')
+      patcher.fs.create_file(r'/stage/file1.txt', contents='file1')
+      patcher.fs.create_file(r'/stage/file2.txt', contents='file2')
+      src1 = r'/stage/file1.txt'
+      dst1 = r'/windows/glazier/glazier.log'
+      file_util.Copy(src1, dst1)
+      self.assertTrue(patcher.fs.exists(r'/windows/glazier/glazier.log'))
+
+  def testCopyBadPath(self):
+    with Patcher():
+      src1 = r'/missing.txt'
+      dst1 = r'/windows/glazier/glazier.log'
+      with self.assertRaises(file_util.Error):
+        file_util.Copy(src1, dst1)
 
   def testCreateDirectories(self):
-    self.filesystem.create_file('/test')
-    self.assertRaises(file_util.Error, file_util.CreateDirectories,
-                      '/test/file.txt')
-    file_util.CreateDirectories('/tmp/test/path/file.log')
-    self.assertTrue(self.filesystem.exists('/tmp/test/path'))
+    with Patcher() as patcher:
+      patcher.fs.create_file('/test')
+      self.assertRaises(file_util.Error, file_util.CreateDirectories,
+                        '/test/file.txt')
+      file_util.CreateDirectories('/tmp/test/path/file.log')
+      self.assertTrue(patcher.fs.exists('/tmp/test/path'))
 
   def testRemove(self):
-    self.filesystem.create_file('/test/file.txt')
-    file_util.Remove('/test/file.txt')
-    self.assertFalse(self.filesystem.exists('/test/file.txt'))
-    file_util.Remove('/test/file2.txt')  # should succeed silently
+    with Patcher() as patcher:
+      patcher.fs.create_file('/test/file.txt')
+      file_util.Remove('/test/file.txt')
+      self.assertFalse(patcher.fs.exists('/test/file.txt'))
+      file_util.Remove('/test/file2.txt')  # should succeed silently
 
 
 if __name__ == '__main__':
