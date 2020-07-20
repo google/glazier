@@ -21,6 +21,7 @@ from absl.testing import flagsaver
 from glazier.lib import beyondcorp
 from glazier.lib import buildinfo
 from glazier.lib import download
+from glazier.lib import file_util
 
 import mock
 from pyfakefs import fake_filesystem
@@ -182,6 +183,19 @@ class DownloadTest(absltest.TestCase):
     urlopen.side_effect = iter([file_stream])
     self.assertFalse(
         self._dl.CheckUrl(TEST_URL, max_retries=1, status_codes=[201]))
+
+  @mock.patch.object(file_util, 'Copy', autospec=True)
+  def testDownloadFileLocal(self, copy):
+    self._dl.DownloadFile(
+        url='c:/glazier/conf/test.ps1', save_location='c:/windows/test.ps1')
+    copy.assert_called_with('c:/glazier/conf/test.ps1', 'c:/windows/test.ps1')
+
+  @mock.patch.object(file_util, 'Copy', autospec=True)
+  def testDownloadFileCopyExcept(self, copy):
+    copy.side_effect = file_util.Error('copy error')
+    with self.assertRaises(download.DownloadError):
+      self._dl.DownloadFile(
+          url='c:/glazier/conf/test.ps1', save_location='c:/windows/test.ps1')
 
   @mock.patch.object(download.BaseDownloader, '_StreamToDisk', autospec=True)
   @mock.patch.object(download.BaseDownloader, '_OpenStream', autospec=True)
