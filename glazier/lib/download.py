@@ -49,8 +49,12 @@ SLEEP = 20
 FLAGS = flags.FLAGS
 
 
+def IsLocal(string: Text) -> bool:
+  return re.match(r'[A-Z,a-z]\:', string) is not None
+
+
 def IsRemote(string: Text) -> bool:
-  return string.startswith('http')
+  return re.match(r'http(s)?:', string, re.I) is not None
 
 
 def Transform(string: Text, build_info) -> Text:

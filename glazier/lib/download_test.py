@@ -39,6 +39,22 @@ SLEEP = 20
 TEST_URL = 'https://www.example.com/build.yaml'
 
 
+class HelperTests(absltest.TestCase):
+
+  def testIsRemote(self):
+    self.assertTrue(download.IsRemote('http://glazier.example.com'))
+    self.assertTrue(download.IsRemote('https://glazier.example.com'))
+    self.assertTrue(download.IsRemote('HTTPS://glazier.example.com'))
+    self.assertFalse(download.IsRemote('String with HTTP in it.'))
+    self.assertFalse(download.IsRemote('C:/glazier'))
+
+  def testIsLocal(self):
+    self.assertTrue(download.IsLocal('C:/glazier'))
+    self.assertTrue(download.IsLocal(r'C:\glazier'))
+    self.assertFalse(download.IsLocal('http://glazier.example.com'))
+    self.assertFalse(download.IsLocal(r'String with C:\glazier in it.'))
+
+
 class PathsTest(absltest.TestCase):
 
   def setUp(self):
