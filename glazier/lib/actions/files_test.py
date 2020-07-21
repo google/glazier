@@ -116,21 +116,67 @@ class FilesTest(absltest.TestCase):
                     None).Validate()
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
   @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
-  def testGet(self, down_file, r_path):
-    r_path.return_value = 'https://glazier-server.example.com/'
-    remote = '@glazier/1.0/autobuild.par'
-    local = r'/tmp/autobuild.par'
+  def testGetFromBin(self, down_file, bin_path, rel_path):
+    rel_path.return_value = 'https://glazier-server.example.com/'
+    bin_path.return_value = 'https://glazier-server.example.com/bin/'
     test_sha256 = (
         '58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800')
     self.filesystem.create_file(
         r'/tmp/autobuild.par.sha256', contents=test_sha256)
     down_file.return_value = True
-    files.Get([[remote, local]], buildinfo.BuildInfo()).Run()
+    files.Get([['@glazier/1.0/autobuild.par', '/tmp/autobuild.par']],
+              buildinfo.BuildInfo()).Run()
     down_file.assert_called_with(
         mock.ANY,
         'https://glazier-server.example.com/bin/glazier/1.0/autobuild.par',
-        local,
+        '/tmp/autobuild.par',
+        show_progress=True)
+
+  @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
+  @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
+  def testGetFromConf(self, down_file, bin_path, rel_path):
+    rel_path.return_value = 'https://glazier-server.example.com/'
+    bin_path.return_value = 'https://glazier-server.example.com/bin/'
+    down_file.return_value = True
+    files.Get([['#test/script.ps1', '/tmp/autobuild.par']],
+              buildinfo.BuildInfo()).Run()
+    down_file.assert_called_with(
+        mock.ANY,
+        'https://glazier-server.example.com/test/script.ps1',
+        '/tmp/autobuild.par',
+        show_progress=True)
+
+  @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
+  @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
+  def testGetFromUntagged(self, down_file, bin_path, rel_path):
+    rel_path.return_value = 'https://glazier-server.example.com/'
+    bin_path.return_value = 'https://glazier-server.example.com/bin/'
+    down_file.return_value = True
+    files.Get([['test/script.ps1', '/tmp/autobuild.par']],
+              buildinfo.BuildInfo()).Run()
+    down_file.assert_called_with(
+        mock.ANY,
+        'https://glazier-server.example.com/test/script.ps1',
+        '/tmp/autobuild.par',
+        show_progress=True)
+
+  @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
+  @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
+  def testGetFromLocal(self, down_file, bin_path, rel_path):
+    rel_path.return_value = 'C:/glazier/conf'
+    bin_path.return_value = 'https://glazier-server.example.com/bin/'
+    down_file.return_value = True
+    files.Get([['#script.ps1', '/tmp/autobuild.par']],
+              buildinfo.BuildInfo()).Run()
+    down_file.assert_called_with(
+        mock.ANY,
+        'C:/glazier/conf/script.ps1',
+        '/tmp/autobuild.par',
         show_progress=True)
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
