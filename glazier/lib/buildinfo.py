@@ -192,7 +192,7 @@ class BuildInfo(object):
     """
     if append:
       self._active_conf_path.append(append)
-    elif set_to:
+    elif set_to is not None:
       self._active_conf_path = set_to
     elif pop and self._active_conf_path:
       self._active_conf_path.pop()
