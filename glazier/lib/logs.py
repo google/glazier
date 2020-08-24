@@ -16,6 +16,10 @@
 
 import logging
 import logging.handlers
+import os
+from typing import Text
+import zipfile
+
 from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib import winpe
@@ -33,6 +37,22 @@ def GetLogsPath():
   if winpe.check_winpe():
     path = constants.WINPE_LOGS_PATH
   return path
+
+
+def Collect(path: Text):
+  """Collect Glazier logs into a zip file.
+
+  Args:
+    path: An output path for the zip file.
+  """
+  try:
+    arc = zipfile.ZipFile(path, mode='w')
+    for root, _, files in os.walk(GetLogsPath()):
+      for f in files:
+        arc.write(os.path.join(root, f))
+    arc.close()
+  except IOError as e:
+    raise LogError(str(e))
 
 
 def Setup():
