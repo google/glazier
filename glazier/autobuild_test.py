@@ -14,7 +14,12 @@
 """Unit tests for autobuild."""
 
 from absl.testing import absltest
+
 from glazier import autobuild
+from glazier.lib import buildinfo
+from glazier.lib import title
+from glazier.lib import winpe
+
 import mock
 from pyfakefs import fake_filesystem
 
@@ -36,17 +41,17 @@ class BuildInfoTest(absltest.TestCase):
 
   def testLogFatal(self):
     with self.assertRaises(LogFatalError):
-      autobuild._LogFatal('image failed')
+      autobuild._LogFatal('image failed', buildinfo.BuildInfo(), collect=False)
     autobuild.logging.fatal.assert_called_with(f'{autobuild._FAILURE_MSG}',
                                                'image failed')
 
   def testLogFatalCode(self):
     with self.assertRaises(LogFatalError):
-      autobuild._LogFatal('image failed', 1234)
+      autobuild._LogFatal('image failed', buildinfo.BuildInfo(), 1234, False)
     autobuild.logging.fatal.assert_called_with(f'{autobuild._FAILURE_MSG}#1234',
                                                'image failed')
 
-  @mock.patch.object(autobuild.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
   def testSetupTaskList(self, wpe):
     # Host
     tasklist = autobuild.constants.SYS_TASK_LIST
@@ -65,12 +70,13 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
     self.assertFalse(autobuild.os.path.exists(tasklist))
 
+  @mock.patch.object(autobuild, '_LogFatal', autospec=True)
   @mock.patch.object(autobuild.title, 'set_title', autospec=True)
-  @mock.patch.object(autobuild.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
   @mock.patch.object(autobuild.runner, 'ConfigRunner', autospec=True)
   @mock.patch.object(autobuild.builder, 'ConfigBuilder', autospec=True)
-  @mock.patch.object(autobuild.buildinfo.BuildInfo, 'BeyondCorp', autospec=True)
-  def testRunBuild(self, bc, builder, runner, wpe, st):
+  @mock.patch.object(buildinfo.BuildInfo, 'BeyondCorp', autospec=True)
+  def testRunBuild(self, bc, builder, runner, wpe, st, fatal):
     bc.return_value = False
     wpe.return_value = False
     self.autobuild.RunBuild()
@@ -78,22 +84,30 @@ class BuildInfoTest(absltest.TestCase):
 
     # ConfigBuilderError
     builder.side_effect = autobuild.builder.ConfigBuilderError
-    self.assertRaises(LogFatalError, self.autobuild.RunBuild)
+    self.autobuild.RunBuild()
+    fatal.assert_called_with(mock.ANY, self.autobuild._build_info)
     # ConfigRunnerError
     builder.side_effect = None
     runner.side_effect = autobuild.runner.ConfigRunnerError
-    self.assertRaises(LogFatalError, self.autobuild.RunBuild)
+    self.autobuild.RunBuild()
+    fatal.assert_called_with(mock.ANY, self.autobuild._build_info)
 
-  @mock.patch.object(autobuild, 'AutoBuild', autospec=True)
-  def testMainError(self, ab):
-    ab.return_value.RunBuild.side_effect = KeyboardInterrupt
-    self.assertRaises(LogFatalError, autobuild.main, 'something')
+  @mock.patch.object(autobuild, '_LogFatal', autospec=True)
+  @mock.patch.object(title, 'set_title', autospec=True)
+  def testMainError(self, st, fatal):
+    st.side_effect = KeyboardInterrupt
+    self.autobuild.RunBuild()
+    fatal.assert_called_with(
+        'KeyboardInterrupt detected, exiting.',
+        self.autobuild._build_info,
+        collect=False)
 
-  @mock.patch.object(autobuild, 'AutoBuild', autospec=True)
-  def testMainException(self, ab):
-    ab.return_value.RunBuild.side_effect = Exception
-    with self.assertRaises(LogFatalError):
-      autobuild.main('something')
+  @mock.patch.object(autobuild, '_LogFatal', autospec=True)
+  @mock.patch.object(title, 'set_title', autospec=True)
+  def testMainException(self, st, fatal):
+    st.side_effect = Exception
+    self.autobuild.RunBuild()
+    fatal.assert_called_with(mock.ANY, self.autobuild._build_info, 4000)
 
 
 if __name__ == '__main__':

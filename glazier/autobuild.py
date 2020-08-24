@@ -17,6 +17,7 @@
 import os
 import sys
 import traceback
+from typing import Optional, Text
 
 from absl import app
 from absl import flags
@@ -37,12 +38,17 @@ logging = logs.logging
 _FAILURE_MSG = ('%s\n\nInstaller cannot continue.')
 
 
-def _LogFatal(msg, code=None):
+def _LogFatal(msg: Text,
+              build_info: buildinfo.BuildInfo,
+              code: Optional[int] = None,
+              collect: bool = True):
   """Log a fatal error and exit.
 
   Args:
     msg: The error message to accompany the failure.
+    build_info: The active BuildInfo class.
     code: Error code to append to the failure message.
+    collect: Whether to collect log files.
   """
   string = _FAILURE_MSG
   if code:
@@ -69,40 +75,41 @@ class AutoBuild(object):
       try:
         os.remove(location)
       except OSError as e:
-        _LogFatal('Unable to remove task list.  %s' % e)
+        _LogFatal('Unable to remove task list.  %s' % e, self._build_info)
     return location
 
   def RunBuild(self):
     """Perform the build."""
-    title.set_title()
-    self._build_info.BeyondCorp()
-
-    task_list = self._SetupTaskList()
-
-    if not os.path.exists(task_list):
-      root_path = FLAGS.config_root_path or '/'
-      try:
-        b = builder.ConfigBuilder(self._build_info)
-        b.Start(out_file=task_list, in_path=root_path)
-      except builder.ConfigBuilderError as e:
-        _LogFatal(str(e))
-
     try:
-      r = runner.ConfigRunner(self._build_info)
-      r.Start(task_list=task_list)
-    except runner.ConfigRunnerError as e:
-      _LogFatal(str(e))
+      title.set_title()
+      self._build_info.BeyondCorp()
+
+      task_list = self._SetupTaskList()
+
+      if not os.path.exists(task_list):
+        root_path = FLAGS.config_root_path or '/'
+        try:
+          b = builder.ConfigBuilder(self._build_info)
+          b.Start(out_file=task_list, in_path=root_path)
+        except builder.ConfigBuilderError as e:
+          _LogFatal(str(e), self._build_info)
+
+      try:
+        r = runner.ConfigRunner(self._build_info)
+        r.Start(task_list=task_list)
+      except runner.ConfigRunnerError as e:
+        _LogFatal(str(e), self._build_info)
+    except KeyboardInterrupt:
+      _LogFatal(
+          'KeyboardInterrupt detected, exiting.',
+          self._build_info,
+          collect=False)
+    except Exception:  # pylint: disable=broad-except
+      _LogFatal(traceback.format_exc(), self._build_info, 4000)
 
 
 def main(unused_argv):
-  ab = AutoBuild()
-  try:
-    ab.RunBuild()
-  except KeyboardInterrupt:
-    logging.fatal('KeyboardInterrupt detected, exiting.')
-    sys.exit(1)
-  except Exception:  # pylint: disable=broad-except
-    _LogFatal(traceback.format_exc(), 4000)
+  AutoBuild().RunBuild()
 
 
 if __name__ == '__main__':
