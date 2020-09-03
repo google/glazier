@@ -260,6 +260,7 @@ class BuildInfo(object):
         'device_id': self.DeviceIds,
         'encryption_type': self.EncryptionLevel,
         'graphics': self.VideoControllersByName,
+        'is_laptop': self.IsLaptop,
         'os_code': self.OsCode,
         'beyond_corp': self.BeyondCorp,
         'lab': self.Lab,
