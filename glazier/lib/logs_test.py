@@ -48,6 +48,15 @@ class LoggingTest(absltest.TestCase):
       with self.assertRaises(logs.LogError):
         logs.Collect(constants.SYS_LOGS_PATH)
 
+  @mock.patch.object(zipfile.ZipFile, 'write', autospec=True)
+  def testCollectValueErr(self, wr):
+    wr.side_effect = ValueError('ZIP does not support timestamps before 1980')
+    with Patcher() as patcher:
+      patcher.fs.create_dir(constants.SYS_LOGS_PATH)
+      patcher.fs.create_file(os.path.join(constants.SYS_LOGS_PATH, 'log1.log'))
+      with self.assertRaises(logs.LogError):
+        logs.Collect(r'C:\glazier.zip')
+
   @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
   def testGetLogsPath(self, wpe):
     # WinPE

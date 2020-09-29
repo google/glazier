@@ -51,7 +51,7 @@ def Collect(path: Text):
       for f in files:
         arc.write(os.path.join(root, f))
     arc.close()
-  except IOError as e:
+  except (IOError, ValueError) as e:
     raise LogError(str(e))
 
 
