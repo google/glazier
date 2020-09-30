@@ -1,6 +1,6 @@
 # Glazier Installer Policies
 
-[TOC]
+
 
 Policy modules determine whether or not Autobuild should be allowed to proceed
 with an installation.
