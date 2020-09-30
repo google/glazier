@@ -92,15 +92,13 @@ class BuildInfoTest(absltest.TestCase):
     self.autobuild.RunBuild()
     fatal.assert_called_with(mock.ANY, self.autobuild._build_info)
 
-  @mock.patch.object(autobuild, '_LogFatal', autospec=True)
   @mock.patch.object(title, 'set_title', autospec=True)
-  def testMainError(self, st, fatal):
+  def testKeyboardInterrupt(self, st):
     st.side_effect = KeyboardInterrupt
-    self.autobuild.RunBuild()
-    fatal.assert_called_with(
-        'KeyboardInterrupt detected, exiting.',
-        self.autobuild._build_info,
-        collect=False)
+    with self.assertRaises(SystemExit) as cm:
+      self.autobuild.RunBuild()
+    self.assertEqual(cm.exception.code, 1)
+    self.assertTrue(autobuild.logging.info.called)
 
   @mock.patch.object(autobuild, '_LogFatal', autospec=True)
   @mock.patch.object(title, 'set_title', autospec=True)

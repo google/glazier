@@ -100,10 +100,8 @@ class AutoBuild(object):
       except runner.ConfigRunnerError as e:
         _LogFatal(str(e), self._build_info)
     except KeyboardInterrupt:
-      _LogFatal(
-          'KeyboardInterrupt detected, exiting.',
-          self._build_info,
-          collect=False)
+      logging.info('KeyboardInterrupt detected, exiting.')
+      sys.exit(1)
     except Exception:  # pylint: disable=broad-except
       _LogFatal(traceback.format_exc(), self._build_info, 4000)
 
