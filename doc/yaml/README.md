@@ -1,6 +1,6 @@
 # Glazier Build YAML Specification
 
-[TOC]
+
 
 Glazier uses YAML-based configuration files. These documents outline the
 supported syntax.
