@@ -1,8 +1,8 @@
 # Glazier
 
-| Support | Travis CI | Python Tests | Contributing | Open Issues | License |
-| ------- | --------- | ------------ | ------------ | ----------- | ------- |
-[![Google Groups - Glazier](https://img.shields.io/badge/Support-Google%20Groups-blue)](https://groups.google.com/forum/#!forum/glazier-discuss) | [![Travis CI Build Status](https://img.shields.io/travis/google/glazier)](https://travis-ci.org/google/glazier) | [![Python Tests](https://github.com/TsekNet/glazier/workflows/Python%20Tests/badge.svg)](https://github.com/google/glazier/actions?query=workflow%3A%22Python+Tests%22) | [![Contributing](https://img.shields.io/badge/contributions-welcome-brightgreen)](https://github.com/google/glazier/blob/master/CONTRIBUTING.md) | [![Open Issues](https://img.shields.io/github/issues/google/glazier)](https://github.com/google/glazier/issues) | [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://github.com/google/glazier/blob/master/LICENSE)
+| Support | Python Tests | Contributing | Open Issues | License |
+| ------- | ------------ | ------------ | ----------- | ------- |
+[![Google Groups - Glazier](https://img.shields.io/badge/Support-Google%20Groups-blue)](https://groups.google.com/forum/#!forum/glazier-discuss) | [![Python Tests](https://github.com/TsekNet/glazier/workflows/Python%20Tests/badge.svg)](https://github.com/google/glazier/actions?query=workflow%3A%22Python+Tests%22) | [![Contributing](https://img.shields.io/badge/contributions-welcome-brightgreen)](https://github.com/google/glazier/blob/master/CONTRIBUTING.md) | [![Open Issues](https://img.shields.io/github/issues/google/glazier)](https://github.com/google/glazier/issues) | [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://github.com/google/glazier/blob/master/LICENSE)
 
 [Gla·zier](https://en.wikipedia.org/wiki/Glazier) /ˈɡlāZHər/ *noun*: a person who installs windows.
 
