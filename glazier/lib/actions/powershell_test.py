@@ -40,10 +40,9 @@ class PowershellTest(parameterized.TestCase):
   @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
   def testPSScript(self, cache, run):
     cache.return_value = SCRIPT_PATH
-    ps = powershell.PSScript([SCRIPT, ARGS], self.bi)
     run.return_value = 0
+    ps = powershell.PSScript([SCRIPT, ARGS], self.bi)
     ps.Run()
-    cache.assert_called_with(mock.ANY, SCRIPT, self.bi)
     run.assert_called_with(mock.ANY, SCRIPT_PATH, ARGS, [0])
     run.side_effect = powershell.powershell.PowerShellError
     self.assertRaises(powershell.ActionError, ps.Run)
@@ -51,6 +50,15 @@ class PowershellTest(parameterized.TestCase):
     run.side_effect = None
     cache.side_effect = powershell.cache.CacheError
     self.assertRaises(powershell.ActionError, ps.Run)
+
+  @mock.patch.object(powershell.powershell, 'PowerShell', autospec=True)
+  @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
+  def testPSScriptNoShell(self, cache, ps_lib):
+    """Assert Shell=False by default for mutation testing."""
+    cache.return_value = SCRIPT_PATH
+    ps_lib.return_value.RunLocal.return_value = 0
+    powershell.PSScript([SCRIPT], self.bi).Run()
+    ps_lib.assert_called_with(False, True)
 
   @mock.patch.object(
       powershell.powershell.PowerShell, 'RunLocal', autospec=True)
@@ -68,9 +76,10 @@ class PowershellTest(parameterized.TestCase):
   @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
   def testPSScriptRebootNoRetry(self, cache, run):
     cache.return_value = SCRIPT_PATH
-    ps = powershell.PSScript([SCRIPT, ARGS, [0], [1337, 1338]], self.bi)
     run.return_value = 1337
-    self.assertRaises(powershell.RestartEvent, ps.Run)
+    with self.assertRaises(powershell.RestartEvent) as cm:
+      powershell.PSScript([SCRIPT, ARGS, [0], [1337, 1338]], self.bi).Run()
+    self.assertEqual(cm.exception.retry_on_restart, False)
     run.assert_called_with(mock.ANY, SCRIPT_PATH, ARGS, [0, 1337, 1338])
 
   @mock.patch.object(
@@ -126,11 +135,40 @@ class PowershellTest(parameterized.TestCase):
     ps = powershell.PSScript([1, 2, 3, 4, 5, 6], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
 
-  # TODO : Use fail() to make an explicit assertion. go/pytotw/006
+  # TODO : Use fail() to make an explicit assertion.
+  # (go/python-tips/006)
   def testPSScriptValidate(self):
     ps = powershell.PSScript([SCRIPT, ARGS, [0], [1337, 1338], True, False,
                               True], None)
     ps.Validate()
+
+  @mock.patch.object(powershell, 'PSScript', autospec=True)
+  def testMultiPSScript(self, psscript):
+    """Valid inputs should call PSScript with the appropriate args."""
+    powershell.MultiPSScript([[SCRIPT], [SCRIPT]], self.bi).Run()
+    psscript.assert_has_calls(
+        [mock.call([SCRIPT], self.bi),
+         mock.call([SCRIPT], self.bi)],
+        any_order=True)
+
+  def testMultiPSScriptIndexError(self):
+    """Missing input fields should raise IndexError."""
+    with self.assertRaises(powershell.ActionError):
+      powershell.MultiPSScript([[]], self.bi).Run()
+
+  def testMultiPSScriptValidate(self):
+    """Valid inputs should pass validation tests."""
+    powershell.MultiPSScript([[SCRIPT]], self.bi).Validate()
+
+  def testMultiPSScriptValidateError(self):
+    """String input should raise ValidationError."""
+    with self.assertRaises(powershell.ActionError):
+      powershell.MultiPSScript(SCRIPT, self.bi).Validate()
+
+  def testMultiPSScriptValidateArgsType(self):
+    """Non-list args should raise ValidationError."""
+    with self.assertRaises(powershell.ValidationError):
+      powershell.MultiPSScript([[SCRIPT], SCRIPT], self.bi).Validate()
 
   @mock.patch.object(
       powershell.powershell.PowerShell, 'RunCommand', autospec=True)
@@ -139,6 +177,13 @@ class PowershellTest(parameterized.TestCase):
     run.return_value = 1337
     ps.Run()
     run.assert_called_with(mock.ANY, TOKENIZED_COMMAND, [1337])
+
+  @mock.patch.object(powershell.powershell, 'PowerShell', autospec=True)
+  def testPSCommandNoShell(self, ps_lib):
+    """Assert Shell=False by default for mutation testing."""
+    ps_lib.return_value.RunCommand.return_value = 0
+    powershell.PSCommand([COMMAND], self.bi).Run()
+    ps_lib.assert_called_with(False, True)
 
   @mock.patch.object(
       powershell.powershell.PowerShell, 'RunCommand', autospec=True)
@@ -179,9 +224,10 @@ class PowershellTest(parameterized.TestCase):
   @mock.patch.object(
       powershell.powershell.PowerShell, 'RunCommand', autospec=True)
   def testPSCommandRebootNoRetry(self, run):
-    ps = powershell.PSCommand([COMMAND, [0], [1337, 1338]], self.bi)
     run.return_value = 1337
-    self.assertRaises(powershell.RestartEvent, ps.Run)
+    with self.assertRaises(powershell.RestartEvent) as cm:
+      powershell.PSCommand([COMMAND, [0], [1337, 1338]], self.bi).Run()
+    self.assertEqual(cm.exception.retry_on_restart, False)
     run.assert_called_with(mock.ANY, TOKENIZED_COMMAND, [0, 1337, 1338])
 
   @mock.patch.object(
@@ -195,8 +241,7 @@ class PowershellTest(parameterized.TestCase):
     self.assertEqual(exception.retry_on_restart, True)
     run.assert_called_with(mock.ANY, TOKENIZED_COMMAND, [0, 1337, 1338])
 
-  @mock.patch.object(
-      powershell.powershell, 'PowerShell', autospec=True)
+  @mock.patch.object(powershell.powershell, 'PowerShell', autospec=True)
   def testPSCommandShell(self, ps_lib):
     ps = powershell.PSCommand([COMMAND, [0], [], False, True], self.bi)
     ps_lib.return_value.RunCommand.return_value = 0
@@ -233,11 +278,41 @@ class PowershellTest(parameterized.TestCase):
                                True], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
 
-  # TODO : Use fail() to make an explicit assertion. go/pytotw/006
+  # TODO : Use fail() to make an explicit assertion.
+  # (go/python-tips/006)
   def testPSCommandValidate(self):
     ps = powershell.PSCommand([COMMAND, [0], [1337, 1338], True, False, True],
                               None)
     ps.Validate()
+
+  @mock.patch.object(powershell, 'PSCommand', autospec=True)
+  def testMultiPSCommand(self, pscommand):
+    """Valid inputs should call PSCommand with the appropriate args."""
+    powershell.MultiPSCommand([[COMMAND], [COMMAND]], self.bi).Run()
+    pscommand.assert_has_calls(
+        [mock.call([COMMAND], self.bi),
+         mock.call([COMMAND], self.bi)],
+        any_order=True)
+
+  def testMultiPSCommandIndexError(self):
+    """Missing input fields should raise IndexError."""
+    with self.assertRaises(powershell.ActionError):
+      powershell.MultiPSCommand([[]], self.bi).Run()
+
+  def testMultiPSCommandValidate(self):
+    """Valid inputs should pass validation tests."""
+    powershell.MultiPSCommand([[COMMAND]], self.bi).Validate()
+
+  def testMultiPSCommandValidateType(self):
+    """String input should raise ValidationError."""
+    with self.assertRaises(powershell.ActionError):
+      powershell.MultiPSCommand(COMMAND, self.bi).Validate()
+
+  def testMultiPSCommandValidateArgsType(self):
+    """Non-list args should raise ValidationError."""
+    with self.assertRaises(powershell.ValidationError):
+      powershell.MultiPSCommand([[COMMAND], COMMAND], self.bi).Validate()
+
 
 if __name__ == '__main__':
   absltest.main()

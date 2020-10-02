@@ -25,6 +25,24 @@ class Error(Exception):
   pass
 
 
+def Copy(src: Text, dst: Text):
+  """Copy a file from src to dst.
+
+  Args:
+    src: The full file path to the source.
+    dst: The full file path to the destination.
+
+  Raises:
+    Error: Failure copying the file.
+  """
+  try:
+    CreateDirectories(dst)
+    shutil.copy2(src, dst)
+    logging.info('Copying: %s to %s', src, dst)
+  except (shutil.Error, IOError) as e:
+    raise Error('Unable to copy %s to %s: %s' % (src, dst, str(e)))
+
+
 def CreateDirectories(path: Text):
   """Create directory if the path to a file doesn't exist.
 

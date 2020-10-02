@@ -51,8 +51,9 @@ class UpdatesTest(absltest.TestCase):
     cache = updates.constants.SYS_CACHE
     exe.assert_called_with(
         'X:\\Windows\\System32\\dism.exe', [
-            '/image:c:\\',
-            f'/Add-Package/PackagePath:c:\\KB2990941-v3-x64.msu/ScratchDir:{cache}\\Updates\\'
+            '/image:c:\\', '/Add-Package',
+            '/PackagePath:c:\\KB2990941-v3-x64.msu',
+            f'/ScratchDir:{cache}\\Updates\\'
         ],
         shell=True)
     mkdir.assert_called_with('%s\\Updates\\' % cache)

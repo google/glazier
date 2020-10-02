@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Download files over HTTPS.
 
 > Resource Requirements
@@ -21,10 +20,6 @@
       A certificate file containing permitted root certs for SSL validation.
 
 """
-
-from __future__ import absolute_import
-from __future__ import print_function
-
 import hashlib
 import logging
 import os
@@ -36,18 +31,30 @@ import sys
 import tempfile
 import time
 
-from typing import Optional, Text
+import typing
+from typing import List, Optional, Text
 
 from absl import flags
 from glazier.lib import beyondcorp
+from glazier.lib import file_util
 from glazier.lib import winpe
 from six.moves import urllib
 
+if typing.TYPE_CHECKING:
+  import http.client
 
 CHUNK_BYTE_SIZE = 65536
 SLEEP = 20
 
 FLAGS = flags.FLAGS
+
+
+def IsLocal(string: Text) -> bool:
+  return re.match(r'[A-Z,a-z]\:', string) is not None
+
+
+def IsRemote(string: Text) -> bool:
+  return re.match(r'http(s)?:', string, re.I) is not None
 
 
 def Transform(string: Text, build_info) -> Text:
@@ -160,7 +167,7 @@ class BaseDownloader(object):
   def _GetHandlers(self):
     return [urllib.request.HTTPSHandler()]
 
-  def _AttemptResource(self, attempt, max_retries, resource):
+  def _AttemptResource(self, attempt: int, max_retries: int, resource: Text):
     r"""Loop logic for retrying failed requests.
 
     Use logger to log messages to standard output streams, and print to write to
@@ -168,8 +175,8 @@ class BaseDownloader(object):
 
     Args:
       attempt: Incrementing number of attempts.
-      max_retries: Number of times to attempt to download a file if the
-        first attempt fails. A negative number implies infinite.
+      max_retries: Number of times to attempt to download a file if the first
+        attempt fails. A negative number implies infinite.
       resource: Resource to attempt to reach.
 
     Raises:
@@ -189,7 +196,11 @@ class BaseDownloader(object):
       raise DownloadError('Failed to reach %s after %d attempt(s).' %
                           (resource, max_retries))
 
-  def _OpenStream(self, url, max_retries=5, status_codes=None):
+  def _OpenStream(
+      self,
+      url: Text,
+      max_retries: int = 5,
+      status_codes: Optional[List[int]] = None) -> 'http.client.HTTPResponse':
     """Opens a connection to a remote resource.
 
     Args:
@@ -229,8 +240,9 @@ class BaseDownloader(object):
       except urllib.error.HTTPError:
         logging.error('File not found on remote server: %s.', url)
       except urllib.error.URLError as e:
-        logging.error('Error connecting to remote server to download file '
-                      '"%s". The error was: %s', url, e)
+        logging.error(
+            'Error connecting to remote server to download file '
+            '"%s". The error was: %s', url, e)
         try:
           logging.info('Trying again with machine context...')
           ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
@@ -238,8 +250,9 @@ class BaseDownloader(object):
         except urllib.error.HTTPError:
           logging.error('File not found on remote server: %s.', url)
         except urllib.error.URLError as e:
-          logging.error('Error connecting to remote server to download file '
-                        '"%s". The error was: %s', url, e)
+          logging.error(
+              'Error connecting to remote server to download file '
+              '"%s". The error was: %s', url, e)
       if file_stream:
         if file_stream.getcode() in (status_codes or [200]):
           return file_stream
@@ -251,7 +264,10 @@ class BaseDownloader(object):
 
       self._AttemptResource(attempt, max_retries, 'file download')
 
-  def CheckUrl(self, url, status_codes, max_retries=5):
+  def CheckUrl(self,
+               url: Text,
+               status_codes: List[int],
+               max_retries: int = 5) -> bool:
     """Check a remote URL for availability.
 
     Args:
@@ -269,31 +285,49 @@ class BaseDownloader(object):
       logging.error(e)
     return False
 
-  def DownloadFile(self, url, save_location, max_retries=5,
-                   show_progress=False):
-    """Downloads a file to temporary storage.
+  def DownloadFile(self,
+                   url: Text,
+                   save_location: Text,
+                   max_retries: int = 5,
+                   show_progress: bool = False):
+    """Downloads a file from one location to another.
+
+    If URL references a local path, the file will be copied rather than
+    downloaded.
 
     Args:
       url:  The address of the file to be downloaded.
       save_location: The full path of where the file should be saved.
-      max_retries:  The number of times to attempt to download
-        a file if the first attempt fails.
+      max_retries:  The number of times to attempt to download a file if the
+        first attempt fails.
       show_progress: Print download progress to stdout (overrides default).
+
+    Raises:
+      DownloadError: failure writing file to the save_location
     """
     self._save_location = save_location
-    if self._beyondcorp.CheckBeyondCorp():
-      url = self._SetUrl(url)
-      max_retries = -1
-    file_stream = self._OpenStream(url, max_retries)
-    self._StreamToDisk(file_stream, show_progress)
+    if IsRemote(url):
+      if self._beyondcorp.CheckBeyondCorp():
+        url = self._SetUrl(url)
+        max_retries = -1
+      file_stream = self._OpenStream(url, max_retries)
+      self._StreamToDisk(file_stream, show_progress)
+    else:
+      try:
+        file_util.Copy(url, save_location)
+      except file_util.Error as e:
+        raise DownloadError(str(e))
 
-  def DownloadFileTemp(self, url, max_retries=5, show_progress=False):
+  def DownloadFileTemp(self,
+                       url: Text,
+                       max_retries: int = 5,
+                       show_progress: bool = False) -> Text:
     """Downloads a file to temporary storage.
 
     Args:
       url:  The address of the file to be downloaded.
-      max_retries:  The number of times to attempt to download
-        a file if the first attempt fails.
+      max_retries:  The number of times to attempt to download a file if the
+        first attempt fails.
       show_progress: Print download progress to stdout (overrides default).
 
     Returns:
@@ -309,7 +343,7 @@ class BaseDownloader(object):
     self._StreamToDisk(file_stream, show_progress)
     return self._save_location
 
-  def _DownloadChunkReport(self, bytes_so_far, total_size):
+  def _DownloadChunkReport(self, bytes_so_far: int, total_size: int):
     """Prints download progress information.
 
     Args:
@@ -318,16 +352,16 @@ class BaseDownloader(object):
     """
     percent = float(bytes_so_far) / total_size
     percent = round(percent * 100, 2)
-    message = (('\rDownloaded %s of %s (%0.2f%%)' + (' ' * 10)) %
-               (self._ConvertBytes(bytes_so_far),
-                self._ConvertBytes(total_size), percent))
+    message = (('\rDownloaded %s of %s (%0.2f%%)' +
+                (' ' * 10)) % (self._ConvertBytes(bytes_so_far),
+                               self._ConvertBytes(total_size), percent))
     sys.stdout.write(message)
     sys.stdout.flush()
 
     if bytes_so_far >= total_size:
       sys.stdout.write('\n')
 
-  def _SetUrl(self, url: Text):
+  def _SetUrl(self, url: Text) -> Text:
     """Simple helper function to determine signed URL.
 
     Args:
@@ -348,22 +382,20 @@ class BaseDownloader(object):
     except beyondcorp.BCError as e:
       raise DownloadError(e)
 
-  def _StoreDebugInfo(self, file_stream, socket_error=None):
+  def _StoreDebugInfo(self,
+                      file_stream: 'http.client.HTTPResponse',
+                      socket_error: Optional[Text] = None):
     """Gathers debug information for use when file downloads fail.
 
     Args:
       file_stream:  The file stream object of the file being downloaded.
-      socket_error: Store the error raised from the socket class with
-        other debug info.
-
-    Returns:
-      debug_info:  A dictionary containing various pieces of debugging
-          information.
+      socket_error: Store the error raised from the socket class with other
+        debug info.
     """
     if socket_error:
       self._debug_info['socket_error'] = socket_error
     if file_stream:
-      for header in file_stream.info().header_items():
+      for header in file_stream.info().items():
         self._debug_info[header[0]] = header[1]
     self._debug_info['current_time'] = time.strftime(
         '%A, %d %B %Y %H:%M:%S UTC')
@@ -379,14 +411,17 @@ class BaseDownloader(object):
         print('%s: %s' % (key, value))
       print('\n\n\n')
 
-  def _StreamToDisk(self, file_stream, show_progress=None, max_retries=5):
+  def _StreamToDisk(self,
+                    file_stream: 'http.client.HTTPResponse',
+                    show_progress: bool = None,
+                    max_retries: int = 5):
     """Save a file stream to disk.
 
     Args:
       file_stream: The file stream returned by a successful urlopen()
       show_progress: Print download progress to stdout (overrides default).
       max_retries:  The number of times to attempt to download a file if the
-      first attempt fails. A negative number implies infinite.
+        first attempt fails. A negative number implies infinite.
 
     Raises:
       DownloadError: Error retrieving file or saving to disk.
@@ -426,7 +461,8 @@ class BaseDownloader(object):
     self._Validate(file_stream, total_size)
     file_stream.close()
 
-  def _Validate(self, file_stream, expected_size):
+  def _Validate(self, file_stream: 'http.client.HTTPResponse',
+                expected_size: int):
     """Validate the downloaded file.
 
     Args:
@@ -447,7 +483,7 @@ class BaseDownloader(object):
                  (actual_file_size, expected_size))
       raise DownloadError(message)
 
-  def VerifyShaHash(self, file_path, expected):
+  def VerifyShaHash(self, file_path: Text, expected: Text) -> bool:
     """Verifies the SHA256 hash of a file.
 
     Arguments:
@@ -490,4 +526,3 @@ class BaseDownloader(object):
 
 # Set our downloader of choice
 Download = BaseDownloader
-

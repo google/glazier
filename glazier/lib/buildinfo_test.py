@@ -486,6 +486,13 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(self.buildinfo.ActiveConfigPath(pop=True), ['/foo'])
     self.assertEqual(self.buildinfo.ActiveConfigPath(pop=True), [])
     self.assertEqual(self.buildinfo.ActiveConfigPath(pop=True), [])
+
+  def testActiveConfigPathSet(self):
+    self.assertEqual(
+        self.buildinfo.ActiveConfigPath(set_to=['/foo', '/bar']),
+        ['/foo', '/bar'])
+    self.assertEqual(self.buildinfo.ActiveConfigPath(), ['/foo', '/bar'])
+    self.assertEqual(self.buildinfo.ActiveConfigPath(set_to=[]), [])
     self.buildinfo.ActiveConfigPath(set_to=['/foo', 'bar', 'baz'])
     self.assertEqual(self.buildinfo.ActiveConfigPath(), ['/foo', 'bar', 'baz'])
 

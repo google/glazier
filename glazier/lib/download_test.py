@@ -21,6 +21,7 @@ from absl.testing import flagsaver
 from glazier.lib import beyondcorp
 from glazier.lib import buildinfo
 from glazier.lib import download
+from glazier.lib import file_util
 
 import mock
 from pyfakefs import fake_filesystem
@@ -36,6 +37,22 @@ branch=stable
 FLAGS = flags.FLAGS
 SLEEP = 20
 TEST_URL = 'https://www.example.com/build.yaml'
+
+
+class HelperTests(absltest.TestCase):
+
+  def testIsRemote(self):
+    self.assertTrue(download.IsRemote('http://glazier.example.com'))
+    self.assertTrue(download.IsRemote('https://glazier.example.com'))
+    self.assertTrue(download.IsRemote('HTTPS://glazier.example.com'))
+    self.assertFalse(download.IsRemote('String with HTTP in it.'))
+    self.assertFalse(download.IsRemote('C:/glazier'))
+
+  def testIsLocal(self):
+    self.assertTrue(download.IsLocal('C:/glazier'))
+    self.assertTrue(download.IsLocal(r'C:\glazier'))
+    self.assertFalse(download.IsLocal('http://glazier.example.com'))
+    self.assertFalse(download.IsLocal(r'String with C:\glazier in it.'))
 
 
 class PathsTest(absltest.TestCase):
@@ -55,15 +72,29 @@ class PathsTest(absltest.TestCase):
                                 self.buildinfo)
     self.assertEqual(result, 'sccm.x86_64.1.00.1337#13371337.exe')
 
-    result = download.Transform(r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #My-Script.ps1 -Verbose', self.buildinfo)
-    self.assertEqual(result, r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File https://glazier/My-Script.ps1 -Verbose')
+    result = download.Transform(
+        r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #My-Script.ps1 -Verbose',
+        self.buildinfo)
+    self.assertEqual(
+        result,
+        r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File https://glazier/My-Script.ps1 -Verbose'
+    )
 
-    result = download.Transform(r'@Corp/install/1.0.0/installer.exe sccm.x86_64.1.00.1337\@13371337.exe',
-                                self.buildinfo)
-    self.assertEqual(result, 'https://glazier/bin/Corp/install/1.0.0/installer.exe sccm.x86_64.1.00.1337@13371337.exe')
+    result = download.Transform(
+        r'@Corp/install/1.0.0/installer.exe sccm.x86_64.1.00.1337\@13371337.exe',
+        self.buildinfo)
+    self.assertEqual(
+        result,
+        'https://glazier/bin/Corp/install/1.0.0/installer.exe sccm.x86_64.1.00.1337@13371337.exe'
+    )
 
-    result = download.Transform(r'C:\Windows\System32\msiexec.exe /i @Google/Chrome/1.3.3.7/googlechromestandaloneenterprise64.msi /qb /norestart', self.buildinfo)
-    self.assertEqual(result, r'C:\Windows\System32\msiexec.exe /i https://glazier/bin/Google/Chrome/1.3.3.7/googlechromestandaloneenterprise64.msi /qb /norestart')
+    result = download.Transform(
+        r'C:\Windows\System32\msiexec.exe /i @Google/Chrome/1.3.3.7/googlechromestandaloneenterprise64.msi /qb /norestart',
+        self.buildinfo)
+    self.assertEqual(
+        result,
+        r'C:\Windows\System32\msiexec.exe /i https://glazier/bin/Google/Chrome/1.3.3.7/googlechromestandaloneenterprise64.msi /qb /norestart'
+    )
 
     result = download.Transform('nothing _ here', self.buildinfo)
     self.assertEqual(result, 'nothing _ here')
@@ -108,8 +139,9 @@ class DownloadTest(absltest.TestCase):
   @mock.patch.object(download.time, 'sleep', autospec=True)
   def testAttemptResource(self, sleep, i):
     self._dl._AttemptResource(1, 2, 'file download')
-    i.assert_called_with('Failed attempt %d of %d: Sleeping for %d second(s) '
-                         'before retrying the %s.', 1, 2, 20, 'file download')
+    i.assert_called_with(
+        'Failed attempt %d of %d: Sleeping for %d second(s) '
+        'before retrying the %s.', 1, 2, 20, 'file download')
     sleep.assert_called_with(20)
 
   @mock.patch.object(download.logging, 'info', autospec=True)
@@ -150,8 +182,8 @@ class DownloadTest(absltest.TestCase):
     # retries
     file_stream.getcode.return_value = 200
     urlopen.side_effect = iter([httperr, httperr, file_stream])
-    self.assertRaises(download.DownloadError, self._dl._OpenStream, url,
-                      max_retries=2)
+    self.assertRaises(
+        download.DownloadError, self._dl._OpenStream, url, max_retries=2)
 
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
@@ -167,6 +199,19 @@ class DownloadTest(absltest.TestCase):
     urlopen.side_effect = iter([file_stream])
     self.assertFalse(
         self._dl.CheckUrl(TEST_URL, max_retries=1, status_codes=[201]))
+
+  @mock.patch.object(file_util, 'Copy', autospec=True)
+  def testDownloadFileLocal(self, copy):
+    self._dl.DownloadFile(
+        url='c:/glazier/conf/test.ps1', save_location='c:/windows/test.ps1')
+    copy.assert_called_with('c:/glazier/conf/test.ps1', 'c:/windows/test.ps1')
+
+  @mock.patch.object(file_util, 'Copy', autospec=True)
+  def testDownloadFileCopyExcept(self, copy):
+    copy.side_effect = file_util.Error('copy error')
+    with self.assertRaises(download.DownloadError):
+      self._dl.DownloadFile(
+          url='c:/glazier/conf/test.ps1', save_location='c:/windows/test.ps1')
 
   @mock.patch.object(download.BaseDownloader, '_StreamToDisk', autospec=True)
   @mock.patch.object(download.BaseDownloader, '_OpenStream', autospec=True)
@@ -230,11 +275,10 @@ class DownloadTest(absltest.TestCase):
       # HTTP Header returned nothing (NoneType)
       http_stream.seek(0)
       report.reset_mock()
-      self.assertRaises(download.DownloadError, self._dl._StreamToDisk,
-                        None)
+      self.assertRaises(download.DownloadError, self._dl._StreamToDisk, None)
     # IOError
     http_stream.seek(0)
-    self.filesystem.CreateDirectory(r'C:\Windows')
+    self.filesystem.create_dir(r'C:\Windows')
     self._dl._save_location = r'C:\Windows'
     self.assertRaises(download.DownloadError, self._dl._StreamToDisk,
                       file_stream)

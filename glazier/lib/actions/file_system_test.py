@@ -15,6 +15,7 @@
 
 from absl.testing import absltest
 
+from glazier.lib import file_util
 from glazier.lib.actions import file_system
 
 import mock
@@ -32,8 +33,8 @@ class FileSystemTest(absltest.TestCase):
       cd = file_system.CopyDir([r'/stage', r'/root/copied'], build_info)
       cd.Validate()
       cd.Run()
-      self.assertTrue(patcher.fs.Exists(r'/root/copied/file1.txt'))
-      self.assertTrue(patcher.fs.Exists(r'/root/copied/file2.txt'))
+      self.assertTrue(patcher.fs.exists(r'/root/copied/file1.txt'))
+      self.assertTrue(patcher.fs.exists(r'/root/copied/file2.txt'))
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testCopyDirWithRemove(self, build_info):
@@ -44,8 +45,8 @@ class FileSystemTest(absltest.TestCase):
       cd = file_system.CopyDir([r'/stage', r'/root/copied', True], build_info)
       cd.Validate()
       cd.Run()
-      self.assertTrue(patcher.fs.Exists(r'/root/copied/file1.txt'))
-      self.assertTrue(patcher.fs.Exists(r'/root/copied/file2.txt'))
+      self.assertTrue(patcher.fs.exists(r'/root/copied/file1.txt'))
+      self.assertTrue(patcher.fs.exists(r'/root/copied/file2.txt'))
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testCopyDirException(self, build_info):
@@ -62,24 +63,22 @@ class FileSystemTest(absltest.TestCase):
     with self.assertRaises(file_system.ActionError):
       cd.Run()
 
+  @mock.patch.object(file_util, 'Copy', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testCopyFile(self, build_info):
-    with Patcher() as patcher:
-      patcher.fs.create_dir(r'/stage')
-      patcher.fs.create_file(r'/stage/file1.txt', contents='file1')
-      patcher.fs.create_file(r'/stage/file2.txt', contents='file2')
-      src1 = r'/stage/file1.txt'
-      dst1 = r'/windows/glazier/glazier.log'
-      src2 = r'/stage/file2.txt'
-      dst2 = r'/windows/glazier/other.log'
-      file_system.MultiCopyFile([[src1, dst1], [src2, dst2]], build_info).Run()
-      self.assertTrue(patcher.fs.Exists(r'/windows/glazier/glazier.log'))
-      self.assertTrue(patcher.fs.Exists(r'/windows/glazier/other.log'))
+  def testCopyFile(self, build_info, copy):
+    src1 = r'/stage/file1.txt'
+    dst1 = r'/windows/glazier/glazier.log'
+    src2 = r'/stage/file2.txt'
+    dst2 = r'/windows/glazier/other.log'
+    file_system.MultiCopyFile([[src1, dst1], [src2, dst2]], build_info).Run()
+    copy.assert_has_calls([mock.call(src1, dst1), mock.call(src2, dst2)])
 
+  @mock.patch.object(file_util, 'Copy', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testCopyFileBadPath(self, build_info):
+  def testCopyFileError(self, build_info, copy):
     src1 = r'/missing.txt'
     dst1 = r'/windows/glazier/glazier.log'
+    copy.side_effect = file_util.Error('error')
     with self.assertRaises(file_system.ActionError):
       file_system.CopyFile([src1, dst1], build_info).Run()
 
@@ -108,19 +107,18 @@ class FileSystemTest(absltest.TestCase):
                                     ['/tmp/src2.txt', '/tmp/dest2.txt']], None)
     cf.Validate()
 
+  @mock.patch.object(file_util, 'CreateDirectories', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testMkdir(self, build_info):
-    with Patcher() as patcher:
-      patcher.fs.create_dir(r'/stage')
-      patcher.fs.create_file(r'/stage/file1.txt', contents='file1')
-      file_system.MkDir(['/stage/subdir1/subdir2'], build_info).Run()
-      self.assertTrue(file_system.os.path.exists('/stage/subdir1/subdir2'))
-      # bad path
-      with self.assertRaises(file_system.ActionError):
-        file_system.MkDir([r'/stage/file1.txt'], build_info).Run()
-      # bad args
-      with self.assertRaises(file_system.ActionError):
-        file_system.MkDir([], build_info).Run()
+  def testMkdir(self, build_info, create):
+    file_system.MkDir(['/stage/subdir1/subdir2'], build_info).Run()
+    create.assert_called_with('/stage/subdir1/subdir2')
+    # bad path
+    create.side_effect = file_util.Error('error')
+    with self.assertRaises(file_system.ActionError):
+      file_system.MkDir([r'/stage/file1.txt'], build_info).Run()
+    # bad args
+    with self.assertRaises(file_system.ActionError):
+      file_system.MkDir([], build_info).Run()
 
   def testMkdirValidate(self):
     with self.assertRaises(file_system.ValidationError):
@@ -135,11 +133,11 @@ class FileSystemTest(absltest.TestCase):
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testRmDir(self, build_info):
     with Patcher() as patcher:
-      patcher.fs.CreateDirectory(r'/test1')
-      patcher.fs.CreateDirectory(r'/test2')
-      self.assertTrue(file_system.os.path.exists('/test2'))
+      patcher.fs.create_dir(r'/test1')
+      patcher.fs.create_dir(r'/test2')
+      self.assertTrue(patcher.fs.exists('/test2'))
       file_system.RmDir(['/test1', '/test2'], build_info).Run()
-      self.assertFalse(file_system.os.path.exists('/test2'))
+      self.assertFalse(patcher.fs.exists('/test2'))
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testRmDirException(self, build_info):
@@ -155,12 +153,12 @@ class FileSystemTest(absltest.TestCase):
     file_system.RmDir([r'D:\Glazier'], build_info).Validate()
     file_system.RmDir([r'C:\Glazier', r'D:\Glazier'], build_info).Validate()
 
+  @mock.patch.object(file_util, 'CreateDirectories', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testSetupCache(self, build_info):
-    with Patcher():
-      build_info.CachePath.return_value = '/test/cache/path'
-      file_system.SetupCache([], build_info).Run()
-      self.assertTrue(file_system.os.path.exists('/test/cache/path'))
+  def testSetupCache(self, build_info, create):
+    build_info.CachePath.return_value = '/test/cache/path'
+    file_system.SetupCache([], build_info).Run()
+    create.assert_called_with('/test/cache/path')
 
   def testSetupCacheValidate(self):
     sc = file_system.SetupCache('String', None)

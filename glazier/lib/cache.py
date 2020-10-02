@@ -84,12 +84,15 @@ class Cache(object):
     match = self._FindDownload(line)
     while match:
       dl = download.Transform(match, build_info)
-      destination = self._DestinationPath(build_info.CachePath(), dl)
-      try:
-        self._downloader.DownloadFile(dl, destination)
-      except download.DownloadError as e:
-        self._downloader.PrintDebugInfo()
-        raise CacheError('Unable to download required file %s: %s' % (dl, e))
+      if download.IsRemote(dl):
+        destination = self._DestinationPath(build_info.CachePath(), dl)
+        try:
+          self._downloader.DownloadFile(dl, destination)
+        except download.DownloadError as e:
+          self._downloader.PrintDebugInfo()
+          raise CacheError('Unable to download required file %s: %s' % (dl, e))
+      else:  # bypass download for local files
+        destination = dl
       line = line.replace(match, destination)
       match = self._FindDownload(line)
     return line
