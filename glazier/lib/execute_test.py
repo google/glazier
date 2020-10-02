@@ -36,7 +36,7 @@ class ExecuteTest(absltest.TestCase):
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
   def test_execute_binary(self, popen):
     popen_instance = popen.return_value
-    popen_instance.returncode = 0
+    popen_instance.returncode = 1
     popen_instance.stdout = io.BytesIO(b'foo\nbar')
     execute.execute_binary(self.binary, ['arg1', 'arg2'])
     popen.assert_called_with([self.binary, 'arg1', 'arg2'],
