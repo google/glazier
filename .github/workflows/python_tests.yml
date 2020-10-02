@@ -1,10 +1,5 @@
 name: Python Tests
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-
+on: [push, pull_request]
 jobs:
   python_tests:
     runs-on: ubuntu-20.04
