@@ -113,7 +113,7 @@ class DomainJoin(object):
           self._username, '-PassThru'
       ]
       if self._domain_ou:
-        cmd += ['-OUPath', self._domain_ou]
+        cmd += ['-OUPath', f'"{self._domain_ou}"']
       try:
         logging.debug('Attempting to join the domain %s.', self._domain_name)
         ps.RunCommand(cmd)

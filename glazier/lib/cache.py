@@ -84,7 +84,7 @@ class Cache(object):
     match = self._FindDownload(line)
     while match:
       dl = download.Transform(match, build_info)
-      if dl.startswith('http'):
+      if download.IsRemote(dl):
         destination = self._DestinationPath(build_info.CachePath(), dl)
         try:
           self._downloader.DownloadFile(dl, destination)

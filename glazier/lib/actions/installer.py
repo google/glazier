@@ -114,8 +114,8 @@ class ChangeServer(BaseAction):
     self._realtime = True
 
   def Run(self):
-    self._build_info.ConfigServer(set_to=str(self._args[0]))
-    self._build_info.ActiveConfigPath(set_to=str(self._args[1]))
+    self._build_info.ConfigServer(set_to=self._args[0])
+    self._build_info.ActiveConfigPath(set_to=self._args[1])
     raise ServerChangeEvent('Action triggering server change.')
 
   def Validate(self):

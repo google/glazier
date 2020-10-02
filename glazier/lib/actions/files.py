@@ -98,7 +98,8 @@ class Get(BaseAction):
       src = arg[0]
       dst = arg[1]
       full_url = download.Transform(src, self._build_info)
-      if 'https' not in full_url:  # support untagged short filenames
+      # support legacy untagged short filenames
+      if not (download.IsRemote(full_url) or download.IsLocal(full_url)):
         full_url = download.PathCompile(self._build_info, file_name=full_url)
       try:
         file_util.CreateDirectories(dst)

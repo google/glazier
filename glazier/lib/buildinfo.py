@@ -192,7 +192,7 @@ class BuildInfo(object):
     """
     if append:
       self._active_conf_path.append(append)
-    elif set_to:
+    elif set_to is not None:
       self._active_conf_path = set_to
     elif pop and self._active_conf_path:
       self._active_conf_path.pop()
@@ -260,6 +260,7 @@ class BuildInfo(object):
         'device_id': self.DeviceIds,
         'encryption_type': self.EncryptionLevel,
         'graphics': self.VideoControllersByName,
+        'is_laptop': self.IsLaptop,
         'os_code': self.OsCode,
         'beyond_corp': self.BeyondCorp,
         'lab': self.Lab,

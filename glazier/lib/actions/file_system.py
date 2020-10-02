@@ -17,6 +17,7 @@
 import logging
 import os
 import shutil
+from glazier.lib import file_util
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import ValidationError  # pylint:disable=unused-import
@@ -24,22 +25,6 @@ from glazier.lib.actions.base import ValidationError  # pylint:disable=unused-im
 
 class FileSystem(BaseAction):
   """Parent filesystem class with utility functions."""
-
-  def _CreateDirectories(self, path):
-    """Create a directory.
-
-    Args:
-      path: The full path to the directory to be created.
-
-    Raises:
-      ActionError: Failure creating the requested directory.
-    """
-    if not os.path.isdir(path):
-      try:
-        logging.debug('Creating directory: %s', path)
-        os.makedirs(path)
-      except (shutil.Error, OSError) as e:
-        raise ActionError('Unable to create directory %s: %s' % (path, str(e)))
 
 
 class CopyDir(FileSystem):
@@ -89,12 +74,9 @@ class CopyFile(FileSystem):
       raise ActionError('Unable to determine source and destination from %s.' %
                         str(self._args))
     try:
-      path = os.path.dirname(dst)
-      self._CreateDirectories(path)
-      shutil.copy2(src, dst)
-      logging.info('Copying: %s to %s', src, dst)
-    except (shutil.Error, IOError) as e:
-      raise ActionError('Unable to copy %s to %s: %s' % (src, dst, str(e)))
+      file_util.Copy(src, dst)
+    except (file_util.Error) as e:
+      raise ActionError(str(e))
 
   def Validate(self):
     self._ListOfStringsValidator(self._args, length=2)
@@ -128,7 +110,10 @@ class MkDir(FileSystem):
     except IndexError:
       raise ActionError('Unable to determine desired path from %s.' %
                         str(self._args))
-    self._CreateDirectories(path)
+    try:
+      file_util.CreateDirectories(path)
+    except file_util.Error as e:
+      raise ActionError(str(e))
 
   def Validate(self):
     self._ListOfStringsValidator(self._args)
@@ -154,7 +139,10 @@ class SetupCache(FileSystem):
 
   def Run(self):
     path = self._build_info.CachePath()
-    self._CreateDirectories(path)
+    try:
+      file_util.CreateDirectories(path)
+    except file_util.Error as e:
+      raise ActionError(str(e))
 
   def Validate(self):
     self._TypeValidator(self._args, list)

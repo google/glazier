@@ -21,6 +21,7 @@ from absl.testing import flagsaver
 from glazier.lib import beyondcorp
 from glazier.lib import buildinfo
 from glazier.lib import download
+from glazier.lib import file_util
 
 import mock
 from pyfakefs import fake_filesystem
@@ -36,6 +37,22 @@ branch=stable
 FLAGS = flags.FLAGS
 SLEEP = 20
 TEST_URL = 'https://www.example.com/build.yaml'
+
+
+class HelperTests(absltest.TestCase):
+
+  def testIsRemote(self):
+    self.assertTrue(download.IsRemote('http://glazier.example.com'))
+    self.assertTrue(download.IsRemote('https://glazier.example.com'))
+    self.assertTrue(download.IsRemote('HTTPS://glazier.example.com'))
+    self.assertFalse(download.IsRemote('String with HTTP in it.'))
+    self.assertFalse(download.IsRemote('C:/glazier'))
+
+  def testIsLocal(self):
+    self.assertTrue(download.IsLocal('C:/glazier'))
+    self.assertTrue(download.IsLocal(r'C:\glazier'))
+    self.assertFalse(download.IsLocal('http://glazier.example.com'))
+    self.assertFalse(download.IsLocal(r'String with C:\glazier in it.'))
 
 
 class PathsTest(absltest.TestCase):
@@ -182,6 +199,19 @@ class DownloadTest(absltest.TestCase):
     urlopen.side_effect = iter([file_stream])
     self.assertFalse(
         self._dl.CheckUrl(TEST_URL, max_retries=1, status_codes=[201]))
+
+  @mock.patch.object(file_util, 'Copy', autospec=True)
+  def testDownloadFileLocal(self, copy):
+    self._dl.DownloadFile(
+        url='c:/glazier/conf/test.ps1', save_location='c:/windows/test.ps1')
+    copy.assert_called_with('c:/glazier/conf/test.ps1', 'c:/windows/test.ps1')
+
+  @mock.patch.object(file_util, 'Copy', autospec=True)
+  def testDownloadFileCopyExcept(self, copy):
+    copy.side_effect = file_util.Error('copy error')
+    with self.assertRaises(download.DownloadError):
+      self._dl.DownloadFile(
+          url='c:/glazier/conf/test.ps1', save_location='c:/windows/test.ps1')
 
   @mock.patch.object(download.BaseDownloader, '_StreamToDisk', autospec=True)
   @mock.patch.object(download.BaseDownloader, '_OpenStream', autospec=True)

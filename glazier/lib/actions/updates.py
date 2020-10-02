@@ -94,8 +94,7 @@ class UpdateMSU(BaseAction):
     try:
       execute.execute_binary(
           constants.WINPE_DISM, [
-              '/image:c:\\', '/Add-Package'
-              f'/PackagePath:{msu_file}'
+              '/image:c:\\', '/Add-Package', f'/PackagePath:{msu_file}',
               f'/ScratchDir:{scratch_dir}'
           ],
           shell=True)

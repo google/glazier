@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Download files over HTTPS.
 
 > Resource Requirements
@@ -37,6 +36,7 @@ from typing import List, Optional, Text
 
 from absl import flags
 from glazier.lib import beyondcorp
+from glazier.lib import file_util
 from glazier.lib import winpe
 from six.moves import urllib
 
@@ -47,6 +47,14 @@ CHUNK_BYTE_SIZE = 65536
 SLEEP = 20
 
 FLAGS = flags.FLAGS
+
+
+def IsLocal(string: Text) -> bool:
+  return re.match(r'[A-Z,a-z]\:', string) is not None
+
+
+def IsRemote(string: Text) -> bool:
+  return re.match(r'http(s)?:', string, re.I) is not None
 
 
 def Transform(string: Text, build_info) -> Text:
@@ -159,7 +167,7 @@ class BaseDownloader(object):
   def _GetHandlers(self):
     return [urllib.request.HTTPSHandler()]
 
-  def _AttemptResource(self, attempt, max_retries, resource):
+  def _AttemptResource(self, attempt: int, max_retries: int, resource: Text):
     r"""Loop logic for retrying failed requests.
 
     Use logger to log messages to standard output streams, and print to write to
@@ -167,8 +175,8 @@ class BaseDownloader(object):
 
     Args:
       attempt: Incrementing number of attempts.
-      max_retries: Number of times to attempt to download a file if the
-        first attempt fails. A negative number implies infinite.
+      max_retries: Number of times to attempt to download a file if the first
+        attempt fails. A negative number implies infinite.
       resource: Resource to attempt to reach.
 
     Raises:
@@ -232,8 +240,9 @@ class BaseDownloader(object):
       except urllib.error.HTTPError:
         logging.error('File not found on remote server: %s.', url)
       except urllib.error.URLError as e:
-        logging.error('Error connecting to remote server to download file '
-                      '"%s". The error was: %s', url, e)
+        logging.error(
+            'Error connecting to remote server to download file '
+            '"%s". The error was: %s', url, e)
         try:
           logging.info('Trying again with machine context...')
           ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
@@ -241,8 +250,9 @@ class BaseDownloader(object):
         except urllib.error.HTTPError:
           logging.error('File not found on remote server: %s.', url)
         except urllib.error.URLError as e:
-          logging.error('Error connecting to remote server to download file '
-                        '"%s". The error was: %s', url, e)
+          logging.error(
+              'Error connecting to remote server to download file '
+              '"%s". The error was: %s', url, e)
       if file_stream:
         if file_stream.getcode() in (status_codes or [200]):
           return file_stream
@@ -280,21 +290,33 @@ class BaseDownloader(object):
                    save_location: Text,
                    max_retries: int = 5,
                    show_progress: bool = False):
-    """Downloads a file to temporary storage.
+    """Downloads a file from one location to another.
+
+    If URL references a local path, the file will be copied rather than
+    downloaded.
 
     Args:
       url:  The address of the file to be downloaded.
       save_location: The full path of where the file should be saved.
-      max_retries:  The number of times to attempt to download
-        a file if the first attempt fails.
+      max_retries:  The number of times to attempt to download a file if the
+        first attempt fails.
       show_progress: Print download progress to stdout (overrides default).
+
+    Raises:
+      DownloadError: failure writing file to the save_location
     """
     self._save_location = save_location
-    if self._beyondcorp.CheckBeyondCorp():
-      url = self._SetUrl(url)
-      max_retries = -1
-    file_stream = self._OpenStream(url, max_retries)
-    self._StreamToDisk(file_stream, show_progress)
+    if IsRemote(url):
+      if self._beyondcorp.CheckBeyondCorp():
+        url = self._SetUrl(url)
+        max_retries = -1
+      file_stream = self._OpenStream(url, max_retries)
+      self._StreamToDisk(file_stream, show_progress)
+    else:
+      try:
+        file_util.Copy(url, save_location)
+      except file_util.Error as e:
+        raise DownloadError(str(e))
 
   def DownloadFileTemp(self,
                        url: Text,
@@ -304,8 +326,8 @@ class BaseDownloader(object):
 
     Args:
       url:  The address of the file to be downloaded.
-      max_retries:  The number of times to attempt to download
-        a file if the first attempt fails.
+      max_retries:  The number of times to attempt to download a file if the
+        first attempt fails.
       show_progress: Print download progress to stdout (overrides default).
 
     Returns:
@@ -330,9 +352,9 @@ class BaseDownloader(object):
     """
     percent = float(bytes_so_far) / total_size
     percent = round(percent * 100, 2)
-    message = (('\rDownloaded %s of %s (%0.2f%%)' + (' ' * 10)) %
-               (self._ConvertBytes(bytes_so_far),
-                self._ConvertBytes(total_size), percent))
+    message = (('\rDownloaded %s of %s (%0.2f%%)' +
+                (' ' * 10)) % (self._ConvertBytes(bytes_so_far),
+                               self._ConvertBytes(total_size), percent))
     sys.stdout.write(message)
     sys.stdout.flush()
 
@@ -367,8 +389,8 @@ class BaseDownloader(object):
 
     Args:
       file_stream:  The file stream object of the file being downloaded.
-      socket_error: Store the error raised from the socket class with
-        other debug info.
+      socket_error: Store the error raised from the socket class with other
+        debug info.
     """
     if socket_error:
       self._debug_info['socket_error'] = socket_error
@@ -399,7 +421,7 @@ class BaseDownloader(object):
       file_stream: The file stream returned by a successful urlopen()
       show_progress: Print download progress to stdout (overrides default).
       max_retries:  The number of times to attempt to download a file if the
-      first attempt fails. A negative number implies infinite.
+        first attempt fails. A negative number implies infinite.
 
     Raises:
       DownloadError: Error retrieving file or saving to disk.
