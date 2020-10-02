@@ -27,7 +27,7 @@ def execute_binary(binary: Text, args: Optional[List[Text]] = None,
                    return_codes: Optional[List[int]] = None,
                    shell: bool = False,
                    log: bool = True) -> int:
-  """Execute a binary with optional parameters and return codes.
+  """Execute a binary with optional parameters and return codes..
 
   Args:
     binary: Full path the to binary.
