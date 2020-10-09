@@ -1,7 +1,6 @@
 # Glazier Installer Actions
 
 
-
 Actions are classes which the configuration handler may call to perform a
 variety of tasks during imaging.
 

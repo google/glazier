@@ -1,7 +1,6 @@
 # Chooser UI
 
 
-
 The Chooser setup UI is an enhancement to autobuild which allows Glazier to
 present the user with a dynamic list of options as part of the installation
 process.
