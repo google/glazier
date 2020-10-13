@@ -27,6 +27,7 @@ from glazier.lib.actions import googet
 from glazier.lib.actions import installer
 from glazier.lib.actions import powershell
 from glazier.lib.actions import registry
+from glazier.lib.actions import splice
 from glazier.lib.actions import sysprep
 from glazier.lib.actions import system
 from glazier.lib.actions import timers
@@ -64,6 +65,7 @@ MultiRegDel = registry.MultiRegDel
 SetTimer = timers.SetTimer
 SetUnattendTimeZone = sysprep.SetUnattendTimeZone
 SetupCache = file_system.SetupCache
+SpliceDomainJoin = splice.SpliceDomainJoin
 ShowChooser = installer.ShowChooser
 Shutdown = system.Shutdown
 Sleep = installer.Sleep

@@ -617,6 +617,22 @@ Pause the installer.
     Sleep: [30]
     Sleep: [300, "Waiting for Group Policy to apply..."]
 
+
+### SpliceDomainJoin
+
+Leverage [Splice](https://github.com/google/splice) to join a Microsoft Active
+Directory domain without direct line of sight to a domain controller.
+
+#### Arguments
+
+*   None
+
+#### Examples
+
+```yaml
+SpliceDomainJoin: []
+```
+
 ### StartStage
 
 Start a new stage of the imaging process.
