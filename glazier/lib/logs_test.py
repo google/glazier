@@ -18,6 +18,7 @@ import zipfile
 
 from absl.testing import absltest
 from glazier.lib import constants
+from glazier.lib import file_util
 from glazier.lib import logs
 
 import mock
@@ -67,23 +68,29 @@ class LoggingTest(absltest.TestCase):
     wpe.return_value = False
     self.assertEqual(logs.GetLogsPath(), logs.constants.SYS_LOGS_PATH)
 
+  @mock.patch.object(file_util, 'CreateDirectories')
   @mock.patch.object(logs.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(logs.logging, 'FileHandler')
-  def testSetup(self, fh, wpe, ii):
+  def testSetup(self, fh, wpe, ii, create_dir):
     ii.return_value = TEST_ID
     wpe.return_value = False
     logs.Setup()
+    create_dir.assert_called_with(r'%s\glazier.log' %
+                                  logs.constants.SYS_LOGS_PATH)
     fh.assert_called_with(r'%s\glazier.log' % logs.constants.SYS_LOGS_PATH)
 
+  @mock.patch.object(file_util, 'CreateDirectories')
   @mock.patch.object(logs.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(logs.logging, 'FileHandler')
-  def testSetupError(self, fh, wpe, ii):
+  def testSetupError(self, fh, wpe, ii, create_dir):
     ii.return_value = TEST_ID
     wpe.return_value = False
     fh.side_effect = IOError
-    self.assertRaises(logs.LogError, logs.Setup)
+    with self.assertRaises(logs.LogError):
+      logs.Setup()
+    self.assertTrue(create_dir.called)
 
 
 if __name__ == '__main__':

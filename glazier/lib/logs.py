@@ -22,6 +22,7 @@ import zipfile
 
 from glazier.lib import buildinfo
 from glazier.lib import constants
+from glazier.lib import file_util
 from glazier.lib import winpe
 
 
@@ -59,6 +60,7 @@ def Setup():
   """Sets up the logging environment."""
   build_info = buildinfo.BuildInfo()
   log_file = r'%s\%s' % (GetLogsPath(), constants.BUILD_LOG_FILE)
+  file_util.CreateDirectories(log_file)
 
   debug_fmt = ('%(levelname).1s%(asctime)s.%(msecs)03d %(process)d {} '
                '%(filename)s:%(lineno)d]  %(message)s').format(
