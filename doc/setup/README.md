@@ -93,6 +93,10 @@ Write-Information 'Starting imaging process.'
     exists. This allows restarts. Set to false to restart an installation from
     scratch.
 
+TIP: For a full list of Glazier flags, execute `python autobuild.py --helpfull`.
+You'll notice a flags are distributed throughout various libraries, are are
+documented when defined.
+
 ### constants.py
 
 In addition to the startup flags provided by autobuild and its libraries, the
