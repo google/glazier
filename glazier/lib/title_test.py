@@ -44,7 +44,8 @@ class TitleTest(absltest.TestCase):
     wpe.return_value = True
     title.constants.FLAGS.config_root_path = None
     ii.return_value = None
-    self.assertEqual(title._base_title(), 'WinPE')
+    self.assertEqual(title._base_title(),
+                     f'WinPE - {title.constants.FLAGS.config_server}')
 
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
@@ -60,8 +61,8 @@ class TitleTest(absltest.TestCase):
     wpe.return_value = False
     ii.return_value = TEST_ID
     title.constants.FLAGS.config_root_path = None
-    self.assertEqual(
-        title._base_title(), TEST_ID)
+    self.assertEqual(title._base_title(),
+                     f'{title.constants.FLAGS.config_server} - {TEST_ID}')
 
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
@@ -69,7 +70,7 @@ class TitleTest(absltest.TestCase):
     wpe.return_value = False
     ii.return_value = None
     title.constants.FLAGS.config_root_path = None
-    self.assertEqual(title._base_title(), '')
+    self.assertEqual(title._base_title(), title.constants.FLAGS.config_server)
 
   @mock.patch.object(title, '_base_title', autospec=True)
   def test_build_title_prefix(self, bt):
@@ -100,10 +101,13 @@ class TitleTest(absltest.TestCase):
   def test_set_title_string(self, wpe, ii, sys):
     wpe.return_value = False
     ii.return_value = TEST_ID
-    self.assertEqual(title.set_title(STRING),
-                     '{0} [{1} - {2}]'.format(PREFIX, STRING, TEST_ID))
-    sys.assert_called_with(
-        'title {0} [{1} - {2}]'.format(PREFIX, STRING, TEST_ID))
+    self.assertEqual(
+        title.set_title(STRING),
+        '{0} [{1} - {2} - {3}]'.format(PREFIX, STRING,
+                                       title.constants.FLAGS.config_server,
+                                       TEST_ID))
+    sys.assert_called_with('title {0} [{1} - {2} - {3}]'.format(
+        PREFIX, STRING, title.constants.FLAGS.config_server, TEST_ID))
 
   @mock.patch.object(title.os, 'system', autospec=True)
   @mock.patch.object(title, '_build_title', autospec=True)

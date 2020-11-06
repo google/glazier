@@ -43,8 +43,10 @@ def _base_title() -> Optional[Text]:
 
   if winpe.check_winpe():
     base.append('WinPE')
-  if constants.FLAGS.config_root_path:
+  if constants.FLAGS.config_root_path and constants.FLAGS.config_root_path != '/':
     base.append(constants.FLAGS.config_root_path.strip('/'))
+  elif constants.FLAGS.config_server and constants.FLAGS.config_server != '/':
+    base.append(constants.FLAGS.config_server.strip('/'))
   if getid:
     base.append(getid)
 
