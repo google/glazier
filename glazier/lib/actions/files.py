@@ -16,7 +16,7 @@
 
 import logging
 import shlex
-from typing import List, Text
+from typing import List
 import zipfile
 from glazier.lib import cache
 from glazier.lib import download
@@ -31,7 +31,7 @@ from glazier.lib.actions.base import ValidationError
 class Execute(BaseAction):
   """Run an executable."""
 
-  def _Run(self, command: Text, success_codes: List[int],
+  def _Run(self, command: str, success_codes: List[int],
            reboot_codes: List[int], restart_retry: bool, shell: bool):
     logging.debug('Interpreting command: %s', command)
     try:

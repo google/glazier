@@ -18,7 +18,7 @@
 import logging
 import os
 import time
-from typing import Optional, Text
+from typing import Optional
 from glazier.lib import execute
 from glazier.lib import identity
 
@@ -34,7 +34,7 @@ class Splice(object):
     self.splice_binary = r'{}\Splice\cli.exe'.format(
         os.environ['ProgramFiles'])
 
-  def _get_hostname(self) -> Text:
+  def _get_hostname(self) -> str:
     hostname = identity.get_hostname()
 
     if not hostname:
@@ -45,7 +45,7 @@ class Splice(object):
 
     return hostname
 
-  def _get_username(self) -> Text:
+  def _get_username(self) -> str:
     username = identity.get_username()
 
     if not username:

@@ -17,7 +17,6 @@
 import logging
 import logging.handlers
 import os
-from typing import Text
 import zipfile
 
 from glazier.lib import buildinfo
@@ -40,7 +39,7 @@ def GetLogsPath():
   return path
 
 
-def Collect(path: Text):
+def Collect(path: str):
   """Collect Glazier logs into a zip file.
 
   Args:

@@ -16,7 +16,7 @@
 """Actions for running PowerShell scripts and commands."""
 
 import logging
-from typing import List, Text
+from typing import List
 from glazier.lib import cache
 from glazier.lib import powershell
 from glazier.lib.actions.base import ActionError
@@ -29,8 +29,8 @@ class PSScript(BaseAction):
   """Execute a PowerShell script file."""
 
   def Run(self):
-    script: Text = self._args[0]
-    ps_args: List[Text] = []
+    script: str = self._args[0]
+    ps_args: List[str] = []
     success_codes: List[int] = [0]
     reboot_codes: List[int] = []
     restart_retry: bool = False
@@ -113,7 +113,7 @@ class PSCommand(BaseAction):
   """Execute a PowerShell command."""
 
   def Run(self):
-    command: List[Text] = self._args[0].split()
+    command: List[str] = self._args[0].split()
     success_codes: List[int] = [0]
     reboot_codes: List[int] = []
     restart_retry: bool = False

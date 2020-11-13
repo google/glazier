@@ -19,7 +19,6 @@ import logging
 import socket
 import subprocess
 import time
-from typing import Text
 
 from glazier.lib.constants import WINPE_SYSTEM32
 import ntplib
@@ -31,7 +30,7 @@ class NtpException(Exception):
   pass
 
 
-def SyncClockToNtp(retries: int = 2, server: Text = 'time.google.com'):
+def SyncClockToNtp(retries: int = 2, server: str = 'time.google.com'):
   """Syncs the hardware clock to an NTP server."""
   logging.info('Reading time from NTP server %s.', server)
 

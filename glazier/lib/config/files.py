@@ -16,7 +16,7 @@
 """Functions for interacting with yaml configuration files."""
 
 import re
-from typing import Any, Text
+from typing import Any
 from glazier.lib import download
 from glazier.lib import file_util
 import yaml
@@ -26,7 +26,7 @@ class Error(Exception):
   pass
 
 
-def Remove(path: Text, backup: bool = True):
+def Remove(path: str, backup: bool = True):
   """Remove a config file.
 
   Args:
@@ -48,7 +48,7 @@ def Remove(path: Text, backup: bool = True):
       raise Error('Failed to remove file (%s)' % str(e))
 
 
-def Dump(path: Text, data: Any, mode: Text = 'w'):
+def Dump(path: str, data: Any, mode: str = 'w'):
   """Write a config file containing some data.
 
   Args:
@@ -71,7 +71,7 @@ def Dump(path: Text, data: Any, mode: Text = 'w'):
     raise Error('Could not replace config file. (%s)' % str(e))
 
 
-def Read(path: Text):
+def Read(path: str):
   """Read a config file at path and return any data it contains.
 
   Will attempt to download files from remote repositories prior to reading.
@@ -94,7 +94,7 @@ def Read(path: Text):
   return _YamlReader(path)
 
 
-def _YamlReader(path: Text) -> Text:
+def _YamlReader(path: str) -> str:
   """Read a configuration file and return the contents.
 
   Can be overloaded to read configs from different sources.

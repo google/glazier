@@ -17,7 +17,7 @@
 import os
 import sys
 import traceback
-from typing import Optional, Text
+from typing import Optional
 
 from absl import app
 from absl import flags
@@ -38,7 +38,7 @@ logging = logs.logging
 _FAILURE_MSG = ('%s\n\nInstaller cannot continue.')
 
 
-def _LogFatal(msg: Text,
+def _LogFatal(msg: str,
               build_info: buildinfo.BuildInfo,
               code: Optional[int] = None,
               collect: bool = True):

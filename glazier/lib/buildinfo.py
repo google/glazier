@@ -17,7 +17,7 @@
 import functools
 import logging
 import time
-from typing import Any, Dict, List, Optional, Text
+from typing import Any, Dict, List, Optional
 
 
 from absl import flags
@@ -83,7 +83,7 @@ class BuildInfo(object):
   # Image Configuration Functions
   #
 
-  def BinaryPath(self) -> Text:
+  def BinaryPath(self) -> str:
     """Determines the path to the folder containing all binaries for build.
 
     Returns:
@@ -94,7 +94,7 @@ class BuildInfo(object):
     path = '%s/%s/' % (server, path)
     return path
 
-  def BinaryServer(self, set_to: Text = '') -> Text:
+  def BinaryServer(self, set_to: str = '') -> str:
     """Get (or set) the binary server address.
 
     Args:
@@ -112,7 +112,7 @@ class BuildInfo(object):
         self._binary_server = self.ConfigServer()
     return self._binary_server.rstrip('/')
 
-  def ConfigServer(self, set_to: Text = '') -> Text:
+  def ConfigServer(self, set_to: str = '') -> str:
     """Get (or set) the config server address.
 
     Args:
@@ -128,7 +128,7 @@ class BuildInfo(object):
     return self._glazier_server.rstrip('/')
 
   @functools.lru_cache()
-  def ImageID(self) -> Text:
+  def ImageID(self) -> str:
     """Optionally generate a unique image identifier.
 
     Returns:
@@ -137,7 +137,7 @@ class BuildInfo(object):
     return identifier.check_id()
 
   @functools.lru_cache()
-  def Release(self) -> Optional[Text]:
+  def Release(self) -> Optional[str]:
     """Determine the current build release.
 
     Returns:
@@ -162,7 +162,7 @@ class BuildInfo(object):
         raise Error(e)
     return self._release_info
 
-  def ReleasePath(self) -> Text:
+  def ReleasePath(self) -> str:
     """Determines the path to the folder containing all files for build.
 
     Returns:
@@ -175,9 +175,9 @@ class BuildInfo(object):
     return path
 
   def ActiveConfigPath(self,
-                       append: Optional[Text] = None,
+                       append: Optional[str] = None,
                        pop: bool = False,
-                       set_to: Optional[List[Text]] = None) -> List[Text]:
+                       set_to: Optional[List[str]] = None) -> List[str]:
     """Tracks the active configuration path beneath the config root.
 
     Use append/pop for directory traversal.
@@ -212,7 +212,7 @@ class BuildInfo(object):
   # Host Discovery Functions
   #
 
-  def BuildPinMatch(self, pin_name: Text, pin_values: List[Text]):
+  def BuildPinMatch(self, pin_name: str, pin_values: List[str]):
     """Compare build pins to local build info data.
 
     Most pins operate on a simple 1:1 string comparison (eg os_code ==
@@ -254,7 +254,7 @@ class BuildInfo(object):
     values = values if isinstance(values, list) else [values]
     return self._StringPinner(values, pin_values, loose=loose)
 
-  def GetExportedPins(self) -> Dict[Text, Any]:
+  def GetExportedPins(self) -> Dict[str, Any]:
     return {
         'computer_model': self.ComputerModel,
         'device_id': self.DeviceIds,
@@ -288,7 +288,7 @@ class BuildInfo(object):
     return constants.SYS_CACHE
 
   @functools.lru_cache()
-  def ComputerManufacturer(self) -> Text:
+  def ComputerManufacturer(self) -> str:
     """Get the computer manufacturer from WMI.
 
     Returns:
@@ -303,7 +303,7 @@ class BuildInfo(object):
     return result
 
   @functools.lru_cache()
-  def ComputerModel(self) -> Text:
+  def ComputerModel(self) -> str:
     """Get the computer model from WMI.
 
     Lenovo models are trimmed to three characters to mitigate submodel drift.
@@ -320,7 +320,7 @@ class BuildInfo(object):
     return result
 
   @functools.lru_cache()
-  def ComputerName(self) -> Text:
+  def ComputerName(self) -> str:
     """Get the assigned computer name string.
 
     Returns:
@@ -329,7 +329,7 @@ class BuildInfo(object):
     return spec.GetModule().GetHostname()
 
   @functools.lru_cache()
-  def ComputerOs(self) -> Text:
+  def ComputerOs(self) -> str:
     """Get the assigned computer OS string.
 
     Returns:
@@ -338,7 +338,7 @@ class BuildInfo(object):
     return spec.GetModule().GetOs()
 
   @functools.lru_cache()
-  def ComputerSerial(self) -> Text:
+  def ComputerSerial(self) -> str:
     """Get the computer serial from WMI.
 
     Returns:
@@ -347,7 +347,7 @@ class BuildInfo(object):
     return self._HWInfo().BiosSerial()
 
   @functools.lru_cache()
-  def DeviceIds(self) -> List[Text]:
+  def DeviceIds(self) -> List[str]:
     """Get local hardware device Ids.
 
     Returns:
@@ -363,7 +363,7 @@ class BuildInfo(object):
     return dev_ids
 
   @functools.lru_cache()
-  def EncryptionLevel(self) -> Text:
+  def EncryptionLevel(self) -> str:
     """Determines what encryption level is required for this machine.
 
     Returns:
@@ -386,7 +386,7 @@ class BuildInfo(object):
     return 'tpm'
 
   @functools.lru_cache()
-  def Fqdn(self) -> Text:
+  def Fqdn(self) -> str:
     """Get the assigned FQDN string.
 
     Returns:
@@ -418,7 +418,7 @@ class BuildInfo(object):
     return self._HWInfo().IsVirtualMachine()
 
   @functools.lru_cache()
-  def KnownBranches(self) -> Dict[Text, Text]:
+  def KnownBranches(self) -> Dict[str, str]:
     return self._VersionInfo()['versions']
 
   def _NetInfo(self):
@@ -450,7 +450,7 @@ class BuildInfo(object):
     return False
 
   @functools.lru_cache()
-  def OsCode(self) -> Text:
+  def OsCode(self) -> str:
     """Return the OS code associated with this build.
 
     Returns:
@@ -578,7 +578,7 @@ class BuildInfo(object):
     return False
 
   @functools.lru_cache()
-  def SupportedModels(self) -> Dict[Text, List[Text]]:
+  def SupportedModels(self) -> Dict[str, List[str]]:
     """Returns the list of known supported models (tier1 and tier2).
 
     Returns:
@@ -614,10 +614,10 @@ class BuildInfo(object):
     logging.debug('Model %s is not recognized as supported.', model)
     return 0
 
-  def TimerGet(self, name: Text):
+  def TimerGet(self, name: str):
     return self._timers.Get(name)
 
-  def TimerSet(self, name: Text):
+  def TimerSet(self, name: str):
     self._timers.Set(name)
 
   def _TpmInfo(self) -> tpm_info.TpmInfo:
@@ -644,7 +644,7 @@ class BuildInfo(object):
     return self._HWInfo().VideoControllers()
 
   @functools.lru_cache()
-  def VideoControllersByName(self) -> List[Text]:
+  def VideoControllersByName(self) -> List[str]:
     """Get all names of detected video controllers.
 
     Returns:
@@ -660,7 +660,7 @@ class BuildInfo(object):
     """The production WinPE version according to the distribution source."""
     return self._VersionInfo()['winpe-version']
 
-  def Branch(self) -> Text:
+  def Branch(self) -> str:
     """Determine the current build branch.
 
     Returns:

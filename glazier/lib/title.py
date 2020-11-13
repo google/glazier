@@ -20,7 +20,7 @@ from __future__ import print_function
 
 import logging
 import os
-from typing import Optional, Text
+from typing import Optional
 
 from glazier.lib import buildinfo
 from glazier.lib import constants
@@ -31,7 +31,7 @@ class Error(Exception):
   pass
 
 
-def _base_title() -> Optional[Text]:
+def _base_title() -> Optional[str]:
   """Concatenate base values for the title based on build information.
 
   Returns:
@@ -52,7 +52,7 @@ def _base_title() -> Optional[Text]:
   return ' - '.join(map(str, base))
 
 
-def _build_title(string: Optional[Text] = None) -> Text:
+def _build_title(string: Optional[str] = None) -> str:
   """Concatenate strings to construct the console title.
 
   Args:
@@ -77,7 +77,7 @@ def _build_title(string: Optional[Text] = None) -> Text:
   return prefix
 
 
-def set_title(string: Optional[Text] = None) -> Text:
+def set_title(string: Optional[str] = None) -> str:
   """Set the console title.
 
   Args:

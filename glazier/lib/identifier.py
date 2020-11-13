@@ -19,7 +19,6 @@ from __future__ import division
 from __future__ import print_function
 import logging
 import os
-from typing import Text
 import uuid
 
 from glazier.lib import constants
@@ -34,7 +33,7 @@ class Error(Exception):
   pass
 
 
-def _generate_id() -> Text:
+def _generate_id() -> str:
   """Generate the image identifier.
 
   Returns:
@@ -45,7 +44,7 @@ def _generate_id() -> Text:
           (str(hw.BiosSerial()), str(uuid.uuid4())[:7])).upper()
 
 
-def _set_id() -> Text:
+def _set_id() -> str:
   """Set the image id registry key."""
   image_id = _generate_id()
   try:
@@ -55,7 +54,7 @@ def _set_id() -> Text:
   return image_id
 
 
-def _check_file() -> Text:
+def _check_file() -> str:
   """Call set_id if image identifier is not set and in WinPE.
 
   Returns:
@@ -83,7 +82,7 @@ def _check_file() -> Text:
     raise Error('Could not locate build info file.')
 
 
-def check_id() -> Text:
+def check_id() -> str:
   """Call set_id if image identifier is not set and in WinPE.
 
   Check build_info (dumped via buildinfodump) in host if image_id does

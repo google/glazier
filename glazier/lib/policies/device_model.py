@@ -20,7 +20,6 @@ from __future__ import division
 from __future__ import print_function
 import logging
 import re
-from typing import Text
 
 from glazier.lib.policies.base import BasePolicy
 from glazier.lib.policies.base import ImagingPolicyException
@@ -54,7 +53,7 @@ _UNSUPPORTED_NOTICE = ("""
 class DeviceModel(BasePolicy):
   """Verify that the device hardware is supported."""
 
-  def _ModelSupportPrompt(self, message: Text, this_model: Text) -> bool:
+  def _ModelSupportPrompt(self, message: str, this_model: str) -> bool:
     """Prompts the user whether to halt an unsupported build.
 
     Args:

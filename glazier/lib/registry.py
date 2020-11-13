@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 import logging
-from typing import Optional, Text, Union
+from typing import Optional, Union
 
 from glazier.lib import constants
 from gwinpy.registry import registry
@@ -30,11 +30,11 @@ class Error(Exception):
 
 
 def get_value(
-    name: Text,
-    root: Optional[Text] = 'HKLM',
-    path: Optional[Text] = constants.REG_ROOT,
+    name: str,
+    root: Optional[str] = 'HKLM',
+    path: Optional[str] = constants.REG_ROOT,
     use_64bit: Optional[bool] = constants.USE_REG_64,
-    log: Optional[bool] = True) -> Optional[Text]:
+    log: Optional[bool] = True) -> Optional[str]:
   r"""Get a registry key value from registry.
 
   Args:
@@ -64,10 +64,10 @@ def get_value(
   return None
 
 
-def set_value(name: Text, value: Union[Text, int],
-              root: Optional[Text] = 'HKLM',
-              path: Optional[Text] = constants.REG_ROOT,
-              reg_type: Optional[Text] = 'REG_SZ',
+def set_value(name: str, value: Union[str, int],
+              root: Optional[str] = 'HKLM',
+              path: Optional[str] = constants.REG_ROOT,
+              reg_type: Optional[str] = 'REG_SZ',
               use_64bit: Optional[bool] = constants.USE_REG_64,
               log: Optional[bool] = True):
   r"""Set a registry value.
@@ -97,9 +97,9 @@ def set_value(name: Text, value: Union[Text, int],
     raise Error(str(e))
 
 
-def remove_value(name: Text,
-                 root: Optional[Text] = 'HKLM',
-                 path: Optional[Text] = constants.REG_ROOT,
+def remove_value(name: str,
+                 root: Optional[str] = 'HKLM',
+                 path: Optional[str] = constants.REG_ROOT,
                  use_64bit: Optional[bool] = constants.USE_REG_64,
                  log: Optional[bool] = True):
   r"""Remove a registry value.

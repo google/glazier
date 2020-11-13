@@ -21,7 +21,7 @@ import re
 import subprocess
 import time
 import typing
-from typing import List, Text
+from typing import List
 
 from glazier.lib import constants
 from glazier.lib import winpe
@@ -37,7 +37,7 @@ class Error(Exception):
 class GooGetInstall(object):
   """Install an application via GooGet."""
 
-  def _AddFlags(self, flags: List[Text], branch: Text = None) -> List[Text]:
+  def _AddFlags(self, flags: List[str], branch: str = None) -> List[str]:
     r"""Add optional flags to GooGet command.
 
     Short name support:
@@ -92,13 +92,13 @@ class GooGetInstall(object):
 
     return flags
 
-  def _GooGet(self) -> Text:
+  def _GooGet(self) -> str:
     if winpe.check_winpe():
       return str(constants.WINPE_GOOGETROOT)
     else:
       return str(constants.SYS_GOOGETROOT)
 
-  def LaunchGooGet(self, pkg: Text, retries: int, sleep: int,
+  def LaunchGooGet(self, pkg: str, retries: int, sleep: int,
                    build_info: 'buildinfo.BuildInfo', **kwargs):
     """Launch the GooGet executable with arguments.
 

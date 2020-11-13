@@ -18,14 +18,13 @@
 import logging
 import os
 import shutil
-from typing import Text
 
 
 class Error(Exception):
   pass
 
 
-def Copy(src: Text, dst: Text):
+def Copy(src: str, dst: str):
   """Copy a file from src to dst.
 
   Args:
@@ -43,7 +42,7 @@ def Copy(src: Text, dst: Text):
     raise Error('Unable to copy %s to %s: %s' % (src, dst, str(e)))
 
 
-def CreateDirectories(path: Text):
+def CreateDirectories(path: str):
   """Create directory if the path to a file doesn't exist.
 
   Args:
@@ -61,7 +60,7 @@ def CreateDirectories(path: Text):
       raise Error('Unable to make directory: %s' % dirname)
 
 
-def Move(src: Text, dst: Text):
+def Move(src: str, dst: str):
   """Move a file from src to dst.
 
   Python's os.rename doesn't support overwrite on Windows.
@@ -80,7 +79,7 @@ def Move(src: Text, dst: Text):
     raise Error('Failure moving file from %s to %s. (%s)' % (src, dst, str(e)))
 
 
-def Remove(path: Text):
+def Remove(path: str):
   """Remove a file.
 
   Args:

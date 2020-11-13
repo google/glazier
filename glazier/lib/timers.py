@@ -16,7 +16,7 @@
 """Store points in time to be used for metrics."""
 
 import typing
-from typing import Dict, Optional, Text
+from typing import Dict, Optional
 
 from glazier.lib import gtime
 
@@ -30,7 +30,7 @@ class Timers(object):
   def __init__(self):
     self._time_store = {}
 
-  def Get(self, name: Text) -> Optional['datetime.datetime']:
+  def Get(self, name: str) -> Optional['datetime.datetime']:
     """Get the stored value of a single timer.
 
     Args:
@@ -43,7 +43,7 @@ class Timers(object):
       return self._time_store[name]
     return None
 
-  def GetAll(self) -> Dict[Text, 'datetime.datetime']:
+  def GetAll(self) -> Dict[str, 'datetime.datetime']:
     """Get the dictionary of all stored timers.
 
     Returns:
@@ -51,7 +51,7 @@ class Timers(object):
     """
     return self._time_store
 
-  def Set(self, name: Text, at_time: 'datetime.datetime' = None):
+  def Set(self, name: str, at_time: 'datetime.datetime' = None):
     """Set a timer at a specific time.
 
     Defaults to the current time in UTC.

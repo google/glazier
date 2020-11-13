@@ -16,7 +16,7 @@
 """Run scripts with Windows Powershell."""
 
 import os
-from typing import List, Optional, Text
+from typing import List, Optional
 
 from glazier.lib import constants
 from glazier.lib import execute
@@ -28,7 +28,7 @@ class PowerShellError(Exception):
   pass
 
 
-def _Powershell() -> Text:
+def _Powershell() -> str:
   if winpe.check_winpe():
     return constants.WINPE_POWERSHELL
   else:
@@ -42,8 +42,8 @@ class PowerShell(object):
     self.shell = shell
     self.log = log
 
-  def _LaunchPs(self, op: Text,
-                args: List[Text],
+  def _LaunchPs(self, op: str,
+                args: List[str],
                 ok_result: Optional[List[int]] = None) -> int:
     """Launch the powershell executable to run a script.
 
@@ -69,7 +69,7 @@ class PowerShell(object):
       raise PowerShellError(str(e))
 
   def RunCommand(self,
-                 command: List[Text],
+                 command: List[str],
                  ok_result: Optional[List[int]] = None) -> int:
     """Run a powershell script on the local filesystem.
 
@@ -86,7 +86,7 @@ class PowerShell(object):
                         list), 'result codes must be passed as a list'
     return self._LaunchPs('-Command', command, ok_result)
 
-  def _GetResPath(self, path: Text) -> Text:
+  def _GetResPath(self, path: str) -> str:
     """Translate an installer resource path into a local path.
 
     Args:
@@ -105,7 +105,7 @@ class PowerShell(object):
       raise PowerShellError(e)
     return os.path.normpath(path)
 
-  def RunResource(self, path: Text, args: List[Text],
+  def RunResource(self, path: str, args: List[str],
                   ok_result: Optional[List[int]] = None):
     """Run a Powershell script supplied as an installer resource file.
 
@@ -121,7 +121,7 @@ class PowerShell(object):
                         list), 'result codes must be passed as a list'
     self.RunLocal(path, args, ok_result)
 
-  def RunLocal(self, path: Text, args: List[Text],
+  def RunLocal(self, path: str, args: List[str],
                ok_result: Optional[List[int]] = None) -> int:
     """Run a powershell script on the local filesystem.
 
@@ -144,7 +144,7 @@ class PowerShell(object):
                         list), 'result codes must be passed as a list'
     return self._LaunchPs('-File', [path] + args, ok_result)
 
-  def SetExecutionPolicy(self, policy: Text):
+  def SetExecutionPolicy(self, policy: str):
     """Set the shell execution policy.
 
     Args:

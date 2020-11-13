@@ -17,7 +17,7 @@
 import functools
 import logging
 import socket
-from typing import Optional, Text
+from typing import Optional
 
 from glazier.lib import constants
 from glazier.lib import interact
@@ -29,7 +29,7 @@ class Error(Exception):
 
 
 @functools.lru_cache()
-def get_username() -> Optional[Text]:
+def get_username() -> Optional[str]:
   """Gets the username from registry.
 
   Returns:
@@ -41,8 +41,8 @@ def get_username() -> Optional[Text]:
     logging.error(str(e))
 
 
-def set_username(username: Optional[Text] = None,
-                 prompt: Optional[Text] = None) -> Text:
+def set_username(username: Optional[str] = None,
+                 prompt: Optional[str] = None) -> str:
   """Sets the username in the registry.
 
   Optionally prompts if there is no username supplied as a parameter.
@@ -68,7 +68,7 @@ def set_username(username: Optional[Text] = None,
 
 
 @functools.lru_cache()
-def get_hostname() -> Optional[Text]:
+def get_hostname() -> Optional[str]:
   """Gets the hostname value from the registry.
 
   Returns:
@@ -82,7 +82,7 @@ def get_hostname() -> Optional[Text]:
     return hostname.strip() if hostname else hostname
 
 
-def set_hostname(hostname: Optional[Text] = None) -> Text:
+def set_hostname(hostname: Optional[str] = None) -> str:
   """Sets the hostname in the registry.
 
    Gets hostname from socket.hostname if no hostname is passed.

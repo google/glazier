@@ -16,14 +16,14 @@
 
 import logging
 import subprocess
-from typing import List, Optional, Text
+from typing import List, Optional
 
 
 class Error(Exception):
   pass
 
 
-def execute_binary(binary: Text, args: Optional[List[Text]] = None,
+def execute_binary(binary: str, args: Optional[List[str]] = None,
                    return_codes: Optional[List[int]] = None,
                    shell: bool = False,
                    log: bool = True) -> int:

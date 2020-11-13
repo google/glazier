@@ -21,12 +21,12 @@ from __future__ import print_function
 import logging
 import re
 import time
-from typing import Optional, Text
+from typing import Optional
 
 from six.moves import input
 
 
-def GetUsername(purpose: Optional[Text] = None) -> Text:
+def GetUsername(purpose: Optional[str] = None) -> str:
   """Prompt the user for their username.
 
   Args:
@@ -47,9 +47,9 @@ def GetUsername(purpose: Optional[Text] = None) -> Text:
   return username
 
 
-def Keystroke(message: Text,
-              validator: Text = '.*',
-              timeout: int = 30) -> Optional[Text]:
+def Keystroke(message: str,
+              validator: str = '.*',
+              timeout: int = 30) -> Optional[str]:
   """Prompts the user for a keystroke and waits the specified amount of time.
 
   Args:
@@ -78,7 +78,7 @@ def Keystroke(message: Text,
   return None
 
 
-def Prompt(message: Text, validator: Text = '.*') -> Optional[Text]:
+def Prompt(message: str, validator: str = '.*') -> Optional[str]:
   """Prompt the user for input.
 
   Args:

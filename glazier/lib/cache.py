@@ -18,7 +18,7 @@
 import os
 import re
 import typing
-from typing import Optional, Text
+from typing import Optional
 
 from glazier.lib import download
 
@@ -39,7 +39,7 @@ class Cache(object):
   def __init__(self):
     self._downloader = download.Download(show_progress=False)
 
-  def _DestinationPath(self, cache_path: Text, url: Text) -> Text:
+  def _DestinationPath(self, cache_path: str, url: str) -> str:
     """Determines the local path for a file being downloaded.
 
     Args:
@@ -53,7 +53,7 @@ class Cache(object):
     destination = os.path.join(cache_path + os.sep, file_name)
     return destination
 
-  def _FindDownload(self, line: Text) -> Optional[Text]:
+  def _FindDownload(self, line: str) -> Optional[str]:
     """Searches a command line for any download strings.
 
     Args:
@@ -67,8 +67,8 @@ class Cache(object):
       return result.group(1).rstrip('"\'')
     return None
 
-  def CacheFromLine(self, line: Text,
-                    build_info: 'buildinfo.BuildInfo') -> Optional[Text]:
+  def CacheFromLine(self, line: str,
+                    build_info: 'buildinfo.BuildInfo') -> Optional[str]:
     """Downloads any files in the command line and replaces with the local path.
 
     Args:

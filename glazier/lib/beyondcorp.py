@@ -28,7 +28,6 @@ import functools
 import hashlib
 import json
 import logging
-from typing import Text
 
 from absl import flags
 from glazier.lib import constants
@@ -97,7 +96,7 @@ class BeyondCorp(object):
     return False
 
   @functools.lru_cache()
-  def _GetHash(self, file_path: Text) -> bytes:
+  def _GetHash(self, file_path: str) -> bytes:
     """Calculates the hash of the boot wim.
 
     Args:
@@ -116,7 +115,7 @@ class BeyondCorp(object):
         fb = f.read(block_size)
     return base64.b64encode(hasher.digest())
 
-  def _GetDisk(self, label: Text) -> Text:
+  def _GetDisk(self, label: str) -> str:
     """Leverages the drive label to define the drive letter.
 
     The BeyondCorp USB device is not gaurenteed to be on a certain drive letter.
@@ -144,7 +143,7 @@ class BeyondCorp(object):
 
     return drive_letter
 
-  def GetSignedUrl(self, relative_path: Text) -> Text:
+  def GetSignedUrl(self, relative_path: str) -> str:
     """Passes data the sign endpoint to retrieve signed URL.
 
     Args:

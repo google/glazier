@@ -16,20 +16,19 @@
 """Turn things on and off."""
 
 import subprocess
-from typing import Text
 
 from glazier.lib import constants
 from glazier.lib import winpe
 
 
-def _System32() -> Text:
+def _System32() -> str:
   if winpe.check_winpe():
     return constants.WINPE_SYSTEM32
   else:
     return constants.SYS_SYSTEM32
 
 
-def Shutdown(timeout: Text, reason: Text):
+def Shutdown(timeout: str, reason: str):
   """Shuts down a Windows machine, given a timeout period and a reason.
 
   Args:
@@ -41,7 +40,7 @@ def Shutdown(timeout: Text, reason: Text):
                   (_System32(), timeout, reason))
 
 
-def Restart(timeout: Text, reason: Text):
+def Restart(timeout: str, reason: str):
   """Restarts a Windows machine, given a timeout period and a reason.
 
   Args:

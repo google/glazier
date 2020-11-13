@@ -17,7 +17,6 @@
 import logging
 import logging.handlers
 import shutil
-from typing import Text
 
 from glazier.lib import constants
 from glazier.lib import drive_map
@@ -37,11 +36,11 @@ class LogCopyCredentials(object):
     self._username = None
     self._password = None
 
-  def GetUsername(self) -> Text:
+  def GetUsername(self) -> str:
     """Override to provide share credentials."""
     return self._username
 
-  def GetPassword(self) -> Text:
+  def GetPassword(self) -> str:
     """Override to provide share credentials."""
     return self._password
 
@@ -54,7 +53,7 @@ class LogCopy(object):
     path = '%s\\log_copy.log' % logs.GetLogsPath()
     self._logging.addHandler(logging.FileHandler(path))
 
-  def _EventLogUpload(self, source_log: Text):
+  def _EventLogUpload(self, source_log: str):
     """Upload the log file contents to the local EventLog."""
     event_handler = logging.handlers.NTEventLogHandler('GlazierBuildLog')
     logger = logging.Logger('eventlogger')
@@ -87,7 +86,7 @@ class LogCopy(object):
     destination_file_date = destination_file_date.replace(':', '')
     return 'l:\\' + hostname + '-' + destination_file_date + '.log'
 
-  def _ShareUpload(self, source_log: Text, share: Text):
+  def _ShareUpload(self, source_log: str, share: str):
     """Copy the log file to a network file share.
 
     Args:
@@ -113,10 +112,10 @@ class LogCopy(object):
     else:
       raise LogCopyError('Drive mapping failed.')
 
-  def EventLogCopy(self, source_log: Text):
+  def EventLogCopy(self, source_log: str):
     """Copy a log file to EventLog."""
     self._EventLogUpload(source_log)
 
-  def ShareCopy(self, source_log: Text, share: Text):
+  def ShareCopy(self, source_log: str, share: str):
     """Copy a log file via CIFS."""
     self._ShareUpload(source_log, share)

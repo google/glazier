@@ -26,7 +26,7 @@ from __future__ import print_function
 
 import datetime
 import logging
-from typing import Optional, Text, Tuple
+from typing import Optional, Tuple
 
 from absl import flags
 from glazier.lib import constants
@@ -123,7 +123,7 @@ def _get_start_end(
   return start, end
 
 
-def _load_time(stage_id: int, key: Text) -> Optional[datetime.datetime]:
+def _load_time(stage_id: int, key: str) -> Optional[datetime.datetime]:
   """Load a time string and convert it into a native datetime value."""
   val = None
   try:
@@ -153,7 +153,7 @@ def set_stage(stage_id: int):
     raise Error(str(e))
 
 
-def _stage_root(stage_id: int) -> Text:
+def _stage_root(stage_id: int) -> str:
   return r'%s\%d' % (STAGES_ROOT, stage_id)
 
 

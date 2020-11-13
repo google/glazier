@@ -32,7 +32,7 @@ import tempfile
 import time
 
 import typing
-from typing import List, Optional, Text
+from typing import List, Optional
 
 from absl import flags
 from glazier.lib import beyondcorp
@@ -49,15 +49,15 @@ SLEEP = 20
 FLAGS = flags.FLAGS
 
 
-def IsLocal(string: Text) -> bool:
+def IsLocal(string: str) -> bool:
   return re.match(r'[A-Z,a-z]\:', string) is not None
 
 
-def IsRemote(string: Text) -> bool:
+def IsRemote(string: str) -> bool:
   return re.match(r'http(s)?:', string, re.I) is not None
 
 
-def Transform(string: Text, build_info) -> Text:
+def Transform(string: str, build_info) -> str:
   r"""Transforms abbreviated file names to absolute file paths.
 
   Short name support:
@@ -81,8 +81,8 @@ def Transform(string: Text, build_info) -> Text:
 
 
 def PathCompile(build_info,
-                file_name: Optional[Text] = None,
-                base: Optional[Text] = None) -> Text:
+                file_name: Optional[str] = None,
+                base: Optional[str] = None) -> str:
   """Compile the active path from the base path and the active conf path.
 
     Attempt to do a reasonable job of joining path components with single
@@ -138,7 +138,7 @@ class BaseDownloader(object):
     self._ca_cert_file = None
     self._beyondcorp = beyondcorp.BeyondCorp()
 
-  def _ConvertBytes(self, num_bytes: int) -> Text:
+  def _ConvertBytes(self, num_bytes: int) -> str:
     """Converts number of bytes to a human readable format.
 
     Args:
@@ -167,7 +167,7 @@ class BaseDownloader(object):
   def _GetHandlers(self):
     return [urllib.request.HTTPSHandler()]
 
-  def _AttemptResource(self, attempt: int, max_retries: int, resource: Text):
+  def _AttemptResource(self, attempt: int, max_retries: int, resource: str):
     r"""Loop logic for retrying failed requests.
 
     Use logger to log messages to standard output streams, and print to write to
@@ -198,7 +198,7 @@ class BaseDownloader(object):
 
   def _OpenStream(
       self,
-      url: Text,
+      url: str,
       max_retries: int = 5,
       status_codes: Optional[List[int]] = None) -> 'http.client.HTTPResponse':
     """Opens a connection to a remote resource.
@@ -265,7 +265,7 @@ class BaseDownloader(object):
       self._AttemptResource(attempt, max_retries, 'file download')
 
   def CheckUrl(self,
-               url: Text,
+               url: str,
                status_codes: List[int],
                max_retries: int = 5) -> bool:
     """Check a remote URL for availability.
@@ -286,8 +286,8 @@ class BaseDownloader(object):
     return False
 
   def DownloadFile(self,
-                   url: Text,
-                   save_location: Text,
+                   url: str,
+                   save_location: str,
                    max_retries: int = 5,
                    show_progress: bool = False):
     """Downloads a file from one location to another.
@@ -319,9 +319,9 @@ class BaseDownloader(object):
         raise DownloadError(str(e))
 
   def DownloadFileTemp(self,
-                       url: Text,
+                       url: str,
                        max_retries: int = 5,
-                       show_progress: bool = False) -> Text:
+                       show_progress: bool = False) -> str:
     """Downloads a file to temporary storage.
 
     Args:
@@ -361,7 +361,7 @@ class BaseDownloader(object):
     if bytes_so_far >= total_size:
       sys.stdout.write('\n')
 
-  def _SetUrl(self, url: Text) -> Text:
+  def _SetUrl(self, url: str) -> str:
     """Simple helper function to determine signed URL.
 
     Args:
@@ -384,7 +384,7 @@ class BaseDownloader(object):
 
   def _StoreDebugInfo(self,
                       file_stream: 'http.client.HTTPResponse',
-                      socket_error: Optional[Text] = None):
+                      socket_error: Optional[str] = None):
     """Gathers debug information for use when file downloads fail.
 
     Args:
@@ -483,7 +483,7 @@ class BaseDownloader(object):
                  (actual_file_size, expected_size))
       raise DownloadError(message)
 
-  def VerifyShaHash(self, file_path: Text, expected: Text) -> bool:
+  def VerifyShaHash(self, file_path: str, expected: str) -> bool:
     """Verifies the SHA256 hash of a file.
 
     Arguments:

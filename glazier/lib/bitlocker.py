@@ -17,7 +17,6 @@
 
 import logging
 import subprocess
-from typing import Text
 
 from glazier.lib import constants
 from glazier.lib import powershell
@@ -32,10 +31,10 @@ class BitlockerError(Exception):
 class Bitlocker(object):
   """Manage Bitlocker related operations on the local host."""
 
-  def __init__(self, mode: Text):
+  def __init__(self, mode: str):
     self._mode = mode
 
-  def _LaunchSubproc(self, command: Text):
+  def _LaunchSubproc(self, command: str):
     """Launch a subprocess.
 
     Args:
