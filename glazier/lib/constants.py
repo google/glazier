@@ -49,7 +49,9 @@ WINPE_GOOGETROOT = '%s\\ProgramData\\GooGet' % WINPE_ROOT
 
 USB_VOLUME_LABEL = 'BEYONDCORP'
 
+# Misc
 USE_REG_64 = True
+HELP_URI = 'https://glazier-failures.example.com'
 
 ## Flags
 
