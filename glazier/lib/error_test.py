@@ -24,8 +24,7 @@ from glazier.lib import error
 import mock
 from pyfakefs import fake_filesystem
 
-_SUFFIX_WITH_CODE = (
-    f'Need help? Visit {error.constants.HELP_URI}#1337')
+_SUFFIX = f'Need help? Visit {error.constants.HELP_URI}'
 
 
 class ErrorsTest(absltest.TestCase):
@@ -45,10 +44,14 @@ class ErrorsTest(absltest.TestCase):
     self.assertTrue(collect.called)
 
   @mock.patch.object(error.logs, 'Collect', autospec=True)
-  def test_collect_failure(self, collect):
+  @mock.patch.object(error.logging, 'critical', autospec=True)
+  def test_collect_failure(self, crit, collect):
     collect.side_effect = error.logs.LogError('something went wrong')
     with self.assertRaises(SystemExit):
       error._collect()
+    crit.assert_called_with(
+        'Failed to collect logs\n\nException: error.py:77] something went '
+        f'wrong\n\n{_SUFFIX}#4302')
 
   @mock.patch.object(error, '_collect', autospec=True)
   @mock.patch.object(error.logging, 'critical', autospec=True)
@@ -58,14 +61,12 @@ class ErrorsTest(absltest.TestCase):
     self.assertTrue(crit.called)
     self.assertTrue(collect.called)
 
-  @mock.patch.object(error.logs, 'Collect', autospec=True)
   @mock.patch.object(error.logging, 'critical', autospec=True)
-  def test_glazier_error_custom(self, crit, collect):
-    collect.return_value = 0
+  def test_glazier_error_custom(self, crit):
     with self.assertRaises(SystemExit):
       error.GlazierError(1337, 'The exception', False, a='code')
     crit.assert_called_with(
-        f'Reserved code\n\nException: The exception\n\n{_SUFFIX_WITH_CODE}')
+        f'Reserved code\n\nException] The exception\n\n{_SUFFIX}#1337')
 
 
 if __name__ == '__main__':

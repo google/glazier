@@ -21,6 +21,7 @@ from __future__ import print_function
 import logging
 import os
 import sys
+import traceback
 from typing import Any, Optional
 
 from glazier.lib import buildinfo
@@ -96,9 +97,18 @@ class GlazierError(Exception):
 
     msg = f'{get_message(code, **kwargs)}\n\n'
 
-    # TODO: Add exception file and lineno.
     if exception:
-      msg += f'Exception: {exception}\n\n'
+      # Index 2 contains the traceback from the sys.exc_info() tuple
+      trace = sys.exc_info()[2]
+      if trace:
+        trace_obj = traceback.extract_tb(trace)[0]
+        # The trace object contains the full file path, grab just the file name
+        file = os.path.split(trace_obj.filename)[1]
+        lineno = trace_obj.lineno
+
+        msg += f'Exception: {file}:{lineno}] {exception}\n\n'
+      else:
+        msg += f'Exception] {exception}\n\n'
 
     msg += f'{_SUFFIX}#{code}'
 
