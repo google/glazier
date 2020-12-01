@@ -48,6 +48,7 @@ def get_message(code: int, **kwargs) -> str:
   """
   # TODO: Investigate how to gaurentee unique error codes
   errors: dict[int, str] = {
+      1337: 'Reserved {}',
       4000: 'Uncaught exception',
       4301: 'Failed to determine error message from code',
       4302: 'Failed to collect logs',
@@ -71,7 +72,7 @@ def _collect():
     logs.Collect(
         os.path.join(build_info.CachePath() + os.sep, 'glazier_logs.zip'))
   except logs.LogError as e:
-    raise GlazierError(4302, exception=e, collect=False)
+    raise GlazierError(4302, e, False)
 
 
 class GlazierError(Exception):
@@ -79,7 +80,6 @@ class GlazierError(Exception):
 
   def __init__(self,
                code: int = 4000,
-               msg: Optional[str] = None,
                exception: Optional[Any] = None,
                collect: bool = True,
                **kwargs):
@@ -87,7 +87,6 @@ class GlazierError(Exception):
 
     Args:
       code: Error code to append to the failure message.
-      msg: Error message that accompanies the failure.
       exception: Exception message string.
       collect: Whether to collect log files.
       **kwargs: Key/value pairs of any number of string replacements in the
@@ -95,9 +94,7 @@ class GlazierError(Exception):
     """
     super(GlazierError, self).__init__()
 
-    if not msg:
-      msg = get_message(code, **kwargs)
-    msg += '\n\n'
+    msg = f'{get_message(code, **kwargs)}\n\n'
 
     # TODO: Add exception file and lineno.
     if exception:

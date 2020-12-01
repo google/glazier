@@ -34,10 +34,10 @@ actionable steps for troubleshooting most known errors.
 
 Below are examples of error codes that can be implemented based on existing
 Glazier exceptions. This list is not meant to be the final mapping or an
-exhaustive enumeration. Always refer to [errors.py](../../glazier/lib/errors.py) for the
-latest error code mappings. All critical errors should be added to the error
-library, rather than individual libraries. The expectation is error codes point
-to anchors in your internal documentation. Error code buckets are shown below:
+exhaustive enumeration. Always refer to error.py for the latest error code
+mappings. All critical errors should be added to the error library, rather than
+individual libraries. The expectation is error codes point to anchors in your
+internal documentation. Error code buckets are shown below:
 
 Code     | Example
 -------- | ------------------------------------
@@ -55,3 +55,37 @@ Code     | Example
 **5XXX** | Server Error
 50XX     | Internal Server Error
 53XX     | Service Unavailable
+
+## Defining Fatal Errors
+
+The below format should be used when any exception is thrown to ensure errors
+get logged appropriately. All arguments are optional. If no arguments are
+provided, error code 4000 will be used by default. _\**kwargs_ can be any number
+of key/value pairs that correspond with string format fields in the error
+message.
+
+`raise error.GlazierError(code[int], exception[str], collect[bool], **kwargs)`
+
+**Example file, let's say division.py**:
+
+```python
+from glazier.lib import error
+
+a = 1
+b = 0
+try:
+  a / b
+except ZeroDivisionError as e:
+  raise error.GlazierError(4101, e, true, num1=a, num2=b)
+```
+
+**Example corresponding message defined in error.py**:
+
+```python
+errors: dict[int, str] = {
+      4000: 'Uncaught exception',
+      4101: 'Failed to divide {} by {}',  # <-- This is the added error message with num1 and num2 kwargs
+      5000: 'Failed to reach web server',
+      5300: 'Service unavailable',
+  }
+```

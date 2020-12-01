@@ -58,22 +58,14 @@ class ErrorsTest(absltest.TestCase):
     self.assertTrue(crit.called)
     self.assertTrue(collect.called)
 
-  @mock.patch.object(error.logging, 'critical', autospec=True)
-  def test_glazier_error_custom(self, crit):
-    with self.assertRaises(SystemExit):
-      error.GlazierError(1337, 'The message', 'The exception', False)
-    crit.assert_called_with(
-        f'The message\n\nException: The exception\n\n{_SUFFIX_WITH_CODE}')
-
   @mock.patch.object(error.logs, 'Collect', autospec=True)
   @mock.patch.object(error.logging, 'critical', autospec=True)
-  def test_glazier_error_no_msg(self, crit, collect):
+  def test_glazier_error_custom(self, crit, collect):
     collect.return_value = 0
     with self.assertRaises(SystemExit):
-      error.GlazierError(1337)
+      error.GlazierError(1337, 'The exception', False, a='code')
     crit.assert_called_with(
-        'Failed to determine error message from code\n\nNeed help? '
-        f'Visit {error.constants.HELP_URI}#4301')
+        f'Reserved code\n\nException: The exception\n\n{_SUFFIX_WITH_CODE}')
 
 
 if __name__ == '__main__':
