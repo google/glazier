@@ -14,18 +14,16 @@
 # limitations under the License.
 """Standarize logging for all errors."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
+import functools
 import logging
 import os
 import sys
 from typing import Any, Optional
+import zipfile
 
 from glazier.lib import buildinfo
 from glazier.lib import constants
-from glazier.lib import logs
+import glazier.lib.winpe
 
 _SUFFIX = (f'Need help? Visit {constants.HELP_URI}')
 
@@ -66,12 +64,34 @@ def get_message(code: int, **kwargs) -> str:
   return str(error_msg.format(*kwargs.values()))
 
 
-def _collect():
-  """Collect failure logs into a zip file."""
+@functools.lru_cache()
+def _get_logs_path() -> str:
+  if glazier.lib.winpe.check_winpe():
+    return constants.WINPE_LOGS_PATH
+  return constants.SYS_LOGS_PATH
+
+
+@functools.lru_cache()
+def _cache_path() -> str:
+  if glazier.lib.winpe.check_winpe():
+    return constants.WINPE_CACHE
+  return constants.SYS_CACHE
+
+
+def zip_logs():
+  """Collect Glazier logs into a zip file.
+
+  Raises:
+    IOError,ValueError: Failed to collect logs
+  """
   try:
-    logs.Collect(
-        os.path.join(build_info.CachePath() + os.sep, 'glazier_logs.zip'))
-  except logs.LogError as e:
+    path = os.path.join(_cache_path(), 'glazier_logs.zip')
+    arc = zipfile.ZipFile(path, mode='w')
+    for root, _, files in os.walk(_get_logs_path()):
+      for f in files:
+        arc.write(os.path.join(root, f))
+    arc.close()
+  except (IOError, ValueError) as e:
     raise GlazierError(4302, e, False)
 
 
@@ -103,7 +123,7 @@ class GlazierError(Exception):
     msg += f'{_SUFFIX}#{code}'
 
     if collect:
-      _collect()
+      zip_logs()
 
     logging.critical(msg)
     sys.exit(1)  # Necessary to avoid traceback

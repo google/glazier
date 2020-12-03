@@ -18,50 +18,62 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
+
 
 from absl.testing import absltest
+from glazier.lib import constants
 from glazier.lib import error
 import mock
-from pyfakefs import fake_filesystem
+from pyfakefs.fake_filesystem_unittest import Patcher
 
 _SUFFIX_WITH_CODE = (
-    f'Need help? Visit {error.constants.HELP_URI}#1337')
+    f'Need help? Visit {constants.HELP_URI}#1337')
 
 
 class ErrorsTest(absltest.TestCase):
 
-  def setUp(self):
-    super(ErrorsTest, self).setUp()
-    self.fs = fake_filesystem.FakeFilesystem()
-    fake_filesystem.FakeOsModule(self.fs)
-    fake_filesystem.FakeFileOpen(self.fs)
-    self.fs.create_file(
-        error.os.path.join(error.build_info.CachePath() + error.os.sep,
-                           'glazier_logs.zip'))
+  def test_collect(self):
+    with Patcher() as patcher:
+      files = [
+          os.path.join(constants.SYS_LOGS_PATH, 'log1.log'),
+          os.path.join(constants.SYS_LOGS_PATH, 'log2.log'),
+      ]
+      patcher.fs.create_dir(constants.SYS_CACHE)
+      patcher.fs.create_file(files[0], contents='log1 content')
+      patcher.fs.create_file(files[1], contents='log2 content')
+      error.zip_logs()
+      with error.zipfile.ZipFile(
+          os.path.join(constants.SYS_CACHE, 'glazier_logs.zip'),
+          'r') as out:
+        with out.open(files[1].lstrip('/')) as f2:
+          self.assertEqual(f2.read(), b'log2 content')
 
-  @mock.patch.object(error.logs, 'Collect', autospec=True)
-  def test_collect(self, collect):
-    error._collect()
-    self.assertTrue(collect.called)
-
-  @mock.patch.object(error.logs, 'Collect', autospec=True)
-  def test_collect_failure(self, collect):
-    collect.side_effect = error.logs.LogError('something went wrong')
+  @mock.patch.object(error.zipfile.ZipFile, 'write', autospec=True)
+  def test_collect_io_error(self, wr):
+    wr.side_effect = IOError
     with self.assertRaises(SystemExit):
-      error._collect()
+      error.zip_logs()
 
-  @mock.patch.object(error, '_collect', autospec=True)
+  @mock.patch.object(error.zipfile.ZipFile, 'write', autospec=True)
+  def test_collect_value_error(self, wr):
+    wr.side_effect = ValueError('ZIP does not support timestamps before 1980')
+    with Patcher() as patcher:
+      patcher.fs.create_dir(constants.SYS_LOGS_PATH)
+      patcher.fs.create_file(os.path.join(constants.SYS_LOGS_PATH, 'log1.log'))
+      with self.assertRaises(SystemExit):
+        error.zip_logs()
+
+  @mock.patch.object(error, 'zip_logs', autospec=True)
   @mock.patch.object(error.logging, 'critical', autospec=True)
-  def test_glazier_error_default(self, crit, collect):
+  def test_glazier_error_default(self, crit, ziplogs):
     with self.assertRaises(SystemExit):
       error.GlazierError()
     self.assertTrue(crit.called)
-    self.assertTrue(collect.called)
+    self.assertTrue(ziplogs.called)
 
-  @mock.patch.object(error.logs, 'Collect', autospec=True)
   @mock.patch.object(error.logging, 'critical', autospec=True)
-  def test_glazier_error_custom(self, crit, collect):
-    collect.return_value = 0
+  def test_glazier_error_custom(self, crit):
     with self.assertRaises(SystemExit):
       error.GlazierError(1337, 'The exception', False, a='code')
     crit.assert_called_with(

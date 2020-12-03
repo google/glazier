@@ -19,10 +19,12 @@ import sys
 import traceback
 from typing import Optional
 
+
 from absl import app
 from absl import flags
 from glazier.lib import buildinfo
 from glazier.lib import constants
+from glazier.lib import error
 from glazier.lib import logs
 from glazier.lib import title
 from glazier.lib import winpe
@@ -53,6 +55,8 @@ def _LogFatal(msg: str,
   string = _FAILURE_MSG
   if code:
     string = _FAILURE_MSG + '#' + str(code)
+  if collect:
+    error.zip_logs()
   logging.fatal(string, msg)
   sys.exit(1)
 
