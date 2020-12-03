@@ -53,7 +53,7 @@ class DriversTest(absltest.TestCase):
     sha.assert_called_with(mock.ANY, local, sha_256)
     cache = drivers.constants.SYS_CACHE
     exe.assert_called_with(
-        'X:\\Windows\\System32\\dism.exe', [
+        'X:/Windows/System32/dism.exe', [
             '/Unmount-Image', f'/MountDir:{cache}\\Drivers\\',
             '/Discard'
         ],

@@ -16,9 +16,11 @@
 """Glazier interface to NTP time service."""
 
 import logging
+import os
 import socket
 import subprocess
 import time
+
 
 from glazier.lib.constants import WINPE_SYSTEM32
 import ntplib
@@ -61,9 +63,11 @@ def SyncClockToNtp(retries: int = 2, server: str = 'time.google.com'):
   current_time = time.strftime('%H:%M:%S', local_time)
   logging.info('Current date/time is %s %s', current_date, current_time)
 
-  date_set = r'%s\cmd.exe /c date %s' % (WINPE_SYSTEM32, current_date)
+  date_set = r'%s /c date %s' % (os.path.join(WINPE_SYSTEM32,
+                                              'cmd.exe'), current_date)
   result = subprocess.call(date_set, shell=True)
   logging.info('Setting date returned result %s', result)
-  time_set = r'%s\cmd.exe /c time %s' % (WINPE_SYSTEM32, current_time)
+  time_set = r'%s /c time %s' % (os.path.join(WINPE_SYSTEM32,
+                                              'cmd.exe'), current_time)
   result = subprocess.call(time_set, shell=True)
   logging.info('Setting time returned result %s', result)

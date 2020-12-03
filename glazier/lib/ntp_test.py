@@ -41,8 +41,8 @@ class NtpTest(absltest.TestCase):
     request.assert_called_with(mock.ANY, 'time.google.com', version=3)
     subproc.assert_has_calls([
         mock.call(
-            r'X:\Windows\System32\cmd.exe /c date 01-19-2016', shell=True),
-        mock.call(r'X:\Windows\System32\cmd.exe /c time 16:23:50', shell=True)
+            r'X:/Windows/System32/cmd.exe /c date 01-19-2016', shell=True),
+        mock.call(r'X:/Windows/System32/cmd.exe /c time 16:23:50', shell=True)
     ])
     # Socket Error
     request.side_effect = ntp.socket.gaierror

@@ -14,6 +14,7 @@
 
 """Constants and Flags used by the Glazier imaging code."""
 
+import os
 from absl import flags
 
 BUILD_LOG_FILE = 'glazier.log'
@@ -27,31 +28,31 @@ USER_AGENT = 'Glazier Installer 1.0'
 
 # System
 SYS_ROOT = 'C:'
-SYS_CACHE = '%s\\glazier_cache' % SYS_ROOT
-SYS_LOGS_PATH = '%s\\Windows\\Logs\\Glazier' % SYS_ROOT
-SYS_BUILD_LOG = '%s\\%s' % (SYS_LOGS_PATH, BUILD_LOG_FILE)
-SYS_SYSTEM32 = '%s\\Windows\\System32' % SYS_ROOT
-SYS_TASK_LIST = '%s\\task_list.yaml' % SYS_CACHE
-SYS_POWERSHELL = '%s\\WindowsPowerShell\\v1.0\\powershell.exe' % SYS_SYSTEM32
-SYS_GOOGETROOT = '%s\\ProgramData\\GooGet' % SYS_ROOT
+SYS_CACHE = os.path.join(SYS_ROOT, 'glazier_cache')
+SYS_LOGS_PATH = os.path.join(SYS_ROOT, 'Windows', 'Logs', 'Glazier')
+SYS_BUILD_LOG = os.path.join(SYS_LOGS_PATH, BUILD_LOG_FILE)
+SYS_SYSTEM32 = os.path.join(SYS_ROOT, 'Windows', 'System32')
+SYS_TASK_LIST = os.path.join(SYS_CACHE, 'task_list.yaml')
+SYS_POWERSHELL = os.path.join(SYS_SYSTEM32, 'WindowsPowerShell', 'v1.0',
+                              'powershell.exe')
+SYS_GOOGETROOT = os.path.join(SYS_ROOT, 'ProgramData', 'GooGet')
 
 # WinPE
 WINPE_ROOT = 'X:'
 WINPE_CACHE = WINPE_ROOT
-WINPE_LOGS_PATH = '%s\\Logs' % WINPE_ROOT
-WINPE_BUILD_LOG = '%s\\%s' % (WINPE_LOGS_PATH, BUILD_LOG_FILE)
-WINPE_SYSTEM32 = '%s\\Windows\\System32' % WINPE_ROOT
-WINPE_TASK_LIST = '%s\\task_list.yaml' % WINPE_ROOT
-WINPE_DISM = '%s\\dism.exe' % WINPE_SYSTEM32
-WINPE_POWERSHELL = ('%s\\WindowsPowerShell\\v1.0\\powershell.exe' %
-                    WINPE_SYSTEM32)
-WINPE_GOOGETROOT = '%s\\ProgramData\\GooGet' % WINPE_ROOT
-
-USB_VOLUME_LABEL = 'BEYONDCORP'
+WINPE_LOGS_PATH = os.path.join(WINPE_ROOT, 'Logs')
+WINPE_BUILD_LOG = os.path.join(WINPE_LOGS_PATH, BUILD_LOG_FILE)
+WINPE_SYSTEM32 = os.path.join(WINPE_ROOT, 'Windows', 'System32')
+WINPE_TASK_LIST = os.path.join(WINPE_ROOT, 'task_list.yaml')
+WINPE_DISM = os.path.join(WINPE_SYSTEM32, 'dism.exe')
+WINPE_POWERSHELL = os.path.join(WINPE_SYSTEM32, 'WindowsPowerShell', 'v1.0',
+                                'powershell.exe')
+WINPE_GOOGETROOT = os.path.join(WINPE_ROOT, 'ProgramData', 'GooGet')
 
 # Misc
-USE_REG_64 = True
+USB_VOLUME_LABEL = 'BEYONDCORP'
 HELP_URI = 'https://glazier-failures.example.com'
+USE_REG_64 = True
 
 ## Flags
 

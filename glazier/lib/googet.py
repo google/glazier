@@ -114,7 +114,7 @@ class GooGetInstall(object):
       Error: The GooGet command failed.
     """
     if not kwargs['path']:
-      kwargs['path'] = self._GooGet() + '\\googet.exe'
+      kwargs['path'] = os.path.join(self._GooGet(), 'googet.exe')
     if not os.path.exists(kwargs['path']):
       raise Error('Cannot find path of GooGet binary [%s]' % kwargs['path'])
     if not pkg:

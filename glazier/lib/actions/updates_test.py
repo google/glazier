@@ -50,7 +50,7 @@ class UpdatesTest(absltest.TestCase):
     sha.assert_called_with(mock.ANY, local, sha_256)
     cache = updates.constants.SYS_CACHE
     exe.assert_called_with(
-        'X:\\Windows\\System32\\dism.exe', [
+        'X:/Windows/System32/dism.exe', [
             '/image:c:\\', '/Add-Package',
             '/PackagePath:c:\\KB2990941-v3-x64.msu',
             f'/ScratchDir:{cache}\\Updates\\'

@@ -152,8 +152,8 @@ class InstallerTest(absltest.TestCase):
     with self.assertRaises(installer.RestartEvent):
       ex.Run()
     copy.assert_has_calls([
-        mock.call([r'X:\task_list.yaml',
-                   '%s\\task_list.yaml' % cache], mock.ANY),
+        mock.call([r'X:/task_list.yaml',
+                   '%s/task_list.yaml' % cache], mock.ANY),
     ])
     copy.return_value.Run.assert_called()
 
