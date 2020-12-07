@@ -53,6 +53,9 @@ def _LogFatal(msg: str,
   string = _FAILURE_MSG
   if code:
     string = _FAILURE_MSG + '#' + str(code)
+  if collect:
+    logs.Collect(
+        os.path.join(build_info.CachePath() + os.sep, 'glazier_logs.zip'))
   logging.fatal(string, msg)
   sys.exit(1)
 

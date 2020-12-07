@@ -52,6 +52,7 @@ WINPE_GOOGETROOT = os.path.join(WINPE_ROOT, os.sep, 'ProgramData', 'GooGet')
 # Misc
 USB_VOLUME_LABEL = 'BEYONDCORP'
 HELP_URI = 'https://glazier-failures.example.com'
+HELP_MSG = (f'Need help? Visit {HELP_URI}')
 USE_REG_64 = True
 
 ## Flags

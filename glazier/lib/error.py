@@ -27,8 +27,6 @@ from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib import logs
 
-_SUFFIX = (f'Need help? Visit {constants.HELP_URI}')
-
 build_info = buildinfo.BuildInfo()
 
 
@@ -51,7 +49,8 @@ def get_message(code: int, **kwargs) -> str:
       1337: 'Reserved {}',
       4000: 'Uncaught exception',
       4301: 'Failed to determine error message from code',
-      4302: 'Failed to collect logs',
+      4302: '',  # Statically defined in logs.py to avoid circular dependency
+      4303: '',  # Statically defined in logs.py to avoid circular dependency
       5000: 'Failed to reach web server',
       5300: 'Service unavailable',
   }
@@ -64,15 +63,6 @@ def get_message(code: int, **kwargs) -> str:
   # Enable passing variables to the errors dict by optionally inserting values
   # associated with the keyword arguments via string.format().
   return str(error_msg.format(*kwargs.values()))
-
-
-def _collect():
-  """Collect failure logs into a zip file."""
-  try:
-    logs.Collect(
-        os.path.join(build_info.CachePath() + os.sep, 'glazier_logs.zip'))
-  except logs.LogError as e:
-    raise GlazierError(4302, e, False)
 
 
 class GlazierError(Exception):
@@ -100,10 +90,11 @@ class GlazierError(Exception):
     if exception:
       msg += f'Exception: {exception}\n\n'
 
-    msg += f'{_SUFFIX}#{code}'
+    msg += f'{constants.HELP_MSG}#{code}'
 
     if collect:
-      _collect()
+      logs.Collect(
+          os.path.join(build_info.CachePath() + os.sep, 'glazier_logs.zip'))
 
     logging.critical(msg)
     sys.exit(1)  # Necessary to avoid traceback

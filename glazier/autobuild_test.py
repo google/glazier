@@ -39,11 +39,13 @@ class BuildInfoTest(absltest.TestCase):
     self.filesystem = fake_filesystem.FakeFilesystem()
     autobuild.os = fake_filesystem.FakeOsModule(self.filesystem)
 
-  def testLogFatal(self):
+  @mock.patch.object(autobuild.logs, 'Collect', autospec=True)
+  def testLogFatal(self, collect):
     with self.assertRaises(LogFatalError):
-      autobuild._LogFatal('image failed', buildinfo.BuildInfo(), collect=False)
+      autobuild._LogFatal('image failed', buildinfo.BuildInfo(), collect=True)
     autobuild.logging.fatal.assert_called_with(f'{autobuild._FAILURE_MSG}',
                                                'image failed')
+    self.assertTrue(collect.called)
 
   def testLogFatalCode(self):
     with self.assertRaises(LogFatalError):

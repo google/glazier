@@ -36,21 +36,10 @@ class ErrorsTest(absltest.TestCase):
     fake_filesystem.FakeOsModule(self.fs)
     fake_filesystem.FakeFileOpen(self.fs)
     self.fs.create_file(
-        error.os.path.join(error.build_info.CachePath() + error.os.sep,
+        error.os.path.join(error.build_info.CachePath(), error.os.sep,
                            'glazier_logs.zip'))
 
   @mock.patch.object(error.logs, 'Collect', autospec=True)
-  def test_collect(self, collect):
-    error._collect()
-    self.assertTrue(collect.called)
-
-  @mock.patch.object(error.logs, 'Collect', autospec=True)
-  def test_collect_failure(self, collect):
-    collect.side_effect = error.logs.LogError('something went wrong')
-    with self.assertRaises(SystemExit):
-      error._collect()
-
-  @mock.patch.object(error, '_collect', autospec=True)
   @mock.patch.object(error.logging, 'critical', autospec=True)
   def test_glazier_error_default(self, crit, collect):
     with self.assertRaises(SystemExit):

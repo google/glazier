@@ -17,6 +17,7 @@
 import logging
 import logging.handlers
 import os
+import sys
 import zipfile
 
 from glazier.lib import buildinfo
@@ -26,10 +27,6 @@ from glazier.lib import winpe
 
 
 DATE_FMT = '%m%d %H:%M:%S'
-
-
-class LogError(Exception):
-  pass
 
 
 def GetLogsPath():
@@ -52,7 +49,9 @@ def Collect(path: str):
         arc.write(os.path.join(root, f))
     arc.close()
   except (IOError, ValueError) as e:
-    raise LogError(str(e))
+    logging.critical('Failed to send logs\n\n%s\n\n%s#4302', e,
+                     constants.HELP_MSG)
+    sys.exit(1)
 
 
 def Setup():
@@ -84,8 +83,10 @@ def Setup():
   # Create file handler and set level
   try:
     fh = logging.FileHandler(log_file)
-  except IOError:
-    raise LogError('Failed to open log file %s.' % log_file)
+  except IOError as e:
+    logging.critical('Failed to open log file: %s\n\n%s\n\n%s#4303', log_file,
+                     e, constants.HELP_MSG)
+    sys.exit(1)
   fh.setLevel(logging.DEBUG)
   fh.setFormatter(debug_formatter)
   logger.addHandler(fh)

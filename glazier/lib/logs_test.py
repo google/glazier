@@ -43,20 +43,24 @@ class LoggingTest(absltest.TestCase):
         with out.open(files[1].lstrip('/')) as f2:
           self.assertEqual(f2.read(), b'log2 content')
 
-  def testCollectIOErr(self):
+  @mock.patch.object(logs.logging, 'critical', autospec=True)
+  def testCollectIOErr(self, crit):
     with Patcher() as patcher:
       patcher.fs.create_dir(constants.SYS_LOGS_PATH)
-      with self.assertRaises(logs.LogError):
+      with self.assertRaises(SystemExit):
         logs.Collect(constants.SYS_LOGS_PATH)
+    self.assertTrue(crit.called)
 
+  @mock.patch.object(logs.logging, 'critical', autospec=True)
   @mock.patch.object(zipfile.ZipFile, 'write', autospec=True)
-  def testCollectValueErr(self, wr):
+  def testCollectValueErr(self, wr, crit):
     wr.side_effect = ValueError('ZIP does not support timestamps before 1980')
     with Patcher() as patcher:
       patcher.fs.create_dir(constants.SYS_LOGS_PATH)
       patcher.fs.create_file(os.path.join(constants.SYS_LOGS_PATH, 'log1.log'))
-      with self.assertRaises(logs.LogError):
+      with self.assertRaises(SystemExit):
         logs.Collect(r'C:\glazier.zip')
+    self.assertTrue(crit.called)
 
   @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
   def testGetLogsPath(self, wpe):
@@ -80,17 +84,19 @@ class LoggingTest(absltest.TestCase):
                                   logs.constants.SYS_LOGS_PATH)
     fh.assert_called_with(r'%s\glazier.log' % logs.constants.SYS_LOGS_PATH)
 
+  @mock.patch.object(logs.logging, 'critical', autospec=True)
   @mock.patch.object(file_util, 'CreateDirectories')
   @mock.patch.object(logs.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(logs.logging, 'FileHandler')
-  def testSetupError(self, fh, wpe, ii, create_dir):
+  def testSetupError(self, fh, wpe, ii, create_dir, crit):
     ii.return_value = TEST_ID
     wpe.return_value = False
     fh.side_effect = IOError
-    with self.assertRaises(logs.LogError):
+    with self.assertRaises(SystemExit):
       logs.Setup()
     self.assertTrue(create_dir.called)
+    self.assertTrue(crit.called)
 
 
 if __name__ == '__main__':
