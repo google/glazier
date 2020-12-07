@@ -19,6 +19,7 @@ import time
 from absl.testing import absltest
 
 from glazier.lib import buildinfo
+from glazier.lib import constants
 from glazier.lib import googet
 
 import mock
@@ -39,7 +40,7 @@ class GooGetTest(absltest.TestCase):
   @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   @mock.patch.object(time, 'sleep', return_value=None)
   def testLaunchGooGet(self, sleep, branch, call, wpe):  # pylint: disable=unused-argument
-    path = r'C:/ProgramData/GooGet/googet.exe'
+    path = googet.os.path.join(constants.SYS_GOOGETROOT, 'googet.exe')
     pkg = 'test_package_v1'
     retries = 5
     sleep_dur = 30
@@ -60,46 +61,49 @@ class GooGetTest(absltest.TestCase):
         pkg, retries, sleep_dur, self.buildinfo, path=path, flags=[
             'http://example.com/team-unstable, '
             'http://example.co.uk/secure-unstable, '
-            'https://example.jp/unstable/',
-            '-reinstall', 'whatever'])
-    cmd_string = (' -noconfirm --root=C:/ProgramData/GooGet install -sources '
-                  'http://example.com/team-unstable, '
-                  'http://example.co.uk/secure-unstable, '
-                  'https://example.jp/unstable/ -reinstall whatever ')
+            'https://example.jp/unstable/', '-reinstall', 'whatever'
+        ])
+    cmd_string = (
+        f' -noconfirm --root={constants.SYS_GOOGETROOT} install -sources '
+        'http://example.com/team-unstable, '
+        'http://example.co.uk/secure-unstable, '
+        'https://example.jp/unstable/ -reinstall whatever ')
     cmd = path + cmd_string + pkg
     call.assert_called_with(cmd)
 
     # String replacement of sources flag was successful
     self.install.LaunchGooGet(
         pkg, retries, sleep_dur, self.buildinfo, path=path, flags=self.flags)
-    cmd_string = (' -noconfirm --root=C:/ProgramData/GooGet install -sources '
-                  'http://example.com/team-example, '
-                  'http://example.co.uk/secure-example%, '
-                  'http://example.jp/example% whatever -reinstall ')
+    cmd_string = (
+        f' -noconfirm --root={constants.SYS_GOOGETROOT} install -sources '
+        'http://example.com/team-example, '
+        'http://example.co.uk/secure-example%, '
+        'http://example.jp/example% whatever -reinstall ')
     cmd = path + cmd_string + pkg
     call.assert_called_with(cmd)
 
     # Only pkg
     self.install.LaunchGooGet(
         pkg, retries, sleep_dur, self.buildinfo, path=None, flags=None)
-    cmd_string = ' -noconfirm --root=C:/ProgramData/GooGet install '
+    cmd_string = f' -noconfirm --root={constants.SYS_GOOGETROOT} install '
     cmd = path + cmd_string + pkg
     call.assert_called_with(cmd)
 
     # No Path
     self.install.LaunchGooGet(
         pkg, retries, sleep_dur, self.buildinfo, path=None, flags=self.flags)
-    cmd_string = (' -noconfirm --root=C:/ProgramData/GooGet install -sources '
-                  'http://example.com/team-example, '
-                  'http://example.co.uk/secure-example%, '
-                  'http://example.jp/example% whatever -reinstall ')
+    cmd_string = (
+        f' -noconfirm --root={constants.SYS_GOOGETROOT} install -sources '
+        'http://example.com/team-example, '
+        'http://example.co.uk/secure-example%, '
+        'http://example.jp/example% whatever -reinstall ')
     cmd = path + cmd_string + pkg
     call.assert_called_with(cmd)
 
     # No flags
     self.install.LaunchGooGet(
         pkg, retries, sleep_dur, self.buildinfo, path=path, flags=None)
-    cmd = path + ' -noconfirm --root=C:/ProgramData/GooGet install ' + pkg
+    cmd = path + f' -noconfirm --root={constants.SYS_GOOGETROOT} install ' + pkg
     call.assert_called_with(cmd)
 
     # Path does not exist

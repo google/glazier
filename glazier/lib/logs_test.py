@@ -40,7 +40,7 @@ class LoggingTest(absltest.TestCase):
       patcher.fs.create_file(files[1], contents='log2 content')
       logs.Collect(r'C:\glazier.zip')
       with zipfile.ZipFile(r'C:\glazier.zip', 'r') as out:
-        with out.open(files[1]) as f2:
+        with out.open(files[1].lstrip('/')) as f2:
           self.assertEqual(f2.read(), b'log2 content')
 
   def testCollectIOErr(self):
