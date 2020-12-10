@@ -225,7 +225,7 @@ Python, you can easily extend Glazier with custom functionality.
 
 When it comes to the act of imaging a system, most of Glazier's time is spent
 performing Actions. Glazier ships with several core Actions, which are
-documented in the [Actions README](../../glazier/lib/actions).
+documented in the [Actions README](../actions.md).
 
 Adding new Glazier Actions is meant to be as simple as possible. Actions are
 automatically recognized by Autobuild's configuration handler. An administrator

@@ -1,10 +1,10 @@
 # Creating New Actions
 
 Glazier's Actions are the core of the system's configuration language. Glazier
-ships with some [existing actions](../../glazier/lib/actions/README.md), but for more
-custom functionality, you can also create your own.
+ships with some [existing actions](../actions.md), but for more custom
+functionality, you can also create your own.
 
-Actions are defined in the [glazier/lib/actions/ module](../../glazier/lib/actions/).
+Actions are defined under [glazier/lib/actions](../../glazier/lib/actions/).
 
 ## BaseAction
 
@@ -28,9 +28,8 @@ All actions receive two parameters, as defined by BaseAction: `args` and
 
 ## Action Definition
 
-Within the *glazier/lib/actions* module there are several libraries. You can extend one
-of the existing libraries or create a new one. The layout is strictly
-organizational.
+Under *glazier/lib/actions* there are several libraries. You can extend one of the
+existing libraries or create a new one. The layout is strictly organizational.
 
 In this example, we'll create the action `FancyAction` to be used in our imaging
 configs.

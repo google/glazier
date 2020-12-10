@@ -9,11 +9,11 @@ with an installation.
 Each module should inherit from `BasePolicy`, and will receive a BuildInfo
 instance (`self._build_info`).
 
-If a policy fails, the module should raise `ImagingPolicyException` with a message
-explaining the cause of failure. This will abort the build.
+If a policy fails, the module should raise `ImagingPolicyException` with a
+message explaining the cause of failure. This will abort the build.
 
-If a policy causes a warning, the module should raise `ImagingPolicyWarning`. This
-will not abort the build, but may present the warning to the user.
+If a policy causes a warning, the module should raise `ImagingPolicyWarning`.
+This will not abort the build, but may present the warning to the user.
 
 ## Modules
 

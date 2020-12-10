@@ -52,7 +52,7 @@ Glazier makes it simple to extend the installer by writing a bit of Python or
 PowerShell code. See creating new actions under docs to get started.
 
 Glazier's Actions are the core of the system's configuration language. Glazier
-ships with some [existing actions](glazier/lib/actions), but for more
+ships with some [existing actions](doc/actions.md), but for more
 custom functionality, you can also create your own.
 
 ## Getting started
