@@ -15,7 +15,7 @@ Glazier is a tool developed at Google for automating Windows operating system de
 *   Applies a base operating system
 *   Installs applications and configurations to said operating system
 
-Want to dive right in? See [here](docs) for documentation on how you can get started with Glazier in your environment.
+Want to dive right in? See [our docs site](https://google.github.io/glazier) for how you can get started with Glazier.
 
 ## Why Glazier?
 
@@ -52,12 +52,12 @@ Glazier makes it simple to extend the installer by writing a bit of Python or
 PowerShell code. See creating new actions under docs to get started.
 
 Glazier's Actions are the core of the system's configuration language. Glazier
-ships with some [existing actions](docs/actions.md), but for more
+ships with some [existing actions](https://google.github.io/glazier/actions), but for more
 custom functionality, you can also create your own.
 
 ## Getting started
 
-See our [setup docs](docs/setup) to learn about how you can get started with Glazier in your own environment.
+See our [setup docs](https://google.github.io/glazier/setup) to learn about how you can get started with Glazier in your own environment.
 
 ## Contact
 

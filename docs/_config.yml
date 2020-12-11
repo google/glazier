@@ -1,10 +1,5 @@
 theme: jekyll-theme-minimal
 show_downloads: True
-defaults:
-  - scope:
-      path: docs
-    values:
-      layout: default
 navigation:
   - title: Home
     url: /
