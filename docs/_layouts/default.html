@@ -12,7 +12,7 @@
 <body>
    <div class="wrapper">
       <header>
-         <h1><a href="{{ "/" | absolute_url }}">{{ site.title | default: site.github.repository_name | capitalize }}</a></h1>
+         <h1 class="project-name"><a href="{{ "/" | absolute_url }}">{{ site.title | default: site.github.repository_name | capitalize }}</a></h1>
          {% if site.logo %}
             <img src="{{site.logo | relative_url}}" alt="Logo" />
          {% endif %}
