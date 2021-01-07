@@ -64,7 +64,10 @@ provided, error code 4000 will be used by default. _\**kwargs_ can be any number
 of key/value pairs that correspond with string format fields in the error
 message.
 
-`raise error.GlazierError(code[int], exception[str], collect[bool], **kwargs)`
+```python
+raise G<NameofError>(exception: Optional[str],
+                     replacements: Optional[List[Union[bool, int, str]]])
+```
 
 **Example file, let's say division.py**:
 
@@ -76,16 +79,27 @@ b = 0
 try:
   a / b
 except ZeroDivisionError as e:
-  raise error.GlazierError(4101, e, true, num1=a, num2=b)
+  raise GDivideByZeroError(e, [a, b])
 ```
 
 **Example corresponding message defined in error.py**:
 
 ```python
-errors: dict[int, str] = {
-      4000: 'Uncaught exception',
-      4101: 'Failed to divide {} by {}',  # <-- This is the added error message with num1 and num2 kwargs
-      5000: 'Failed to reach web server',
-      5300: 'Service unavailable',
-  }
+# This is the added error message with a and b args
+GDivideByZeroError = _new_err(4101, 'Failed to divide {} by {}')
+```
+
+The error message will be as follows:
+
+> Failed to divide 1 by 0
+
+Once this exception is caught by `autobuild.py`, the following log message will
+be displayed:
+
+```
+Failed to divide 1 by 0
+
+Exception: division by zero
+
+Need help? Visit https://glazier-failures.example.com#4101
 ```
