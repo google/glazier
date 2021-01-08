@@ -16,23 +16,23 @@
 
 
 from absl.testing import absltest
-from glazier.lib import error
+from glazier.lib import errors
 
 
 class ErrorsTest(absltest.TestCase):
 
   def test_glazier_reserved_error_replacements(self):
     self.assertEqual(
-        str(error.GReservedError('exception', [1, 2, 3])),
+        str(errors.GReservedError('exception', [1, 2, 3])),
         'Reserved 1 2 3 (1337): exception')
 
   def test_glazier_reserved_error_no_replacements(self):
     self.assertEqual(
-        str(error.GUncaughtError('exception')),
+        str(errors.GUncaughtError('exception')),
         'Uncaught exception (4000): exception')
 
   def test_glazier_error_str(self):
-    self.assertEqual(str(error.GlazierError('exception')), '(4000): exception')
+    self.assertEqual(str(errors.GlazierError('exception')), '(4000): exception')
 
 if __name__ == '__main__':
   absltest.main()

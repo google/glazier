@@ -34,7 +34,7 @@ actionable steps for troubleshooting most known errors.
 
 Below are examples of error codes that can be implemented based on existing
 Glazier exceptions. This list is not meant to be the final mapping or an
-exhaustive enumeration. Always refer to error.py for the latest error code
+exhaustive enumeration. Always refer to errors.py for the latest error code
 mappings. All critical errors should be added to the error library, rather than
 individual libraries. The expectation is error codes point to anchors in your
 internal documentation. Error code buckets are shown below:
@@ -82,7 +82,7 @@ except ZeroDivisionError as e:
   raise GDivideByZeroError(e, [a, b])
 ```
 
-**Example corresponding message defined in error.py**:
+**Example corresponding message defined in errors.py**:
 
 ```python
 # This is the added error message with a and b args
