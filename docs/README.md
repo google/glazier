@@ -1,5 +1,8 @@
 # Glazier Documentation
 
+TIP: Glazier docs are best viewed on our
+[docs site](https://google.github.io/glazier).
+
 We'd love to hear from you! If you have any questions or suggestions regarding
 the documentation below, please make a post in our public discussion list at
 [glazier-discuss@googlegroups.com](https://groups.google.com/forum/#!forum/glazier-discuss).
@@ -37,9 +40,11 @@ supported syntax.
 
 ## Python
 
-*   [Installer Actions](../glazier/lib/actions) - Actions are classes which the
+*   [Installer Actions](actions.md) - Actions are classes which the
     configuration handler may call to perform a variety of tasks during imaging.
-*   [Policy Modules](../glazier/lib/policies) - Policy modules determine whether or not
+*   [Policy Modules](policies.md) - Policy modules determine whether or not
+    Autobuild should be allowed to proceed with an installation.
+*   [Error Handling](error_codes.md) - Policy modules determine whether or not
     Autobuild should be allowed to proceed with an installation.
 *   [Config Handlers](./setup/config_handlers.md) - The Glazier configuration
     handling libraries are responsible for taking the configuration language as
