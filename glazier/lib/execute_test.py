@@ -90,7 +90,7 @@ class ExecuteTest(absltest.TestCase):
     popen_instance.returncode = 0
     popen_instance.stdout = io.BytesIO(b'foo\nbar')
     execute.execute_binary(self.binary, log=False)
-    i.assert_called_with('Executing: %s', self.binary)
+    i.assert_not_called()
     popen.assert_called_with([self.binary],
                              shell=False,
                              stdout=execute.subprocess.PIPE,

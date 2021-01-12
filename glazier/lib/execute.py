@@ -51,7 +51,8 @@ def execute_binary(binary: str, args: Optional[List[str]] = None,
   if not return_codes:
     return_codes = [0]
 
-  logging.info('Executing: %s', string)
+  if log:
+    logging.info('Executing: %s', string)
 
   stdout = subprocess.PIPE
   stderr = subprocess.STDOUT
