@@ -76,7 +76,8 @@ class DomainJoin(object):
                  socket.gethostname())
 
     while True:
-      ps = powershell.PowerShell()
+      # Set log=False to prevent leaking Domain Join credentials.
+      ps = powershell.PowerShell(log=False)
       try:
         logging.debug('Attempting to join the domain %s.', self._domain_name)
         ps.RunLocal(
