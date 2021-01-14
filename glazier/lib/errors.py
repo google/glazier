@@ -53,10 +53,7 @@ class GlazierError(Exception):
   def __str__(self) -> str:
     string = ''
 
-    if self.message and self.replacements:
-      # Asterisk is used to unpack the values of the list
-      string = f'{self.message.format(*self.replacements)} '
-    elif self.message:
+    if self.message:
       string = f'{self.message} '
 
     string += f'({self.code})'
@@ -83,18 +80,23 @@ def _new_err(code: int, message: str) -> Type[GlazierError]:
   """
 
   class Error(GlazierError):
+    """Stores error information used in GlazierError."""
 
     def __init__(self,
                  exception: Optional[str] = '',
                  replacements: Optional[List[Union[bool, int, str]]] = None):
       super().__init__(exception, replacements)
       self.code: int = code
-      self.message: str = message
+      if message and replacements:
+        # Asterisk is used to unpack the values of the list
+        self.message: str = f'{message.format(*replacements)}'
+      elif message:
+        self.message: str = message
 
   return Error
 
 ################################################################################
-# ERROR CODES (https://google.github.io/glazier/setup/error_codes)             #
+# ERROR CODES (https://google.github.io/glazier/error_codes)             #
 ################################################################################
 GReservedError = _new_err(1337, 'Reserved {} {} {}')
 GUncaughtError = _new_err(4000, 'Uncaught exception')
