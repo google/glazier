@@ -13,15 +13,18 @@
 # limitations under the License.
 """Unit tests for autobuild."""
 
-from absl.testing import absltest
 
+from absl.testing import absltest
 from glazier import autobuild
 from glazier.lib import buildinfo
 from glazier.lib import title
 from glazier.lib import winpe
-
 import mock
 from pyfakefs import fake_filesystem
+
+_HELP_MSG = (
+    f'See {autobuild.constants.SYS_BUILD_LOG} for more info. Need help? Visit '
+    f'{autobuild.constants.HELP_URI}')
 
 
 class LogFatalError(Exception):
@@ -39,17 +42,40 @@ class BuildInfoTest(absltest.TestCase):
     self.filesystem = fake_filesystem.FakeFilesystem()
     autobuild.os = fake_filesystem.FakeOsModule(self.filesystem)
 
-  def testLogFatal(self):
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
+  def testLogFatal(self, wpe):
+    wpe.return_value = True
     with self.assertRaises(LogFatalError):
-      autobuild._LogFatal('image failed', buildinfo.BuildInfo(), collect=False)
-    autobuild.logging.fatal.assert_called_with(f'{autobuild._FAILURE_MSG}',
-                                               'image failed')
+      autobuild._LogFatal('image failed', self.autobuild._build_info)
+    autobuild.logging.fatal.assert_called_with(
+        f'image failed\n\nSee {autobuild.constants.WINPE_BUILD_LOG} for more '
+        f'info. Need help? Visit {autobuild.constants.HELP_URI}#4000')
+    self.assertTrue(autobuild.logging.debug.called)
 
   def testLogFatalCode(self):
     with self.assertRaises(LogFatalError):
-      autobuild._LogFatal('image failed', buildinfo.BuildInfo(), 1234, False)
-    autobuild.logging.fatal.assert_called_with(f'{autobuild._FAILURE_MSG}#1234',
-                                               'image failed')
+      autobuild._LogFatal('image failed', self.autobuild._build_info, 1234,
+                          False)
+    autobuild.logging.fatal.assert_called_with(
+        f'image failed\n\n{_HELP_MSG}#1234')
+
+  def testLogFatalException(self):
+    with self.assertRaises(LogFatalError):
+      autobuild._LogFatal(
+          'image failed',
+          self.autobuild._build_info,
+          exception='FakeException',
+          collect=False)
+    autobuild.logging.fatal.assert_called_with(
+        f'image failed\n\nException] FakeException\n\n'
+        f'{_HELP_MSG}#4000')
+
+  @mock.patch.object(title, 'set_title', autospec=True)
+  def testLogFatalFileAndLineNo(self, st):
+    st.side_effect = Exception('something')
+    with self.assertRaises(LogFatalError):
+      self.autobuild.RunBuild()
+    autobuild.logging.fatal.assert_called_once()
 
   @mock.patch.object(winpe, 'check_winpe', autospec=True)
   def testSetupTaskList(self, wpe):
@@ -85,12 +111,15 @@ class BuildInfoTest(absltest.TestCase):
     # ConfigBuilderError
     builder.side_effect = autobuild.builder.ConfigBuilderError
     self.autobuild.RunBuild()
-    fatal.assert_called_with(mock.ANY, self.autobuild._build_info)
+    fatal.assert_called_with('Failed to build the task list',
+                             self.autobuild._build_info, 4302, mock.ANY)
     # ConfigRunnerError
     builder.side_effect = None
     runner.side_effect = autobuild.runner.ConfigRunnerError
     self.autobuild.RunBuild()
-    fatal.assert_called_with(mock.ANY, self.autobuild._build_info)
+    self.assertTrue(fatal.called)
+    fatal.assert_called_with('Failed to execute the task list',
+                             self.autobuild._build_info, 4303, mock.ANY)
 
   @mock.patch.object(title, 'set_title', autospec=True)
   def testKeyboardInterrupt(self, st):
@@ -102,10 +131,18 @@ class BuildInfoTest(absltest.TestCase):
 
   @mock.patch.object(autobuild, '_LogFatal', autospec=True)
   @mock.patch.object(title, 'set_title', autospec=True)
+  def testGlazierError(self, st, fatal):
+    st.side_effect = autobuild.errors.GlazierError
+    self.autobuild.RunBuild()
+    self.assertTrue(fatal.called)
+
+  @mock.patch.object(autobuild, '_LogFatal', autospec=True)
+  @mock.patch.object(title, 'set_title', autospec=True)
   def testMainException(self, st, fatal):
     st.side_effect = Exception
     self.autobuild.RunBuild()
-    fatal.assert_called_with(mock.ANY, self.autobuild._build_info, 4000)
+    fatal.assert_called_with('Unknown Exception', self.autobuild._build_info,
+                             4000, mock.ANY)
 
 
 if __name__ == '__main__':
