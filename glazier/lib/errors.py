@@ -100,6 +100,19 @@ def _new_err(code: int, message: str) -> Type[GlazierError]:
 ################################################################################
 GReservedError = _new_err(1337, 'Reserved {} {} {}')
 GUncaughtError = _new_err(4000, 'Uncaught exception')
-GCollectLogsError = _new_err(4301, 'Failed to collect logs')
+GUnsupportedPEError = _new_err(4100, """
+                  !!!!! Warning !!!!!
+
+    This image is not running the latest WinPE version.
+
+    This scenario typically occurs when you are booting off of an outdated
+    .iso file. Please update before continuing.
+
+    """)
+GUnsupportedModelError = _new_err(
+    4101, 'System OS/model does not have imaging support {}')
+GConfigBuilderError = _new_err(4300, 'Failed to build the task list')
+GConfigRunnerError = _new_err(4301, 'Failed to execute the task list')
+GRegSetError = _new_err(4340, 'Failed to set registry value')
 GWebServerError = _new_err(5000, 'Failed to reach web server')
 GServiceError = _new_err(5300, 'Service unavailable')
