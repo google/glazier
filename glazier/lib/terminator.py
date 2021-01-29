@@ -84,5 +84,5 @@ def log_and_exit(msg: str,
   string += (f'See {build_log} for more info. '
              f'Need help? Visit {constants.HELP_URI}#{code}')
 
-  logging.fatal(string)
+  logging.critical(string)
   sys.exit(1)

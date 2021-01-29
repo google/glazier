@@ -33,7 +33,7 @@ class TerminatorTest(absltest.TestCase):
     wpe.return_value = True
     with self.assertRaises(SystemExit):
       terminator.log_and_exit('image failed', terminator.buildinfo.BuildInfo())
-    log.fatal.assert_called_with(
+    log.critical.assert_called_with(
         f'image failed\n\nSee {terminator.constants.WINPE_BUILD_LOG} for more '
         f'info. Need help? Visit {terminator.constants.HELP_URI}#4000')
     self.assertTrue(log.debug.called)
@@ -43,7 +43,7 @@ class TerminatorTest(absltest.TestCase):
     with self.assertRaises(SystemExit):
       terminator.log_and_exit('image failed', terminator.buildinfo.BuildInfo(),
                               1234, False)
-    log.fatal.assert_called_with(f'image failed\n\n{_HELP_MSG}#1234')
+    log.critical.assert_called_with(f'image failed\n\n{_HELP_MSG}#1234')
 
   @mock.patch.object(terminator, 'logging', autospec=True)
   def test_log_and_exit_exception(self, log):
@@ -53,7 +53,7 @@ class TerminatorTest(absltest.TestCase):
           terminator.buildinfo.BuildInfo(),
           exception=Exception('FakeException'),
           collect=False)
-    log.fatal.assert_called_with(
+    log.critical.assert_called_with(
         f'image failed\n\nException] FakeException\n\n'
         f'{_HELP_MSG}#4000')
 
