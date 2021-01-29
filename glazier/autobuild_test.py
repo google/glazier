@@ -23,11 +23,11 @@ import mock
 from pyfakefs import fake_filesystem
 
 
-class BuildInfoTest(absltest.TestCase):
+class AutobuildTest(absltest.TestCase):
 
   @mock.patch.object(autobuild, 'logs', autospec=True)
   def setUp(self, logs):
-    super(BuildInfoTest, self).setUp()
+    super(AutobuildTest, self).setUp()
     self.autobuild = autobuild.AutoBuild()
     autobuild.logging = logs.logging
     self.filesystem = fake_filesystem.FakeFilesystem()
@@ -54,13 +54,13 @@ class BuildInfoTest(absltest.TestCase):
 
   @mock.patch.object(autobuild.terminator, 'log_and_exit', autospec=True)
   @mock.patch.object(autobuild, 'os', autospec=True)
-  def testSetupTaskListError(self, operatingsystem, terminator):
+  def testSetupTaskListError(self, operatingsystem, log_and_exit):
     self.filesystem.create_file(autobuild.constants.SYS_TASK_LIST)
     autobuild.FLAGS.preserve_tasks = False
     operatingsystem.remove.side_effect = OSError
     self.autobuild._SetupTaskList()
-    terminator.assert_called_with('Unable to remove task list',
-                                  self.autobuild._build_info, 4303, mock.ANY)
+    log_and_exit.assert_called_with('Unable to remove task list',
+                                    self.autobuild._build_info, 4303, mock.ANY)
 
   @mock.patch.object(autobuild.terminator, 'log_and_exit', autospec=True)
   @mock.patch.object(autobuild.title, 'set_title', autospec=True)
@@ -68,7 +68,7 @@ class BuildInfoTest(absltest.TestCase):
   @mock.patch.object(autobuild.runner, 'ConfigRunner', autospec=True)
   @mock.patch.object(autobuild.builder, 'ConfigBuilder', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'BeyondCorp', autospec=True)
-  def testRunBuild(self, bc, builder, runner, wpe, st, terminator):
+  def testRunBuild(self, bc, builder, runner, wpe, st, log_and_exit):
     bc.return_value = False
     wpe.return_value = False
     self.autobuild.RunBuild()
@@ -77,14 +77,14 @@ class BuildInfoTest(absltest.TestCase):
     # ConfigBuilderError
     builder.side_effect = autobuild.builder.ConfigBuilderError
     self.autobuild.RunBuild()
-    terminator.assert_called_with('Failed to build the task list',
-                                  self.autobuild._build_info, 4302, mock.ANY)
+    log_and_exit.assert_called_with('Failed to build the task list',
+                                    self.autobuild._build_info, 4302, mock.ANY)
     # ConfigRunnerError
     builder.side_effect = None
     runner.side_effect = autobuild.runner.ConfigRunnerError
     self.autobuild.RunBuild()
-    terminator.assert_called_with('Failed to execute the task list',
-                                  self.autobuild._build_info, 4303, mock.ANY)
+    log_and_exit.assert_called_with('Failed to execute the task list',
+                                    self.autobuild._build_info, 4303, mock.ANY)
 
   @mock.patch.object(title, 'set_title', autospec=True)
   def testKeyboardInterrupt(self, st):
@@ -96,18 +96,18 @@ class BuildInfoTest(absltest.TestCase):
 
   @mock.patch.object(autobuild.terminator, 'log_and_exit', autospec=True)
   @mock.patch.object(title, 'set_title', autospec=True)
-  def testGlazierError(self, st, terminator):
+  def testGlazierError(self, st, log_and_exit):
     st.side_effect = autobuild.errors.GlazierError
     self.autobuild.RunBuild()
-    self.assertTrue(terminator.called)
+    self.assertTrue(log_and_exit.called)
 
   @mock.patch.object(autobuild.terminator, 'log_and_exit', autospec=True)
   @mock.patch.object(title, 'set_title', autospec=True)
-  def testMainException(self, st, terminator):
+  def testMainException(self, st, log_and_exit):
     st.side_effect = Exception
     self.autobuild.RunBuild()
-    terminator.assert_called_with('Unknown Exception',
-                                  self.autobuild._build_info, 4000, mock.ANY)
+    log_and_exit.assert_called_with('Unknown Exception',
+                                    self.autobuild._build_info, 4000, mock.ANY)
 
 
 if __name__ == '__main__':
