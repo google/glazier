@@ -79,27 +79,27 @@ b = 0
 try:
   a / b
 except ZeroDivisionError as e:
-  raise GDivideByZeroError(e, [a, b])
+  raise errors.GDivideByZeroError(e, [a, b])
 ```
 
 **Example corresponding message defined in errors.py**:
 
 ```python
 # This is the added error message with a and b args
-GDivideByZeroError = _new_err(4101, 'Failed to divide {} by {}')
+GDivideByZeroError = _new_err(4101, 'Failed to divide [{}] by [{}]')
 ```
 
 The error message will be as follows:
 
-> Failed to divide 1 by 0
+> Failed to divide [1] by [0]
 
 Once this exception is caught by `autobuild.py`, the following log message will
 be displayed:
 
 ```
-Failed to divide 1 by 0
+<Context> terminator.py:93] CRITICAL - Failed to divide [1] by [0]
 
-Exception: division by zero
+Exception <file.py>:<lineno>] division by zero
 
-Need help? Visit https://glazier-failures.example.com#4101
+See <LogFile> for more info. Need help? Visit https://glazier-failures.example.com#4101
 ```
