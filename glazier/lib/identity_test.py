@@ -32,14 +32,6 @@ class RegUtilTest(absltest.TestCase):
     gv.return_value = USERNAME
     self.assertEqual(identity.get_username(), USERNAME)
 
-  @mock.patch.object(identity.registry, 'get_value', autospec=True)
-  @mock.patch.object(identity.logging, 'error', autospec=True)
-  def test_get_username_error(self, e, gv):
-    identity.get_username.cache_clear()
-    gv.side_effect = identity.registry.Error
-    identity.get_username()
-    self.assertTrue(e.called)
-
   @mock.patch.object(identity.interact, 'GetUsername', autospec=True)
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
   def test_set_username_domain(self, sv, prompt):
@@ -62,21 +54,14 @@ class RegUtilTest(absltest.TestCase):
 
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
   def test_set_username_error(self, sv):
-    sv.side_effect = identity.registry.Error
-    self.assertRaises(identity.Error, identity.set_username, USERNAME)
+    sv.side_effect = identity.errors.GRegSetError
+    self.assertRaises(identity.errors.GRegSetError, identity.set_username,
+                      USERNAME)
 
   @mock.patch.object(identity.registry, 'get_value', autospec=True)
   def test_get_hostname(self, gv):
     gv.return_value = HOSTNAME
     self.assertEqual(identity.get_hostname(), HOSTNAME)
-
-  @mock.patch.object(identity.registry, 'get_value', autospec=True)
-  @mock.patch.object(identity.logging, 'error', autospec=True)
-  def test_get_hostname_error(self, e, gv):
-    identity.get_hostname.cache_clear()
-    gv.side_effect = identity.registry.Error
-    identity.get_hostname()
-    self.assertTrue(e.called)
 
   @mock.patch.object(identity.socket, 'gethostname', autospec=True)
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
@@ -92,8 +77,8 @@ class RegUtilTest(absltest.TestCase):
 
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
   def test_set_hostname_error(self, sv):
-    sv.side_effect = identity.registry.Error
-    self.assertRaises(identity.Error, identity.set_hostname)
+    sv.side_effect = identity.errors.GRegSetError
+    self.assertRaises(identity.errors.GRegSetError, identity.set_hostname)
 
 
 if __name__ == '__main__':

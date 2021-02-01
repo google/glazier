@@ -41,8 +41,8 @@ class StageTest(absltest.TestCase):
 
   @mock.patch.object(stage.registry, 'set_value', autospec=True)
   def test_exit_stage_invalid(self, sv):
-    sv.side_effect = stage.registry.Error
-    self.assertRaises(stage.Error, stage.exit_stage, 3)
+    sv.side_effect = stage.errors.GRegSetError
+    self.assertRaises(stage.errors.GRegSetError, stage.exit_stage, 3)
 
   @mock.patch.object(stage.registry, 'get_value', autospec=True)
   @mock.patch.object(stage, '_check_expiration', autospec=True)
@@ -54,7 +54,7 @@ class StageTest(absltest.TestCase):
 
   @mock.patch.object(stage.registry, 'get_value', autospec=True)
   def test_get_active_stage_none(self, gv):
-    gv.side_effect = stage.registry.Error
+    gv.return_value = None
     self.assertIsNone(stage.get_active_stage())
 
   @mock.patch.object(stage.registry, 'get_value', autospec=True)
@@ -142,7 +142,7 @@ class StageTest(absltest.TestCase):
 
   @mock.patch.object(stage.registry, 'get_value', autospec=True)
   def test_load_time_reg_err(self, gv):
-    gv.side_effect = stage.registry.Error
+    gv.return_value = None
     self.assertIsNone(stage._load_time(1, 'End'))
 
   @mock.patch.object(stage.registry, 'set_value', autospec=True)
@@ -168,8 +168,8 @@ class StageTest(absltest.TestCase):
   @mock.patch.object(stage.registry, 'set_value', autospec=True)
   def test_set_stage_error(self, sv, get_active):
     get_active.return_value = None
-    sv.side_effect = stage.registry.Error
-    self.assertRaises(stage.Error, stage.set_stage, 3)
+    sv.side_effect = stage.errors.GRegSetError
+    self.assertRaises(stage.errors.GRegSetError, stage.set_stage, 3)
 
   def test_exit_stage_invalid_type(self):
     self.assertRaises(stage.Error, stage.set_stage, 'ABC')

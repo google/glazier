@@ -43,9 +43,9 @@ class TimersTest(absltest.TestCase):
   @mock.patch.object(timers.registry, 'set_value', autospec=True)
   def testSetTimerError(self, sv, build_info):
     build_info.TimerGet.return_value = VALUE_DATA
-    sv.side_effect = timers.registry.Error
+    sv.side_effect = timers.errors.GRegSetError
     st = timers.SetTimer([VALUE_NAME], build_info)
-    self.assertRaises(timers.Error, st.Run)
+    self.assertRaises(timers.errors.GRegSetError, st.Run)
 
   def testSetTimerValidate(self):
     st = timers.SetTimer(VALUE_NAME, None)

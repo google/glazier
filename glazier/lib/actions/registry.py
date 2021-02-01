@@ -15,6 +15,7 @@
 
 """Actions for managing the host registry."""
 from glazier.lib import constants
+from glazier.lib import errors
 from glazier.lib import registry
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
@@ -34,8 +35,8 @@ class RegAdd(BaseAction):
       registry.set_value(self._args[2], self._args[3],
                          self._args[0], self._args[1],
                          self._args[4], use_64bit=use_64bit)
-    except registry.Error as e:
-      raise ActionError(str(e))
+    except errors.GlazierError as e:
+      raise errors.GRegSetError(str(e))
     except IndexError:
       raise ActionError('Unable to access all required arguments. [%s]' %
                         str(self._args))
@@ -89,8 +90,8 @@ class RegDel(BaseAction):
     try:
       registry.remove_value(self._args[2], self._args[0],
                             self._args[1], use_64bit=use_64bit)
-    except registry.Error as e:
-      raise ActionError(str(e))
+    except errors.GlazierError as e:
+      raise errors.GRegRemError(str(e))
     except IndexError:
       raise ActionError(
           'Unable to access all required arguments. [%s]' % str(self._args))

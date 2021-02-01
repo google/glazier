@@ -17,11 +17,11 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-import logging
 import os
 import uuid
 
 from glazier.lib import constants
+from glazier.lib import errors
 from glazier.lib import registry
 from glazier.lib import winpe
 from gwinpy.wmi import hw_info
@@ -49,8 +49,8 @@ def _set_id() -> str:
   image_id = _generate_id()
   try:
     registry.set_value('image_id', image_id, path=constants.REG_ROOT)
-  except registry.Error as e:
-    raise Error(str(e))
+  except errors.GlazierError as e:
+    raise errors.GRegSetError(str(e))
   return image_id
 
 
@@ -74,8 +74,8 @@ def _check_file() -> str:
         image_id = input_config['BUILD']['image_id']
         registry.set_value('image_id', image_id, path=constants.REG_ROOT)
         return image_id
-      except registry.Error as e:
-        raise Error(str(e))
+      except errors.GlazierError as e:
+        raise errors.GRegSetError(str(e))
       except KeyError as e:
         raise Error('Could not determine %s from file: %s.' % (e, path))
   else:
@@ -91,11 +91,7 @@ def check_id() -> str:
   Returns:
     Image identifier as a string if already set.
   """
-  image_id = None
-  try:
-    image_id = registry.get_value('image_id', path=constants.REG_ROOT)
-  except registry.Error as e:
-    logging.error(str(e))
+  image_id = registry.get_value('image_id', path=constants.REG_ROOT)
 
   if image_id:
     return image_id

@@ -60,8 +60,8 @@ class IdentifierTest(absltest.TestCase):
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
   def test_set_reg_error(self, sv):
-    sv.side_effect = identifier.registry.Error
-    self.assertRaises(identifier.Error, identifier._set_id)
+    sv.side_effect = identifier.errors.GRegSetError
+    self.assertRaises(identifier.errors.GRegSetError, identifier._set_id)
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
   def test_check_file(self, sv):
@@ -86,8 +86,8 @@ class IdentifierTest(absltest.TestCase):
         '/%s/build_info.yaml' % identifier.constants.SYS_CACHE,
         contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, image_id: 12345}}\n'
     )
-    sv.side_effect = identifier.registry.Error
-    self.assertRaises(identifier.Error, identifier._check_file)
+    sv.side_effect = identifier.errors.GRegSetError
+    self.assertRaises(identifier.errors.GRegSetError, identifier._check_file)
 
   def test_check_file_no_file(self):
     self.assertRaises(identifier.Error, identifier._check_file)
@@ -96,13 +96,6 @@ class IdentifierTest(absltest.TestCase):
   def test_check_id_get(self, gv):
     gv.return_value = TEST_ID
     self.assertEqual(identifier.check_id(), TEST_ID)
-
-  @mock.patch.object(identifier.registry, 'get_value', autospec=True)
-  @mock.patch.object(identifier.winpe, 'check_winpe', autospec=True)
-  def test_check_id_get_error(self, wpe, gv):
-    wpe.return_value = False
-    gv.side_effect = identifier.registry.Error
-    self.assertRaises(identifier.Error, identifier.check_id)
 
   @mock.patch.object(identifier, '_set_id', autospec=True)
   @mock.patch.object(identifier.registry, 'get_value', autospec=True)

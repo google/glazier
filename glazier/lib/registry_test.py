@@ -68,7 +68,8 @@ class RegistryTest(absltest.TestCase):
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   def test_set_value_error(self, reg):
     reg.return_value.SetKeyValue.side_effect = registry.registry.RegistryError
-    self.assertRaises(registry.Error, registry.set_value, self.name, self.value)
+    with self.assertRaises(registry.errors.GRegSetError):
+      registry.set_value(self.name, self.value)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   @mock.patch.object(registry.logging, 'debug', autospec=True)
@@ -100,7 +101,8 @@ class RegistryTest(absltest.TestCase):
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   def test_remove_value_error(self, reg):
     reg.return_value.RemoveKeyValue.side_effect = registry.registry.RegistryError
-    self.assertRaises(registry.Error, registry.remove_value, self.name)
+    with self.assertRaises(registry.errors.GRegRemError):
+      registry.remove_value(self.name)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   @mock.patch.object(registry.logging, 'debug', autospec=True)

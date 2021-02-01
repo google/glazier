@@ -47,7 +47,9 @@ _ERRORS: Dict[str, List[Union[int, str]]] = {
     ],
     'GConfigBuilderError': [4300, 'Failed to build the task list'],
     'GConfigRunnerError': [4301, 'Failed to execute the task list'],
-    'GRegSetError': [4340, 'Failed to set registry value'],
+    'GRegGetError': [4340, r'Failed to get registry value: {}:\{}\{}'],
+    'GRegSetError': [4341, 'Failed to set registry value'],
+    'GRegRemError': [4342, 'Failed to remove registry key'],
     'GWebServerError': [5000, 'Failed to reach web server'],
     'GServiceError': [5300, 'Service unavailable'],
 }

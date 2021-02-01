@@ -37,11 +37,5 @@ class WinPETest(absltest.TestCase):
     gv.return_value = 'Enterprise'
     self.assertEqual(winpe.check_winpe(), False)
 
-  @mock.patch.object(winpe.registry, 'get_value', autospec=True)
-  def test_check_winpe_error(self, gv):
-    winpe.check_winpe.cache_clear()
-    gv.side_effect = winpe.registry.Error
-    self.assertRaises(winpe.Error, winpe.check_winpe)
-
 if __name__ == '__main__':
   absltest.main()

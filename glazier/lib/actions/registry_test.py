@@ -40,8 +40,8 @@ class RegistryTest(absltest.TestCase):
     sv.assert_called_with(NAME, VALUE, ROOT, PATH, TYPE, USE_64)
 
     # Registry error
-    sv.side_effect = registry.registry.Error
-    self.assertRaises(registry.ActionError, ra.Run)
+    sv.side_effect = registry.errors.GRegSetError
+    self.assertRaises(registry.errors.GRegSetError, ra.Run)
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -74,8 +74,8 @@ class RegistryTest(absltest.TestCase):
     rv.assert_called_with(NAME, ROOT, PATH, USE_64)
 
     # Registry error
-    rv.side_effect = registry.registry.Error
-    self.assertRaises(registry.ActionError, rd.Run)
+    rv.side_effect = registry.errors.GRegRemError
+    self.assertRaises(registry.errors.GRegRemError, rd.Run)
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
