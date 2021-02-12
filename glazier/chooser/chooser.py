@@ -85,7 +85,7 @@ class Chooser(object):
   def _GuiHeader(self):
     """Creates all UI elements above the input fields."""
     self.root.columnconfigure(0, weight=1)
-    self.root.overrideredirect(1)
+    self.root.overrideredirect(1)  # pytype: disable=wrong-arg-types
     top = self.root.winfo_toplevel()
     top.rowconfigure(0, weight=1)
     top.columnconfigure(0, weight=1)
