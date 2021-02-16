@@ -62,7 +62,7 @@ def Setup():
   file_util.CreateDirectories(log_file)
 
   debug_fmt = ('%(levelname).1s%(asctime)s.%(msecs)03d %(process)d {} '
-               '%(filename)s:%(lineno)d]  %(message)s').format(
+               '%(filename)s:%(lineno)d] %(message)s').format(
                    build_info.ImageID())
   info_fmt = '%(levelname).1s%(asctime)s %(filename)s:%(lineno)d] %(message)s'
 
