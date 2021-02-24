@@ -35,6 +35,11 @@ class Splice(object):
         os.environ['ProgramFiles'])
 
   def _get_hostname(self) -> str:
+    """Retrieve hostname from identity module.
+
+    Returns:
+      hostname of machine.
+    """
     hostname = identity.get_hostname()
 
     if not hostname:
@@ -46,9 +51,16 @@ class Splice(object):
     return hostname
 
   def _get_username(self) -> str:
+    """Retrieve username from identity module.
+
+    Returns:
+      username of desired user.
+    """
     username = identity.get_username()
 
     if not username:
+      # Clear lru_cache otherwise the next check will return no username.
+      identity.get_username.cache_clear()
       try:
         username = identity.set_username(prompt='domain join')
       except identity.Error as e:
