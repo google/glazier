@@ -443,7 +443,8 @@ class BaseDownloader(object):
 
     try:
       with open(self._save_location, 'wb') as output_file:
-        logging.info('Downloading file "%s" to "%s".', url, self._save_location)
+        logging.info('Downloading file "%s" to "%s".',
+                     url.split('?')[0], self._save_location)
         while 1:
           chunk = file_stream.read(CHUNK_BYTE_SIZE)
           bytes_so_far += len(chunk)
