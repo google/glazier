@@ -96,7 +96,7 @@ def _new_err(code: int, message: str) -> Type[GlazierError]:
   return Error
 
 ################################################################################
-# ERROR CODES (https://google.github.io/glazier/error_codes)             #
+# ERROR CODES (https://google.github.io/glazier/error_codes)                   #
 ################################################################################
 GReservedError = _new_err(1337, 'Reserved {} {} {}')
 GUncaughtError = _new_err(4000, 'Uncaught exception')
