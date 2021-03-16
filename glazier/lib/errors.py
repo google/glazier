@@ -12,9 +12,40 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Create custom error class and centrally define all errors."""
+"""Creates custom error class and centrally define all errors.
 
-from typing import List, Optional, Type, Union
+See https://google.github.io/glazier/error_codes more information.
+"""
+
+from typing import Dict, List, Optional, Type, Union
+
+# Format: 'G<NameofError>': [Code, 'Message with optional replacements']
+_ERRORS: Dict[str, List[Union[int, str]]] = {
+    'GReservedError': [1337, 'Reserved {} {} {}'],
+    'GUncaughtError': [4000, 'Uncaught exception'],
+    'GUnsupportedPEError': [
+        4100, """
+                  !!!!! Warning !!!!!
+
+    This image is not running the latest WinPE version.
+
+    This scenario typically occurs when you are booting off of an outdated
+    .iso file. Please update before continuing.
+
+    """
+    ],
+    'GUnsupportedModelError': [
+        4101, 'System OS/model does not have imaging support {}'
+    ],
+    'GConfigBuilderError': [4300, 'Failed to build the task list'],
+    'GConfigRunnerError': [4301, 'Failed to execute the task list'],
+    'GRegSetError': [4340, 'Failed to set registry value'],
+    'GWebServerError': [5000, 'Failed to reach web server'],
+    'GServiceError': [5300, 'Service unavailable'],
+}
+
+# Required for Pytype to work with dynamic error objects
+_HAS_DYNAMIC_ATTRIBUTES = True
 
 
 class GlazierError(Exception):
@@ -58,7 +89,6 @@ class GlazierError(Exception):
 
     string += f'({self.code})'
 
-    # TODO: Add exception file and lineno.
     if self.exception:
       string += f': {self.exception}'
 
@@ -95,24 +125,6 @@ def _new_err(code: int, message: str) -> Type[GlazierError]:
 
   return Error
 
-################################################################################
-# ERROR CODES (https://google.github.io/glazier/error_codes)             #
-################################################################################
-GReservedError = _new_err(1337, 'Reserved {} {} {}')
-GUncaughtError = _new_err(4000, 'Uncaught exception')
-GUnsupportedPEError = _new_err(4100, """
-                  !!!!! Warning !!!!!
 
-    This image is not running the latest WinPE version.
-
-    This scenario typically occurs when you are booting off of an outdated
-    .iso file. Please update before continuing.
-
-    """)
-GUnsupportedModelError = _new_err(
-    4101, 'System OS/model does not have imaging support {}')
-GConfigBuilderError = _new_err(4300, 'Failed to build the task list')
-GConfigRunnerError = _new_err(4301, 'Failed to execute the task list')
-GRegSetError = _new_err(4340, 'Failed to set registry value')
-GWebServerError = _new_err(5000, 'Failed to reach web server')
-GServiceError = _new_err(5300, 'Service unavailable')
+for key, value in _ERRORS.items():
+  vars()[key] = _new_err(value[0], value[1])

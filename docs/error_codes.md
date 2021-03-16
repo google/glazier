@@ -82,11 +82,12 @@ except ZeroDivisionError as e:
   raise errors.GDivideByZeroError(e, [a, b])
 ```
 
-**Example corresponding message defined in errors.py**:
+**Example corresponding message defined in the `_ERRORS` dictionary in
+errors.py**:
 
 ```python
 # This is the added error message with a and b args
-GDivideByZeroError = _new_err(4101, 'Failed to divide [{}] by [{}]')
+'GDivideByZeroError': [4101, 'Failed to divide [{}] by [{}]']
 ```
 
 The error message will be as follows:
