@@ -63,21 +63,22 @@ def execute_binary(binary: str, args: Optional[List[str]] = None,
     process = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, shell=shell,
                                universal_newlines=True)
   except WindowsError as e:  # pylint: disable=undefined-variable
-    raise Error('Failed to execute "%s": %s' % (string, str(e)))
+    raise Error(f'Failed to execute [{string}]: {str(e)}')
 
   # Optionally log output to standard logger
-  if shell:
-    process.wait()
-  else:
-    while True:
-      output = process.stdout.readline()
-      if output and log:
-        logging.info(output.strip())
-      elif process.poll() is not None:
+  if not shell and log:
+    for line in iter(process.stdout.readline, b''):
+      # Break when empty newlines are detected
+      if not line:
         break
+      logging.info(line.strip())
+    process.stdout.close()
+
+  process.wait()
 
   if process.returncode not in return_codes:
-    raise Error("Executing '{0}' returned invalid exit code: {1}".format(
-        string, process.returncode))
+    raise Error(
+        f'Executing [{string}] returned invalid exit code [{process.returncode}]'
+    )
 
   return process.returncode

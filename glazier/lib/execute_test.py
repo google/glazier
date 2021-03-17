@@ -33,12 +33,17 @@ class ExecuteTest(absltest.TestCase):
     self.binary = r'C:\foo.exe'
     self.fs.create_file(self.binary)
 
+  @mock.patch.object(execute.logging, 'info', autospec=True)
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
-  def test_execute_binary(self, popen):
+  def test_execute_binary(self, popen, i):
     popen_instance = popen.return_value
     popen_instance.returncode = 0
-    popen_instance.stdout = io.BytesIO(b'foo\nbar')
+    popen_instance.stdout = io.BytesIO(b'foo\n\n\n')
     execute.execute_binary(self.binary, ['arg1', 'arg2'])
+    i.assert_has_calls([
+        mock.call('Executing: %s', 'C:\\foo.exe arg1 arg2'),
+        mock.call(b'foo')
+    ],)
     popen.assert_called_with([self.binary, 'arg1', 'arg2'],
                              shell=False,
                              stdout=execute.subprocess.PIPE,
@@ -96,6 +101,7 @@ class ExecuteTest(absltest.TestCase):
                              stdout=execute.subprocess.PIPE,
                              stderr=execute.subprocess.STDOUT,
                              universal_newlines=True)
+    self.assertTrue(popen_instance.wait.called)
 
   @mock.patch.object(execute.logging, 'info', autospec=True)
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
@@ -110,6 +116,7 @@ class ExecuteTest(absltest.TestCase):
                              stdout=None,
                              stderr=None,
                              universal_newlines=True)
+    self.assertTrue(popen_instance.wait.called)
 
 
 if __name__ == '__main__':
