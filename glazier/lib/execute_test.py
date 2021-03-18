@@ -118,6 +118,38 @@ class ExecuteTest(absltest.TestCase):
                              universal_newlines=True)
     self.assertTrue(popen_instance.wait.called)
 
+  @mock.patch.object(execute.logging, 'info', autospec=True)
+  @mock.patch.object(execute.subprocess, 'check_output', autospec=True)
+  def test_check_output(self, check, i):
+    execute.check_output(self.binary, ['arg1', 'arg2'])
+    i.assert_called_with('Executing: %s', 'C:\\foo.exe arg1 arg2')
+    check.assert_called_with([self.binary, 'arg1', 'arg2'],
+                             stderr=-2,
+                             stdin=-1,
+                             universal_newlines=True)
+
+  @mock.patch.object(execute.logging, 'info', autospec=True)
+  @mock.patch.object(execute.subprocess, 'check_output', autospec=True)
+  def test_check_output_error(self, check, i):
+    check.side_effect = execute.subprocess.CalledProcessError(
+        1, self.binary, b'output')
+    with self.assertRaises(execute.errors.GlazierError) as cm:
+      execute.check_output(self.binary, ['arg1', 'arg2'])
+    self.assertEqual(cm.exception.code, 4144)
+    self.assertIsNotNone(cm.exception)
+    i.assert_called_with('Executing: %s', 'C:\\foo.exe arg1 arg2')
+
+  @mock.patch.object(execute.logging, 'info', autospec=True)
+  @mock.patch.object(execute.subprocess, 'check_output', autospec=True)
+  def test_check_output_timeout(self, check, i):
+    check.side_effect = execute.subprocess.TimeoutExpired(
+        self.binary, 300, b'output')
+    with self.assertRaises(execute.errors.GlazierError) as cm:
+      execute.check_output(self.binary, ['arg1', 'arg2'])
+    self.assertEqual(cm.exception.code, 4142)
+    self.assertIsNotNone(cm.exception)
+    i.assert_called_with('Executing: %s', 'C:\\foo.exe arg1 arg2')
+
 
 if __name__ == '__main__':
   absltest.main()

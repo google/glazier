@@ -37,6 +37,14 @@ _ERRORS: Dict[str, List[Union[int, str]]] = {
     'GUnsupportedModelError': [
         4101, 'System OS/model does not have imaging support {}'
     ],
+    'GExecError': [4141, 'Failed to execute [{}]'],
+    'GExecTimeOutError': [4142, 'Failed to execute [{}] after [{}] second(s)'],
+    'GExecReturnError': [
+        4143, 'Executing [{}] returned invalid exit code [{}]'
+    ],
+    'GExecReturnOutError': [
+        4144, 'Executing [{}] returned invalid exit code [{}]: {}'
+    ],
     'GConfigBuilderError': [4300, 'Failed to build the task list'],
     'GConfigRunnerError': [4301, 'Failed to execute the task list'],
     'GRegSetError': [4340, 'Failed to set registry value'],

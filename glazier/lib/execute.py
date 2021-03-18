@@ -18,9 +18,29 @@ import logging
 import subprocess
 from typing import List, Optional
 
+from glazier.lib import errors
+
 
 class Error(Exception):
   pass
+
+
+def format_command(binary: str, args: Optional[List[str]] = None):
+  """Format the command to execute.
+
+  Args:
+    binary: Full path the to binary.
+    args: Additional commandline arguments.
+
+  Returns:
+    The command list required for subprocess and the formatted string for
+    human-readable logging.
+  """
+  # If there is a quote in the binary, remove it.
+  cmd = [binary.replace('"', '')]
+  if args:
+    cmd += args
+  return cmd, ' '.join(map(str, cmd))
 
 
 def execute_binary(binary: str, args: Optional[List[str]] = None,
@@ -42,11 +62,7 @@ def execute_binary(binary: str, args: Optional[List[str]] = None,
   Raises:
     Error: Command returned invalid exit code.
   """
-  # If there is a quote in the binary, remove it.
-  cmd = [binary.replace('"', '')]
-  if args:
-    cmd += args
-  string = ' '.join(map(str, cmd))
+  cmd, string = format_command(binary, args)
 
   if not return_codes:
     return_codes = [0]
@@ -82,3 +98,47 @@ def execute_binary(binary: str, args: Optional[List[str]] = None,
     )
 
   return process.returncode
+
+
+def check_output(binary: str,
+                 args: Optional[List[str]] = None,
+                 return_codes: List[int] = None,
+                 timeout: int = 300) -> str:
+  """Executes a binary with optional parameters and checks the output.
+
+  Args:
+    binary: Full path the to binary.
+    args: Additional commandline arguments.
+    return_codes: Acceptable exit/return codes. Defaults to 0.
+    timeout: How long, in seconds, to wait before exiting.
+
+  Returns:
+    Process stdout if the operation completed successfully.
+
+  Raises:
+    GExecReturnOutError
+    GExecTimeOutError
+  """
+  cmd, string = format_command(binary, args)
+
+  if not return_codes:
+    return_codes = [0]
+
+  logging.info('Executing: %s', string)
+  try:
+    process = subprocess.check_output(
+        cmd,
+        stdin=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True)
+  except subprocess.CalledProcessError as e:
+    # Process object does not exist if there was an error
+    # Exception object contains the code and output
+    out = e.output.strip()
+    if e.returncode not in return_codes:
+      raise errors.GExecReturnOutError(replacements=[string, e.returncode, out])
+    return out
+  except subprocess.TimeoutExpired as e:
+    raise errors.GExecTimeOutError(str(e), [string, timeout])
+
+  return process
