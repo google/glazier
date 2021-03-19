@@ -14,7 +14,6 @@
 
 """Action for running GooGet commands with arguments."""
 
-import logging
 from glazier.lib import googet
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
@@ -49,7 +48,6 @@ class GooGetInstall(BaseAction):
         sleep = 30
 
       try:
-        logging.info('Invoking GooGet with args %s', args)
         install = googet.GooGetInstall()
         install.LaunchGooGet(pkg=args[0],
                              retries=retries,
@@ -58,8 +56,7 @@ class GooGetInstall(BaseAction):
                              path=path,
                              flags=flags)
       except googet.Error as e:
-        raise ActionError("Failure executing GooGet command with error: '%s'" %
-                          e)
+        raise ActionError("Failure executing GooGet command: '%s'" % e)
       except IndexError:
         raise ActionError("Unable to access all required arguments in command "
                           "'%s'" % str(args))

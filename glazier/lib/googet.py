@@ -18,12 +18,12 @@
 import logging
 import os
 import re
-import subprocess
 import time
 import typing
 from typing import List
 
 from glazier.lib import constants
+from glazier.lib import execute
 from glazier.lib import winpe
 
 if typing.TYPE_CHECKING:
@@ -85,7 +85,8 @@ class GooGetInstall(object):
 
     if url:
       # Sources format required for the GooGet install command
-      flags.append('-sources ' + ', '.join(url))
+      flags.append('-sources')
+      flags.extend([', '.join(url)])
 
     if options:
       flags.extend(options)
@@ -123,7 +124,7 @@ class GooGetInstall(object):
     # Pass --root as GOOGETROOT environmental variable may not exist
     root = '--root=' + self._GooGet()
 
-    cmd = [kwargs['path'], '-noconfirm', root, 'install']
+    cmd = ['-noconfirm', root, 'install']
 
     if kwargs['flags']:
       cmd.extend(self._AddFlags(kwargs['flags'], build_info.Branch()))
@@ -131,24 +132,17 @@ class GooGetInstall(object):
     # Add the package name to the end of the command, this must be done last.
     cmd.append(pkg)
 
-    # Subprocess doesn't like the space in '-sources URL'
-    cmd = ' '.join(cmd)
-
     max_attempts = retries + 1
 
     for i in range(1, max_attempts + 1):
-      # Call the command, store the result for later
-      logging.info(
-          'Attempt %d of %d: Executing command (%s): ', i, max_attempts, cmd)
-      result = subprocess.call(cmd)
+      logging.info('Attempt %d of %d', i, max_attempts)
 
-      if result == 0:
-        logging.info('GooGet successfully installed \'%s\'', pkg)
+      try:
+        execute.execute_binary(kwargs['path'], cmd)
         return
-      else:
-        # TODO
-        logging.warning('GooGet command failed with error:\n%s', result)
-        logging.info('sleeping for %d seconds before retrying', sleep)
+      except execute.Error as e:
+        logging.warning(str(e))
+        logging.info('Retrying in %d seconds', sleep)
         time.sleep(sleep)
 
     raise Error('GooGet command failed after %d attempts' % retries)
