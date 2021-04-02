@@ -35,7 +35,7 @@ class RegAdd(BaseAction):
                          self._args[0], self._args[1],
                          self._args[4], use_64bit=use_64bit)
     except registry.Error as e:
-      raise ActionError(str(e))
+      raise ActionError(e)
     except IndexError:
       raise ActionError('Unable to access all required arguments. [%s]' %
                         str(self._args))
@@ -90,7 +90,7 @@ class RegDel(BaseAction):
       registry.remove_value(self._args[2], self._args[0],
                             self._args[1], use_64bit=use_64bit)
     except registry.Error as e:
-      raise ActionError(str(e))
+      raise ActionError(e)
     except IndexError:
       raise ActionError(
           'Unable to access all required arguments. [%s]' % str(self._args))

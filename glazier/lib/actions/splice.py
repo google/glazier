@@ -28,4 +28,4 @@ class SpliceDomainJoin(BaseAction):
     try:
       self._splice.domain_join()
     except splice.Error as e:
-      raise ActionError(str(e))
+      raise ActionError(e)
