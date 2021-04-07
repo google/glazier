@@ -126,6 +126,7 @@ class ExecuteTest(absltest.TestCase):
     check.assert_called_with([self.binary, 'arg1', 'arg2'],
                              stderr=-2,
                              stdin=-1,
+                             timeout=300,
                              universal_newlines=True)
 
   @mock.patch.object(execute.logging, 'info', autospec=True)

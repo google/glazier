@@ -130,6 +130,7 @@ def check_output(binary: str,
         cmd,
         stdin=subprocess.PIPE,
         stderr=subprocess.STDOUT,
+        timeout=timeout,
         universal_newlines=True)
   except subprocess.CalledProcessError as e:
     # Process object does not exist if there was an error
