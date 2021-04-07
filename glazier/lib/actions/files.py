@@ -37,7 +37,7 @@ class Execute(BaseAction):
     try:
       command_cache = cache.Cache().CacheFromLine(command, self._build_info)
     except cache.CacheError as e:
-      raise ActionError(e)
+      raise ActionError(str(e))
 
     try:
       command_list = shlex.split(command_cache, posix=False)
@@ -47,7 +47,7 @@ class Execute(BaseAction):
           success_codes + reboot_codes,
           shell=shell)
     except (execute.Error, ValueError) as e:
-      raise ActionError(e)
+      raise ActionError(str(e))
     except KeyboardInterrupt:
       raise ActionError('KeyboardInterrupt detected, exiting.')
 

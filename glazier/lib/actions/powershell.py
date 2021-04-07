@@ -53,7 +53,7 @@ class PSScript(BaseAction):
     try:
       script = cache.Cache().CacheFromLine(script, self._build_info)  # pytype: disable=annotation-type-mismatch
     except cache.CacheError as e:
-      raise ActionError(e)
+      raise ActionError(str(e))
 
     try:
       result = powershell.PowerShell(shell, log).RunLocal(
@@ -104,7 +104,7 @@ class MultiPSScript(BaseAction):
     try:
       self._TypeValidator(self._args, list)
     except ValidationError as e:
-      raise ActionError(e)
+      raise ActionError(str(e))
     for arg in self._args:
       PSScript(arg, self._build_info).Validate()
 
@@ -141,7 +141,7 @@ class PSCommand(BaseAction):
       try:
         command[0] = cache.Cache().CacheFromLine(command[0], self._build_info)
       except cache.CacheError as e:
-        raise ActionError(e)
+        raise ActionError(str(e))
 
     try:
       # Exit $LASTEXITCODE is necessary because PowerShell.exe -Command only
@@ -194,6 +194,6 @@ class MultiPSCommand(BaseAction):
     try:
       self._TypeValidator(self._args, list)
     except ValidationError as e:
-      raise ActionError(e)
+      raise ActionError(str(e))
     for arg in self._args:
       PSCommand(arg, self._build_info).Validate()
