@@ -18,6 +18,7 @@ import os
 import time
 from glazier.chooser import chooser
 from glazier.lib import constants
+from glazier.lib import errors
 from glazier.lib import log_copy
 from glazier.lib import registry
 from glazier.lib import stage
@@ -85,6 +86,9 @@ class BuildInfoSave(BaseAction):
 
     Args:
       reg_values: A dictionary of key/value pairs to be added to the registry.
+
+    Raises:
+      GRegSetError
     """
     for value_name in reg_values:
       key_path = constants.REG_ROOT
@@ -93,8 +97,8 @@ class BuildInfoSave(BaseAction):
         key_path = r'{0}\{1}'.format(constants.REG_ROOT, 'Timers')
       try:
         registry.set_value(value_name, value_data, 'HKLM', key_path)
-      except registry.Error as e:
-        raise ActionError(str(e))
+      except errors.GlazierError as e:
+        raise errors.GRegSetError(str(e))
 
   def Run(self):
     path = os.path.join(constants.SYS_CACHE, 'build_info.yaml')

@@ -164,18 +164,14 @@ class BeyondcorpTest(absltest.TestCase):
   @mock.patch.object(registry, 'set_value', autospec=True)
   def testCheckBeyondCorpTrueError(self, sv):
     beyondcorp.FLAGS.use_signed_url = True
-    sv.side_effect = registry.Error
-    self.assertRaises(beyondcorp.BCError, self.beyondcorp.CheckBeyondCorp)
+    sv.side_effect = beyondcorp.errors.GRegSetError
+    self.assertRaises(beyondcorp.errors.GRegSetError,
+                      self.beyondcorp.CheckBeyondCorp)
 
   @mock.patch.object(registry, 'get_value', autospec=True)
   def testCheckBeyondCorpGet(self, gv):
     gv.return_value = 'True'
     self.assertEqual(self.beyondcorp.CheckBeyondCorp(), True)
-
-  @mock.patch.object(registry, 'get_value', autospec=True)
-  def testCheckBeyondCorpGetError(self, gv):
-    gv.side_effect = registry.Error
-    self.assertRaises(beyondcorp.BCError, self.beyondcorp.CheckBeyondCorp)
 
   @mock.patch.object(registry, 'set_value', autospec=True)
   def testCheckBeyondCorpFalse(self, sv):
@@ -186,8 +182,9 @@ class BeyondcorpTest(absltest.TestCase):
   @mock.patch.object(registry, 'set_value', autospec=True)
   def testCheckBeyondCorpFalseError(self, sv):
     beyondcorp.FLAGS.use_signed_url = False
-    sv.side_effect = registry.Error
-    self.assertRaises(beyondcorp.BCError, self.beyondcorp.CheckBeyondCorp)
+    sv.side_effect = beyondcorp.errors.GRegSetError
+    self.assertRaises(beyondcorp.errors.GRegSetError,
+                      self.beyondcorp.CheckBeyondCorp)
 
   def testGetDisk(self):
     self.mock_wmi.return_value.Query.return_value = [mock.Mock(Name='D')]

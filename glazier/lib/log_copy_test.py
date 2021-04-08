@@ -56,8 +56,8 @@ class LogCopyTest(absltest.TestCase):
 
   @mock.patch.object(log_copy.registry, 'get_value', autospec=True)
   def testGetLogFileNameError(self, gv):
-    gv.side_effect = log_copy.registry.Error
-    self.assertRaises(log_copy.LogCopyError, self.lc._GetLogFileName)
+    gv.return_value = None
+    self.assertRaises(log_copy.errors.GRegGetError, self.lc._GetLogFileName)
 
   @mock.patch.object(log_copy.LogCopy, '_EventLogUpload', autospec=True)
   def testEventLogCopy(self, event_up):

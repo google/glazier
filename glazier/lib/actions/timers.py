@@ -18,12 +18,9 @@
 import logging
 
 from glazier.lib import constants
+from glazier.lib import errors
 from glazier.lib import registry
 from glazier.lib.actions.base import BaseAction
-
-
-class Error(Exception):
-  pass
 
 
 class SetTimer(BaseAction):
@@ -39,8 +36,8 @@ class SetTimer(BaseAction):
     try:
       registry.set_value(value_name, value_data, 'HKLM', key_path, log=False)
       logging.info('Set image timer: %s (%s)', timer, value_data)
-    except registry.Error as e:
-      raise Error(str(e))
+    except errors.GlazierError as e:
+      raise errors.GRegSetError(str(e))
 
   def Validate(self):
     self._ListOfStringsValidator(self._args)

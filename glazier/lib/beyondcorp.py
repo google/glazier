@@ -31,6 +31,7 @@ import logging
 
 from absl import flags
 from glazier.lib import constants
+from glazier.lib import errors
 from glazier.lib import registry
 from gwinpy.wmi import hw_info
 from gwinpy.wmi import wmi_query
@@ -76,23 +77,20 @@ class BeyondCorp(object):
       try:
         registry.set_value('beyond_corp', 'True', path=constants.REG_ROOT)
         return True
-      except registry.Error as e:
-        raise BCError(str(e))
+      except errors.GlazierError as e:
+        raise errors.GRegSetError(str(e))
     else:
-      try:
-        bc = registry.get_value('beyond_corp', path=constants.REG_ROOT)
-        if bc:
-          if bc.lower() == 'true':
-            return True
-          elif bc.lower() == 'false':
-            return False
-      except registry.Error as e:
-        logging.warning(str(e))
+      bc = registry.get_value('beyond_corp', path=constants.REG_ROOT)
+      if bc:
+        if bc.lower() == 'true':
+          return True
+        elif bc.lower() == 'false':
+          return False
 
     try:
       registry.set_value('beyond_corp', 'False', path=constants.REG_ROOT)
-    except registry.Error as e:
-      raise BCError(str(e))
+    except errors.GlazierError as e:
+      raise errors.GRegSetError(str(e))
     return False
 
   @functools.lru_cache()

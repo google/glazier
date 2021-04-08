@@ -30,6 +30,7 @@ from typing import Optional, Tuple
 
 from absl import flags
 from glazier.lib import constants
+from glazier.lib import errors
 from glazier.lib import registry
 
 FLAGS = flags.FLAGS
@@ -52,8 +53,8 @@ def exit_stage(stage_id: int):
   try:
     registry.set_value('End', str(end), 'HKLM', _stage_root(stage_id))
     registry.set_value(ACTIVE_KEY, '', 'HKLM', STAGES_ROOT)
-  except registry.Error as e:
-    raise Error(str(e))
+  except errors.GlazierError as e:
+    raise errors.GRegSetError(str(e))
 
 
 def _check_expiration(stage_id: int):
@@ -65,11 +66,7 @@ def _check_expiration(stage_id: int):
 
 def get_active_stage() -> Optional[int]:
   """Get the active build stage, if one exists."""
-  val = None
-  try:
-    val = registry.get_value(ACTIVE_KEY, 'HKLM', STAGES_ROOT)
-  except registry.Error as e:
-    logging.error(str(e))
+  val = registry.get_value(ACTIVE_KEY, 'HKLM', STAGES_ROOT)
   if not val:
     return None
   val = int(val)
@@ -130,7 +127,7 @@ def _load_time(stage_id: int, key: str) -> Optional[datetime.datetime]:
     v = registry.get_value(key, 'HKLM', _stage_root(stage_id))
     if v:
       val = datetime.datetime.strptime(v, '%Y-%m-%dT%H:%M:%S.%f')
-  except (registry.Error, ValueError) as e:
+  except ValueError as e:
     logging.error(str(e))
     return None
   return val
@@ -149,8 +146,8 @@ def set_stage(stage_id: int):
   try:
     registry.set_value('Start', str(start), 'HKLM', _stage_root(stage_id))
     registry.set_value(ACTIVE_KEY, str(stage_id), 'HKLM', STAGES_ROOT)
-  except registry.Error as e:
-    raise Error(str(e))
+  except errors.GlazierError as e:
+    raise errors.GRegSetError(str(e))
 
 
 def _stage_root(stage_id: int) -> str:
