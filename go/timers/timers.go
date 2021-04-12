@@ -38,8 +38,12 @@ type Timer struct {
 }
 
 // NewTimer creates a new Timer.
-func NewTimer(name string, time *time.Time) *Timer {
-	return &Timer{Name: name, Time: *time}
+func NewTimer(name string, at *time.Time) *Timer {
+	if at == nil {
+		t := time.Now()
+		at = &t
+	}
+	return &Timer{Name: name, Time: *at}
 }
 
 // Load loads a timer object into the registry.
