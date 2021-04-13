@@ -139,7 +139,7 @@ class PSCommand(BaseAction):
     if command[0] and command[0].endswith('.ps1'):
       logging.info('Interpreting PowerShell script: %s', command[0])
       try:
-        command[0] = cache.Cache().CacheFromLine(command[0], self._build_info)
+        command[0] = cache.Cache().CacheFromLine(command[0], self._build_info)  # pytype: disable=container-type-mismatch
       except cache.CacheError as e:
         raise ActionError(e)
 
