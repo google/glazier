@@ -37,7 +37,7 @@ class SetTimer(BaseAction):
       registry.set_value(value_name, value_data, 'HKLM', key_path, log=False)
       logging.info('Set image timer: %s (%s)', timer, value_data)
     except registry.Error as e:
-      raise ActionError(str(e))
+      raise ActionError(e)
 
   def Validate(self):
     self._ListOfStringsValidator(self._args)

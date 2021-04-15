@@ -77,7 +77,7 @@ class BeyondCorp(object):
         registry.set_value('beyond_corp', 'True', path=constants.REG_ROOT)
         return True
       except registry.Error as e:
-        raise BCError(str(e))
+        raise BCError(e)
     else:
       try:
         bc = registry.get_value('beyond_corp', path=constants.REG_ROOT)
@@ -92,7 +92,7 @@ class BeyondCorp(object):
     try:
       registry.set_value('beyond_corp', 'False', path=constants.REG_ROOT)
     except registry.Error as e:
-      raise BCError(str(e))
+      raise BCError(e)
     return False
 
   @functools.lru_cache()

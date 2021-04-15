@@ -316,7 +316,7 @@ class BaseDownloader(object):
       try:
         file_util.Copy(url, save_location)
       except file_util.Error as e:
-        raise DownloadError(str(e))
+        raise DownloadError(e)
 
   def DownloadFileTemp(self,
                        url: str,

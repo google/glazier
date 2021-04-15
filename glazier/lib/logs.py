@@ -52,7 +52,7 @@ def Collect(path: str):
         arc.write(os.path.join(root, f))
     arc.close()
   except (IOError, ValueError) as e:
-    raise LogError(str(e))
+    raise LogError(e)
 
 
 def Setup():

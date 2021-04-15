@@ -53,7 +53,7 @@ def exit_stage(stage_id: int):
     registry.set_value('End', str(end), 'HKLM', _stage_root(stage_id))
     registry.set_value(ACTIVE_KEY, '', 'HKLM', STAGES_ROOT)
   except registry.Error as e:
-    raise Error(str(e))
+    raise Error(e)
 
 
 def _check_expiration(stage_id: int):
@@ -150,7 +150,7 @@ def set_stage(stage_id: int):
     registry.set_value('Start', str(start), 'HKLM', _stage_root(stage_id))
     registry.set_value(ACTIVE_KEY, str(stage_id), 'HKLM', STAGES_ROOT)
   except registry.Error as e:
-    raise Error(str(e))
+    raise Error(e)
 
 
 def _stage_root(stage_id: int) -> str:

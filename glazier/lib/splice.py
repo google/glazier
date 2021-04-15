@@ -46,7 +46,7 @@ class Splice(object):
       try:
         hostname = identity.set_hostname()
       except identity.Error as e:
-        raise Error(str(e))
+        raise Error(e)
 
     return hostname
 
@@ -64,7 +64,7 @@ class Splice(object):
       try:
         username = identity.set_username(prompt='domain join')
       except identity.Error as e:
-        raise Error(str(e))
+        raise Error(e)
 
     return username
 

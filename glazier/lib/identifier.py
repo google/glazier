@@ -50,7 +50,7 @@ def _set_id() -> str:
   try:
     registry.set_value('image_id', image_id, path=constants.REG_ROOT)
   except registry.Error as e:
-    raise Error(str(e))
+    raise Error(e)
   return image_id
 
 
@@ -75,7 +75,7 @@ def _check_file() -> str:
         registry.set_value('image_id', image_id, path=constants.REG_ROOT)
         return image_id
       except registry.Error as e:
-        raise Error(str(e))
+        raise Error(e)
       except KeyError as e:
         raise Error('Could not determine %s from file: %s.' % (e, path))
   else:

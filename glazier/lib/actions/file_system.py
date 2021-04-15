@@ -76,7 +76,7 @@ class CopyFile(FileSystem):
     try:
       file_util.Copy(src, dst)
     except (file_util.Error) as e:
-      raise ActionError(str(e))
+      raise ActionError(e)
 
   def Validate(self):
     self._ListOfStringsValidator(self._args, length=2)
@@ -113,7 +113,7 @@ class MkDir(FileSystem):
     try:
       file_util.CreateDirectories(path)
     except file_util.Error as e:
-      raise ActionError(str(e))
+      raise ActionError(e)
 
   def Validate(self):
     self._ListOfStringsValidator(self._args)
@@ -142,7 +142,7 @@ class SetupCache(FileSystem):
     try:
       file_util.CreateDirectories(path)
     except file_util.Error as e:
-      raise ActionError(str(e))
+      raise ActionError(e)
 
   def Validate(self):
     self._TypeValidator(self._args, list)

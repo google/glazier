@@ -66,7 +66,7 @@ class PowerShell(object):
                                     ['-NoProfile', '-NoLogo', op] + args,
                                     ok_result, self.shell, self.log)
     except execute.Error as e:
-      raise PowerShellError(str(e))
+      raise PowerShellError(e)
 
   def RunCommand(self,
                  command: List[str],
@@ -164,4 +164,4 @@ class PowerShell(object):
       execute.execute_binary(_Powershell(), ['-NoProfile', '-NoLogo'],
                              shell=self.shell, log=self.log)
     except execute.Error as e:
-      raise PowerShellError(str(e))
+      raise PowerShellError(e)

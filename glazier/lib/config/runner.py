@@ -114,4 +114,4 @@ class ConfigRunner(base.ConfigBase):
     except AttributeError:
       raise ConfigRunnerError('Unknown imaging policy: %s' % str(line))
     except policies.ImagingPolicyException as e:
-      raise ConfigRunnerError(str(e))
+      raise ConfigRunnerError(e)
