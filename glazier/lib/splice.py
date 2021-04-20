@@ -19,6 +19,7 @@ import logging
 import os
 import time
 from typing import Optional
+from glazier.lib import constants
 from glazier.lib import execute
 from glazier.lib import identity
 
@@ -31,8 +32,9 @@ class Splice(object):
   """Define several functions to join a machine to the domain via Splice."""
 
   def __init__(self):
-    self.splice_binary = r'{}\Splice\cli.exe'.format(
-        os.environ['ProgramFiles'])
+    self.splice_binary = fr"{os.environ['ProgramFiles']}\Splice\cli.exe"
+    self.splice_server = 'splice.example.com'
+    self.cert_container = 'example_container'
 
   def _get_hostname(self) -> str:
     """Retrieve hostname from identity module.
@@ -66,7 +68,7 @@ class Splice(object):
       except identity.Error as e:
         raise Error(e)
 
-    return username
+    return fr'{constants.DOMAIN_NAME}\{username}'
 
   def domain_join(self, max_retries: Optional[int] = 5):
     """Execute the Splice CLI with defined flags.
@@ -79,10 +81,9 @@ class Splice(object):
       Error: Domain join failed.
     """
     args = [
-       '-cert_issuer=client',
-       '-name={}'.format(self._get_hostname()),
-       '-server=splice.example.com', '-really_join=true',
-       '-user_name={}'.format(self._get_username())
+        '-cert_issuer=client', f'-cert_container={self.cert_container}',
+        f'-name={self._get_hostname()}', f'-server={self.splice_server}',
+        '-really_join=true', f'-user_name={self._get_username()}'
     ]
 
     attempt = 0
@@ -91,7 +92,7 @@ class Splice(object):
     while True:
       attempt += 1
       try:
-        execute.execute_binary(self.splice_binary, args)
+        execute.execute_binary(self.splice_binary, args, shell=True)
       except execute.Error:
         if max_retries < 0 or attempt < max_retries:
           logging.warning(
@@ -99,8 +100,7 @@ class Splice(object):
               attempt, max_retries, sleep)
           time.sleep(sleep)
         else:
-          raise Error('Failed to join domain after {} attempt(s).'.format(
-              max_retries))
+          raise Error(f'Failed to join domain after {max_retries} attempt(s).')
       else:
         logging.info('Domain join succeeded after %d attempt(s).',
                      attempt)

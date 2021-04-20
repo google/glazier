@@ -33,7 +33,6 @@ class SpliceTest(absltest.TestCase):
     splice.os = fake_filesystem.FakeOsModule(self.fs)
     splice.open = fake_filesystem.FakeFileOpen(self.fs)
     splice.os.environ['ProgramFiles'] = r'C:\Program Files'
-    splice.os.environ['SystemDrive'] = 'C:'
     self.splice = splice.Splice()
     self.error = splice.execute.Error
 
@@ -54,16 +53,18 @@ class SpliceTest(absltest.TestCase):
   def testGetUsernameNone(self, get_user, set_user):
     get_user.return_value = None
     set_user.return_value = _USERNAME
-    self.assertEqual(self.splice._get_username(),
-                     splice.identity.set_username())
+    self.assertEqual(
+        self.splice._get_username(),
+        fr'{splice.constants.DOMAIN_NAME}\{splice.identity.set_username()}')
     self.assertTrue(get_user.called)
     self.assertTrue(set_user.called)
 
   @mock.patch.object(splice.identity, 'get_username', autospec=True)
   def testGetUsernameExists(self, get_user):
     get_user.return_value = _USERNAME
-    self.assertEqual(self.splice._get_username(),
-                     splice.identity.get_username())
+    self.assertEqual(
+        self.splice._get_username(),
+        fr'{splice.constants.DOMAIN_NAME}\{splice.identity.get_username()}')
 
   @mock.patch.object(splice.identity, 'set_username', autospec=True)
   def testGetUsernameError(self, set_user):
@@ -89,7 +90,7 @@ class SpliceTest(absltest.TestCase):
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
   @mock.patch.object(splice.Splice, '_get_username', autospec=True)
   @mock.patch.object(splice, 'logging', autospec=True)
-  def test_domain_join_failure_success(self, log, hostname, user, eb, sleep):  # pylint: disable=line-too-long
+  def test_domain_join_failure_success(self, log, hostname, user, eb, sleep):
     self.fs.CreateFile(self.splice.splice_binary)
     hostname.return_value = 'foo'
     user.return_value = 'bar'
@@ -116,7 +117,7 @@ class SpliceTest(absltest.TestCase):
   @mock.patch.object(splice.execute, 'execute_binary', autospec=True)
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
   @mock.patch.object(splice.Splice, '_get_username', autospec=True)
-  def test_domain_join_failure(self, hostname, user, eb):
+  def test_domain_join_execute_error(self, hostname, user, eb):
     self.fs.CreateFile(self.splice.splice_binary)
     hostname.return_value = 'foo'
     user.return_value = 'bar'

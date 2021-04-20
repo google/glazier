@@ -24,6 +24,7 @@ REG_ROOT = r'SOFTWARE\Glazier'
 
 DOMAIN = 'domain.example.com'
 DOMAIN_DN = 'DC=domain,DC=example,DC=com'
+DOMAIN_NAME = 'EXAMPLE'
 USER_AGENT = 'Glazier Installer 1.0'
 
 # System
