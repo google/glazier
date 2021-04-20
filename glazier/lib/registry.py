@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 import logging
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 from glazier.lib import constants
 from gwinpy.registry import registry
@@ -95,6 +95,36 @@ def set_value(name: str, value: Union[str, int],
                     str(value))
   except registry.RegistryError as e:
     raise Error(e)
+
+
+def get_values(path: str,
+               root: Optional[str] = 'HKLM',
+               use_64bit: Optional[bool] = constants.USE_REG_64,
+               log: Optional[bool] = True) -> Optional[List[str]]:
+  r"""Gets a list of registry values.
+
+  Args:
+    path: Registry key path to enumerate from.
+    root: Registry root (HKCR\HKCU\HKLM\HKU). Defaults to HKLM.
+    use_64bit: True for 64 bit registry. False for 32 bit.
+    Defaults to constants.USE_REG_64.
+    log: Log the registry operation to the standard logger. Defaults to True.
+
+  Returns:
+    The registry values as a List of strings or None.
+  """
+  try:
+    reg = registry.Registry(root_key=root)
+    values = reg.GetRegKeys(
+        key_path=path,
+        use_64bit=use_64bit)
+    if values:
+      if log:
+        logging.debug(r'Registry keys under %s:\%s = %s.', root, path, values)
+      return values
+  except registry.RegistryError as e:
+    logging.warning(str(e))
+    return None
 
 
 def remove_value(name: str,

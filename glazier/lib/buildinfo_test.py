@@ -254,6 +254,20 @@ class BuildInfoTest(absltest.TestCase):
     self.assertFalse(self.buildinfo.BuildPinMatch('USER_locale', []))
     self.assertFalse(self.buildinfo.BuildPinMatch('USER_missing', ['na']))
 
+  @mock.patch.object(buildinfo.registry, 'get_values', autospec=True)
+  def testInstalledSoftware(self, mock_software):
+    mock_software.return_value = ['Mozilla FireFox',
+                                  'Google Chrome', 'Microsoft Edge']
+
+    self.assertTrue(
+        self.buildinfo.BuildPinMatch('is_installed', ['Google Chrome']))
+    self.assertTrue(
+        self.buildinfo.BuildPinMatch('is_installed', ['!Safari']))
+    self.assertFalse(
+        self.buildinfo.BuildPinMatch('is_installed', ['Chrome']))
+    self.assertFalse(
+        self.buildinfo.BuildPinMatch('is_installed', ['!Google Chrome']))
+
   @mock.patch.object(buildinfo.winpe, 'check_winpe', autospec=True)
   def testCachePath(self, wpe):
     wpe.return_value = False

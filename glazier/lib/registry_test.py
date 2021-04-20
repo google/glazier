@@ -43,13 +43,34 @@ class RegistryTest(absltest.TestCase):
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   def test_get_value_none(self, reg):
     reg.return_value.GetKeyValue.side_effect = registry.registry.RegistryError
-    self.assertEqual(registry.get_value(self.name), None)
+    self.assertIsNone(registry.get_value(self.name))
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   @mock.patch.object(registry.logging, 'debug', autospec=True)
   def test_get_value_silent(self, d, reg):
     reg.return_value.GetKeyValue.return_value = self.value
     registry.get_value(self.name, log=False)
+    self.assertFalse(d.called)
+
+  @mock.patch.object(registry.registry, 'Registry', autospec=True)
+  def test_get_values(self, reg):
+    reg.return_value.GetRegKeys.return_value = self.value
+    self.assertEqual(registry.get_values(self.name), self.value)
+    reg.assert_called_with('HKLM')
+    reg.return_value.GetRegKeys.assert_called_with(
+        key_path=self.name,
+        use_64bit=registry.constants.USE_REG_64)
+
+  @mock.patch.object(registry.registry, 'Registry', autospec=True)
+  def test_get_values_none(self, reg):
+    reg.return_value.GetRegKeys.side_effect = registry.registry.RegistryError
+    self.assertIsNone(registry.get_values(self.name))
+
+  @mock.patch.object(registry.registry, 'Registry', autospec=True)
+  @mock.patch.object(registry.logging, 'debug', autospec=True)
+  def test_get_values_silent(self, d, reg):
+    reg.return_value.GetRegKeys.return_value = self.value
+    registry.get_values(self.name, log=False)
     self.assertFalse(d.called)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
@@ -90,8 +111,8 @@ class RegistryTest(absltest.TestCase):
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   @mock.patch.object(registry.logging, 'warning', autospec=True)
   def test_remove_value_not_found(self, w, reg):
-    reg.return_value.RemoveKeyValue.side_effect = \
-        registry.registry.RegistryError('Test', errno=2)
+    reg.return_value.RemoveKeyValue.side_effect = registry.registry.RegistryError(
+        'Test', errno=2)
     registry.remove_value(self.name)
     w.assert_called_with(r'Failed to delete non-existant registry key: '
                          r'%s:\%s\%s', 'HKLM', registry.constants.REG_ROOT,

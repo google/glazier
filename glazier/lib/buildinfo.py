@@ -24,6 +24,7 @@ from absl import flags
 from glazier.lib import beyondcorp
 from glazier.lib import constants
 from glazier.lib import identifier
+from glazier.lib import registry
 from glazier.lib import timers
 from glazier.lib import winpe
 from glazier.lib.config import files
@@ -264,6 +265,7 @@ class BuildInfo(object):
         'os_code': self.OsCode,
         'beyond_corp': self.BeyondCorp,
         'lab': self.Lab,
+        'is_installed': self.InstalledSoftware,
     }
 
   @functools.lru_cache()
@@ -384,6 +386,26 @@ class BuildInfo(object):
 
     logging.info('No TPM was detected in this machine.')
     return 'tpm'
+
+  def InstalledSoftware(self) -> List[str]:
+    """Query registry keys to find installed software.
+
+    Returns:
+      A list of installed software.
+    """
+
+    subkeys = [
+        r'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall',
+        r'SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
+    ]
+    installed_software = []
+
+    for subkey in subkeys:
+      software = registry.get_values(path=subkey)
+      if software:
+        installed_software.extend(software)
+
+    return installed_software
 
   @functools.lru_cache()
   def Fqdn(self) -> str:
