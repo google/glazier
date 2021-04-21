@@ -67,7 +67,7 @@ func (t *Timer) Load() error {
 
 // Record records a timer object into the registry.
 func (t *Timer) Record() error {
-	k, err := registry.OpenKey(registry.LOCAL_MACHINE, TimersRoot, registry.WRITE)
+	k, _, err := registry.CreateKey(registry.LOCAL_MACHINE, TimersRoot, registry.WRITE)
 	if err != nil {
 		return err
 	}
