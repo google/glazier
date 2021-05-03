@@ -135,7 +135,7 @@ func exe(path string, args []string, timeout *time.Duration, spattr *syscall.Sys
 		// Escape spaces in PowerShell paths.
 		args = append([]string{"-NoProfile", "-NoLogo", "-Command", strings.ReplaceAll(path, " ", "` ")}, args...)
 		path = PsPath
-	case ".exe":
+	case ".exe", ".bat":
 		// path and args unmodified
 	default:
 		return result, errors.New("extension not currently supported")
