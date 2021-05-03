@@ -81,11 +81,17 @@ class GlazierError(Exception):
   """
 
   def __init__(self,
-               exception: Optional[str] = '',
+               exception: Optional[Exception] = None,
                replacements: Optional[List[Union[bool, int, str]]] = None):
     self.code = 4000
-    self.message = ''
+    self.message = 'Unknown Exception'
     self.exception = exception
+
+    if isinstance(exception, GlazierError):
+      self.code = exception.code
+      self.message = exception.message
+      self.exception = exception.exception
+
     self.replacements = replacements
     super().__init__(exception, replacements)
 
@@ -121,7 +127,7 @@ def _new_err(code: int, message: str) -> Type[GlazierError]:
     """Stores error information used in GlazierError."""
 
     def __init__(self,
-                 exception: Optional[str] = '',
+                 exception: Optional[Exception] = None,
                  replacements: Optional[List[Union[bool, int, str]]] = None):
       super().__init__(exception, replacements)
       self.code: int = code

@@ -140,6 +140,6 @@ def check_output(binary: str,
       raise errors.GExecReturnOutError(replacements=[string, e.returncode, out])
     return out
   except subprocess.TimeoutExpired as e:
-    raise errors.GExecTimeOutError(str(e), [string, timeout])
+    raise errors.GExecTimeOutError(e, [string, timeout])
 
   return process
