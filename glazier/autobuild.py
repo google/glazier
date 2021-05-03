@@ -83,7 +83,7 @@ class AutoBuild(object):
       except runner.ConfigRunnerError as e:
         # TODO: Migrate to GlazierError
         terminator.log_and_exit('Failed to execute the task list',
-                                self._build_info, 4303, e)
+                                self._build_info, 4304, e)
     except KeyboardInterrupt:
       logging.info('KeyboardInterrupt detected, exiting.')
       sys.exit(1)

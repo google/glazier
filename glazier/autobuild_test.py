@@ -84,7 +84,7 @@ class AutobuildTest(absltest.TestCase):
     runner.side_effect = autobuild.runner.ConfigRunnerError
     self.autobuild.RunBuild()
     log_and_exit.assert_called_with('Failed to execute the task list',
-                                    self.autobuild._build_info, 4303, mock.ANY)
+                                    self.autobuild._build_info, 4304, mock.ANY)
 
   @mock.patch.object(title, 'set_title', autospec=True)
   def testKeyboardInterrupt(self, st):
