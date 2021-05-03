@@ -19,9 +19,10 @@ classes.  It is meant to be inherited rather than run directly.
 """
 
 from glazier.lib import actions
+from glazier.lib import errors
 
 
-class ConfigError(Exception):
+class ConfigError(errors.GlazierError):
   pass
 
 

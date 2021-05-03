@@ -19,6 +19,7 @@ import sys
 
 from glazier.lib import constants
 from glazier.lib import download
+from glazier.lib import errors
 from glazier.lib import policies
 from glazier.lib import power
 from glazier.lib.config import base
@@ -63,7 +64,7 @@ class ConfigRunner(base.ConfigBase):
       dl = download.Download()
       for url in constants.FLAGS.verify_urls:
         if not dl.CheckUrl(url, [200], max_retries=-1):
-          raise ConfigRunnerError('verify_urls failed for url %s' % url)
+          raise errors.GCheckUrlError(replacements=[url])
 
     while tasks:
       self._build_info.ActiveConfigPath(set_to=tasks[0]['path'])
@@ -112,6 +113,6 @@ class ConfigRunner(base.ConfigBase):
       policy = check(build_info=self._build_info)
       policy.Verify()
     except AttributeError:
-      raise ConfigRunnerError('Unknown imaging policy: %s' % str(line))
+      raise errors.GUnknownPolicyError(replacements=[str(line)])
     except policies.ImagingPolicyException as e:
       raise ConfigRunnerError(e)
