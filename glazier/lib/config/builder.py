@@ -47,6 +47,7 @@ import copy
 from glazier.lib import actions
 from glazier.lib import buildinfo
 from glazier.lib import download
+from glazier.lib import errors
 from glazier.lib.config import base
 from glazier.lib.config import files
 
@@ -159,7 +160,7 @@ class ConfigBuilder(base.ConfigBase):
         if not self._build_info.BuildPinMatch(pin, pins[pin]):
           return False
       except buildinfo.Error as e:
-        raise ConfigBuilderError('Error gathering system information. %s' % e)
+        raise errors.GSysInfoError(e)
     return True
 
   def _StoreControls(self, control, templates):
@@ -191,4 +192,4 @@ class ConfigBuilder(base.ConfigBase):
               'server': copy.deepcopy(self._build_info.ConfigServer())
           })
       else:
-        raise ConfigBuilderError('Unknown imaging action: %s' % str(element))
+        raise errors.GUnknownActionError(replacments=[str(element)])
