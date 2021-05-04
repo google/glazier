@@ -21,6 +21,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestExecWithVerify(t *testing.T) {
@@ -76,5 +78,121 @@ func TestExecWithVerify(t *testing.T) {
 				t.Errorf("got %v; want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestContainsString(t *testing.T) {
+	tests := []struct {
+		in    []string
+		inStr string
+		want  bool
+	}{
+		{
+			in:    []string{"abc", "def", "ghi"},
+			inStr: "def",
+			want:  true,
+		},
+		{
+			in:    []string{"abc", "def", "ghi"},
+			inStr: "d",
+			want:  false,
+		},
+		{
+			in:    []string{"abc", "def", "ghi"},
+			inStr: "",
+			want:  false,
+		},
+	}
+	for _, tt := range tests {
+		o := ContainsString(tt.inStr, tt.in)
+		if o != tt.want {
+			t.Errorf("ContainsString(%s, %v) = %t, want %t", tt.inStr, tt.in, o, tt.want)
+		}
+	}
+}
+
+// TestStringToSlice ensures StringToSlice correctly parses passed params
+func TestStringToSlice(t *testing.T) {
+	tests := []struct {
+		desc string
+		in   string
+		out  []string
+	}{
+		{
+			desc: "comma separated",
+			in:   "a,b,c",
+			out:  []string{"a", "b", "c"},
+		},
+		{
+			desc: "comma separated with spaces",
+			in:   "a, b, c",
+			out:  []string{"a", "b", "c"},
+		},
+		{
+			desc: "space separated",
+			in:   "a b c",
+			out:  []string{"a b c"},
+		},
+		{
+			desc: "trailing whitespace",
+			in:   "a b c ",
+			out:  []string{"a b c"},
+		},
+		{
+			desc: "semicolon separated",
+			in:   "a;b;c",
+			out:  []string{"a;b;c"},
+		},
+	}
+	for _, tt := range tests {
+		o := StringToSlice(tt.in)
+		if diff := cmp.Diff(o, tt.out); diff != "" {
+			t.Errorf("TestStringToSlice(): %+v returned unexpected differences (-want +got):\n%s", tt.desc, diff)
+		}
+	}
+}
+
+func TestStringToMap(t *testing.T) {
+	tests := []struct {
+		desc string
+		in   string
+		out  map[string]bool
+	}{
+		{
+			desc: "comma separated",
+			in:   "a,b,c",
+			out:  map[string]bool{"a": true, "b": true, "c": true},
+		},
+		{
+			desc: "comma separated with spaces",
+			in:   "a, b, c",
+			out:  map[string]bool{"a": true, "b": true, "c": true},
+		},
+		{
+			desc: "space separated",
+			in:   "a b c",
+			out:  map[string]bool{"a b c": true},
+		},
+		{
+			desc: "trailing whitespace",
+			in:   "a b c ",
+			out:  map[string]bool{"a b c": true},
+		},
+		{
+			desc: "semicolon separated",
+			in:   "a;b;c",
+			out:  map[string]bool{"a;b;c": true},
+		},
+		{
+			desc: "empty string",
+			in:   "",
+			out:  map[string]bool{},
+		},
+	}
+	for _, tt := range tests {
+		o := StringToMap(tt.in)
+		if diff := cmp.Diff(o, tt.out); diff != "" {
+			t.Errorf("TestStringToSlice(): %+v returned unexpected differences (-want +got):\n%s", tt.desc, diff)
+		}
 	}
 }

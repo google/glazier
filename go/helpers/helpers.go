@@ -320,3 +320,48 @@ func StopService(name string) error {
 
 	return stopService(s)
 }
+
+// ContainsString returns true if a string is in slice and false otherwise.
+func ContainsString(a string, slice []string) bool {
+	for _, b := range slice {
+		if a == b {
+			return true
+		}
+	}
+	return false
+}
+
+// PathExists returns whether the given file or directory exists or not
+func PathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if !errors.Is(err, os.ErrNotExist) {
+		return false, err
+	}
+	return false, nil
+}
+
+// StringToSlice converts a comma separated string to a slice.
+func StringToSlice(s string) []string {
+	if s == "" {
+		return nil
+	}
+	a := strings.Split(s, ",")
+	for i, item := range a {
+		a[i] = strings.TrimSpace(item)
+	}
+	return a
+}
+
+// StringToMap converts a comma separated string to a map.
+func StringToMap(s string) map[string]bool {
+	m := map[string]bool{}
+	if s != "" {
+		for _, item := range strings.Split(s, ",") {
+			m[strings.TrimSpace(item)] = true
+		}
+	}
+	return m
+}
