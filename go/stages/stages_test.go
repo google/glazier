@@ -16,7 +16,9 @@ package stages
 import (
 	"fmt"
 	"testing"
+	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -122,8 +124,8 @@ func TestGetActiveStageTypeError(t *testing.T) {
 	}
 }
 
-func TestGetActiveTime(t *testing.T) {
-	testID := "TestGetActiveTime"
+func TestGetTimes(t *testing.T) {
+	testID := "TestGetTimes"
 	testKey := fmt.Sprintf(`%s\%s`, testStageRoot, testID)
 	stageKey := fmt.Sprintf(`%s\%d`, testKey, 5)
 
@@ -140,14 +142,14 @@ func TestGetActiveTime(t *testing.T) {
 		t.Fatal(err)
 	}
 	k.Close()
-	_, err = getActiveTime(testKey, "5")
+	_, _, err = GetTimes(testKey, "5")
 	if err != nil {
 		t.Errorf("%s(): raised unexpected error %v", testID, err)
 	}
 }
 
-func TestGetActiveTimeParseError(t *testing.T) {
-	testID := "TestGetActiveTimeParseError"
+func TestGetTimesParseError(t *testing.T) {
+	testID := "TestGetTimesParseError"
 	testKey := fmt.Sprintf(`%s\%s`, testStageRoot, testID)
 	stageKey := fmt.Sprintf(`%s\%d`, testKey, 5)
 
@@ -164,7 +166,7 @@ func TestGetActiveTimeParseError(t *testing.T) {
 		t.Fatal(err)
 	}
 	k.Close()
-	_, err = getActiveTime(testKey, "5")
+	_, _, err = GetTimes(testKey, "5")
 	if err == nil {
 		t.Errorf("%s(): failed to raise expected error", testID)
 	}
@@ -172,8 +174,30 @@ func TestGetActiveTimeParseError(t *testing.T) {
 
 func TestGetActiveTimeNoKey(t *testing.T) {
 	testID := "TestGetActiveTimeNoKey"
-	_, err := getActiveTime(testStageRoot, "3")
+	s, err := getActiveTime(testStageRoot, "3", "Start")
+	if err != nil {
+		t.Errorf("%s(): raised unexpected error %v", testID, err)
+	}
+	if diff := cmp.Diff(time.Time{}, s); diff != "" {
+		t.Errorf("getActiveTime(%v, %v, %v) returned unexpected diff (-want +got):\n%s", testStageRoot, "3", "Start", diff)
+	}
+}
+
+func TestGetActiveTimeWrongPeriod(t *testing.T) {
+	testID := "TestGetActiveTimeWrongPeriod"
+	s, err := getActiveTime(testStageRoot, "3", "Foo")
 	if err == nil {
 		t.Errorf("%s(): failed to raise expected error", testID)
+	}
+	if diff := cmp.Diff(time.Time{}, s); diff != "" {
+		t.Errorf("getActiveTime(%v, %v, %v) returned unexpected diff (-want +got):\n%s", testStageRoot, "3", "Foo", diff)
+	}
+}
+
+func TestGetTimesNoKey(t *testing.T) {
+	testID := "TestGetTimesNoKey"
+	_, _, err := GetTimes(testStageRoot, "3")
+	if err != nil {
+		t.Errorf("%s(): raised unexpected error %v", testID, err)
 	}
 }
