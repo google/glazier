@@ -32,6 +32,7 @@ import (
 	"golang.org/x/sys/windows/svc/mgr"
 	"golang.org/x/sys/windows/svc"
 	"github.com/google/logger"
+	"github.com/iamacarpet/go-win64api"
 )
 
 // ExecResult holds the output from a subprocess execution.
@@ -56,7 +57,8 @@ var (
 	PsPath = os.ExpandEnv("${windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe")
 
 	// TestHelpers
-	execFn = exe
+	execFn        = exe
+	fnProcessList = winapi.ProcessList
 )
 
 // Exec executes a subprocess and returns the results.
@@ -319,6 +321,34 @@ func StopService(name string) error {
 	defer s.Close()
 
 	return stopService(s)
+}
+
+// WaitForProcessExit waits for a process to stop (no longer appear in the process list).
+func WaitForProcessExit(matcher *regexp.Regexp, timeout time.Duration) error {
+	t := time.NewTicker(timeout)
+	defer t.Stop()
+	r := time.NewTicker(5 * time.Second)
+	defer r.Stop()
+
+loop:
+	for {
+		select {
+		case <-t.C:
+			return ErrTimeout
+		case <-r.C:
+			procs, err := fnProcessList()
+			if err != nil {
+				return fmt.Errorf("winapi.ProcessList: %w", err)
+			}
+			for _, p := range procs {
+				if matcher.MatchString(p.Executable) {
+					logger.Warningf("Process %s still running; waiting for exit.", p.Executable)
+					goto loop
+				}
+			}
+			return nil
+		}
+	}
 }
 
 // ContainsString returns true if a string is in slice and false otherwise.
