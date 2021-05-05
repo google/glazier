@@ -16,6 +16,9 @@
 package power
 
 import (
+	"fmt"
+	"syscall"
+
 	"golang.org/x/sys/windows"
 )
 
@@ -25,9 +28,10 @@ type Flag uint32
 
 const (
 	EWX_LOGOFF   = Flag(0x00000000)
-	EWX_POWEROFF = Flag(0x00000008)
-	EWX_REBOOT   = Flag(0x00000002)
 	EWX_SHUTDOWN = Flag(0x00000001)
+	EWX_REBOOT   = Flag(0x00000002)
+	EWX_FORCE    = Flag(0x00000004)
+	EWX_POWEROFF = Flag(0x00000008)
 )
 
 // Reason Codes for system shutdown
@@ -42,6 +46,37 @@ const (
 	SHTDN_REASON_MINOR_RECONFIG     = Reason(0x00000004)
 )
 
+// Privileges
+const (
+	SE_SHUTDOWN_NAME = "SeShutdownPrivilege"
+)
+
+// To shut down or restart the system, the calling process must use the AdjustTokenPrivileges function to enable the SE_SHUTDOWN_NAME privilege.
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-exitwindowsex
+func setPrivToken() error {
+	var hToken windows.Token
+	err := windows.OpenProcessToken(windows.CurrentProcess(), windows.TOKEN_ADJUST_PRIVILEGES|windows.TOKEN_QUERY, &hToken)
+	if err != nil {
+		return fmt.Errorf("windows.OpenProcessToken: %w", err)
+	}
+	defer hToken.Close()
+
+	tkp := windows.Tokenprivileges{}
+	err = windows.LookupPrivilegeValue(nil, syscall.StringToUTF16Ptr(SE_SHUTDOWN_NAME), &tkp.Privileges[0].Luid)
+	if err != nil {
+		return fmt.Errorf("windows.LookupPrivilegeValue: %w", err)
+	}
+
+	tkp.PrivilegeCount = 1
+	tkp.Privileges[0].Attributes = windows.SE_PRIVILEGE_ENABLED
+
+	err = windows.AdjustTokenPrivileges(hToken, false, &tkp, 0, nil, nil)
+	if err != nil {
+		return fmt.Errorf("windows.AdjustTokenPrivileges: %w", err)
+	}
+	return nil
+}
+
 // Exit exits the active session using custom settings.
 //
 // Example: Exit(EWX_LOGOFF, SHTDN_REASON_MINOR_MAINTENANCE)
@@ -51,14 +86,30 @@ func Exit(flag Flag, reason Reason) error {
 
 // Reboot reboots the system.
 //
-// Example: Reboot(SHTDN_REASON_MINOR_MAINTENANCE)
-func Reboot(reason Reason) error {
-	return windows.ExitWindowsEx(uint32(EWX_REBOOT), uint32(reason))
+// Example: Reboot(SHTDN_REASON_MINOR_MAINTENANCE, true)
+func Reboot(reason Reason, force bool) error {
+	if err := setPrivToken(); err != nil {
+		return err
+	}
+	fl := uint32(EWX_REBOOT)
+	if force {
+		fl = fl | uint32(EWX_FORCE)
+	}
+	return windows.ExitWindowsEx(fl, uint32(reason))
 }
 
 // Shutdown shuts down the system.
 //
-// Example: Shutdown(SHTDN_REASON_MINOR_MAINTENANCE)
-func Shutdown(reason Reason) error {
-	return windows.ExitWindowsEx(uint32(EWX_SHUTDOWN), uint32(reason))
+// Example: Shutdown(SHTDN_REASON_MINOR_MAINTENANCE, true)
+func Shutdown(reason Reason, force bool) error {
+
+	if err := setPrivToken(); err != nil {
+		return err
+	}
+	fl := uint32(EWX_SHUTDOWN)
+	if force {
+		fl = fl | uint32(EWX_FORCE)
+	}
+
+	return windows.ExitWindowsEx(fl, uint32(reason))
 }
