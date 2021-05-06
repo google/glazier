@@ -45,15 +45,15 @@ var (
 func GetType() (Type, error) {
 	var result []Win32_OperatingSystem
 	if err := wmi.Query(wmi.CreateQuery(&result, ""), &result); err != nil {
-		return "server", err
+		return Server, err
 	}
 	if len(result) < 1 {
-		return "server", ErrWMIEmptyResult
+		return Server, ErrWMIEmptyResult
 	}
 
 	if result[0].ProductType == 1 {
-		return "client", nil
+		return Client, nil
 	}
 
-	return "server", nil
+	return Server, nil
 }
