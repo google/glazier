@@ -363,6 +363,10 @@ func ContainsString(a string, slice []string) bool {
 
 // PathExists returns whether the given file or directory exists or not
 func PathExists(path string) (bool, error) {
+	if strings.TrimSpace(path) == "" {
+		return false, errors.New("path cannot be empty")
+	}
+
 	_, err := os.Stat(path)
 	if err == nil {
 		return true, nil
@@ -375,7 +379,7 @@ func PathExists(path string) (bool, error) {
 
 // StringToSlice converts a comma separated string to a slice.
 func StringToSlice(s string) []string {
-	if s == "" {
+	if strings.TrimSpace(s) == "" {
 		return nil
 	}
 	a := strings.Split(s, ",")
