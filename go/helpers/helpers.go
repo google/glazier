@@ -57,20 +57,34 @@ var (
 	PsPath = os.ExpandEnv("${windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe")
 
 	// TestHelpers
-	execFn        = exe
+	fnExec        = execute
 	fnProcessList = winapi.ProcessList
 )
 
+// ExecConfig provides flexible execution configuration.
+type ExecConfig struct {
+	Verifier *ExecVerifier
+
+	Timeout *time.Duration
+	Retry   *time.Duration
+
+	SpAttr *syscall.SysProcAttr
+}
+
 // Exec executes a subprocess and returns the results.
-func Exec(path string, args []string, timeout *time.Duration) (ExecResult, error) {
-	return execFn(path, args, timeout, nil)
+func Exec(path string, args []string, conf *ExecConfig) (ExecResult, error) {
+	return fnExec(path, args, conf)
 }
 
 // ExecWithAttr executes a subprocess with custom process attributes and returns the results.
 //
 // See also https://github.com/golang/go/issues/17149.
 func ExecWithAttr(path string, timeout *time.Duration, spattr *syscall.SysProcAttr) (ExecResult, error) {
-	return execFn(path, []string{}, timeout, spattr)
+	conf := &ExecConfig{
+		Timeout: timeout,
+		SpAttr:  spattr,
+	}
+	return fnExec(path, []string{}, conf)
 }
 
 // ExecVerifier provides checks against executable results.
@@ -101,7 +115,14 @@ func ExecWithVerify(path string, args []string, timeout *time.Duration, verifier
 	if verifier == nil {
 		verifier = NewExecVerifier()
 	}
-	res, err := execFn(path, args, timeout, nil)
+	conf := &ExecConfig{
+		Timeout:  timeout,
+		Verifier: verifier,
+	}
+	return fnExec(path, args, conf)
+}
+
+func verify(path string, res ExecResult, err error, verifier ExecVerifier) (ExecResult, error) {
 	if err != nil {
 		return res, err
 	}
@@ -128,9 +149,14 @@ func ExecWithVerify(path string, args []string, timeout *time.Duration, verifier
 	return res, nil
 }
 
-func exe(path string, args []string, timeout *time.Duration, spattr *syscall.SysProcAttr) (ExecResult, error) {
+func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 	var cmd *exec.Cmd
 	result := ExecResult{}
+	if conf == nil {
+		conf = &ExecConfig{
+			Verifier: NewExecVerifier(),
+		}
+	}
 
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".ps1":
@@ -143,9 +169,9 @@ func exe(path string, args []string, timeout *time.Duration, spattr *syscall.Sys
 		return result, errors.New("extension not currently supported")
 	}
 
-	if spattr != nil {
+	if conf.SpAttr != nil {
 		cmd = exec.Command(path)
-		cmd.SysProcAttr = spattr
+		cmd.SysProcAttr = conf.SpAttr
 	} else {
 		cmd = exec.Command(path, args...)
 	}
@@ -167,8 +193,8 @@ func exe(path string, args []string, timeout *time.Duration, spattr *syscall.Sys
 
 	var timer *time.Timer
 	// Create a timer that will kill the process
-	if timeout != nil {
-		timer = time.AfterFunc(*timeout, func() {
+	if conf.Timeout != nil {
+		timer = time.AfterFunc(*conf.Timeout, func() {
 			cmd.Process.Kill()
 		})
 	}
@@ -186,11 +212,16 @@ func exe(path string, args []string, timeout *time.Duration, spattr *syscall.Sys
 	result.ExitErr = cmd.Wait()
 
 	// when the execution times out return a timeout error
-	if timeout != nil && !timer.Stop() {
+	if conf.Timeout != nil && !timer.Stop() {
 		return result, ErrTimeout
 	}
 
 	result.ExitCode = cmd.ProcessState.ExitCode()
+
+	if conf.Verifier != nil {
+		return verify(path, result, err, *conf.Verifier)
+	}
+
 	return result, nil
 }
 

@@ -18,7 +18,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"syscall"
 	"testing"
 	"time"
 
@@ -26,24 +25,25 @@ import (
 	so "github.com/iamacarpet/go-win64api/shared"
 )
 
-func TestExecWithVerify(t *testing.T) {
+func TestVerify(t *testing.T) {
 	err1 := errors.New("direct error")
+	def := NewExecVerifier()
 	tests := []struct {
-		ver    *ExecVerifier
+		ver    ExecVerifier
 		res    ExecResult
 		resErr error
 		want   error
 	}{
-		{nil, ExecResult{}, err1, err1},
-		{nil, ExecResult{ExitErr: err1}, nil, err1},
-		{nil, ExecResult{ExitCode: 1}, nil, ErrExitCode},
-		{&ExecVerifier{SuccessCodes: []int{2, 3, 4}}, ExecResult{ExitCode: 3}, nil, nil},
-		{&ExecVerifier{SuccessCodes: []int{2, 3, 4}}, ExecResult{ExitCode: 5}, nil, ErrExitCode},
-		{nil, ExecResult{
+		{*def, ExecResult{}, err1, err1},
+		{*def, ExecResult{ExitErr: err1}, nil, err1},
+		{*def, ExecResult{ExitCode: 1}, nil, ErrExitCode},
+		{ExecVerifier{SuccessCodes: []int{2, 3, 4}}, ExecResult{ExitCode: 3}, nil, nil},
+		{ExecVerifier{SuccessCodes: []int{2, 3, 4}}, ExecResult{ExitCode: 5}, nil, ErrExitCode},
+		{*def, ExecResult{
 			Stdout: []byte("This is harmless output."),
 			Stderr: []byte("This too."),
 		}, nil, nil},
-		{&ExecVerifier{
+		{ExecVerifier{
 			SuccessCodes: []int{0},
 			StdOutMatch:  regexp.MustCompile(".*harmful.*"),
 			StdErrMatch:  regexp.MustCompile(".*harmful.*"),
@@ -51,7 +51,7 @@ func TestExecWithVerify(t *testing.T) {
 			Stdout: []byte("This is harmless output."),
 			Stderr: []byte("This too."),
 		}, nil, nil},
-		{&ExecVerifier{
+		{ExecVerifier{
 			SuccessCodes: []int{0},
 			StdOutMatch:  regexp.MustCompile(".*harmful.*"),
 			StdErrMatch:  regexp.MustCompile(".*harmful.*"),
@@ -59,7 +59,7 @@ func TestExecWithVerify(t *testing.T) {
 			Stdout: []byte("This is harmful output."),
 			Stderr: []byte("This isn't."),
 		}, nil, ErrStdOut},
-		{&ExecVerifier{
+		{ExecVerifier{
 			SuccessCodes: []int{0},
 			StdOutMatch:  regexp.MustCompile(".*harmful.*"),
 			StdErrMatch:  regexp.MustCompile(".*harmful.*"),
@@ -70,11 +70,8 @@ func TestExecWithVerify(t *testing.T) {
 	}
 	for i, tt := range tests {
 		testID := fmt.Sprintf("Test%d", i)
-		t.Run(fmt.Sprintf(testID, i), func(t *testing.T) {
-			execFn = func(p string, a []string, t *time.Duration, s *syscall.SysProcAttr) (ExecResult, error) {
-				return tt.res, tt.resErr
-			}
-			_, got := ExecWithVerify(testID, nil, nil, tt.ver)
+		t.Run(testID, func(t *testing.T) {
+			_, got := verify(testID, tt.res, tt.resErr, tt.ver)
 			if !errors.Is(got, tt.want) {
 				t.Errorf("got %v; want %v", got, tt.want)
 			}
