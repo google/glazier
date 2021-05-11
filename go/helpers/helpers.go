@@ -59,21 +59,58 @@ var (
 	// TestHelpers
 	fnExec        = execute
 	fnProcessList = winapi.ProcessList
+	fnSleep       = time.Sleep
 )
 
 // ExecConfig provides flexible execution configuration.
 type ExecConfig struct {
+	// A verifier, if specified, will attempt to verify the subprocess output and return an error if problems are detected.
 	Verifier *ExecVerifier
 
+	// A timeout will kill the subprocess if it doesn't execute within the duration. Leave nil to disable timeout.
 	Timeout *time.Duration
-	Retry   *time.Duration
+
+	// If RetryCount is non-zero, Exec will attempt to retry a failed execution (one which returns err). Executions will retry
+	// every RetryInterval. Combine with a Verifier to retry until certain conditions are met.
+	RetryCount    int
+	RetryInterval *time.Duration
 
 	SpAttr *syscall.SysProcAttr
 }
 
 // Exec executes a subprocess and returns the results.
+//
+// If Exec is called without a configuration, a default configuration is used. The default
+// configuration will use a simple exit code verifier and no timeout. Behaviors can be disabled
+// by supplying a config but leaving individual members as nil.
 func Exec(path string, args []string, conf *ExecConfig) (ExecResult, error) {
-	return fnExec(path, args, conf)
+	var err error
+	var res ExecResult
+
+	// Default config if unspecified.
+	if conf == nil {
+		conf = &ExecConfig{
+			Verifier: NewExecVerifier(),
+		}
+	}
+	// Default retry if unspecified.
+	if conf.RetryInterval == nil {
+		defInt := 1 * time.Minute
+		conf.RetryInterval = &defInt
+	}
+
+	for attempt := 0; attempt <= conf.RetryCount; attempt++ {
+		if res, err = fnExec(path, args, conf); err == nil {
+			break
+		}
+		logger.Warningf("%s did not complete successfully: %v", path, err)
+		if attempt == conf.RetryCount {
+			break
+		}
+		logger.Infof("retrying in %v", conf.RetryInterval)
+		fnSleep(*conf.RetryInterval)
+	}
+	return res, err
 }
 
 // ExecWithAttr executes a subprocess with custom process attributes and returns the results.
@@ -153,9 +190,7 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 	var cmd *exec.Cmd
 	result := ExecResult{}
 	if conf == nil {
-		conf = &ExecConfig{
-			Verifier: NewExecVerifier(),
-		}
+		return result, errors.New("conf cannot be nil")
 	}
 
 	switch strings.ToLower(filepath.Ext(path)) {

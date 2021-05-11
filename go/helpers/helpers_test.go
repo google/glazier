@@ -79,6 +79,63 @@ func TestVerify(t *testing.T) {
 	}
 }
 
+func TestExecWithRetry(t *testing.T) {
+	tests := []struct {
+		inConf  *ExecConfig
+		inErr   []error
+		inRes   []ExecResult
+		wantErr error
+		wantRes ExecResult
+	}{
+		// defaults used; success on first try
+		{nil, []error{nil},
+			[]ExecResult{
+				ExecResult{Stdout: []byte("Result 1")},
+			}, nil,
+			ExecResult{Stdout: []byte("Result 1")},
+		},
+		// defaults used; error on first try
+		{nil, []error{ErrStdErr},
+			[]ExecResult{
+				ExecResult{Stdout: []byte("Result 1")},
+			}, ErrStdErr,
+			ExecResult{},
+		},
+		// success on third try
+		{&ExecConfig{RetryCount: 3},
+			[]error{ErrStdErr, ErrStdErr, nil},
+			[]ExecResult{
+				ExecResult{Stdout: []byte("Result 1")},
+				ExecResult{Stdout: []byte("Result 2")},
+				ExecResult{Stdout: []byte("Result 3")},
+			}, nil,
+			ExecResult{Stdout: []byte("Result 3")},
+		},
+	}
+	fnSleep = func(time.Duration) {}
+	for i, tt := range tests {
+		testID := fmt.Sprintf("Test%d", i)
+		t.Run(testID, func(t *testing.T) {
+			ci := -1
+			fnExec = func(string, []string, *ExecConfig) (ExecResult, error) {
+				ci++
+				if ci >= len(tt.inErr) {
+					t.Fatalf("ran out of return values...")
+				}
+				return tt.inRes[ci], tt.inErr[ci]
+			}
+			got, err := Exec("test-process", []string{}, tt.inConf)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("Exec(%s): got %v; want %v", testID, err, tt.wantErr)
+			}
+			diff := cmp.Diff(got, tt.wantRes)
+			if err == nil && diff != "" {
+				t.Errorf("Exec(%s): returned unexpected differences (-want +got):\n%s", testID, diff)
+			}
+		})
+	}
+}
+
 func TestWaitForProcessExit(t *testing.T) {
 	tests := []struct {
 		match   string
@@ -130,14 +187,14 @@ func TestWaitForProcessExit(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("Test%d", i), func(t *testing.T) {
-			ci := 0
+			ci := -1
 			fnProcessList = func() ([]so.Process, error) {
+				ci++
 				if ci >= len(tt.plists) {
-					t.Errorf("ran out of return values...")
+					t.Fatalf("ran out of return values...")
 				}
 				return tt.plists[ci], nil
 			}
-			ci++
 			re := regexp.MustCompile(tt.match)
 			got := WaitForProcessExit(re, tt.timeout)
 			if !errors.Is(got, tt.want) {
