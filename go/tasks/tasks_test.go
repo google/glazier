@@ -15,71 +15,43 @@
 package tasks
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/capnspacehook/taskmaster"
 )
 
 func TestTaskExists(t *testing.T) {
-	lookupErr := errors.New("scheduled task lookup failed")
 	tests := []struct {
-		desc     string
-		in       string
-		fakeTask func(name string) (taskmaster.RegisteredTask, error)
-		want     bool
-		wantErr  error
+		desc string
+		in   string
+		coll taskmaster.RegisteredTaskCollection
+		want bool
 	}{
 		{
 			desc: "task error",
 			in:   "task1",
-			fakeTask: func(name string) (taskmaster.RegisteredTask, error) {
-				return taskmaster.RegisteredTask{}, lookupErr
+			coll: taskmaster.RegisteredTaskCollection{
+				taskmaster.RegisteredTask{Name: "Task1"},
+				taskmaster.RegisteredTask{Name: "task2"},
 			},
-			want:    false,
-			wantErr: lookupErr,
+			want: true,
 		},
 		{
 			desc: "task does not exist",
 			in:   "task2",
-			fakeTask: func(name string) (taskmaster.RegisteredTask, error) {
-				return taskmaster.RegisteredTask{}, nil
+			coll: taskmaster.RegisteredTaskCollection{
+				taskmaster.RegisteredTask{Name: "Task1"},
+				taskmaster.RegisteredTask{Name: "task3"},
 			},
-			want:    false,
-			wantErr: nil,
-		},
-		{
-			desc: "task is not registered",
-			in:   "task3",
-			fakeTask: func(name string) (taskmaster.RegisteredTask, error) {
-				return taskmaster.RegisteredTask{}, ErrNotRegistered
-			},
-			want:    false,
-			wantErr: nil,
-		},
-		{
-			desc: "task does exist",
-			in:   "task4",
-			fakeTask: func(name string) (taskmaster.RegisteredTask, error) {
-				return taskmaster.RegisteredTask{
-					Name: "task4",
-				}, nil
-			},
-			want:    true,
-			wantErr: nil,
+			want: false,
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			fnGetTask = tt.fakeTask
-			got, err := TaskExists(tt.in)
-
-			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("TaskExists(%v) returned unexpected error %v", tt.in, err)
-			}
+			t.Parallel()
+			got := taskMatcher(tt.in, tt.coll)
 			if got != tt.want {
-				t.Errorf("TaskExists(%v) = %v, want %v", tt.in, got, tt.want)
+				t.Errorf("taskMatcher(%v) = %v, want %v", tt.in, got, tt.want)
 			}
 		})
 	}

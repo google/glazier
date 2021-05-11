@@ -17,6 +17,7 @@ package tasks
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/capnspacehook/taskmaster"
@@ -28,27 +29,29 @@ var (
 	// ErrNotRegistered indicates that the querired Scheduled Task
 	// is not registered in the Windows Task Scheduler
 	ErrNotRegistered = errors.New("scheduled task is not registered")
-
-	// Test Helpers
-	fnGetTask = GetTask
 )
 
 func setEnabled(name string, enabled bool) error {
-	task, err := GetTask(name)
-	if err != nil {
-		return err
-	}
-	defer task.Release()
-
 	svc, err := taskmaster.Connect()
 	if err != nil {
-		return err
+		return fmt.Errorf("taskmaster.Connect: %w", err)
 	}
 	defer svc.Disconnect()
 
-	task.Definition.Settings.Enabled = enabled
-	_, err = svc.UpdateTask(task.Path, task.Definition)
-	return err
+	tasks, err := svc.GetRegisteredTasks()
+	if err != nil {
+		return fmt.Errorf("svc.GetRegisteredTasks: %w", err)
+	}
+	defer tasks.Release()
+
+	for _, t := range tasks {
+		if strings.EqualFold(t.Name, name) {
+			t.Definition.Settings.Enabled = enabled
+			_, err = svc.UpdateTask(t.Path, t.Definition)
+			return err
+		}
+	}
+	return ErrTaskNotFound
 }
 
 // Disable disables a scheduled task.
@@ -61,42 +64,30 @@ func Enable(name string) error {
 	return setEnabled(name, true)
 }
 
-// GetTask gathers details about a Windows Scheduled Task.
-func GetTask(name string) (taskmaster.RegisteredTask, error) {
+func taskMatcher(name string, tasks taskmaster.RegisteredTaskCollection) bool {
+	for _, t := range tasks {
+		if strings.EqualFold(t.Name, name) {
+			return true
+		}
+	}
+	return false
+}
+
+// TaskExists is a helper function that detects whether a scheduled task exists.
+func TaskExists(name string) (bool, error) {
 	svc, err := taskmaster.Connect()
 	if err != nil {
-		return taskmaster.RegisteredTask{}, err
+		return false, fmt.Errorf("taskmaster.Connect: %w", err)
 	}
 	defer svc.Disconnect()
 
 	tasks, err := svc.GetRegisteredTasks()
 	if err != nil {
-		return taskmaster.RegisteredTask{}, err
+		return false, fmt.Errorf("svc.GetRegisteredTasks: %w", err)
 	}
 	defer tasks.Release()
 
-	for _, t := range tasks {
-		if strings.EqualFold(t.Name, name) {
-			return t, nil
-		}
-	}
-
-	return taskmaster.RegisteredTask{}, ErrNotRegistered
-}
-
-// TaskExists is a helper function that detects whether a scheduled task exists.
-func TaskExists(name string) (bool, error) {
-	task, err := fnGetTask(name)
-
-	if err != nil && !errors.Is(err, ErrNotRegistered) {
-		return false, err
-	}
-
-	if strings.EqualFold(task.Name, name) {
-		return true, nil
-	}
-
-	return false, nil
+	return taskMatcher(name, tasks), nil
 }
 
 // Delete attempts to delete a scheduled task.
