@@ -79,7 +79,7 @@ $env:LOCALAPPDATA = 'X:\'
 $PYTHON_EXE = 'X:\python\files\python.exe'
 $env:PYTHONPATH = 'X:\src'
 Write-Information 'Starting imaging process.'
-& $PYTHON_EXE "$env:PYTHONPATH\glazier\autobuild.py" --environment=WinPE --config_server=https://glazier.example.com --resource_path=X:\\resources --preserve_tasks=true --glazier_spec="flag"
+& $PYTHON_EXE "$env:PYTHONPATH\glazier\autobuild.py" --environment=WinPE --config_server=https://glazier.example.com --resource_path=X:\\resources --preserve_tasks=true
 ```
 
 *   `--environment`: tells autobuild which host environment it's operating
