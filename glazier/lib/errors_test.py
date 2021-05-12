@@ -32,7 +32,10 @@ class ErrorsTest(absltest.TestCase):
         'Uncaught exception (4000): exception')
 
   def test_glazier_error_str(self):
-    self.assertEqual(str(errors.GlazierError('exception')), '(4000): exception')
+    self.assertEqual(
+        str(errors.GlazierError('exception')),
+        'Unknown Exception (4000): exception')
+
 
 if __name__ == '__main__':
   absltest.main()

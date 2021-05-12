@@ -1,0 +1,293 @@
+{
+    "CimClass":  {
+                     "CimSuperClassName":  "MSFT_StorageObject",
+                     "CimSuperClass":  {
+                                           "CimSuperClassName":  null,
+                                           "CimSuperClass":  null,
+                                           "CimClassProperties":  "ObjectId PassThroughClass PassThroughIds PassThroughNamespace PassThroughServer UniqueId",
+                                           "CimClassQualifiers":  "Abstract = True locale = 1033",
+                                           "CimClassMethods":  "",
+                                           "CimSystemProperties":  "Microsoft.Management.Infrastructure.CimSystemProperties"
+                                       },
+                     "CimClassProperties":  [
+                                                "ObjectId",
+                                                "PassThroughClass",
+                                                "PassThroughIds",
+                                                "PassThroughNamespace",
+                                                "PassThroughServer",
+                                                "UniqueId",
+                                                "AccessPaths",
+                                                "DiskId",
+                                                "DiskNumber",
+                                                "DriveLetter",
+                                                "GptType",
+                                                "Guid",
+                                                "IsActive",
+                                                "IsBoot",
+                                                "IsDAX",
+                                                "IsHidden",
+                                                "IsOffline",
+                                                "IsReadOnly",
+                                                "IsShadowCopy",
+                                                "IsSystem",
+                                                "MbrType",
+                                                "NoDefaultDriveLetter",
+                                                "Offset",
+                                                "OperationalStatus",
+                                                "PartitionNumber",
+                                                "Size",
+                                                "TransitionState"
+                                            ],
+                     "CimClassQualifiers":  [
+                                                "dynamic = True",
+                                                "locale = 1033",
+                                                "provider = \"StorageWMI\""
+                                            ],
+                     "CimClassMethods":  [
+                                             "DeleteObject",
+                                             "GetAccessPaths",
+                                             "AddAccessPath",
+                                             "RemoveAccessPath",
+                                             "Resize",
+                                             "GetSupportedSize",
+                                             "Online",
+                                             "Offline",
+                                             "SetAttributes"
+                                         ],
+                     "CimSystemProperties":  {
+                                                 "Namespace":  "ROOT/Microsoft/Windows/Storage",
+                                                 "ServerName":  "DESKTOP-123",
+                                                 "ClassName":  "MSFT_Partition",
+                                                 "Path":  null
+                                             }
+                 },
+    "CimInstanceProperties":  [
+                                  {
+                                      "Name":  "ObjectId",
+                                      "Value":  "{1}\\\\DESKTOP-123\\root/Microsoft/Windows/Storage/Providers_v2\\WSP_Partition.ObjectId=\"{82d454d6-5fba-11e9-ac1f-806e6f6e6963}:PR:{00000000-0000-0000-0000-100000000000}\\\\?\\scsi#disk\u0026ven_nvme\u0026prod_pc401_nvme_sk_hy#4\u002665e414b\u00260\u0026010000#{53f56307-b6bf-11d0-94f2-00a0c91efb8b}\"",
+                                      "CimType":  14,
+                                      "Flags":  "Property, Key, Required, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "PassThroughClass",
+                                      "Value":  null,
+                                      "CimType":  14,
+                                      "Flags":  "Property, ReadOnly, NotModified, NullValue",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "PassThroughIds",
+                                      "Value":  null,
+                                      "CimType":  14,
+                                      "Flags":  "Property, ReadOnly, NotModified, NullValue",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "PassThroughNamespace",
+                                      "Value":  null,
+                                      "CimType":  14,
+                                      "Flags":  "Property, ReadOnly, NotModified, NullValue",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "PassThroughServer",
+                                      "Value":  null,
+                                      "CimType":  14,
+                                      "Flags":  "Property, ReadOnly, NotModified, NullValue",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "UniqueId",
+                                      "Value":  "{00000000-0000-0000-0000-100000000000}eui.ACE42E81750195A2",
+                                      "CimType":  14,
+                                      "Flags":  "Property, Required, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "AccessPaths",
+                                      "Value":  "\\\\?\\Volume{09eb89b8-1595-4b70-b056-a3adbbb33255}\\",
+                                      "CimType":  30,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "DiskId",
+                                      "Value":  "\\\\?\\scsi#disk\u0026ven_nvme\u0026prod_pc401_nvme_sk_hy#4\u002665e414b\u00260\u0026010000#{53f56307-b6bf-11d0-94f2-00a0c91efb8b}",
+                                      "CimType":  14,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "DiskNumber",
+                                      "Value":  0,
+                                      "CimType":  6,
+                                      "Flags":  "Property, Required, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "DriveLetter",
+                                      "Value":  null,
+                                      "CimType":  12,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "GptType",
+                                      "Value":  "{de94bba4-06d1-4d40-a16a-bfd50179d6ac}",
+                                      "CimType":  14,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "Guid",
+                                      "Value":  "{09eb89b8-1595-4b70-b056-a3adbbb33255}",
+                                      "CimType":  14,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "IsActive",
+                                      "Value":  false,
+                                      "CimType":  1,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "IsBoot",
+                                      "Value":  false,
+                                      "CimType":  1,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "IsDAX",
+                                      "Value":  false,
+                                      "CimType":  1,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "IsHidden",
+                                      "Value":  false,
+                                      "CimType":  1,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "IsOffline",
+                                      "Value":  false,
+                                      "CimType":  1,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "IsReadOnly",
+                                      "Value":  false,
+                                      "CimType":  1,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "IsShadowCopy",
+                                      "Value":  false,
+                                      "CimType":  1,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "IsSystem",
+                                      "Value":  false,
+                                      "CimType":  1,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "MbrType",
+                                      "Value":  null,
+                                      "CimType":  4,
+                                      "Flags":  "Property, ReadOnly, NotModified, NullValue",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "NoDefaultDriveLetter",
+                                      "Value":  true,
+                                      "CimType":  1,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "Offset",
+                                      "Value":  1048576,
+                                      "CimType":  8,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "OperationalStatus",
+                                      "Value":  1,
+                                      "CimType":  4,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "PartitionNumber",
+                                      "Value":  1,
+                                      "CimType":  6,
+                                      "Flags":  "Property, Required, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "Size",
+                                      "Value":  524288000,
+                                      "CimType":  8,
+                                      "Flags":  "Property, Required, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "TransitionState",
+                                      "Value":  1,
+                                      "CimType":  4,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  }
+                              ],
+    "CimSystemProperties":  {
+                                "Namespace":  "ROOT/Microsoft/Windows/Storage",
+                                "ServerName":  "DESKTOP-123",
+                                "ClassName":  "MSFT_Partition",
+                                "Path":  null
+                            },
+    "OperationalStatus":  "Online",
+    "Type":  "Recovery",
+    "DiskPath":  "\\\\?\\scsi#disk\u0026ven_nvme\u0026prod_pc401_nvme_sk_hy#4\u002665e414b\u00260\u0026010000#{53f56307-b6bf-11d0-94f2-00a0c91efb8b}",
+    "ObjectId":  "{1}\\\\DESKTOP-123\\root/Microsoft/Windows/Storage/Providers_v2\\WSP_Partition.ObjectId=\"{82d454d6-5fba-11e9-ac1f-806e6f6e6963}:PR:{00000000-0000-0000-0000-100000000000}\\\\?\\scsi#disk\u0026ven_nvme\u0026prod_pc401_nvme_sk_hy#4\u002665e414b\u00260\u0026010000#{53f56307-b6bf-11d0-94f2-00a0c91efb8b}\"",
+    "PassThroughClass":  null,
+    "PassThroughIds":  null,
+    "PassThroughNamespace":  null,
+    "PassThroughServer":  null,
+    "UniqueId":  "{00000000-0000-0000-0000-100000000000}eui.ACE42E81750195A2",
+    "AccessPaths":  [
+                        "\\\\?\\Volume{09eb89b8-1595-4b70-b056-a3adbbb33255}\\"
+                    ],
+    "DiskId":  "\\\\?\\scsi#disk\u0026ven_nvme\u0026prod_pc401_nvme_sk_hy#4\u002665e414b\u00260\u0026010000#{53f56307-b6bf-11d0-94f2-00a0c91efb8b}",
+    "DiskNumber":  0,
+    "DriveLetter":  null,
+    "GptType":  "{de94bba4-06d1-4d40-a16a-bfd50179d6ac}",
+    "Guid":  "{09eb89b8-1595-4b70-b056-a3adbbb33255}",
+    "IsActive":  false,
+    "IsBoot":  false,
+    "IsDAX":  false,
+    "IsHidden":  false,
+    "IsOffline":  false,
+    "IsReadOnly":  false,
+    "IsShadowCopy":  false,
+    "IsSystem":  false,
+    "MbrType":  null,
+    "NoDefaultDriveLetter":  true,
+    "Offset":  1048576,
+    "PartitionNumber":  1,
+    "Size":  524288000,
+    "TransitionState":  1,
+    "PSComputerName":  null
+}

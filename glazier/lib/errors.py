@@ -47,6 +47,10 @@ _ERRORS: Dict[str, List[Union[int, str]]] = {
     ],
     'GConfigBuilderError': [4300, 'Failed to build the task list'],
     'GConfigRunnerError': [4301, 'Failed to execute the task list'],
+    'GSysInfoError': [4311, 'Error gathering system information'],
+    'GUnknownActionError': [4312, 'Unknown imaging action [{}]'],
+    'GUnknownPolicyError': [4313, 'Unknown imaging policy [{}]'],
+    'GCheckUrlError': [4314, 'Failed to verify url [{}]'],
     'GRegSetError': [4340, 'Failed to set registry value'],
     'GWebServerError': [5000, 'Failed to reach web server'],
     'GServiceError': [5300, 'Service unavailable'],
@@ -81,11 +85,17 @@ class GlazierError(Exception):
   """
 
   def __init__(self,
-               exception: Optional[str] = '',
+               exception: Optional[Exception] = None,
                replacements: Optional[List[Union[bool, int, str]]] = None):
     self.code = 4000
-    self.message = ''
+    self.message = 'Unknown Exception'
     self.exception = exception
+
+    if isinstance(exception, GlazierError):
+      self.code = exception.code
+      self.message = exception.message
+      self.exception = exception.exception
+
     self.replacements = replacements
     super().__init__(exception, replacements)
 
@@ -121,7 +131,7 @@ def _new_err(code: int, message: str) -> Type[GlazierError]:
     """Stores error information used in GlazierError."""
 
     def __init__(self,
-                 exception: Optional[str] = '',
+                 exception: Optional[Exception] = None,
                  replacements: Optional[List[Union[bool, int, str]]] = None):
       super().__init__(exception, replacements)
       self.code: int = code

@@ -32,11 +32,11 @@ build.
 ## Syntax
 
 The Glazer YAML specification allows Chooser options to be encoded as part of
-the build config files. Autobuild compiles and translates these options into an
-option file for the chooser in stage15. Leveraging the build YAMLs allows for
-all the same pinning and templating capabilities as the other commands, meaning
-Chooser options can be targeted at images on the fly based on any available
-buildinfo data.
+the build config files. Glazier compiles and translates these options into an
+option file for the chooser. Leveraging the build YAMLs allows for all the same
+pinning and templating capabilities as the other commands, meaning Chooser
+options can be targeted at images on the fly based on any available buildinfo
+data.
 
 The top level YAML command *choice* indicates a chooser option. Each choice
 consists of several required sub-fields:
@@ -48,11 +48,12 @@ aggregate all options as USER_\[name\] where name is determined by this field.
 
 ### type
 
-Type indicates the UI field type to be shown (see below).
+Type indicates the UI field type to be shown ([see below](#field-types)).
 
 ### prompt
 
-Prompt is the text label shown in the UI next to the interactive fields.
+Prompt is the text label shown in the UI next to the interactive fields (ex:
+System Locale).
 
 ### options
 
@@ -72,26 +73,30 @@ dictionary in the list should have the following sub-fields.
 The radio_menu field provides a multiple choice drop-down menu. The menu allows
 one and only one selection at a time from the available options.
 
-    choice:
-              name: system_locale
-              type: radio_menu
-              prompt: 'System Locale'
-              options: [
-                    {label: 'de-de', value: 'de-de', tip: ''},
-                    {label: 'en-gb', value: 'en-gb', tip: ''},
-                    {label: 'en-us', value: 'en-us', tip: '', default: True},
-            ...
-        ]
+```yaml
+choice:
+  name: system_locale
+  type: radio_menu
+  prompt: 'System Locale'
+  options: [
+    {label: 'de-de', value: 'de-de', tip: ''},
+    {label: 'en-gb', value: 'en-gb', tip: ''},
+    {label: 'en-us', value: 'en-us', tip: '', default: True},
+  ...
+  ]
+```
 
 ### toggle
 
 A simple pair of on/off (or true/false) radio buttons.
 
-        choice:
-              name: puppet_enable
-              type: toggle
-              prompt: 'Enable Puppet'
-              options: [
-                    {label: 'False', value: False, tip: '', default: True},
-                    {label: 'True', value: True, tip: ''},
-              ]
+```yaml
+choice:
+  name: puppet_enable
+  type: toggle
+  prompt: 'Enable Puppet'
+  options: [
+    {label: 'False', value: False, tip: '', default: True},
+    {label: 'True', value: True, tip: ''},
+  ]
+```

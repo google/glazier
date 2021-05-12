@@ -32,6 +32,7 @@ import (
 	"golang.org/x/sys/windows/svc/mgr"
 	"golang.org/x/sys/windows/svc"
 	"github.com/google/logger"
+	"github.com/iamacarpet/go-win64api"
 )
 
 // ExecResult holds the output from a subprocess execution.
@@ -56,19 +57,71 @@ var (
 	PsPath = os.ExpandEnv("${windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe")
 
 	// TestHelpers
-	execFn = exe
+	fnExec        = execute
+	fnProcessList = winapi.ProcessList
+	fnSleep       = time.Sleep
 )
 
+// ExecConfig provides flexible execution configuration.
+type ExecConfig struct {
+	// A verifier, if specified, will attempt to verify the subprocess output and return an error if problems are detected.
+	Verifier *ExecVerifier
+
+	// A timeout will kill the subprocess if it doesn't execute within the duration. Leave nil to disable timeout.
+	Timeout *time.Duration
+
+	// If RetryCount is non-zero, Exec will attempt to retry a failed execution (one which returns err). Executions will retry
+	// every RetryInterval. Combine with a Verifier to retry until certain conditions are met.
+	RetryCount    int
+	RetryInterval *time.Duration
+
+	SpAttr *syscall.SysProcAttr
+}
+
 // Exec executes a subprocess and returns the results.
-func Exec(path string, args []string, timeout *time.Duration) (ExecResult, error) {
-	return execFn(path, args, timeout, nil)
+//
+// If Exec is called without a configuration, a default configuration is used. The default
+// configuration will use a simple exit code verifier and no timeout. Behaviors can be disabled
+// by supplying a config but leaving individual members as nil.
+func Exec(path string, args []string, conf *ExecConfig) (ExecResult, error) {
+	var err error
+	var res ExecResult
+
+	// Default config if unspecified.
+	if conf == nil {
+		conf = &ExecConfig{
+			Verifier: NewExecVerifier(),
+		}
+	}
+	// Default retry if unspecified.
+	if conf.RetryInterval == nil {
+		defInt := 1 * time.Minute
+		conf.RetryInterval = &defInt
+	}
+
+	for attempt := 0; attempt <= conf.RetryCount; attempt++ {
+		if res, err = fnExec(path, args, conf); err == nil {
+			break
+		}
+		logger.Warningf("%s did not complete successfully: %v", path, err)
+		if attempt == conf.RetryCount {
+			break
+		}
+		logger.Infof("retrying in %v", conf.RetryInterval)
+		fnSleep(*conf.RetryInterval)
+	}
+	return res, err
 }
 
 // ExecWithAttr executes a subprocess with custom process attributes and returns the results.
 //
 // See also https://github.com/golang/go/issues/17149.
 func ExecWithAttr(path string, timeout *time.Duration, spattr *syscall.SysProcAttr) (ExecResult, error) {
-	return execFn(path, []string{}, timeout, spattr)
+	conf := &ExecConfig{
+		Timeout: timeout,
+		SpAttr:  spattr,
+	}
+	return fnExec(path, []string{}, conf)
 }
 
 // ExecVerifier provides checks against executable results.
@@ -99,7 +152,14 @@ func ExecWithVerify(path string, args []string, timeout *time.Duration, verifier
 	if verifier == nil {
 		verifier = NewExecVerifier()
 	}
-	res, err := execFn(path, args, timeout, nil)
+	conf := &ExecConfig{
+		Timeout:  timeout,
+		Verifier: verifier,
+	}
+	return fnExec(path, args, conf)
+}
+
+func verify(path string, res ExecResult, err error, verifier ExecVerifier) (ExecResult, error) {
 	if err != nil {
 		return res, err
 	}
@@ -126,24 +186,27 @@ func ExecWithVerify(path string, args []string, timeout *time.Duration, verifier
 	return res, nil
 }
 
-func exe(path string, args []string, timeout *time.Duration, spattr *syscall.SysProcAttr) (ExecResult, error) {
+func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 	var cmd *exec.Cmd
 	result := ExecResult{}
+	if conf == nil {
+		return result, errors.New("conf cannot be nil")
+	}
 
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".ps1":
 		// Escape spaces in PowerShell paths.
 		args = append([]string{"-NoProfile", "-NoLogo", "-Command", strings.ReplaceAll(path, " ", "` ")}, args...)
 		path = PsPath
-	case ".exe":
+	case ".exe", ".bat":
 		// path and args unmodified
 	default:
 		return result, errors.New("extension not currently supported")
 	}
 
-	if spattr != nil {
+	if conf.SpAttr != nil {
 		cmd = exec.Command(path)
-		cmd.SysProcAttr = spattr
+		cmd.SysProcAttr = conf.SpAttr
 	} else {
 		cmd = exec.Command(path, args...)
 	}
@@ -165,8 +228,8 @@ func exe(path string, args []string, timeout *time.Duration, spattr *syscall.Sys
 
 	var timer *time.Timer
 	// Create a timer that will kill the process
-	if timeout != nil {
-		timer = time.AfterFunc(*timeout, func() {
+	if conf.Timeout != nil {
+		timer = time.AfterFunc(*conf.Timeout, func() {
 			cmd.Process.Kill()
 		})
 	}
@@ -184,11 +247,16 @@ func exe(path string, args []string, timeout *time.Duration, spattr *syscall.Sys
 	result.ExitErr = cmd.Wait()
 
 	// when the execution times out return a timeout error
-	if timeout != nil && !timer.Stop() {
+	if conf.Timeout != nil && !timer.Stop() {
 		return result, ErrTimeout
 	}
 
 	result.ExitCode = cmd.ProcessState.ExitCode()
+
+	if conf.Verifier != nil {
+		return verify(path, result, err, *conf.Verifier)
+	}
+
 	return result, nil
 }
 
@@ -319,4 +387,81 @@ func StopService(name string) error {
 	defer s.Close()
 
 	return stopService(s)
+}
+
+// WaitForProcessExit waits for a process to stop (no longer appear in the process list).
+func WaitForProcessExit(matcher *regexp.Regexp, timeout time.Duration) error {
+	t := time.NewTicker(timeout)
+	defer t.Stop()
+	r := time.NewTicker(5 * time.Second)
+	defer r.Stop()
+
+loop:
+	for {
+		select {
+		case <-t.C:
+			return ErrTimeout
+		case <-r.C:
+			procs, err := fnProcessList()
+			if err != nil {
+				return fmt.Errorf("winapi.ProcessList: %w", err)
+			}
+			for _, p := range procs {
+				if matcher.MatchString(p.Executable) {
+					logger.Warningf("Process %s still running; waiting for exit.", p.Executable)
+					goto loop
+				}
+			}
+			return nil
+		}
+	}
+}
+
+// ContainsString returns true if a string is in slice and false otherwise.
+func ContainsString(a string, slice []string) bool {
+	for _, b := range slice {
+		if a == b {
+			return true
+		}
+	}
+	return false
+}
+
+// PathExists returns whether the given file or directory exists or not
+func PathExists(path string) (bool, error) {
+	if strings.TrimSpace(path) == "" {
+		return false, errors.New("path cannot be empty")
+	}
+
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if !errors.Is(err, os.ErrNotExist) {
+		return false, err
+	}
+	return false, nil
+}
+
+// StringToSlice converts a comma separated string to a slice.
+func StringToSlice(s string) []string {
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+	a := strings.Split(s, ",")
+	for i, item := range a {
+		a[i] = strings.TrimSpace(item)
+	}
+	return a
+}
+
+// StringToMap converts a comma separated string to a map.
+func StringToMap(s string) map[string]bool {
+	m := map[string]bool{}
+	if s != "" {
+		for _, item := range strings.Split(s, ",") {
+			m[strings.TrimSpace(item)] = true
+		}
+	}
+	return m
 }

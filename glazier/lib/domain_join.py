@@ -53,8 +53,6 @@ class DomainJoinCredentials(object):
     return self._password
 
 
-
-
 class DomainJoin(object):
   """Defines several functions used to join a machine to the domain."""
 
@@ -135,4 +133,3 @@ class DomainJoin(object):
     else:
       self._InteractiveJoin()
     logging.info('Domain join completed.')
-
