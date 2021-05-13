@@ -22,23 +22,83 @@ import (
 	"strconv"
 	"time"
 
-	"golang.org/x/sys/windows/registry"
+	"github.com/pkg/errors"
+	"github.com/google/glazier/go/registry"
 )
 
 const (
 	defaultTimeout = 60 * 24 * 7 * time.Minute // 7 days
 	regStagesRoot  = `SOFTWARE\Glazier\Stages`
 	regActiveKey   = "_Active"
+	term           = "100" // Stage after which to consider the build completed
+	timeFmt        = "2006-01-02T15:04:05.000000"
 )
+
+var (
+	// ErrPeriod indicates an unsupported period was passed when checking stage status
+	ErrPeriod = errors.New("invalid period")
+)
+
+// A Stage stores named stage elements.
+type Stage struct {
+	ID    string
+	Start time.Time
+	End   time.Time
+	State string
+}
+
+// NewStage fills the stage struct with default values.
+func NewStage() *Stage {
+	return &Stage{
+		State: "Unknown",
+	}
+}
+
+func activeTimeFromReg(root, stageID string, period string) (time.Time, error) {
+	switch period {
+	case "Start", "End":
+		active, err := registry.GetString(fmt.Sprintf(`%s\%s`, root, stageID), period)
+		if err != nil && err != registry.ErrNotExist {
+			return time.Time{}, err
+		}
+
+		var at time.Time
+		if active != "" {
+			at, err = time.Parse(timeFmt, active)
+			if err != nil {
+				return time.Time{}, err
+			}
+		}
+		return at, nil
+	default:
+		return time.Time{}, ErrPeriod
+	}
+}
+
+// RetreiveTimes populates the Stage struct with the start and end times of the
+// passed stage ID.
+func (s *Stage) RetreiveTimes(root, stageID string) error {
+	var err error
+
+	if s.Start, err = activeTimeFromReg(root, stageID, "Start"); err != nil {
+		return err
+	}
+
+	if s.End, err = activeTimeFromReg(root, stageID, "End"); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func checkExpiration(stageID string) error {
 	// TODO: Implement stage expiration here
-	_, err := getActiveTime(regStagesRoot, stageID)
-	return err
+	s := NewStage()
+	return s.RetreiveTimes(regStagesRoot, stageID)
 }
 
-func getActiveStage(root string) (string, error) {
-	active, err := readKey(root, regActiveKey)
+func activeStageFromReg(root string) (string, error) {
+	active, err := registry.GetString(root, regActiveKey)
 	if err != nil {
 		if err != registry.ErrNotExist {
 			return "", err
@@ -48,35 +108,45 @@ func getActiveStage(root string) (string, error) {
 	return active, nil
 }
 
-func getActiveTime(root, stageID string) (time.Time, error) {
-	active, err := readKey(fmt.Sprintf(`%s\%s`, root, stageID), "Start")
-	if err != nil {
-		return time.Time{}, err
-	}
-	return time.Parse("2006-01-02T15:04:05.000000", active)
-}
-
-func readKey(root, key string) (string, error) {
-	k, err := registry.OpenKey(registry.LOCAL_MACHINE, root, registry.QUERY_VALUE)
-	if err != nil {
-		return "", err
-	}
-	defer k.Close()
-
-	active, _, err := k.GetStringValue(key)
-	return active, err
-}
-
-// GetActiveStage returns the active build stage for the machine.
-func GetActiveStage() (uint64, error) {
-	stage, err := getActiveStage(regStagesRoot)
+// ActiveStage returns the active build stage string converted to uint64.
+// The returned uint64 can be used for comparison against greater/lesser
+// stages to determine the latest stage.
+func ActiveStage() (uint64, error) {
+	s, err := activeStageFromReg(regStagesRoot)
 	if err != nil {
 		return 0, err
 	}
-	err = checkExpiration(stage)
+	err = checkExpiration(s)
 	if err != nil {
 		return 0, err
 	}
 
-	return strconv.ParseUint(stage, 10, 64)
+	return strconv.ParseUint(s, 10, 64)
+}
+
+// ActiveStatus returns a Stage struct with all known fields.
+func ActiveStatus() (*Stage, error) {
+	var err error
+	s := NewStage()
+
+	s.ID, err = activeStageFromReg(regStagesRoot)
+	if err != nil {
+		return s, err
+	}
+	if s.ID == "" {
+		s.ID = term
+	}
+
+	err = s.RetreiveTimes(regStagesRoot, s.ID)
+	if err != nil {
+		return s, err
+	}
+
+	if s.ID == term && !s.End.IsZero() {
+		s.State = "Complete"
+	} else {
+		s.State = "Running"
+	}
+
+	return s, nil
 }
