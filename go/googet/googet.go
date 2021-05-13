@@ -107,6 +107,15 @@ func Remove(pkg string, dbOnly bool, conf *Config) error {
 	return call(args, conf)
 }
 
+// RemoveRepo removes a Googet repository.
+func RemoveRepo(repo string, conf *Config) error {
+	if conf == nil {
+		conf = NewConfig()
+	}
+
+	return call([]string{"rmrepo", repo}, conf)
+}
+
 // Update updates all googet packages.
 func Update(conf *Config) error {
 	if conf == nil {
