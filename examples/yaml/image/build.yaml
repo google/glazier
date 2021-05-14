@@ -1,0 +1,6 @@
+controls:
+  # Place unattend.xml for sysprep/first boot that's handled as part of the ExitWinPE action.
+  - pin:
+      'os_code': ['win10']
+    pull:
+      - ['#unattend.xml', 'C:\Windows\Panther\unattend.xml']

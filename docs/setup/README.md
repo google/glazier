@@ -61,41 +61,12 @@ WinPE can be configured to automatically start application(s) using
 _winpeshl.exe_, with the configuration in
 [winpeshl.ini](https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/winpeshlini-reference-launching-an-app-when-winpe-starts).
 
-Example _winpeshl.ini_ that will launch `autobuild.ps1` when WinPE starts:
-
-```powershell
-[LaunchApps]
-wpeinit
-powershell,
-Set-ExecutionPolicy -ExecutionPolicy Bypass -Force
-powershell, -NoProfile -WindowStyle Maximized -NoExit -NoLogo -File "%PROGRAMFILES%\autobuild.ps1" -InformationAction Continue`
-```
-
-Example _autobuild.ps1_ that will configure the environment and launch
-`autobuild.py` (Glazier) to begin the imaging process:
-
-```powershell
-$env:LOCALAPPDATA = 'X:\'
-$PYTHON_EXE = 'X:\python\files\python.exe'
-$env:PYTHONPATH = 'X:\src'
-Write-Information 'Starting imaging process.'
-& $PYTHON_EXE "$env:PYTHONPATH\glazier\autobuild.py" --environment=WinPE --config_server=https://glazier.example.com --resource_path=X:\\resources --preserve_tasks=true
-```
-
-*   `--environment`: tells autobuild which host environment it's operating
-    under. This is tied to a variety of variables in glazier/lib/constants.py, which
-    helps autobuild find files on the local system. You may need to modify
-    [constants.py](#constants.py) to fit your environment.
-*   `--config_server`: tells autobuild where to find your distribution point.
-*   `--resource_path`: is used by certain libraries to locate non-python
-    companion files. See [Resources](#resources).
-*   `--preserve_tasks`: tells autobuild not to purge the local task list if one
-    exists. This allows restarts. Set to false to restart an installation from
-    scratch.
+See [examples](../../examples/winpeshl.ini) for a winpeshl.ini file that will
+instruct WinPE to launch `autobuild.ps1` when WinPE starts.
 
 TIP: For a full list of Glazier flags, execute `python autobuild.py --helpfull`.
-You'll notice a flags are distributed throughout various libraries, are are
-documented when defined.
+You'll notice a flags are distributed throughout various libraries, and are
+documented where defined.
 
 ### constants.py
 
@@ -110,26 +81,17 @@ Once the host is rebooted into its new image, Windows will undergo sysprep.
 Normally, we will want Autobuild to resume operation after sysprep, so it can
 complete post-install configuration tasks.
 
-One way to accomplish this is as follows:
+One way to accomplish this would be to:
 
-1.  Write a small script to replace the logon shell with the autobuild launcher.
-
-```bash
-    %WinDir%\System32\reg.exe add "HKCU\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" /v Shell /t REG_SZ /d "PowerShell.exe -NoProfile -WindowStyle Maximized -NoExit -File C:\Glazier\autobuild.ps1"
-```
-
-1.  During the WinPE stage of setup, drop your script to the local disk.
-
-1.  When provisioning the base image, configure automatic logon and use
-    [LogonCommands](https://msdn.microsoft.com/en-us/windows/hardware/commercialize/customize/desktop/unattend/microsoft-windows-shell-setup-logoncommands)
-    to reference the script you saved to disk.
-
-During the following login, your script will replace the logon shell, then
-reboot into Autobuild. Autobuild should resume where it left off, processing the
-task list.
-
-As one of the final steps in your config, remove the custom logon shell before
-rebooting into the completed host.
+1.  Copy a customized
+    [answer file](https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/update-windows-settings-and-scripts-create-your-own-answer-file-sxs)
+    ([example](../../examples/yaml/image/unattend.xml)) that tells windows to
+    automatically login and launch Glazier.
+2.  Configure [these registry keys](../../examples/yaml/autologin/build.yaml) in
+    your task list, instructing Windows to launch Glazier on *every* subsequent
+    reboot.
+3.  As one of the final steps in your config, reset the registry keys above to
+    their respective defaults before rebooting into the completed host.
 
 ## Distribution Point
 

@@ -5,6 +5,9 @@ Glazier uses YAML-based configuration files.
 
 ## Example
 
+TIP: See the [examples](../../examples/yaml/build.yaml) directory for more
+complete YAML examples.
+
 Below is an example of what a simple Glazier configuration could look like.
 
 ```yaml
@@ -19,7 +22,7 @@ templates:
       ['somefile.txt', 'C:\somefile.txt']
 controls:
   - pin:
-      'os_code': ['win2008-x64-se', 'win2008-x64-ee']
+      'os_code': ['win2019', 'win2022']
     template:
       - software
   - pin:
@@ -129,7 +132,7 @@ While direct match pins are exclusive, skipping any values not named in the set,
 inverse match pins are inclusive, accepting any values not named directly. If
 the pin is not negated by a matching inverse pin, the outcome is a successful
 match. For example: `'os_code': ['!win10', '!win8']` is False for os_code=win10
-and False for os_code=win8, but True for os_code=win2012.
+and False for os_code=win8, but True for os_code=win2022.
 
 *Direct pins are only considered if no inverse pins are present.* This is to
 compensate for direct matches being exclusive in nature. It would not make sense

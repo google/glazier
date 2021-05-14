@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+    <servicing>
+        <package action="configure">
+            <assemblyIdentity name="Microsoft-Windows-Security-SPP-Component-SKU-Enterprise-GVLK-Package" version="10.0.14393.0" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="" />
+        </package>
+    </servicing>
+    <settings pass="specialize">
+        <component name="Microsoft-Windows-IE-InternetExplorer" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <DisableAccelerators>true</DisableAccelerators>
+            <DisableFirstRunWizard>true</DisableFirstRunWizard>
+            <DisableOOBAccelerators>true</DisableOOBAccelerators>
+            <Home_Page>CHANGEME</Home_Page>
+            <SuggestedSitesEnabled>false</SuggestedSitesEnabled>
+            <SearchScopes>
+                <Scope wcm:action="add">
+                    <FaviconURL>http://www.google.com/favicon.ico</FaviconURL>
+                    <ScopeDisplayName>Google</ScopeDisplayName>
+                    <ScopeDefault>true</ScopeDefault>
+                    <SuggestionsURL>http://clients5.google.com/complete/search?hl={language}&amp;amp;q={searchTerms}&amp;amp;client=ie8&amp;amp;inputencoding={inputEncoding}&amp;amp;outputencoding={outputEncoding}</SuggestionsURL>
+                    <SuggestionsURL_JSON>http://suggestqueries.google.com/complete/search?output=firefox&amp;amp;client=IE8&amp;amp;qu={searchTerms}</SuggestionsURL_JSON>
+                    <ScopeKey>SearchProvider1</ScopeKey>
+                    <ScopeUrl>http://www.google.com/search?q={searchTerms}&amp;amp;rls=com.microsoft:{language}&amp;amp;ie={inputEncoding}&amp;amp;oe={outputEncoding}&amp;amp;startIndex={startIndex?}&amp;amp;startPage={startPage}</ScopeUrl>
+                </Scope>
+            </SearchScopes>
+        </component>
+        <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <OEMInformation>
+                <HelpCustomized>false</HelpCustomized>
+                <SupportURL>CHANGEME</SupportURL>
+            </OEMInformation>
+            <ComputerName>*</ComputerName>
+            <CopyProfile>true</CopyProfile>
+            <RegisteredOrganization>CHANGEME</RegisteredOrganization>
+            <RegisteredOwner>CHANGEME</RegisteredOwner>
+            <TimeZone>UTC</TimeZone>
+            <TaskbarLinks>
+                <Link0>C:\Windows\explorer.exe</Link0>
+                <Link1>C:\Program Files\Google\Chrome\Application\chrome.exe</Link1>
+            </TaskbarLinks>
+        </component>
+        <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <RunAsynchronous>
+                <RunAsynchronousCommand wcm:action="add">
+                    <Order>1</Order>
+                    <Description>Disable First Logon Animation</Description>
+                    <Path>reg.exe add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v EnableFirstLogonAnimation /d 0 /t REG_DWORD /f</Path>
+                </RunAsynchronousCommand>
+                <RunAsynchronousCommand wcm:action="add">
+                    <Order>2</Order>
+                    <Description>Disable the Network Location Wizard</Description>
+                    <Path>reg.exe add HKLM\SYSTEM\CurrentControlSet\Control\Network\NewNetworkWindowOff /f</Path>
+                </RunAsynchronousCommand>
+                <RunAsynchronousCommand wcm:action="add">
+                    <Order>3</Order>
+                    <Description>Show desktop immediately once admin is signed in</Description>
+                    <Path>reg.exe add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v DelayedDesktopSwitchTimeout /d 0 /t REG_DWORD /f</Path>
+                </RunAsynchronousCommand>
+            </RunAsynchronous>
+        </component>
+        <component name="Microsoft-Windows-IE-InternetExplorer" processorArchitecture="wow64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <SearchScopes>
+                <Scope wcm:action="add">
+                    <FaviconURL>http://www.google.com/favicon.ico</FaviconURL>
+                    <ScopeDisplayName>Google</ScopeDisplayName>
+                    <ScopeDefault>true</ScopeDefault>
+                    <SuggestionsURL>http://clients5.google.com/complete/search?hl={language}&amp;amp;q={searchTerms}&amp;amp;client=ie8&amp;amp;inputencoding={inputEncoding}&amp;amp;outputencoding={outputEncoding}</SuggestionsURL>
+                    <SuggestionsURL_JSON>http://suggestqueries.google.com/complete/search?output=firefox&amp;amp;client=IE8&amp;amp;qu={searchTerms}</SuggestionsURL_JSON>
+                    <ScopeKey>SearchProvider1</ScopeKey>
+                    <ScopeUrl>http://www.google.com/search?q={searchTerms}&amp;amp;rls=com.microsoft:{language}&amp;amp;ie={inputEncoding}&amp;amp;oe={outputEncoding}&amp;amp;startIndex={startIndex?}&amp;amp;startPage={startPage}</ScopeUrl>
+                </Scope>
+            </SearchScopes>
+            <Home_Page>CHANGEME</Home_Page>
+            <DisableAccelerators>true</DisableAccelerators>
+            <DisableFirstRunWizard>true</DisableFirstRunWizard>
+            <DisableOOBAccelerators>true</DisableOOBAccelerators>
+            <SuggestedSitesEnabled>false</SuggestedSitesEnabled>
+        </component>
+        <component name="Microsoft-Windows-TCPIP" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <IcmpRedirectsEnabled>false</IcmpRedirectsEnabled>
+        </component>
+    </settings>
+    <settings pass="oobeSystem">
+        <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <InputLocale>en-us</InputLocale>
+            <SystemLocale>en-us</SystemLocale>
+            <UILanguage>en-us</UILanguage>
+            <UserLocale>en-us</UserLocale>
+        </component>
+        <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <AutoLogon>
+                <Enabled>true</Enabled>
+                <LogonCount>5</LogonCount>
+                <Username>Administrator</Username>
+                <Password>
+                    <Value>CHANGEME</Value>
+                    <PlainText>false</PlainText>
+                </Password>
+            </AutoLogon>
+            <FirstLogonCommands>
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>C:\Windows\System32\taskkill.exe /F /IM explorer.exe</CommandLine>
+                    <Description>Kill Explorer</Description>
+                    <Order>1</Order>
+                </SynchronousCommand>
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>powershell.exe -NoProfile -WindowStyle Maximized -NoExit -NoLogo -ExecutionPolicy Bypass -Command &amp; C:\path\to\autobuild.ps1</CommandLine>
+                    <Description>Launch Autobuild</Description>
+                    <Order>2</Order>
+                </SynchronousCommand>
+            </FirstLogonCommands>
+            <OOBE>
+                <HideEULAPage>true</HideEULAPage>
+                <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+                <NetworkLocation>Work</NetworkLocation>
+                <ProtectYourPC>3</ProtectYourPC>
+                <HideOnlineAccountScreens>true</HideOnlineAccountScreens>
+                <HideOEMRegistrationScreen>true</HideOEMRegistrationScreen>
+                <HideLocalAccountScreen>true</HideLocalAccountScreen>
+                <UnattendEnableRetailDemo>false</UnattendEnableRetailDemo>
+            </OOBE>
+            <UserAccounts>
+                <AdministratorPassword>
+                    <Value>CHANGEME</Value>
+                    <PlainText>false</PlainText>
+                </AdministratorPassword>
+            </UserAccounts>
+            <RegisteredOrganization>CHANGEME</RegisteredOrganization>
+            <RegisteredOwner>CHANGEME</RegisteredOwner>
+            <TimeZone>UTC</TimeZone>
+            <DesktopOptimization>
+                <ShowWindowsStoreAppsOnTaskbar>false</ShowWindowsStoreAppsOnTaskbar>
+                <GoToDesktopOnSignIn>true</GoToDesktopOnSignIn>
+            </DesktopOptimization>
+        </component>
+    </settings>
+    <settings pass="windowsPE">
+        <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <ComplianceCheck>
+                <DisplayReport>OnError</DisplayReport>
+            </ComplianceCheck>
+            <DiskConfiguration>
+                <DisableEncryptedDiskProvisioning>false</DisableEncryptedDiskProvisioning>
+                <WillShowUI>OnError</WillShowUI>
+                <Disk wcm:action="add">
+                    <CreatePartitions>
+                        <CreatePartition wcm:action="add">
+                            <Order>1</Order>
+                            <Size>CHANGEME</Size>
+                            <Type>Primary</Type>
+                        </CreatePartition>
+                        <CreatePartition wcm:action="add">
+                            <Order>2</Order>
+                            <Size>CHANGEME</Size>
+                            <Type>EFI</Type>
+                        </CreatePartition>
+                        <CreatePartition wcm:action="add">
+                            <Order>3</Order>
+                            <Size>CHANGEME</Size>
+                            <Type>MSR</Type>
+                        </CreatePartition>
+                        <CreatePartition wcm:action="add">
+                            <Order>4</Order>
+                            <Type>Primary</Type>
+                            <Extend>true</Extend>
+                        </CreatePartition>
+                    </CreatePartitions>
+                    <ModifyPartitions>
+                        <ModifyPartition wcm:action="add">
+                            <PartitionID>1</PartitionID>
+                            <Format>NTFS</Format>
+                            <Label>Windows RE tools</Label>
+                            <Order>1</Order>
+                            <TypeID>CHANGEME</TypeID>
+                        </ModifyPartition>
+                        <ModifyPartition wcm:action="add">
+                            <Order>2</Order>
+                            <PartitionID>2</PartitionID>
+                            <Format>FAT32</Format>
+                            <Label>System</Label>
+                        </ModifyPartition>
+                        <ModifyPartition wcm:action="add">
+                            <Order>3</Order>
+                            <PartitionID>3</PartitionID>
+                        </ModifyPartition>
+                        <ModifyPartition wcm:action="add">
+                            <Label>Windows</Label>
+                            <Format>NTFS</Format>
+                            <Order>4</Order>
+                            <PartitionID>4</PartitionID>
+                        </ModifyPartition>
+                    </ModifyPartitions>
+                    <DiskID>0</DiskID>
+                    <WillWipeDisk>true</WillWipeDisk>
+                </Disk>
+            </DiskConfiguration>
+            <ImageInstall>
+                <OSImage>
+                    <InstallTo>
+                        <DiskID>0</DiskID>
+                        <PartitionID>4</PartitionID>
+                    </InstallTo>
+                </OSImage>
+            </ImageInstall>
+            <UserData>
+                <ProductKey>
+                    <Key>CHANGEME</Key>
+                    <WillShowUI>OnError</WillShowUI>
+                </ProductKey>
+            </UserData>
+            <EnableFirewall>true</EnableFirewall>
+            <EnableNetwork>true</EnableNetwork>
+        </component>
+    </settings>
+    <cpi:offlineImage cpi:source="wim:c:/path/to/sources/install.wim#Windows 10 Enterprise" xmlns:cpi="urn:schemas-microsoft-com:cpi" />
+</unattend>
