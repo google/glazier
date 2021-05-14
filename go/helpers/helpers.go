@@ -16,8 +16,10 @@
 package helpers
 
 import (
+	"archive/zip"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -464,4 +466,49 @@ func StringToMap(s string) map[string]bool {
 		}
 	}
 	return m
+}
+
+// Unzip unzips a Zip file to disk.
+//
+// Example: Unzip("my_archive.zip", `C:\Path\To\Unzip`)
+func Unzip(in, out string) error {
+	r, err := zip.OpenReader(in)
+	if err != nil {
+		return fmt.Errorf("zip.OpenReader: %w", err)
+	}
+	defer r.Close()
+
+	if err := os.MkdirAll(out, 0755); err != nil {
+		return fmt.Errorf("os.MkdirAll(%s): %w", out, err)
+	}
+
+	for _, file := range r.File {
+		if err := func() error {
+			path := filepath.Join(out, file.Name)
+			if file.FileInfo().IsDir() {
+				os.MkdirAll(path, file.Mode())
+				return nil
+			}
+
+			reader, err := file.Open()
+			if err != nil {
+				return fmt.Errorf("file.Open: %w", err)
+			}
+			defer reader.Close()
+
+			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
+			if err != nil {
+				return fmt.Errorf("os.OpenFile(%s): %w", path, err)
+			}
+			defer f.Close()
+
+			if _, err := io.Copy(f, reader); err != nil {
+				return fmt.Errorf("io.Copy: %w", err)
+			}
+			return nil
+		}(); err != nil {
+			return err
+		}
+	}
+	return nil
 }

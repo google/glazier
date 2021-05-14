@@ -17,6 +17,9 @@ package helpers
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"regexp"
 	"testing"
 	"time"
@@ -81,28 +84,26 @@ func TestVerify(t *testing.T) {
 
 func TestExecWithRetry(t *testing.T) {
 	tests := []struct {
+		desc    string
 		inConf  *ExecConfig
 		inErr   []error
 		inRes   []ExecResult
 		wantErr error
 		wantRes ExecResult
 	}{
-		// defaults used; success on first try
-		{nil, []error{nil},
+		{"defaults used; success on first try", nil, []error{nil},
 			[]ExecResult{
 				ExecResult{Stdout: []byte("Result 1")},
 			}, nil,
 			ExecResult{Stdout: []byte("Result 1")},
 		},
-		// defaults used; error on first try
-		{nil, []error{ErrStdErr},
+		{"defaults used; error on first try", nil, []error{ErrStdErr},
 			[]ExecResult{
 				ExecResult{Stdout: []byte("Result 1")},
 			}, ErrStdErr,
 			ExecResult{},
 		},
-		// success on third try
-		{&ExecConfig{RetryCount: 3},
+		{"success on third try", &ExecConfig{RetryCount: 3},
 			[]error{ErrStdErr, ErrStdErr, nil},
 			[]ExecResult{
 				ExecResult{Stdout: []byte("Result 1")},
@@ -113,9 +114,9 @@ func TestExecWithRetry(t *testing.T) {
 		},
 	}
 	fnSleep = func(time.Duration) {}
-	for i, tt := range tests {
-		testID := fmt.Sprintf("Test%d", i)
-		t.Run(testID, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			t.Parallel()
 			ci := -1
 			fnExec = func(string, []string, *ExecConfig) (ExecResult, error) {
 				ci++
@@ -126,11 +127,11 @@ func TestExecWithRetry(t *testing.T) {
 			}
 			got, err := Exec("test-process", []string{}, tt.inConf)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("Exec(%s): got %v; want %v", testID, err, tt.wantErr)
+				t.Errorf("Exec(%s): got %v; want %v", tt.desc, err, tt.wantErr)
 			}
 			diff := cmp.Diff(got, tt.wantRes)
 			if err == nil && diff != "" {
-				t.Errorf("Exec(%s): returned unexpected differences (-want +got):\n%s", testID, diff)
+				t.Errorf("Exec(%s): returned unexpected differences (-want +got):\n%s", tt.desc, diff)
 			}
 		})
 	}
@@ -317,5 +318,24 @@ func TestStringToMap(t *testing.T) {
 		if diff := cmp.Diff(o, tt.out); diff != "" {
 			t.Errorf("TestStringToSlice(): %+v returned unexpected differences (-want +got):\n%s", tt.desc, diff)
 		}
+	}
+}
+
+func TestUnzip(t *testing.T) {
+	out := os.TempDir()
+
+	zip := "testdata/test.zip"
+
+	if err := Unzip(zip, out); err != nil {
+		t.Fatalf("Unzip: %v", err)
+	}
+	f, err := ioutil.ReadFile(filepath.Join(out, "google.txt"))
+	if err != nil {
+		t.Fatalf("failed reading expected output file: %v", err)
+	}
+	got := string(f)
+	want := "i'm feeling lucky"
+	if got != want {
+		t.Fatalf("unzip output: %s, want %s", got, want)
 	}
 }
