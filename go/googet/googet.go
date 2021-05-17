@@ -57,6 +57,19 @@ func call(args []string, conf *Config) error {
 	return err
 }
 
+// AddRepo adds a googet repository to the local system.
+func AddRepo(name, url string, conf *Config) error {
+	if conf == nil {
+		conf = NewConfig()
+	}
+
+	if name == "" || url == "" {
+		return errors.New("must specify name and url")
+	}
+
+	return call([]string{"addrepo", name, url}, conf)
+}
+
 // Install installs a Googet package.
 func Install(pkg, sources string, reinstall bool, conf *Config) error {
 	if conf == nil {
