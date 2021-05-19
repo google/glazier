@@ -60,4 +60,3 @@ class Warn(BaseAction):
       raise ValidationError('Invalid args length: %s' % self._args)
     if not isinstance(self._args[0], str):
       raise ValidationError('Invalid argument type: %s' % self._args[0])
-

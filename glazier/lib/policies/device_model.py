@@ -49,7 +49,6 @@ _UNSUPPORTED_NOTICE = ("""
     """)
 
 
-
 class DeviceModel(BasePolicy):
   """Verify that the device hardware is supported."""
 

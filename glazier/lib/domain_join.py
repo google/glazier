@@ -17,7 +17,6 @@
 Methods:
   *  auto:  Auto join the domain with no user interaction.
   *  interactive: Prompt the user for domain join credentials.
-
 """
 
 import logging

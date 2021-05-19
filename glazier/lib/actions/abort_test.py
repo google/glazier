@@ -57,6 +57,5 @@ class AbortTest(absltest.TestCase):
     warn = abort.Warn(['Error Message'], None)
     warn.Validate()
 
-
 if __name__ == '__main__':
   absltest.main()

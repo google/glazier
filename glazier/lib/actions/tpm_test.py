@@ -43,6 +43,5 @@ class TpmTest(absltest.TestCase):
     b.Validate()
 
 
-
 if __name__ == '__main__':
   absltest.main()
