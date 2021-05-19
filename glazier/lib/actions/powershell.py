@@ -130,7 +130,7 @@ class PSCommand(BaseAction):
     if len(self._args) > 5:
       log = self._args[5]
 
-    # TODO: Remove once updated PowerShell is used in the image.
+    # TODO(b/155776932): Remove once updated PowerShell is used in the image.
     # PSScript (which calls powershell.exe -File) does not accept non-string
     # parameters. Instead, if the command string starts with a PowerShell
     # script, cache it's location and run the script using powershell.exe

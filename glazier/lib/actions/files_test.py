@@ -32,7 +32,7 @@ class FilesTest(absltest.TestCase):
         self.filesystem)
     files.WindowsError = Exception
 
-  # TODO: Split into separate tests.
+  # TODO(b/152894756): Split into separate tests.
   @mock.patch.object(files.execute, 'execute_binary', autospec=True)
   @mock.patch.object(files.shlex, 'split', autospec=True)
   @mock.patch.object(files.cache.Cache, 'CacheFromLine', autospec=True)
@@ -92,7 +92,7 @@ class FilesTest(absltest.TestCase):
     with self.assertRaises(files.ActionError):
       e.Run()
 
-  # TODO: Paramaterize and add cm for these tests
+  # TODO(b/152894756): Paramaterize and add cm for these tests
   # (go/python-tips/011).
   def testExecuteValidation(self):
     e = files.Execute([['cmd.exe', [0], [2], False], ['explorer.exe']], None)

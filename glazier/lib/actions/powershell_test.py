@@ -135,7 +135,7 @@ class PowershellTest(parameterized.TestCase):
     ps = powershell.PSScript([1, 2, 3, 4, 5, 6], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
 
-  # TODO : Use fail() to make an explicit assertion.
+  # TODO (b/140891452): Use fail() to make an explicit assertion.
   # (go/python-tips/006)
   def testPSScriptValidate(self):
     ps = powershell.PSScript([SCRIPT, ARGS, [0], [1337, 1338], True, False,
@@ -278,7 +278,7 @@ class PowershellTest(parameterized.TestCase):
                                True], None)
     self.assertRaises(powershell.ValidationError, ps.Validate)
 
-  # TODO : Use fail() to make an explicit assertion.
+  # TODO (b/140891452): Use fail() to make an explicit assertion.
   # (go/python-tips/006)
   def testPSCommandValidate(self):
     ps = powershell.PSCommand([COMMAND, [0], [1337, 1338], True, False, True],
