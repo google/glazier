@@ -5,8 +5,9 @@ Glazier uses YAML-based configuration files.
 
 ## Example
 
-TIP: See the [examples](../../examples/yaml/build.yaml) directory for more
-complete YAML examples.
+TIP: See the
+[examples](https://github.com/google/glazier/blob/master/examples/yaml/build.yaml)
+directory for more complete YAML examples.
 
 Below is an example of what a simple Glazier configuration could look like.
 

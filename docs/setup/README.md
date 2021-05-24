@@ -61,8 +61,10 @@ WinPE can be configured to automatically start application(s) using
 _winpeshl.exe_, with the configuration in
 [winpeshl.ini](https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/winpeshlini-reference-launching-an-app-when-winpe-starts).
 
-See [examples](../../examples/winpeshl.ini) for a winpeshl.ini file that will
-instruct WinPE to launch `autobuild.ps1` when WinPE starts.
+See
+[examples](https://github.com/google/glazier/blob/master/examples/winpeshl.ini)
+for a winpeshl.ini file that will instruct WinPE to launch `autobuild.ps1` when
+WinPE starts.
 
 TIP: For a full list of Glazier flags, execute `python autobuild.py --helpfull`.
 You'll notice a flags are distributed throughout various libraries, and are
@@ -85,11 +87,12 @@ One way to accomplish this would be to:
 
 1.  Copy a customized
     [answer file](https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/update-windows-settings-and-scripts-create-your-own-answer-file-sxs)
-    ([example](../../examples/yaml/image/unattend.xml)) that tells windows to
-    automatically login and launch Glazier.
-2.  Configure [these registry keys](../../examples/yaml/autologin/build.yaml) in
-    your task list, instructing Windows to launch Glazier on *every* subsequent
-    reboot.
+    ([example](https://github.com/google/glazier/blob/master/examples/yaml/image/unattend.xml))
+    that tells windows to automatically login and launch Glazier.
+2.  Configure
+    [these registry keys](https://github.com/google/glazier/blob/master/examples/yaml/autologin/build.yaml)
+    in your task list, instructing Windows to launch Glazier on *every*
+    subsequent reboot.
 3.  As one of the final steps in your config, reset the registry keys above to
     their respective defaults before rebooting into the completed host.
 
