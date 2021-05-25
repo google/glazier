@@ -22,26 +22,31 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/google/logger"
 	"github.com/google/glazier/go/helpers"
 )
 
 var (
 
 	// Test Helpers
-	funcExec = helpers.ExecWithVerify
+	funcExec = helpers.Exec
 )
 
 // Config provides the ability to customize GooGet behavior.
 type Config struct {
-	GooGetExe string
-	Timeout   time.Duration
+	GooGetExe  string
+	ExecConfig helpers.ExecConfig
 }
 
 // NewConfig generates a new Config object.
 func NewConfig() *Config {
+	timeout := 10 * time.Minute
 	return &Config{
 		GooGetExe: os.Getenv("GooGetRoot") + `\googet.exe`,
-		Timeout:   10 * time.Minute,
+		ExecConfig: helpers.ExecConfig{
+			Timeout:  &timeout,
+			Verifier: helpers.NewExecVerifier(),
+		},
 	}
 }
 
@@ -50,9 +55,13 @@ func call(args []string, conf *Config) error {
 		conf = NewConfig()
 	}
 
-	_, err := funcExec(conf.GooGetExe, args, &conf.Timeout, nil)
-	if err != nil && errors.Is(err, helpers.ErrTimeout) {
-		return fmt.Errorf("execution timed out after %v", conf.Timeout)
+	res, err := funcExec(conf.GooGetExe, args, &conf.ExecConfig)
+	if err != nil {
+		logger.Errorf("googet stdout: %v", string(res.Stdout))
+		logger.Errorf("googet stderr: %v", string(res.Stderr))
+		if errors.Is(err, helpers.ErrTimeout) {
+			return fmt.Errorf("execution timed out after %v", conf.ExecConfig.Timeout)
+		}
 	}
 	return err
 }
@@ -91,13 +100,12 @@ func Install(pkg, sources string, reinstall bool, conf *Config) error {
 // PackageVersion attempts to retrieve the current version
 // of the named package from the local system.
 func PackageVersion(pkg string) (string, error) {
-	timeout := 2 * time.Minute
 	conf := NewConfig()
 
-	out, err := funcExec(conf.GooGetExe, []string{"installed", pkg}, &timeout, nil)
+	out, err := funcExec(conf.GooGetExe, []string{"installed", pkg}, &conf.ExecConfig)
 	if err != nil {
 		if errors.Is(err, helpers.ErrTimeout) {
-			return "unknown", fmt.Errorf("execution timed out after %v", timeout)
+			return "unknown", fmt.Errorf("execution timed out after %v", conf.ExecConfig.Timeout)
 		}
 		return "unknown", err
 	}

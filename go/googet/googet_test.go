@@ -17,7 +17,6 @@ package googet
 import (
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/glazier/go/helpers"
@@ -48,7 +47,7 @@ func TestInstall(t *testing.T) {
 	}
 	for _, tt := range tests {
 		a := []string{}
-		funcExec = func(path string, args []string, timeout *time.Duration, v *helpers.ExecVerifier) (helpers.ExecResult, error) {
+		funcExec = func(path string, args []string, v *helpers.ExecConfig) (helpers.ExecResult, error) {
 			a = args
 			return helpers.ExecResult{}, nil
 		}
@@ -130,7 +129,7 @@ No package matching filter "missing" installed.
 		},
 	}
 	for _, tt := range tests {
-		funcExec = func(path string, args []string, timeout *time.Duration, v *helpers.ExecVerifier) (helpers.ExecResult, error) {
+		funcExec = func(path string, args []string, v *helpers.ExecConfig) (helpers.ExecResult, error) {
 			return tt.in, tt.inErr
 		}
 		o, err := PackageVersion("")
