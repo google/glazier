@@ -15,6 +15,7 @@
 """Time related helper functions."""
 
 import datetime
+from typing import Optional
 
 from absl import flags
 
@@ -24,7 +25,7 @@ flags.DEFINE_integer('default_tz_offset', 0,
                      'Default timezone offset used for time calculations.')
 
 
-def now(offset: int = None) -> datetime.datetime:
+def now(offset: Optional[int] = None) -> datetime.datetime:
   if not offset:
     offset = FLAGS.default_tz_offset
   tz = datetime.timezone(datetime.timedelta(offset))

@@ -20,7 +20,7 @@ import os
 import re
 import time
 import typing
-from typing import List
+from typing import List, Optional
 
 from glazier.lib import constants
 from glazier.lib import execute
@@ -37,7 +37,9 @@ class Error(Exception):
 class GooGetInstall(object):
   """Install an application via GooGet."""
 
-  def _AddFlags(self, flags: List[str], branch: str = None) -> List[str]:
+  def _AddFlags(self,
+                flags: List[str],
+                branch: Optional[str] = None) -> List[str]:
     r"""Add optional flags to GooGet command.
 
     Short name support:

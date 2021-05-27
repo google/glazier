@@ -51,7 +51,7 @@ class Timers(object):
     """
     return self._time_store
 
-  def Set(self, name: str, at_time: 'datetime.datetime' = None):
+  def Set(self, name: str, at_time: Optional['datetime.datetime'] = None):
     """Set a timer at a specific time.
 
     Defaults to the current time in UTC.
