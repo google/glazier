@@ -95,12 +95,15 @@ const (
 	EncryptSynchronous int32 = 0x00010000
 
 	// Error Codes
+	ERROR_IO_DEVICE        int32 = -2147023779
 	FVE_E_BOOTABLE_CDDVD   int32 = -2144272336
 	FVE_E_PROTECTOR_EXISTS int32 = -2144272335
 )
 
 func encryptErrHandler(val int32) error {
 	switch val {
+	case ERROR_IO_DEVICE:
+		return fmt.Errorf("an I/O error has occurred during encryption; the device may need to be reset")
 	case FVE_E_BOOTABLE_CDDVD:
 		return fmt.Errorf("BitLocker Drive Encryption detected bootable media (CD or DVD) in the computer. " +
 			"Remove the media and restart the computer before configuring BitLocker.")
