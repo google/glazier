@@ -1,0 +1,147 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// +build windows
+
+// Package dism provides an interface to the Deployment Image Servicing and Management (DISM).
+//
+// Reference: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/deployment-image-servicing-and-management--dism--api
+package dism
+
+import (
+	"fmt"
+	"unsafe"
+
+	"golang.org/x/sys/windows"
+)
+
+// API Constants
+// Ref https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dism-api-constants
+const (
+	DISM_ONLINE_IMAGE = "DISM_{53BFAE52-B167-4E2F-A258-0A37B57FF845}"
+
+	DISM_MOUNT_READWRITE       = 0x00000000
+	DISM_MOUNT_READONLY        = 0x00000001
+	DISM_MOUNT_OPTIMIZE        = 0x00000002
+	DISM_MOUNT_CHECK_INTEGRITY = 0x00000004
+)
+
+// DismPackageIdentifier specifies whether a package is identified by name or by file path.
+type DismPackageIdentifier uint32
+
+const (
+	// DismPackageNone indicates that no package is specified.
+	DismPackageNone DismPackageIdentifier = iota
+	// DismPackageName indicates that the package is identified by its name.
+	DismPackageName
+	// DismPackagePath indicates that the package is specified by its path.
+	DismPackagePath
+)
+
+// Session holds a dism session. You must call Close() to free up the session upon completion.
+type Session struct {
+	Handle uint32
+}
+
+// DisableFeature disables Windows Feature(s).
+//
+// To disable multiple features, separate each feature name with a semicolon.
+//
+// Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dismdisablefeature-function
+func (s Session) DisableFeature(
+	feature string,
+	optPackageName string,
+	cancelEvent *windows.Handle,
+	progressCallback unsafe.Pointer,
+) error {
+	return DismDisableFeature(s.Handle, toUint16(feature), toUint16(optPackageName), false, cancelEvent, progressCallback, nil)
+}
+
+// EnableFeature enables Windows Feature(s).
+//
+// To disable multiple features, separate each feature name with a semicolon.
+//
+// Examples, enable a feature, including all dependencies:
+//   s.EnableFeature("SMB1Protocol", "", nil, true, nil, nil)
+//
+// Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dismenablefeature-function
+func (s Session) EnableFeature(
+	feature string,
+	optIdentifier string,
+	optPackageIdentifier *DismPackageIdentifier,
+	enableAll bool,
+	cancelEvent *windows.Handle,
+	progressCallback unsafe.Pointer,
+) error {
+	return DismEnableFeature(s.Handle, toUint16(feature), toUint16(optIdentifier), optPackageIdentifier, false, nil, 0, enableAll, cancelEvent, progressCallback, nil)
+}
+
+// Close closes the session and shuts down dism. This must be called prior to exiting.
+func (s Session) Close() error {
+	if err := DismCloseSession(s.Handle); err != nil {
+		return err
+	}
+	return DismShutdown()
+}
+
+// DismLogLevel specifies the kind of information that is reported in the log file.
+// Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dismloglevel-enumeration
+type DismLogLevel uint32
+
+const (
+	// DismLogErrors logs only errors.
+	DismLogErrors DismLogLevel = 0
+	// DismLogErrorsWarnings logs errors and warnings.
+	DismLogErrorsWarnings DismLogLevel = 1
+	// DismLogErrorsWarningsInfo logs errors, warnings, and additional information.
+	DismLogErrorsWarningsInfo DismLogLevel = 2
+)
+
+func toUint16(in string) (out *uint16) {
+	if in != "" {
+		out = windows.StringToUTF16Ptr(in)
+	}
+	return
+}
+
+// OpenSession opens a DISM session. The session can be used for subsequent DISM calls.
+//
+// Don't forget to call Close() on the returned Session object.
+//
+// Example, modifying the online image:
+//		dism.OpenSession(dism.DISM_ONLINE_IMAGE, "", "", dism.DismLogErrorsWarningsInfo, "", "")
+//
+// Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/disminitialize-function
+// Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dismopensession-function
+func OpenSession(imagePath, optWindowsDir, optSystemDrive string, logLevel DismLogLevel, optLogFilePath, optScratchDir string) (Session, error) {
+	s := Session{}
+
+	if err := DismInitialize(logLevel, toUint16(optLogFilePath), toUint16(optScratchDir)); err != nil {
+		return s, fmt.Errorf("DismInitialize: %w", err)
+	}
+
+	if err := DismOpenSession(toUint16(imagePath), toUint16(optWindowsDir), toUint16(optSystemDrive), &s.Handle); err != nil {
+		return s, fmt.Errorf("DismOpenSession: %w", err)
+	}
+
+	return s, nil
+}
+
+//go:generate go run golang.org/x/sys/windows/mkwinsyscall -output zdism.go dism.go
+//sys DismCloseSession(Session uint32) (e error) = DismAPI.DismCloseSession
+//sys DismInitialize(LogLevel DismLogLevel, LogFilePath *uint16, ScratchDirectory *uint16) (e error) = DismAPI.DismInitialize
+//sys DismDisableFeature(Session uint32, FeatureName *uint16, PackageName *uint16, RemovePayload bool, CancelEvent *windows.Handle, Progress unsafe.Pointer, UserData unsafe.Pointer) (e error) = DismAPI.DismDisableFeature
+//sys DismEnableFeature(Session uint32, FeatureName *uint16, Identifier *uint16, PackageIdentifier *DismPackageIdentifier, LimitAccess bool, SourcePaths *string, SourcePathCount uint32, EnableAll bool, CancelEvent *windows.Handle, Progress unsafe.Pointer, UserData unsafe.Pointer) (e error) = DismAPI.DismEnableFeature
+//sys DismOpenSession(ImagePath *uint16, WindowsDirectory *uint16, SystemDrive *uint16, Session *uint32) (e error) = DismAPI.DismOpenSession
+//sys DismShutdown() (e error) = DismAPI.DismShutdown
