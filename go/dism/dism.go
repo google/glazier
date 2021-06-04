@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build windows
+// +build generate windows
 
 // Package dism provides an interface to the Deployment Image Servicing and Management (DISM).
 //
@@ -21,6 +21,7 @@ package dism
 
 import (
 	"fmt"
+	"unsafe"
 
 	"golang.org/x/sys/windows"
 )
@@ -53,30 +54,46 @@ type Session struct {
 	Handle uint32
 }
 
+// AddPackage adds Windows packages(s) to an image.
+//
+// Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dismaddpackage-function
+func (s Session) AddPackage(
+	packagePath string,
+	ignoreCheck bool,
+	preventPending bool,
+	cancelEvent *windows.Handle,
+	progressCallback unsafe.Pointer,
+) error {
+	return DismAddPackage(s.Handle, toUint16(packagePath), ignoreCheck, preventPending, cancelEvent, progressCallback, nil)
+}
+
 // DisableFeature disables Windows Feature(s).
 //
 // To disable multiple features, separate each feature name with a semicolon.
 //
+// May return the error windows.ERROR_SUCCESS_REBOOT_REQUIRED if a reboot is required to complete the operation.
+//
 // Example, disabling a feature:
-//   s.EnableFeature("SMB1Protocol", "", nil, true, nil, 0, 0)
+//   s.DisableFeature("SMB1Protocol", "", nil, nil)
 //
 // Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dismdisablefeature-function
 func (s Session) DisableFeature(
 	feature string,
 	optPackageName string,
 	cancelEvent *windows.Handle,
-	progressCallback uintptr,
-	userData uintptr,
+	progressCallback unsafe.Pointer,
 ) error {
-	return DismDisableFeature(s.Handle, toUint16(feature), toUint16(optPackageName), false, cancelEvent, progressCallback, userData)
+	return DismDisableFeature(s.Handle, toUint16(feature), toUint16(optPackageName), false, cancelEvent, progressCallback, nil)
 }
 
 // EnableFeature enables Windows Feature(s).
 //
-// To disable multiple features, separate each feature name with a semicolon.
+// To enable multiple features, separate each feature name with a semicolon.
+//
+// May return the error windows.ERROR_SUCCESS_REBOOT_REQUIRED if a reboot is required to complete the operation.
 //
 // Example, enabling a feature, including all dependencies:
-//   s.DisableFeature("SMB1Protocol", "", nil, 0, 0)
+//   s.EnableFeature("SMB1Protocol", "", nil, true, nil, nil)
 //
 // Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dismenablefeature-function
 func (s Session) EnableFeature(
@@ -85,10 +102,21 @@ func (s Session) EnableFeature(
 	optPackageIdentifier *DismPackageIdentifier,
 	enableAll bool,
 	cancelEvent *windows.Handle,
-	progressCallback uintptr,
-	userData uintptr,
+	progressCallback unsafe.Pointer,
 ) error {
-	return DismEnableFeature(s.Handle, toUint16(feature), toUint16(optIdentifier), optPackageIdentifier, false, nil, 0, enableAll, cancelEvent, progressCallback, userData)
+	return DismEnableFeature(s.Handle, toUint16(feature), toUint16(optIdentifier), optPackageIdentifier, false, nil, 0, enableAll, cancelEvent, progressCallback, nil)
+}
+
+// RemovePackage removes Windows packages(s) from an image.
+//
+// Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dismremovepackage-function
+func (s Session) RemovePackage(
+	identifier string,
+	packageIdentifier *DismPackageIdentifier,
+	cancelEvent *windows.Handle,
+	progressCallback unsafe.Pointer,
+) error {
+	return DismRemovePackage(s.Handle, toUint16(identifier), packageIdentifier, cancelEvent, progressCallback, nil)
 }
 
 // Close closes the session and shuts down dism. This must be called prior to exiting.
@@ -142,17 +170,17 @@ func OpenSession(imagePath, optWindowsDir, optSystemDrive string, logLevel DismL
 	return s, nil
 }
 
-//go generate go run golang.org/x/sys/windows/mkwinsyscall -output zdism.go dism.go
-//sys DismAddCapability(Session uint32, Name *uint16, LimitAccess bool, SourcePaths **uint16,  SourcePathCount uint32, CancelEvent *windows.Handle, Progress uintptr, UserData uintptr) (e error) = DismAPI.DismAddCapability
+//go:generate go run golang.org/x/sys/windows/mkwinsyscall -output zdism.go dism.go
+//sys DismAddCapability(Session uint32, Name *uint16, LimitAccess bool, SourcePaths **uint16,  SourcePathCount uint32, CancelEvent *windows.Handle, Progress unsafe.Pointer, UserData unsafe.Pointer) (e error) = DismAPI.DismAddCapability
 //sys DismAddDriver(Session uint32, DriverPath *uint16, ForceUnsigned bool) (e error) = DismAPI.DismAddDriver
-//sys DismAddPackage(Session uint32, PackagePath *uint16, IgnoreCheck bool, PreventPending bool, CancelEvent *windows.Handle, Progress uintptr, UserData uintptr) (e error) = DismAPI.DismAddPackage
+//sys DismAddPackage(Session uint32, PackagePath *uint16, IgnoreCheck bool, PreventPending bool, CancelEvent *windows.Handle, Progress unsafe.Pointer, UserData unsafe.Pointer) (e error) = DismAPI.DismAddPackage
 //sys DismApplyUnattend(Session uint32, UnattendFile *uint16, SingleSession bool) (e error) = DismAPI.DismApplyUnattend
 //sys DismCloseSession(Session uint32) (e error) = DismAPI.DismCloseSession
 //sys DismInitialize(LogLevel DismLogLevel, LogFilePath *uint16, ScratchDirectory *uint16) (e error) = DismAPI.DismInitialize
-//sys DismDisableFeature(Session uint32, FeatureName *uint16, PackageName *uint16, RemovePayload bool, CancelEvent *windows.Handle, Progress uintptr, UserData uintptr) (e error) = DismAPI.DismDisableFeature
-//sys DismEnableFeature(Session uint32, FeatureName *uint16, Identifier *uint16, PackageIdentifier *DismPackageIdentifier, LimitAccess bool, SourcePaths *string, SourcePathCount uint32, EnableAll bool, CancelEvent *windows.Handle, Progress uintptr, UserData uintptr) (e error) = DismAPI.DismEnableFeature
+//sys DismDisableFeature(Session uint32, FeatureName *uint16, PackageName *uint16, RemovePayload bool, CancelEvent *windows.Handle, Progress unsafe.Pointer, UserData unsafe.Pointer) (e error) = DismAPI.DismDisableFeature
+//sys DismEnableFeature(Session uint32, FeatureName *uint16, Identifier *uint16, PackageIdentifier *DismPackageIdentifier, LimitAccess bool, SourcePaths *string, SourcePathCount uint32, EnableAll bool, CancelEvent *windows.Handle, Progress unsafe.Pointer, UserData unsafe.Pointer) (e error) = DismAPI.DismEnableFeature
 //sys DismOpenSession(ImagePath *uint16, WindowsDirectory *uint16, SystemDrive *uint16, Session *uint32) (e error) = DismAPI.DismOpenSession
-//sys DismRemoveCapability(Session uint32, Name *uint16, CancelEvent *windows.Handle, Progress uintptr, UserData uintptr) (e error) = DismAPI.DismRemoveCapability
+//sys DismRemoveCapability(Session uint32, Name *uint16, CancelEvent *windows.Handle, Progress unsafe.Pointer, UserData unsafe.Pointer) (e error) = DismAPI.DismRemoveCapability
 //sys DismRemoveDriver(Session uint32, DriverPath *uint16) (e error) = DismAPI.DismRemoveDriver
-//sys DismRemovePackage(Session uint32, Identifier *uint16, PackageIdentifier *DismPackageIdentifier, CancelEvent *windows.Handle, Progress uintptr, UserData uintptr) (e error) = DismAPI.DismRemovePackage
+//sys DismRemovePackage(Session uint32, Identifier *uint16, PackageIdentifier *DismPackageIdentifier, CancelEvent *windows.Handle, Progress unsafe.Pointer, UserData unsafe.Pointer) (e error) = DismAPI.DismRemovePackage
 //sys DismShutdown() (e error) = DismAPI.DismShutdown

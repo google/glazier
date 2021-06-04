@@ -71,7 +71,7 @@ var (
 	procDismShutdown         = modDismAPI.NewProc("DismShutdown")
 )
 
-func DismAddCapability(Session uint32, Name *uint16, LimitAccess bool, SourcePaths **uint16, SourcePathCount uint32, CancelEvent *windows.Handle, Progress uintptr, UserData uintptr) (e error) {
+func DismAddCapability(Session uint32, Name *uint16, LimitAccess bool, SourcePaths **uint16, SourcePathCount uint32, CancelEvent *windows.Handle, Progress unsafe.Pointer, UserData unsafe.Pointer) (e error) {
 	var _p0 uint32
 	if LimitAccess {
 		_p0 = 1
@@ -95,7 +95,7 @@ func DismAddDriver(Session uint32, DriverPath *uint16, ForceUnsigned bool) (e er
 	return
 }
 
-func DismAddPackage(Session uint32, PackagePath *uint16, IgnoreCheck bool, PreventPending bool, CancelEvent *windows.Handle, Progress uintptr, UserData uintptr) (e error) {
+func DismAddPackage(Session uint32, PackagePath *uint16, IgnoreCheck bool, PreventPending bool, CancelEvent *windows.Handle, Progress unsafe.Pointer, UserData unsafe.Pointer) (e error) {
 	var _p0 uint32
 	if IgnoreCheck {
 		_p0 = 1
@@ -131,7 +131,7 @@ func DismCloseSession(Session uint32) (e error) {
 	return
 }
 
-func DismDisableFeature(Session uint32, FeatureName *uint16, PackageName *uint16, RemovePayload bool, CancelEvent *windows.Handle, Progress uintptr, UserData uintptr) (e error) {
+func DismDisableFeature(Session uint32, FeatureName *uint16, PackageName *uint16, RemovePayload bool, CancelEvent *windows.Handle, Progress unsafe.Pointer, UserData unsafe.Pointer) (e error) {
 	var _p0 uint32
 	if RemovePayload {
 		_p0 = 1
@@ -143,7 +143,7 @@ func DismDisableFeature(Session uint32, FeatureName *uint16, PackageName *uint16
 	return
 }
 
-func DismEnableFeature(Session uint32, FeatureName *uint16, Identifier *uint16, PackageIdentifier *DismPackageIdentifier, LimitAccess bool, SourcePaths *string, SourcePathCount uint32, EnableAll bool, CancelEvent *windows.Handle, Progress uintptr, UserData uintptr) (e error) {
+func DismEnableFeature(Session uint32, FeatureName *uint16, Identifier *uint16, PackageIdentifier *DismPackageIdentifier, LimitAccess bool, SourcePaths *string, SourcePathCount uint32, EnableAll bool, CancelEvent *windows.Handle, Progress unsafe.Pointer, UserData unsafe.Pointer) (e error) {
 	var _p0 uint32
 	if LimitAccess {
 		_p0 = 1
@@ -175,7 +175,7 @@ func DismOpenSession(ImagePath *uint16, WindowsDirectory *uint16, SystemDrive *u
 	return
 }
 
-func DismRemoveCapability(Session uint32, Name *uint16, CancelEvent *windows.Handle, Progress uintptr, UserData uintptr) (e error) {
+func DismRemoveCapability(Session uint32, Name *uint16, CancelEvent *windows.Handle, Progress unsafe.Pointer, UserData unsafe.Pointer) (e error) {
 	r0, _, _ := syscall.Syscall6(procDismRemoveCapability.Addr(), 5, uintptr(Session), uintptr(unsafe.Pointer(Name)), uintptr(unsafe.Pointer(CancelEvent)), uintptr(Progress), uintptr(UserData), 0)
 	if r0 != 0 {
 		e = syscall.Errno(r0)
@@ -191,7 +191,7 @@ func DismRemoveDriver(Session uint32, DriverPath *uint16) (e error) {
 	return
 }
 
-func DismRemovePackage(Session uint32, Identifier *uint16, PackageIdentifier *DismPackageIdentifier, CancelEvent *windows.Handle, Progress uintptr, UserData uintptr) (e error) {
+func DismRemovePackage(Session uint32, Identifier *uint16, PackageIdentifier *DismPackageIdentifier, CancelEvent *windows.Handle, Progress unsafe.Pointer, UserData unsafe.Pointer) (e error) {
 	r0, _, _ := syscall.Syscall6(procDismRemovePackage.Addr(), 6, uintptr(Session), uintptr(unsafe.Pointer(Identifier)), uintptr(unsafe.Pointer(PackageIdentifier)), uintptr(unsafe.Pointer(CancelEvent)), uintptr(Progress), uintptr(UserData))
 	if r0 != 0 {
 		e = syscall.Errno(r0)
