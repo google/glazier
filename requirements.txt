@@ -5,4 +5,5 @@ pyfakefs
 PyYAML
 requests
 six
+pywin32
 git+git://github.com/google/winops@master#egg=gwinpy
