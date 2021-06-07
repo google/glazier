@@ -22,7 +22,7 @@ import (
 	"github.com/google/logger"
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
-	"github.com/iamacarpet/go-win64api"
+	"github.com/iamacarpet/go-win64api/winapi"
 )
 
 var (

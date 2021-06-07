@@ -32,7 +32,7 @@ import (
 	"golang.org/x/sys/windows/svc/mgr"
 	"golang.org/x/sys/windows/svc"
 	"github.com/google/logger"
-	"github.com/iamacarpet/go-win64api"
+	"github.com/iamacarpet/go-win64api/winapi"
 )
 
 // ExecResult holds the output from a subprocess execution.
