@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	so "github.com/iamacarpet/go-win64api/shared"
+	so "github.com/lxn/win64api/shared"
 )
 
 func TestVerify(t *testing.T) {

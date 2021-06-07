@@ -19,7 +19,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	so "github.com/iamacarpet/go-win64api/shared"
+	so "github.com/lxn/win64api/shared"
 )
 
 func TestBackupToAD(t *testing.T) {
