@@ -254,6 +254,18 @@ class BuildInfoTest(absltest.TestCase):
     self.assertFalse(self.buildinfo.BuildPinMatch('USER_locale', []))
     self.assertFalse(self.buildinfo.BuildPinMatch('USER_missing', ['na']))
 
+  @flagsaver.flagsaver
+  def testImageTypeFFU(self):
+    FLAGS.glazier_spec = 'flag'
+    FLAGS.glazier_spec_image_type = 'FFU'
+    self.assertEqual(self.buildinfo.ImageType(), 'ffu')
+
+  @flagsaver.flagsaver
+  def testImageTypeUnknown(self):
+    FLAGS.glazier_spec = 'flag'
+    FLAGS.glazier_spec_image_type = ''
+    self.assertEqual(self.buildinfo.ImageType(), 'unknown')
+
   @mock.patch.object(buildinfo.registry, 'get_values', autospec=True)
   def testInstalledSoftware(self, mock_software):
     mock_software.return_value = ['Mozilla FireFox',

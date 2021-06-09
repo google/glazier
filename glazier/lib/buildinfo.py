@@ -266,6 +266,7 @@ class BuildInfo(object):
         'beyond_corp': self.BeyondCorp,
         'lab': self.Lab,
         'is_installed': self.InstalledSoftware,
+        'image_type': self.ImageType,
     }
 
   @functools.lru_cache()
@@ -420,6 +421,14 @@ class BuildInfo(object):
     if not self._hw_info:
       self._hw_info = hw_info.HWInfo()
     return self._hw_info
+
+  @functools.lru_cache()
+  def ImageType(self) -> str:
+    """ImageType returns a string based on the image_type spec setting."""
+    t = spec.GetModule().GetImageType()
+    return {
+        'ffu': 'ffu',
+    }.get(t.lower(), 'unknown')
 
   @functools.lru_cache()
   def IsLaptop(self) -> bool:
