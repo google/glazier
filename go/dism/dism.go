@@ -54,6 +54,24 @@ type Session struct {
 	Handle uint32
 }
 
+// AddCapability adds a Windows capability from an image.
+//
+// Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dismaddcapability
+func (s Session) AddCapability(
+	name string,
+	limitAccess bool,
+	sourcePaths string,
+	sourcePathsCount uint32,
+	cancelEvent *windows.Handle,
+	progressCallback unsafe.Pointer,
+) error {
+	var sp **uint16
+	if p := toUint16(sourcePaths); p != nil {
+		sp = &p
+	}
+	return DismAddCapability(s.Handle, toUint16(name), limitAccess, sp, sourcePathsCount, cancelEvent, progressCallback, nil)
+}
+
 // AddPackage adds Windows packages(s) to an image.
 //
 // Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dismaddpackage-function
@@ -105,6 +123,17 @@ func (s Session) EnableFeature(
 	progressCallback unsafe.Pointer,
 ) error {
 	return DismEnableFeature(s.Handle, toUint16(feature), toUint16(optIdentifier), optPackageIdentifier, false, nil, 0, enableAll, cancelEvent, progressCallback, nil)
+}
+
+// RemoveCapability removes a Windows capability from an image.
+//
+// Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dismremovecapability
+func (s Session) RemoveCapability(
+	name string,
+	cancelEvent *windows.Handle,
+	progressCallback unsafe.Pointer,
+) error {
+	return DismRemoveCapability(s.Handle, toUint16(name), cancelEvent, progressCallback, nil)
 }
 
 // RemovePackage removes Windows packages(s) from an image.
