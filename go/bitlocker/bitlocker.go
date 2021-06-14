@@ -145,16 +145,16 @@ func EncryptWithTPM(driveLetter string, method int32, flags int32) error {
 	ole.VariantInit(&volumeKeyProtectorID)
 	resultRaw, err := oleutil.CallMethod(item, "ProtectKeyWithTPM", nil, nil, &volumeKeyProtectorID)
 	if err != nil {
-		return fmt.Errorf("error calling ProtectKeyWithTPM(%s): %w", driveLetter, err)
+		return fmt.Errorf("ProtectKeyWithTPM(%s): %w", driveLetter, err)
 	} else if val, ok := resultRaw.Value().(int32); val != 0 || !ok {
-		return encryptErrHandler(val)
+		return fmt.Errorf("ProtectKeyWithTPM(%s): %w", driveLetter, encryptErrHandler(val))
 	}
 
 	resultRaw, err = oleutil.CallMethod(item, "Encrypt", method, flags)
 	if err != nil {
-		return fmt.Errorf("error calling Encrypt(%s): %w", driveLetter, err)
+		return fmt.Errorf("Encrypt(%s): %w", driveLetter, err)
 	} else if val, ok := resultRaw.Value().(int32); val != 0 || !ok {
-		return encryptErrHandler(val)
+		return fmt.Errorf("Encrypt(%s): %w", driveLetter, encryptErrHandler(val))
 	}
 	return nil
 }
