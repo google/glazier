@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/google/logger"
@@ -27,7 +28,6 @@ import (
 )
 
 var (
-
 	// Test Helpers
 	funcExec = helpers.Exec
 )
@@ -95,6 +95,44 @@ func Install(pkg, sources string, reinstall bool, conf *Config) error {
 	cmd = append(cmd, pkg)
 
 	return call(cmd, conf)
+}
+
+// Package represents a GooGet package.
+type Package struct {
+	Name    string
+	Version string
+}
+
+// Installed lists installed package(s).
+func Installed(initial string, conf *Config) ([]Package, error) {
+	if conf == nil {
+		conf = NewConfig()
+	}
+
+	p := []Package{}
+	args := []string{"installed", initial}
+	res, err := funcExec(conf.GooGetExe, args, &conf.ExecConfig)
+	if err != nil {
+		return p, err
+	}
+	lines := strings.Split(string(res.Stdout), "\n")
+	for i, r := range lines {
+		r = strings.TrimSpace(r)
+		if i == 0 || r == "" {
+			continue
+		}
+		dat := strings.Fields(r)
+		if len(dat) < 2 {
+			logger.Errorf("unable to parse googet output %v", r)
+			continue
+		}
+		p = append(p, Package{
+			Name:    dat[0],
+			Version: dat[1],
+		})
+	}
+
+	return p, nil
 }
 
 // PackageVersion attempts to retrieve the current version
