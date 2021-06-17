@@ -90,6 +90,44 @@ func TaskExists(name string) (bool, error) {
 	return taskMatcher(name, tasks), nil
 }
 
+// Create attempts to create a scheduled task.
+//
+// Set common defaults for name and user to reduce the amount of required args.
+func Create(id, path, args, name, user string, trigger taskmaster.Trigger) error {
+	svc, err := taskmaster.Connect()
+	if err != nil {
+		return fmt.Errorf("taskmaster.Connect: %w", err)
+	}
+	defer svc.Disconnect()
+
+	def := svc.NewTaskDefinition()
+	def.AddAction(taskmaster.ExecAction{
+		ID:   id,
+		Path: path,
+		Args: args,
+	})
+	def.Principal.RunLevel = taskmaster.TASK_RUNLEVEL_HIGHEST
+	if user == "" {
+		user = "SYSTEM"
+	}
+	def.Principal.UserID = user
+	def.AddTrigger(trigger)
+
+	if name == "" {
+		name = id
+	}
+	task, ok, err := svc.CreateTask(`\`+name, def, true)
+	if err != nil {
+		return fmt.Errorf("svc.CreateTask: %w", err)
+	}
+	if !ok {
+		return errors.New("unable to register task")
+	}
+	task.Release()
+
+	return nil
+}
+
 // Delete attempts to delete a scheduled task.
 func Delete(name string) error {
 	svc, err := taskmaster.Connect()
