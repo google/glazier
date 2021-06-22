@@ -93,6 +93,15 @@ func TaskExists(name string) (bool, error) {
 // Create attempts to create a scheduled task.
 //
 // Set common defaults for name and user to reduce the amount of required args.
+//
+// Example taskmaster.Trigger that creates a new task on startup with a two minute delay:
+// taskmaster.BootTrigger{
+//   TaskTrigger: taskmaster.TaskTrigger{
+// 		 Enabled: true,
+// 		 ID:      "startup",
+// 	 },
+// 	 Delay: period.NewHMS(0, 2, 0),
+// },
 func Create(id, path, args, name, user string, trigger taskmaster.Trigger) error {
 	svc, err := taskmaster.Connect()
 	if err != nil {
