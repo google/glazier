@@ -359,11 +359,11 @@ func stopService(s *mgr.Service) error {
 	}
 	retry := 0
 	for stat.State != svc.Stopped {
-		logger.Infof("Waiting for service to stop.")
+		logger.Infof("Waiting for service %q to stop.", s.Name)
 		time.Sleep(5 * time.Second)
 		retry++
 		if retry > 12 {
-			return fmt.Errorf("timed out waiting for service to stop")
+			return fmt.Errorf("timed out waiting for service %q to stop", s.Name)
 		}
 		stat, err = s.Query()
 		if err != nil {
