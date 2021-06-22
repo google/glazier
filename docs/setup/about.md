@@ -239,8 +239,8 @@ configuration files.
 ### Other Languages
 
 Administrators may prefer to implement some parts of the imaging process in
-other languages, such as PowerShell, Batch, Go, etc. This is
-perfectly fine, fully supported, and in some cases even recommended.
+other languages, such as PowerShell, Batch, Go, etc. This is perfectly fine,
+fully supported, and in some cases even recommended.
 
 As described above, Glazier's Autobuild tool is essentially a command executor.
 It works great out of the box with companion scripts or executables and can

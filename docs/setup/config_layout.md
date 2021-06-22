@@ -59,11 +59,13 @@ load the config from the *testing_branch/* directory.
 
 Example `version-info.yaml`:
 
-    versions:
-      windows7: 'stable_branch'
-      windows7-qa: 'testing_branch'
-      windows10: 'stable_branch'
-      windows10-qa: 'testing_branch'
+```
+versions:
+  windows7: 'stable_branch'
+  windows7-qa: 'testing_branch'
+  windows10: 'stable_branch'
+  windows10-qa: 'testing_branch'
+```
 
 ### branch/release-id.yaml
 
@@ -74,7 +76,9 @@ to the registry and logs for later inspection.
 
 Example `release-id.yaml`:
 
-        release_id: 1.2.3.4
+```
+    release_id: 1.2.3.4
+```
 
 ### branch/release-info.yaml
 
@@ -86,25 +90,27 @@ being required.
 
 Example `release-info.yaml`:
 
-    supported_models:
-      tier1:
-        [
-          Windows Tier 1 Device,
-          Another Tier 1 Device
-        ]
-      tier2:
-        [
-          Windows Tier 2 Device,  # Testing
-        ]
-    os_codes:
-      windows7-qa:
-        code: win7
-      windows7-stable:
-        code: win7
-      windows10-qa:
-        code: win10
-      windows10-stable:
-        code: win10
+```
+supported_models:
+  tier1:
+    [
+      Windows Tier 1 Device,
+      Another Tier 1 Device
+    ]
+  tier2:
+    [
+      Windows Tier 2 Device,  # Testing
+    ]
+os_codes:
+  windows7-qa:
+    code: win7
+  windows7-stable:
+    code: win7
+  windows10-qa:
+    code: win10
+  windows10-stable:
+    code: win10
+```
 
 #### supported_models
 
@@ -128,10 +134,12 @@ Glazier to attempt to process the Windows 7 configuration in both cases. Rather
 than having to apply both names, we generalize both to the code name *win7*. In
 the config files, we can then do this:
 
-      - pin:
-          'os_code': ['win7']
-        Execute:
-          - [some_installer.exe]
+```
+  - pin:
+      'os_code': ['win7']
+    Execute:
+      - [some_installer.exe]
+```
 
 Both branches QA and stable will then treat this command as belonging to the
 Windows 7 install.

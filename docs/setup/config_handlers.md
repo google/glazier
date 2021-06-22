@@ -78,5 +78,7 @@ able to act on any results that were obtained.
 An action can be identified as realtime by setting the internal \_realtime
 property to true in the action's setup routine.
 
-    def _Setup(self):
-      self._realtime = True
+```
+def _Setup(self):
+  self._realtime = True
+```

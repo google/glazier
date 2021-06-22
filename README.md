@@ -1,12 +1,14 @@
 # Glazier
 
-| Support | Python Tests | Go Tests | Contributing | Open Issues | License |
-| ------- | -------- | ------------ | ------------ | ----------- | ------- |
-[![Google Groups - Glazier](https://img.shields.io/badge/Support-Google%20Groups-blue)](https://groups.google.com/forum/#!forum/glazier-discuss) | [![Python Tests](https://github.com/google/glazier/workflows/Python%20Tests/badge.svg)](https://github.com/google/glazier/actions?query=workflow%3A%22Python+Tests%22) | [![Go Tests](https://github.com/google/glazier/workflows/Go%20Tests/badge.svg)](https://github.com/google/glazier/actions?query=workflow%3A%22Go+Tests%22)   | [![Contributing](https://img.shields.io/badge/Contributions-Closed-red)](https://github.com/google/glazier/blob/master/CONTRIBUTING.md) | [![Open Issues](https://img.shields.io/github/issues/google/glazier)](https://github.com/google/glazier/issues) | [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://github.com/google/glazier/blob/master/LICENSE)
+Support                                                                                                                                          | Python Tests                                                                                                                                                           | Go Tests                                                                                                                                                   | Contributing                                                                                                                            | Open Issues                                                                                                     | License
+------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | -------
+[![Google Groups - Glazier](https://img.shields.io/badge/Support-Google%20Groups-blue)](https://groups.google.com/forum/#!forum/glazier-discuss) | [![Python Tests](https://github.com/google/glazier/workflows/Python%20Tests/badge.svg)](https://github.com/google/glazier/actions?query=workflow%3A%22Python+Tests%22) | [![Go Tests](https://github.com/google/glazier/workflows/Go%20Tests/badge.svg)](https://github.com/google/glazier/actions?query=workflow%3A%22Go+Tests%22) | [![Contributing](https://img.shields.io/badge/Contributions-Closed-red)](https://github.com/google/glazier/blob/master/CONTRIBUTING.md) | [![Open Issues](https://img.shields.io/github/issues/google/glazier)](https://github.com/google/glazier/issues) | [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://github.com/google/glazier/blob/master/LICENSE)
 
-[Gla·zier](https://en.wikipedia.org/wiki/Glazier) /ˈɡlāZHər/ *noun*: a person who installs windows.
+[Gla·zier](https://en.wikipedia.org/wiki/Glazier) /ˈɡlāZHər/ *noun*: a person
+who installs windows.
 
-Glazier is a tool developed at Google for automating Windows operating system deployments.
+Glazier is a tool developed at Google for automating Windows operating system
+deployments.
 
 ### How it works
 
@@ -15,7 +17,8 @@ Glazier is a tool developed at Google for automating Windows operating system de
 *   Applies a base operating system
 *   Installs applications and configurations to said operating system
 
-Want to dive right in? See [our docs site](https://google.github.io/glazier) for how you can get started with Glazier.
+Want to dive right in? See [our docs site](https://google.github.io/glazier) for
+how you can get started with Glazier.
 
 ## Why Glazier?
 
@@ -52,12 +55,13 @@ Glazier makes it simple to extend the installer by writing a bit of Python or
 PowerShell code. See creating new actions under docs to get started.
 
 Glazier's Actions are the core of the system's configuration language. Glazier
-ships with some [existing actions](https://google.github.io/glazier/actions), but for more
-custom functionality, you can also create your own.
+ships with some [existing actions](https://google.github.io/glazier/actions),
+but for more custom functionality, you can also create your own.
 
 ## Getting started
 
-See our [setup docs](https://google.github.io/glazier/setup) to learn about how you can get started with Glazier in your own environment.
+See our [setup docs](https://google.github.io/glazier/setup) to learn about how
+you can get started with Glazier in your own environment.
 
 ## Contact
 
@@ -65,11 +69,14 @@ We'd love to hear from you! If you have any questions or suggestions regarding
 the documentation below, please make a post in our public discussion list at
 [glazier-discuss@googlegroups.com](https://groups.google.com/forum/#!forum/glazier-discuss).
 
-If you have any general questions for the Windows Team at Google that wrote Glazier, please make a post in our public discussion list at
+If you have any general questions for the Windows Team at Google that wrote
+Glazier, please make a post in our public discussion list at
 [google-winops@googlegroups.com](https://groups.google.com/forum/#!forum/google-winops).
 
 ## Disclaimer
 
-Glazier is maintained by a small team at Google. Support for this repo is treated as best effort, and issues will be responded to as engineering time permits.
+Glazier is maintained by a small team at Google. Support for this repo is
+treated as best effort, and issues will be responded to as engineering time
+permits.
 
 This is not an official Google product.

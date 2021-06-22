@@ -70,9 +70,9 @@ Change the active Glazier config server at runtime.
 
 ChangeServer is a unique action in the sense that it alters the behavior of the
 configuration builder in real time. This action must come (logically) last in
-the input config; once reached, the config builder effectively restarts immediately
-with the new server address and root. No subsequent tasks in the original
-location will be handled.
+the input config; once reached, the config builder effectively restarts
+immediately with the new server address and root. No subsequent tasks in the
+original location will be handled.
 
 #### ChangeServer Arguments
 
@@ -82,7 +82,9 @@ location will be handled.
 
 #### Examples
 
-    ChangeServer: ['https://new-server.example.com', '/new/config/path']
+```
+ChangeServer: ['https://new-server.example.com', '/new/config/path']
+```
 
 ### CopyDir
 
@@ -97,8 +99,10 @@ Copy directories from source to destination.
 
 #### Examples
 
-    CopyDir: ['X:\Glazier', 'C:\Glazier\Old']
-    CopyDir: ['X:\Glazier', 'C:\Glazier\Old', true]
+```
+CopyDir: ['X:\Glazier', 'C:\Glazier\Old']
+CopyDir: ['X:\Glazier', 'C:\Glazier\Old', true]
+```
 
 ### CopyFile/MultiCopyFile
 
@@ -125,11 +129,13 @@ Also available as MultiCopyFile for copying larger sets of files.
 
 #### Examples
 
-    CopyFile: ['X:\glazier.log', 'C:\Windows\Logs\glazier.log']
+```
+CopyFile: ['X:\glazier.log', 'C:\Windows\Logs\glazier.log']
 
-    MultiCopyFile:
-      - ['X:\glazier-applyimg.log', 'C:\Windows\Logs\glazier-applyimg.log']
-      - ['X:\glazier.log', 'C:\Windows\Logs\glazier.log']
+MultiCopyFile:
+  - ['X:\glazier-applyimg.log', 'C:\Windows\Logs\glazier-applyimg.log']
+  - ['X:\glazier.log', 'C:\Windows\Logs\glazier.log']
+```
 
 ### DomainJoin
 
@@ -146,8 +152,10 @@ OS.)
 
 #### Example
 
-    DomainJoin: ['interactive', 'domain.example.com']
-    DomainJoin: ['auto', 'domain.example.com', 'OU=Servers,DC=DOMAIN,DC=EXAMPLE,DC=COM']
+```
+DomainJoin: ['interactive', 'domain.example.com']
+DomainJoin: ['auto', 'domain.example.com', 'OU=Servers,DC=DOMAIN,DC=EXAMPLE,DC=COM']
+```
 
 ### Driver
 
@@ -157,9 +165,11 @@ unmounts wim.
 
 #### Example
 
-    Driver: ['@/Driver/HP/z840/win10/20160909/z840.wim',
-             'C:\Glazier_Cache\z840.wim',
-             'cd8f4222a9ba4c4493d8df208fe38cdad969514512d6f5dfd0f7cc7e1ea2c782']
+```
+Driver: ['@/Driver/HP/z840/win10/20160909/z840.wim',
+         'C:\Glazier_Cache\z840.wim',
+         'cd8f4222a9ba4c4493d8df208fe38cdad969514512d6f5dfd0f7cc7e1ea2c782']
+```
 
 ### Execute
 
@@ -187,16 +197,18 @@ program executions occurring as part of a typical imaging process.
 
 #### Examples
 
-    Execute: [
-      # Using defaults.
-      ['C:\Windows\System32\netsh.exe interface teredo set state disabled'],
-      # 0 or 1 are successful exit codes, 3010 will trigger a restart.
-      ['C:\Windows\System32\msiexec.exe /i @Drivers/HP/zbook/HP_Hotkey_Support_6_2_20_8.msi /qn /norestart', [0,1], [3010]],
-      # 0 is a successful exit code, 2 will trigger a restart, and True will rerun the command after the restart.
-      ['C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #secureboot.ps1', [0], [2], True]
-      # 0 is a successful exit code, 2 will trigger a restart, and True will ONLY log output to console.
-      ['C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #secureboot.ps1', [0], [2], False. True]
-    ]
+```
+Execute: [
+  # Using defaults.
+  ['C:\Windows\System32\netsh.exe interface teredo set state disabled'],
+  # 0 or 1 are successful exit codes, 3010 will trigger a restart.
+  ['C:\Windows\System32\msiexec.exe /i @Drivers/HP/zbook/HP_Hotkey_Support_6_2_20_8.msi /qn /norestart', [0,1], [3010]],
+  # 0 is a successful exit code, 2 will trigger a restart, and True will rerun the command after the restart.
+  ['C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #secureboot.ps1', [0], [2], True]
+  # 0 is a successful exit code, 2 will trigger a restart, and True will ONLY log output to console.
+  ['C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #secureboot.ps1', [0], [2], False. True]
+]
+```
 
 ### ExitWinPE
 
@@ -231,8 +243,10 @@ To use checksum verification, add the computed SHA256 hash as a third argument
 to the list. This argument is optional, and being absent or null bypasses
 verification.
 
-    Get:
-        - ['windows10.wim', 'c:\base.wim', '4b5b6bf0e59dadb4663ad9b4110bf0794ba24c344291f30d47467d177feb4776']
+```
+Get:
+    - ['windows10.wim', 'c:\base.wim', '4b5b6bf0e59dadb4663ad9b4110bf0794ba24c344291f30d47467d177feb4776']
+```
 
 #### Arguments
 
@@ -246,9 +260,11 @@ verification.
 
 #### Examples
 
-    Get:
-        - ['win2008-x64-se.wim', 'c:\base.wim']
-        - ['win2008-x64-se.wim.sha256', 'c:\base.wim.sha256']
+```
+Get:
+    - ['win2008-x64-se.wim', 'c:\base.wim']
+    - ['win2008-x64-se.wim.sha256', 'c:\base.wim.sha256']
+```
 
 ### GooGetInstall
 
@@ -310,7 +326,9 @@ share.
 
 #### Examples
 
-    LogCopy: ['C:\Windows\Logs\glazier.log', '\\shares.example.com\logs-share']
+```
+LogCopy: ['C:\Windows\Logs\glazier.log', '\\shares.example.com\logs-share']
+```
 
 ### MkDir
 
@@ -323,7 +341,9 @@ Make a directory.
 
 #### Examples
 
-    MkDir: ['C:\Glazier_Cache']
+```
+MkDir: ['C:\Glazier_Cache']
+```
 
 ### PSCommand/MultiPSCommand
 
@@ -334,23 +354,23 @@ Run a PowerShell command.
 *   Format: List
     *   Arg1[str]: The PowerShell command to be run.
     *   Arg2[list]: One or more integers indicating successful exit codes.
-          *   Default: [0]
+        *   Default: [0]
     *   Arg3[list]: One or more integers indicating a reboot is required.
         *   Default: []
-    *   Arg4[bool]: Rerun after a reboot occurs. A reboot code must be
-        provided and returned by the execution.
-          *   Default: False
+    *   Arg4[bool]: Rerun after a reboot occurs. A reboot code must be provided
+        and returned by the execution.
+        *   Default: False
     *   Arg5[bool]: Log console output ONLY to the shell. Ignores log=True.
         *   Default: False
     *   Arg6[bool]: Log messages to Python stdout. Only valid if shell=False.
-          *   Default: True
+        *   Default: True
 
 #### MultiPSCommand Arguments
 
-*    Format: List of Lists
-     *  Arg1[List]: First [PSCommand Argument](#pscommand-arguments) list.
-     *  Arg2[List]: Second [PSCommand Argument](#pscommand-arguments) list.
-     *  ...
+*   Format: List of Lists
+    *   Arg1[List]: First [PSCommand Argument](#pscommand-arguments) list.
+    *   Arg2[List]: Second [PSCommand Argument](#pscommand-arguments) list.
+    *   ...
 
 #### Examples
 
@@ -386,28 +406,27 @@ Run a PowerShell script file using the local PowerShell interpreter.
 #### PSScript Arguments
 
 *   Format: List
-      *   Arg1[str]: The script file name or path to be run..
-      *   Arg2[list]: A list of strings to be passed to the script as parameters.
-          * Default: []
-      *   Arg3[list]: One or more integers indicating successful exit codes.
-          *   Default: [0]
-      *   Arg4[list]: One or more integers indicating a reboot is required.
-          *   Default: []
-      *   Arg5[bool]: Rerun after a reboot occurs. A reboot code must be
-          provided and returned by the execution.
-          *   Default: False
-      *   Arg6[bool]: Log console output ONLY to the shell. Ignores log=True.
-          *   Default: False
-      *   Arg7[bool]: Log messages to Python stdout. Only valid if shell=False.
-          *   Default: True
-
+    *   Arg1[str]: The script file name or path to be run..
+    *   Arg2[list]: A list of strings to be passed to the script as parameters.
+        *   Default: []
+    *   Arg3[list]: One or more integers indicating successful exit codes.
+        *   Default: [0]
+    *   Arg4[list]: One or more integers indicating a reboot is required.
+        *   Default: []
+    *   Arg5[bool]: Rerun after a reboot occurs. A reboot code must be provided
+        and returned by the execution.
+        *   Default: False
+    *   Arg6[bool]: Log console output ONLY to the shell. Ignores log=True.
+        *   Default: False
+    *   Arg7[bool]: Log messages to Python stdout. Only valid if shell=False.
+        *   Default: True
 
 #### MultiPSScript Arguments
 
-*    Format: List of Lists
-     *  Arg1[List]: First [PSScript argument](#psscript-arguments) list.
-     *  Arg2[List]: Second [PSScript argument](#psscript-arguments) list.
-     *  ...
+*   Format: List of Lists
+    *   Arg1[List]: First [PSScript argument](#psscript-arguments) list.
+    *   Arg2[List]: Second [PSScript argument](#psscript-arguments) list.
+    *   ...
 
 #### Examples
 
@@ -470,11 +489,13 @@ Also available as MultiRegAdd for creating larger sets of registry keys.
 
 #### Examples
 
-    RegAdd: ['HKLM', 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform', 'KeyManagementServiceName', 'kms.example.com', 'REG_SZ']
+```
+RegAdd: ['HKLM', 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform', 'KeyManagementServiceName', 'kms.example.com', 'REG_SZ']
 
-    MultiRegAdd:
-      - ['HKLM', 'SOFTWARE\Policies\Microsoft\WindowsStore', 'RemoveWindowsStore', 1, 'REG_DWORD']
-      - ['HKLM', 'SOFTWARE\Policies\Microsoft\Windows\Windows Search', 'AllowCortana', 0, 'REG_DWORD']
+MultiRegAdd:
+  - ['HKLM', 'SOFTWARE\Policies\Microsoft\WindowsStore', 'RemoveWindowsStore', 1, 'REG_DWORD']
+  - ['HKLM', 'SOFTWARE\Policies\Microsoft\Windows\Windows Search', 'AllowCortana', 0, 'REG_DWORD']
+```
 
 ### RegDel/MultiRegDel
 
@@ -501,11 +522,13 @@ Delete a registry key.
 
 #### Examples
 
-    RegDel: ['HKLM', 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform', 'KeyManagementServiceName']
+```
+RegDel: ['HKLM', 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform', 'KeyManagementServiceName']
 
-    MultiRegDel:
-      - ['HKLM', 'SOFTWARE\Policies\Microsoft\WindowsStore', 'RemoveWindowsStore']
-      - ['HKLM', 'SOFTWARE\Policies\Microsoft\Windows\Windows Search', 'AllowCortana']
+MultiRegDel:
+  - ['HKLM', 'SOFTWARE\Policies\Microsoft\WindowsStore', 'RemoveWindowsStore']
+  - ['HKLM', 'SOFTWARE\Policies\Microsoft\Windows\Windows Search', 'AllowCortana']
+```
 
 ### Reboot
 
@@ -522,9 +545,11 @@ Restart the host machine.
 
 #### Examples
 
-    Reboot: [30]
-    Reboot: [10, "Restarting to finish installing drivers."]
-    Reboot: [10, "Restarting to finish installing drivers.", True]
+```
+Reboot: [30]
+Reboot: [10, "Restarting to finish installing drivers."]
+Reboot: [10, "Restarting to finish installing drivers.", True]
+```
 
 ### RmDir
 
@@ -533,12 +558,14 @@ Remove one or more directories.
 #### Arguments
 
 *   Format: List
-    *  Arg1[Str]: First directory to be removed
-    *  ...
+    *   Arg1[Str]: First directory to be removed
+    *   ...
 
 #### Examples
 
-    RmDir: ['C:\Glazier_Cache', 'D:\Glazier_Cache']
+```
+RmDir: ['C:\Glazier_Cache', 'D:\Glazier_Cache']
+```
 
 ### SetUnattendTimeZone
 
@@ -559,7 +586,9 @@ Creates the imaging cache directory with the path stored in BuildInfo.
 
 #### Examples
 
-    SetupCache: []
+```
+SetupCache: []
+```
 
 ### SetTimer
 
@@ -572,7 +601,9 @@ Add an imaging timer.
 
 #### Examples
 
-    SetTimer: ['TimerName']
+```
+SetTimer: ['TimerName']
+```
 
 ### ShowChooser
 
@@ -598,9 +629,11 @@ Shutdown the host machine.
 
 #### Examples
 
-    Shutdown: [30]
-    Shutdown: [10, "Shutting down to save power."]
-    Shutdown: [10, "Shutting down to save power.", True]
+```
+Shutdown: [30]
+Shutdown: [10, "Shutting down to save power."]
+Shutdown: [10, "Shutting down to save power.", True]
+```
 
 ### Sleep
 
@@ -614,9 +647,10 @@ Pause the installer.
 
 #### Examples
 
-    Sleep: [30]
-    Sleep: [300, "Waiting for Group Policy to apply..."]
-
+```
+Sleep: [30]
+Sleep: [300, "Waiting for Group Policy to apply..."]
+```
 
 ### SpliceDomainJoin
 
@@ -644,11 +678,15 @@ through the imaging process.
 
 *   Format: List
     *   Arg1[int]: Stage number
-    *   Arg2[bool]: If True, indicates a terminal stage (the last stage of the build). The action will set both the start and end time on the stage, assuming no subsequent stages are yet to come. (optional)
+    *   Arg2[bool]: If True, indicates a terminal stage (the last stage of the
+        build). The action will set both the start and end time on the stage,
+        assuming no subsequent stages are yet to come. (optional)
 
 #### Examples
 
-    StartStage: [1]
+```
+StartStage: [1]
+```
 
 ### Unzip
 
@@ -663,7 +701,9 @@ Unzip a zip file to the local filesystem.
 
 #### Examples
 
-    Unzip: ['C:\some_archive.zip', 'C:\Some\Destination\Path']
+```
+Unzip: ['C:\some_archive.zip', 'C:\Some\Destination\Path']
+```
 
 ### UpdateMSU
 
@@ -673,9 +713,11 @@ file, and applies the update to the base image.
 
 #### Example
 
-    Update: ['@/Driver/HP/z840/win7/20160909/kb290292.msu',
-             'C:\Glazier_Cache\kb290292.msu',
-             'cd8f4222a9ba4c4493d8df208fe38cdad969514512d6f5dfd0f7cc7e1ea2c782']
+```
+Update: ['@/Driver/HP/z840/win7/20160909/kb290292.msu',
+         'C:\Glazier_Cache\kb290292.msu',
+         'cd8f4222a9ba4c4493d8df208fe38cdad969514512d6f5dfd0f7cc7e1ea2c782']
+```
 
 ### Warn
 
@@ -688,4 +730,6 @@ Issue a warning that can be bypassed by the user.
 
 #### Examples
 
-    Warn: ["You probably don't want to do this, or bad things will happen."]
+```
+Warn: ["You probably don't want to do this, or bad things will happen."]
+```

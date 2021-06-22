@@ -20,8 +20,10 @@ All actions receive two parameters, as defined by BaseAction: `args` and
 
     *   An example of the Get action with its args, as written in a config:
 
-            Get:
-                - ['windows10.wim', 'c:\base.wim', '4b5b6bf0e59dadb4663ad9b4110bf0794ba24c344291f30d47467d177feb4776']
+        ```
+        Get:
+            - ['windows10.wim', 'c:\base.wim', '4b5b6bf0e59dadb4663ad9b4110bf0794ba24c344291f30d47467d177feb4776']
+        ```
 
 *   `build_info` is the internal state of the installer. This is automatically
     passed by the config handler while the configs are being parsed.
@@ -37,18 +39,20 @@ configs.
 Import `BaseAction` and create a new Python class decended from it. The name of
 the class will be the name of the command we use in new configs.
 
-    from glazier.lib.actions.base import ActionError
-    from glazier.lib.actions.base import BaseAction
+```
+from glazier.lib.actions.base import ActionError
+from glazier.lib.actions.base import BaseAction
 
-    class FancyAction(BaseAction):
-      """Do awesome things."""
+class FancyAction(BaseAction):
+  """Do awesome things."""
 
-      def Run(self):
-        my_arg = self._args[0]
-        try:
-          DoFancyStuff(my_arg)
-        except NotFancyEnough:
-          raise ActionError("Problem running FancyAction with %s" % my_arg)
+  def Run(self):
+    my_arg = self._args[0]
+    try:
+      DoFancyStuff(my_arg)
+    except NotFancyEnough:
+      raise ActionError("Problem running FancyAction with %s" % my_arg)
+```
 
 The class must declare at least one function, called `Run`. Run is called
 whenever Autobuild intends to execute the action. You can add any additional
@@ -67,7 +71,9 @@ it should abort the installation until things are fixed.
 Once your action class has been defined, open *glazier/lib/actions/\_\_init\_\_.py*. Add
 a new line declaring the name of your class to export it to the config handler.
 
-    FancyAction = fancy.FancyAction
+```
+FancyAction = fancy.FancyAction
+```
 
 That's it! You can now use `FancyAction` in your Glazier configs.
 
@@ -83,10 +89,12 @@ list, we know a mistake has been made and the config is broken.
 
 An example validator for Get:
 
-      def Validate(self):
-        self._TypeValidator(self._args, list)
-        for arg in self._args:
-          self._ListOfStringsValidator(arg, 2, 3)
+```
+  def Validate(self):
+    self._TypeValidator(self._args, list)
+    for arg in self._args:
+      self._ListOfStringsValidator(arg, 2, 3)
+```
 
 The `Validate` function should raise `ValidationError` if it finds a problem
 with *self.\_args*.
@@ -103,17 +111,19 @@ Once we have the config YAML, testing validity of the entire config is as simple
 as looping through each element, verifying that a corresponding Action exists,
 and calling its `Validate` function.
 
-    from glazier.lib import actions
+```
+from glazier.lib import actions
 
-    ...
-    # config = loaded config file content
-    ...
+...
+# config = loaded config file content
+...
 
-    for c in config:
-      if c in dir(actions):
-        act_obj = getattr(actions, str(c))
-        a = act_obj(args=config[c], build_info=None)
-        try:
-          a.Validate()
-        except actions.ValidationError as e:
-          self.fail(e)  # broken config
+for c in config:
+  if c in dir(actions):
+    act_obj = getattr(actions, str(c))
+    a = act_obj(args=config[c], build_info=None)
+    try:
+      a.Validate()
+    except actions.ValidationError as e:
+      self.fail(e)  # broken config
+```
