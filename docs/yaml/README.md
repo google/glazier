@@ -1,6 +1,5 @@
 # Glazier Build YAML Specification
 
-
 Glazier uses YAML-based configuration files.
 
 ## Example
