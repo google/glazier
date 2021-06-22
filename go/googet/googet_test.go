@@ -61,6 +61,61 @@ func TestInstall(t *testing.T) {
 	}
 }
 
+func TestInstalled(t *testing.T) {
+	fail := errors.New("test failure")
+	tests := []struct {
+		desc    string
+		in      helpers.ExecResult
+		inErr   error
+		want    []Package
+		wantErr error
+	}{
+		{
+			desc: "normal output with matches",
+			in: helpers.ExecResult{
+				ExitErr: nil,
+				Stdout: []byte(`Installed packages:
+  aukera.x86_64 2021.06.08@12345
+  cabbie.x86_64 2021.05.26@67890
+  glazier.noarch 1.5.3@9872313
+
+	`),
+			},
+			want: []Package{
+				Package{"aukera.x86_64", "2021.06.08@12345"},
+				Package{"cabbie.x86_64", "2021.05.26@67890"},
+				Package{"glazier.noarch", "1.5.3@9872313"},
+			},
+			wantErr: nil,
+		},
+		{
+			desc: "no matching packages",
+			in: helpers.ExecResult{
+				ExitErr: fail,
+				Stdout: []byte(`Installed packages matching "foo":
+No package matching filter "foo" installed.
+`),
+			},
+			inErr:   fail,
+			want:    []Package{},
+			wantErr: fail,
+		},
+	}
+	for _, tt := range tests {
+		funcExec = func(path string, args []string, v *helpers.ExecConfig) (helpers.ExecResult, error) {
+			return tt.in, tt.inErr
+		}
+		o, err := Installed("", nil)
+		diff := cmp.Diff(tt.want, o)
+		if diff != "" {
+			t.Errorf("Installed(%s) diff = %v", tt.desc, diff)
+		}
+		if !errors.Is(err, tt.wantErr) {
+			t.Errorf("Installed(%s) returned unexpected error %v", tt.desc, err)
+		}
+	}
+}
+
 func TestPackageVersion(t *testing.T) {
 	fail := errors.New("test failure")
 	tests := []struct {
