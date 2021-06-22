@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	testData = "testdata"
+	testData = "testdata/"
 )
 
 func TestGetPartitionInfo(t *testing.T) {
