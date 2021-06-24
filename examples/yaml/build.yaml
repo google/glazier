@@ -1,63 +1,63 @@
 templates:
   software:
     include:
-      - ['software/', 'build.yaml']
+    - ['software/', 'build.yaml']
   download_cool_files:
     pull:
-      - ['@cool_binary.exe', 'X:\path\to\cooler_binary.exe']
-      - ['@cool_installer.msi', 'X:\path\to\cooler_installer.msi']
+    - ['@cool_binary.exe', 'X:\path\to\cooler_binary.exe']
+    - ['@cool_installer.msi', 'X:\path\to\cooler_installer.msi']
 
 controls:
-  - SetTimer: ['winpe_start']
-  - pin:
-      'beyond_corp': ['True']
-    SetTimer: ['beyondcorp_start']
+- SetTimer: ['winpe_start']
+- pin:
+    'beyond_corp': ['True']
+  SetTimer: ['beyondcorp_start']
 
-  - include:
-      - ['image/', 'build.yaml']
+- include:
+  - ['image/', 'build.yaml']
 
-  #################################################################################################
-  # Copy files from WinPE to the host for later use                                               #
-  #################################################################################################
-  - CopyDir: ['X:\path\to\glazier\src', 'C:\path\to\glazier\src', true]
-  - CopyDir: ['X:\path\to\glazier\resources', 'C:\\path\to\glazier\resources', true]
-  - CopyFile: ['X:\path\to\Autobuild.ps1', 'C:\path\to\autobuild.ps1']
+#################################################################################################
+# Copy files from WinPE to the host for later use                                               #
+#################################################################################################
+- CopyDir: ['X:\path\to\glazier\src', 'C:\path\to\glazier\src', true]
+- CopyDir: ['X:\path\to\glazier\resources', 'C:\\path\to\glazier\resources', true]
+- CopyFile: ['X:\path\to\Autobuild.ps1', 'C:\path\to\autobuild.ps1']
 
-  - SetTimer: ['winpe_stop']
-  - BuildInfoDump: []
+- SetTimer: ['winpe_stop']
+- BuildInfoDump: []
 
-  #################################################################################################
-  # Exit WinPE                                                                                    #
-  #################################################################################################
-  - ExitWinPE: []
+#################################################################################################
+# Exit WinPE                                                                                    #
+#################################################################################################
+- ExitWinPE: []
 
-  #################################################################################################
-  # Enter Host                                                                                    #
-  #################################################################################################
-  - SetTimer: ['host_start']
+#################################################################################################
+# Enter Host                                                                                    #
+#################################################################################################
+- SetTimer: ['host_start']
 
-  # Install VMware Tools and reboot
-  - pin:
-      computer_model: ['VMware']
-    Execute:
-      - ['C:\path\to\vmware-tools-setup.exe /S /v /qn REBOOT=R', [0], [3010]]
+# Install VMware Tools and reboot
+- pin:
+    computer_model: ['VMware']
+  Execute:
+  - ['C:\path\to\vmware-tools-setup.exe /S /v /qn REBOOT=R', [0], [3010]]
 
-  - BuildInfoSave: []
+- BuildInfoSave: []
 
-  - include:
-      - ['autologin/', 'build.yaml']
+- include:
+  - ['autologin/', 'build.yaml']
 
-  - Reboot: [10, 'Rebooting to begin host configuration', True]
+- Reboot: [10, 'Rebooting to begin host configuration', true]
 
-  #################################################################################################
-  # Install Software                                                                              #
-  #################################################################################################
-  - pin:
-      'os_code': ['!win2012r2']
-    template:
-      - software
+#################################################################################################
+# Install Software                                                                              #
+#################################################################################################
+- pin:
+    'os_code': ['!win2012r2']
+  template:
+  - software
 
-  - pin:
-      'os_code': ['win10']
-    template:
-      - download_cool_files
+- pin:
+    'os_code': ['win10']
+  template:
+  - download_cool_files

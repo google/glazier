@@ -1,8 +1,8 @@
 controls:
-  # Launch Glazier with every subsequent reboot
-  - MultiRegAdd: [
-      ['HKCU', 'Software\Microsoft\Windows NT\CurrentVersion\Winlogon', 'Shell', 'powershell.exe -NoProfile -WindowStyle Maximized -NoExit -NoLogo -ExecutionPolicy Bypass -Command & C:\path\to\autobuild.ps1', 'REG_SZ'],
-      ['HKCU', 'Software\Microsoft\Windows\CurrentVersion\Policies\Explorer', 'NoLogoff', 1, 'REG_DWORD'],
-      ['HKCU', 'Software\Microsoft\Windows\CurrentVersion\Policies\System', 'DisableChangePassword', 1, 'REG_DWORD'],
-      ['HKCU', 'Software\Microsoft\Windows\CurrentVersion\Policies\System', 'DisableLockWorkstation', 1, 'REG_DWORD'],
-    ]
+# Launch Glazier with every subsequent reboot
+- MultiRegAdd: [
+    ['HKCU', 'Software\Microsoft\Windows NT\CurrentVersion\Winlogon', 'Shell', 'powershell.exe -NoProfile -WindowStyle Maximized -NoExit -NoLogo -ExecutionPolicy Bypass -Command & C:\path\to\autobuild.ps1', 'REG_SZ'],
+    ['HKCU', 'Software\Microsoft\Windows\CurrentVersion\Policies\Explorer', 'NoLogoff', 1, 'REG_DWORD'],
+    ['HKCU', 'Software\Microsoft\Windows\CurrentVersion\Policies\System', 'DisableChangePassword', 1, 'REG_DWORD'],
+    ['HKCU', 'Software\Microsoft\Windows\CurrentVersion\Policies\System', 'DisableLockWorkstation', 1, 'REG_DWORD'],
+  ]

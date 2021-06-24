@@ -20,31 +20,31 @@ templates:
     ]
 
 controls:
-  - pin:
-      'os_code': ['win2012r2', 'win2016', 'win2019']
-      'computer_model': ['!Google Compute Engine']
-    template:
-      - install-googet
-      - common
+- pin:
+    'os_code': ['win2012r2', 'win2016', 'win2019']
+    'computer_model': ['!Google Compute Engine']
+  template:
+  - install-googet
+  - common
 
-  - pin:
-      'os_code': ['win10']
-      'computer_model': ['!Google Compute Engine']
-    template:
-      - install-googet
-      - common
-      - client
+- pin:
+    'os_code': ['win10']
+    'computer_model': ['!Google Compute Engine']
+  template:
+  - install-googet
+  - common
+  - client
 
-  - pin:
-      'os_code': ['win10']
-      'computer_model': ['Google Compute Engine']
-    template:
-      - common
-      - client
+- pin:
+    'os_code': ['win10']
+    'computer_model': ['Google Compute Engine']
+  template:
+  - common
+  - client
 
-  - pin:
-      'os_code': ['win2012r2', 'win2016', 'win2019']
-      'computer_model': ['Google Compute Engine']
-    template:
-      - common
-      - gce_server
+- pin:
+    'os_code': ['win2012r2', 'win2016', 'win2019']
+    'computer_model': ['Google Compute Engine']
+  template:
+  - common
+  - gce_server
