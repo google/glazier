@@ -243,14 +243,14 @@ func (v *Volume) ProtectWithNumericalPassword(password string) error {
 	var resultRaw *ole.VARIANT
 	var err error
 	if password != "" {
-		resultRaw, err = oleutil.CallMethod(v.handle, "ProtectWithNumericalPassword", nil, password, &volumeKeyProtectorID)
+		resultRaw, err = oleutil.CallMethod(v.handle, "ProtectKeyWithNumericalPassword", nil, password, &volumeKeyProtectorID)
 	} else {
-		resultRaw, err = oleutil.CallMethod(v.handle, "ProtectWithNumericalPassword", nil, nil, &volumeKeyProtectorID)
+		resultRaw, err = oleutil.CallMethod(v.handle, "ProtectKeyWithNumericalPassword", nil, nil, &volumeKeyProtectorID)
 	}
 	if err != nil {
-		return fmt.Errorf("ProtectWithNumericalPassword(%s): %w", v.letter, err)
+		return fmt.Errorf("ProtectKeyWithNumericalPassword(%s): %w", v.letter, err)
 	} else if val, ok := resultRaw.Value().(int32); val != 0 || !ok {
-		return fmt.Errorf("ProtectWithNumericalPassword(%s): %w", v.letter, encryptErrHandler(val))
+		return fmt.Errorf("ProtectKeyWithNumericalPassword(%s): %w", v.letter, encryptErrHandler(val))
 	}
 
 	return nil
