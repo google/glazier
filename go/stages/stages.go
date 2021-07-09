@@ -133,8 +133,15 @@ func ActiveStatus() (*Stage, error) {
 	if err != nil {
 		return s, err
 	}
+
+	// Indicates regActiveKey is empty.
 	if s.ID == "" {
 		s.ID = term
+	}
+
+	// Indicates regActiveKey doesn't exist.
+	if s.ID == "0" {
+		return s, nil
 	}
 
 	err = s.RetreiveTimes(regStagesRoot, s.ID)
@@ -142,10 +149,9 @@ func ActiveStatus() (*Stage, error) {
 		return s, err
 	}
 
+	s.State = "Running"
 	if s.ID == term && !s.End.IsZero() {
 		s.State = "Complete"
-	} else {
-		s.State = "Running"
 	}
 
 	return s, nil
