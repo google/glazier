@@ -221,9 +221,9 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 	}
 
 	// Start command asynchronously
-	logger.V(2).Infof("Executing command: %v \n", cmd.Args)
+	logger.V(2).Infof("Executing: %v \n", cmd.Args)
 	if err := cmd.Start(); err != nil {
-		return result, fmt.Errorf("starting cmd returned error: %s", err)
+		return result, fmt.Errorf("cmd.Start: %w", err)
 	}
 
 	var timer *time.Timer
