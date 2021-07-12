@@ -78,8 +78,9 @@ func Stop() error {
 	}
 
 	// Wait for osqueryd and extensions to shut down cleanly. DB files will be locked until processes exit.
+	// TODO(b/192259933): Remove this timeout after confirming the new OSQuery shutdown process is working properly
 	re := regexp.MustCompile("osquery*")
-	if err := helpers.WaitForProcessExit(re, 1*time.Minute); err != nil {
+	if err := helpers.WaitForProcessExit(re, 5*time.Minute); err != nil {
 		return fmt.Errorf("helpers.WaitForProcessExit: %w", err)
 	}
 	return nil
