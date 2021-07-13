@@ -15,6 +15,8 @@ See the links below to help get you started with your own Glazier configuration.
     Glazier.
 *   [Setup Guide](./setup) - Getting started with the basic principles from the
     about page.
+*   [Getting started with Windows Imaging & Glazier (Part 1)](https://bkurtz.io/posts/glazier/) -
+    Great community blog post about getting started with Glazier.
 
 ## Glazier Configurations
 
