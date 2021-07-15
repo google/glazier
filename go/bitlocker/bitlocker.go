@@ -175,7 +175,7 @@ func Connect(driveLetter string) (Volume, error) {
 //
 // Example: vol.Encrypt(bitlocker.XtsAES256, bitlocker.EncryptDataOnly)
 //
-// Ref: https://docs.microsoft.com/en-us/windows/win32/secprov/protectkeywithtpm-win32-encryptablevolume
+// Ref: https://docs.microsoft.com/en-us/windows/win32/secprov/encrypt-win32-encryptablevolume
 func (v *Volume) Encrypt(method EncryptionMethod, flags EncryptionFlag) error {
 	resultRaw, err := oleutil.CallMethod(v.handle, "Encrypt", int32(method), int32(flags))
 	if err != nil {
@@ -275,10 +275,16 @@ func (v *Volume) ProtectWithPassphrase(passphrase string) error {
 // ProtectWithTPM adds the TPM key protector.
 //
 // Ref: https://docs.microsoft.com/en-us/windows/win32/secprov/protectkeywithtpm-win32-encryptablevolume
-func (v *Volume) ProtectWithTPM() error {
+func (v *Volume) ProtectWithTPM(platformValidationProfile *[]uint8) error {
 	var volumeKeyProtectorID ole.VARIANT
 	ole.VariantInit(&volumeKeyProtectorID)
-	resultRaw, err := oleutil.CallMethod(v.handle, "ProtectKeyWithTPM", nil, nil, &volumeKeyProtectorID)
+	var resultRaw *ole.VARIANT
+	var err error
+	if platformValidationProfile == nil {
+		resultRaw, err = oleutil.CallMethod(v.handle, "ProtectKeyWithTPM", nil, nil, &volumeKeyProtectorID)
+	} else {
+		resultRaw, err = oleutil.CallMethod(v.handle, "ProtectKeyWithTPM", nil, *platformValidationProfile, &volumeKeyProtectorID)
+	}
 	if err != nil {
 		return fmt.Errorf("ProtectKeyWithTPM(%s): %w", v.letter, err)
 	} else if val, ok := resultRaw.Value().(int32); val != 0 || !ok {
