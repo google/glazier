@@ -48,6 +48,36 @@ type Partition struct {
 	handle *ole.IDispatch
 }
 
+// Delete attempts to delete a partition.
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-partition-deleteobject
+func (p *Partition) Delete() error {
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+	resultRaw, err := oleutil.CallMethod(p.handle, "DeleteObject", &extendedStatus)
+	if err != nil {
+		return fmt.Errorf("DeleteObject: %w", err)
+	} else if val, ok := resultRaw.Value().(int32); val != 0 || !ok {
+		return fmt.Errorf("error code returned during deletion: %d", val)
+	}
+	return nil
+}
+
+// Resize attempts to resize a partition.
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-partition-resize
+func (p *Partition) Resize(size uint64) error {
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+	resultRaw, err := oleutil.CallMethod(p.handle, "Resize", size, &extendedStatus)
+	if err != nil {
+		return fmt.Errorf("Resize: %w", err)
+	} else if val, ok := resultRaw.Value().(int32); val != 0 || !ok {
+		return fmt.Errorf("error code returned during resize: %d", val)
+	}
+	return nil
+}
+
 // A PartitionSet contains one or more Partitions.
 type PartitionSet struct {
 	Partitions []Partition
@@ -69,7 +99,7 @@ func (s *PartitionSet) Close() {
 //
 // To get specific partitions, provide a valid WMI query filter string, for example:
 //		svc.GetPartitions("WHERE DiskNumber=1")
-func (svc Service) GetPartitions(filter string) (PartitionSet, error) {
+func (svc *Service) GetPartitions(filter string) (PartitionSet, error) {
 	parts := PartitionSet{}
 	query := "SELECT * FROM MSFT_Partition"
 	if filter != "" {
