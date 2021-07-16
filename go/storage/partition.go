@@ -46,6 +46,12 @@ type Partition struct {
 }
 
 // GetPartitions queries for local partitions.
+//
+// Get all partitions:
+//		svc.GetPartitions("")
+//
+// To get specific partitions, provide a valid WMI query filter string, for example:
+//		svc.GetPartitions("WHERE DiskNumber=1")
 func (svc Service) GetPartitions(filter string) ([]Partition, error) {
 	parts := []Partition{}
 	query := "SELECT * FROM MSFT_Partition"
@@ -54,7 +60,6 @@ func (svc Service) GetPartitions(filter string) ([]Partition, error) {
 	}
 	raw, err := oleutil.CallMethod(svc.wmiSvc, "ExecQuery", query)
 	if err != nil {
-		svc.Close()
 		return parts, fmt.Errorf("ExecQuery(%s): %w", query, err)
 	}
 	result := raw.ToIDispatch()

@@ -98,13 +98,23 @@ func assignVariant(value interface{}, dest interface{}) error {
 	return nil
 }
 
-// GetDisks queries for all local disks.
-func (svc Service) GetDisks() ([]Disk, error) {
+// GetDisks queries for local disks.
+//
+// Get all disks:
+//		svc.GetDisks("")
+//
+// To get specific disks, provide a valid WMI query filter string, for example:
+//		svc.GetDisks("WHERE Number=1")
+//		svc.GetDisks("WHERE IsSystem=True")
+func (svc Service) GetDisks(filter string) ([]Disk, error) {
 	disks := []Disk{}
-	raw, err := oleutil.CallMethod(svc.wmiSvc, "ExecQuery", "SELECT * FROM MSFT_DISK")
+	query := "SELECT * FROM MSFT_DISK"
+	if filter != "" {
+		query = fmt.Sprintf("%s %s", query, filter)
+	}
+	raw, err := oleutil.CallMethod(svc.wmiSvc, "ExecQuery", query)
 	if err != nil {
-		svc.Close()
-		return disks, fmt.Errorf("ExecQuery(SELECT * FROM MSFT_DISK): %w", err)
+		return disks, fmt.Errorf("ExecQuery(%s): %w", query, err)
 	}
 	result := raw.ToIDispatch()
 	defer result.Release()
