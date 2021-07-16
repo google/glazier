@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/google/logger"
+	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
 )
 
@@ -43,17 +44,33 @@ type Partition struct {
 	IsHidden             bool
 	IsShadowCopy         bool
 	NoDefaultDriveLetter bool
+
+	handle *ole.IDispatch
+}
+
+// A PartitionSet contains one or more Partitions.
+type PartitionSet struct {
+	Partitions []Partition
+}
+
+// Close releases all Partition handles inside a PartitionSet.
+func (s *PartitionSet) Close() {
+	for _, p := range s.Partitions {
+		p.handle.Release()
+	}
 }
 
 // GetPartitions queries for local partitions.
+//
+// Close() must be called on the resulting PartitionSet to ensure all disks are released.
 //
 // Get all partitions:
 //		svc.GetPartitions("")
 //
 // To get specific partitions, provide a valid WMI query filter string, for example:
 //		svc.GetPartitions("WHERE DiskNumber=1")
-func (svc Service) GetPartitions(filter string) ([]Partition, error) {
-	parts := []Partition{}
+func (svc Service) GetPartitions(filter string) (PartitionSet, error) {
+	parts := PartitionSet{}
 	query := "SELECT * FROM MSFT_Partition"
 	if filter != "" {
 		query = fmt.Sprintf("%s %s", query, filter)
@@ -77,39 +94,38 @@ func (svc Service) GetPartitions(filter string) ([]Partition, error) {
 		if err != nil {
 			return parts, fmt.Errorf("oleutil.CallMethod(ItemIndex, %d): %w", i, err)
 		}
-		item := itemRaw.ToIDispatch()
-		defer item.Release()
+		part.handle = itemRaw.ToIDispatch()
 
 		// DriveLetter
-		p, err := oleutil.GetProperty(item, "DriveLetter")
+		p, err := oleutil.GetProperty(part.handle, "DriveLetter")
 		if err != nil {
 			return parts, fmt.Errorf("oleutil.GetProperty(DriveLetter): %w", err)
 		}
 		part.DriveLetter = p.ToString()
 
 		// DriveLetter
-		p, err = oleutil.GetProperty(item, "DriveLetter")
+		p, err = oleutil.GetProperty(part.handle, "DriveLetter")
 		if err != nil {
 			return parts, fmt.Errorf("oleutil.GetProperty(DriveLetter): %w", err)
 		}
 		part.DriveLetter = p.ToString()
 
 		// AccessPaths
-		p, err = oleutil.GetProperty(item, "AccessPaths")
+		p, err = oleutil.GetProperty(part.handle, "AccessPaths")
 		if err != nil {
 			return parts, fmt.Errorf("oleutil.GetProperty(AccessPaths): %w", err)
 		}
 		part.AccessPaths = p.ToString()
 
 		// GptType
-		p, err = oleutil.GetProperty(item, "GptType")
+		p, err = oleutil.GetProperty(part.handle, "GptType")
 		if err != nil {
 			return parts, fmt.Errorf("oleutil.GetProperty(GptType): %w", err)
 		}
 		part.GptType = p.ToString()
 
 		// GUID
-		p, err = oleutil.GetProperty(item, "Guid")
+		p, err = oleutil.GetProperty(part.handle, "Guid")
 		if err != nil {
 			return parts, fmt.Errorf("oleutil.GetProperty(Guid): %w", err)
 		}
@@ -132,7 +148,7 @@ func (svc Service) GetPartitions(filter string) ([]Partition, error) {
 			[]interface{}{"IsShadowCopy", &part.IsShadowCopy},
 			[]interface{}{"NoDefaultDriveLetter", &part.NoDefaultDriveLetter},
 		} {
-			prop, err := oleutil.GetProperty(item, p[0].(string))
+			prop, err := oleutil.GetProperty(part.handle, p[0].(string))
 			if err != nil {
 				return parts, fmt.Errorf("oleutil.GetProperty(%s): %w", p[0].(string), err)
 			}
@@ -141,7 +157,7 @@ func (svc Service) GetPartitions(filter string) ([]Partition, error) {
 			}
 		}
 
-		parts = append(parts, part)
+		parts.Partitions = append(parts.Partitions, part)
 	}
 
 	return parts, nil

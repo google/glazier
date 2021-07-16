@@ -20,6 +20,7 @@ import (
 	"strconv"
 
 	"github.com/google/logger"
+	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
 )
 
@@ -57,6 +58,20 @@ type Disk struct {
 	IsClustered        bool
 	IsBoot             bool
 	BootFromDisk       bool
+
+	handle *ole.IDispatch
+}
+
+// A DiskSet contains one or more Disks.
+type DiskSet struct {
+	Disks []Disk
+}
+
+// Close releases all Disk handles inside a DiskSet.
+func (s *DiskSet) Close() {
+	for _, d := range s.Disks {
+		d.handle.Release()
+	}
 }
 
 // assignVariant attempts to assign an ole variant to a variable, while somewhat
@@ -100,28 +115,30 @@ func assignVariant(value interface{}, dest interface{}) error {
 
 // GetDisks queries for local disks.
 //
+// Close() must be called on the resulting DiskSet to ensure all disks are released.
+//
 // Get all disks:
 //		svc.GetDisks("")
 //
 // To get specific disks, provide a valid WMI query filter string, for example:
 //		svc.GetDisks("WHERE Number=1")
 //		svc.GetDisks("WHERE IsSystem=True")
-func (svc Service) GetDisks(filter string) ([]Disk, error) {
-	disks := []Disk{}
+func (svc Service) GetDisks(filter string) (DiskSet, error) {
+	dset := DiskSet{}
 	query := "SELECT * FROM MSFT_DISK"
 	if filter != "" {
 		query = fmt.Sprintf("%s %s", query, filter)
 	}
 	raw, err := oleutil.CallMethod(svc.wmiSvc, "ExecQuery", query)
 	if err != nil {
-		return disks, fmt.Errorf("ExecQuery(%s): %w", query, err)
+		return dset, fmt.Errorf("ExecQuery(%s): %w", query, err)
 	}
 	result := raw.ToIDispatch()
 	defer result.Release()
 
 	countVar, err := oleutil.GetProperty(result, "Count")
 	if err != nil {
-		return disks, fmt.Errorf("oleutil.GetProperty(Count): %w", err)
+		return dset, fmt.Errorf("oleutil.GetProperty(Count): %w", err)
 	}
 	count := int(countVar.Val)
 
@@ -129,71 +146,70 @@ func (svc Service) GetDisks(filter string) ([]Disk, error) {
 		d := Disk{}
 		itemRaw, err := oleutil.CallMethod(result, "ItemIndex", i)
 		if err != nil {
-			return disks, fmt.Errorf("oleutil.CallMethod(ItemIndex, %d): %w", i, err)
+			return dset, fmt.Errorf("oleutil.CallMethod(ItemIndex, %d): %w", i, err)
 		}
-		item := itemRaw.ToIDispatch()
-		defer item.Release()
+		d.handle = itemRaw.ToIDispatch()
 
 		// Path
-		p, err := oleutil.GetProperty(item, "Path")
+		p, err := oleutil.GetProperty(d.handle, "Path")
 		if err != nil {
-			return disks, fmt.Errorf("oleutil.GetProperty(Path): %w", err)
+			return dset, fmt.Errorf("oleutil.GetProperty(Path): %w", err)
 		}
 		d.Path = p.ToString()
 
 		// Location
-		p, err = oleutil.GetProperty(item, "Location")
+		p, err = oleutil.GetProperty(d.handle, "Location")
 		if err != nil {
-			return disks, fmt.Errorf("oleutil.GetProperty(Location): %w", err)
+			return dset, fmt.Errorf("oleutil.GetProperty(Location): %w", err)
 		}
 		d.Location = p.ToString()
 
 		// FriendlyName
-		p, err = oleutil.GetProperty(item, "FriendlyName")
+		p, err = oleutil.GetProperty(d.handle, "FriendlyName")
 		if err != nil {
-			return disks, fmt.Errorf("oleutil.GetProperty(FriendlyName): %w", err)
+			return dset, fmt.Errorf("oleutil.GetProperty(FriendlyName): %w", err)
 		}
 		d.FriendlyName = p.ToString()
 
 		// UniqueID
-		p, err = oleutil.GetProperty(item, "UniqueId")
+		p, err = oleutil.GetProperty(d.handle, "UniqueId")
 		if err != nil {
-			return disks, fmt.Errorf("oleutil.GetProperty(UniqueId): %w", err)
+			return dset, fmt.Errorf("oleutil.GetProperty(UniqueId): %w", err)
 		}
 		d.UniqueID = p.ToString()
 
 		// SerialNumber
-		p, err = oleutil.GetProperty(item, "SerialNumber")
+		p, err = oleutil.GetProperty(d.handle, "SerialNumber")
 		if err != nil {
-			return disks, fmt.Errorf("oleutil.GetProperty(SerialNumber): %w", err)
+			return dset, fmt.Errorf("oleutil.GetProperty(SerialNumber): %w", err)
 		}
 		d.SerialNumber = p.ToString()
 
 		// FirmwareVersion
-		p, err = oleutil.GetProperty(item, "FirmwareVersion")
+		p, err = oleutil.GetProperty(d.handle, "FirmwareVersion")
 		if err != nil {
-			return disks, fmt.Errorf("oleutil.GetProperty(FirmwareVersion): %w", err)
+			return dset, fmt.Errorf("oleutil.GetProperty(FirmwareVersion): %w", err)
 		}
 		d.FirmwareVersion = p.ToString()
 
 		// Manufacturer
-		p, err = oleutil.GetProperty(item, "Manufacturer")
+		p, err = oleutil.GetProperty(d.handle, "Manufacturer")
 		if err != nil {
-			return disks, fmt.Errorf("oleutil.GetProperty(Manufacturer): %w", err)
+			return dset, fmt.Errorf("oleutil.GetProperty(Manufacturer): %w", err)
 		}
 		d.Manufacturer = p.ToString()
 
 		// Model
-		p, err = oleutil.GetProperty(item, "Model")
+		p, err = oleutil.GetProperty(d.handle, "Model")
 		if err != nil {
-			return disks, fmt.Errorf("oleutil.GetProperty(Model): %w", err)
+			return dset, fmt.Errorf("oleutil.GetProperty(Model): %w", err)
 		}
 		d.Model = p.ToString()
 
 		// GUID
-		p, err = oleutil.GetProperty(item, "Guid")
+		p, err = oleutil.GetProperty(d.handle, "Guid")
 		if err != nil {
-			return disks, fmt.Errorf("oleutil.GetProperty(Guid): %w", err)
+			return dset, fmt.Errorf("oleutil.GetProperty(Guid): %w", err)
 		}
 		d.GUID = p.ToString()
 
@@ -221,17 +237,17 @@ func (svc Service) GetDisks(filter string) ([]Disk, error) {
 			[]interface{}{"IsBoot", &d.IsBoot},
 			[]interface{}{"BootFromDisk", &d.BootFromDisk},
 		} {
-			prop, err := oleutil.GetProperty(item, p[0].(string))
+			prop, err := oleutil.GetProperty(d.handle, p[0].(string))
 			if err != nil {
-				return disks, fmt.Errorf("oleutil.GetProperty(%s): %w", p[0].(string), err)
+				return dset, fmt.Errorf("oleutil.GetProperty(%s): %w", p[0].(string), err)
 			}
 			if err := assignVariant(prop.Value(), p[1]); err != nil {
 				logger.Warningf("assignVariant(%s): %v", p[0].(string), err)
 			}
 		}
 
-		disks = append(disks, d)
+		dset.Disks = append(dset.Disks, d)
 	}
 
-	return disks, nil
+	return dset, nil
 }
