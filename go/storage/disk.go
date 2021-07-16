@@ -62,6 +62,52 @@ type Disk struct {
 	handle *ole.IDispatch
 }
 
+// Clear wipes a disk and all its contents.
+//
+// Example:
+//		d.Clear(true, true, true)
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/clear-msft-disk
+func (d *Disk) Clear(removeData, removeOEM, zeroDisk bool) error {
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+	res, err := oleutil.CallMethod(d.handle, "Clear", removeData, removeOEM, zeroDisk, &extendedStatus)
+	if err != nil {
+		return fmt.Errorf("Clear(): %w", err)
+	} else if val, ok := res.Value().(int32); val != 0 || !ok {
+		return fmt.Errorf("error code returned during disk wipe: %d", val)
+	}
+	return nil
+}
+
+// PartitionStyle represents the partition scheme to be used for a disk.
+type PartitionStyle int32
+
+const (
+	// GptStyle represents the GPT partition style for a disk.
+	GptStyle PartitionStyle = 1
+	// MbrStyle represents the MBR partition style for a disk.
+	MbrStyle PartitionStyle = 2
+)
+
+// Initialize initializes a new disk.
+//
+// Example:
+//		d.Initialize(storage.GptStyle)
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/initialize-msft-disk
+func (d *Disk) Initialize(ps PartitionStyle) error {
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+	res, err := oleutil.CallMethod(d.handle, "Initialize", int32(ps), &extendedStatus)
+	if err != nil {
+		return fmt.Errorf("Initialize(%d): %w", ps, err)
+	} else if val, ok := res.Value().(int32); val != 0 || !ok {
+		return fmt.Errorf("error code returned during initialization: %d", val)
+	}
+	return nil
+}
+
 // A DiskSet contains one or more Disks.
 type DiskSet struct {
 	Disks []Disk
