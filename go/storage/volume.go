@@ -40,13 +40,22 @@ type Volume struct {
 	handle *ole.IDispatch
 }
 
+// Close releases the handle to the volume.
+func (v *Volume) Close() {
+	v.handle.Release()
+}
+
 // Format formats a volume.
 //
 // fs can be one of "ExFAT", "FAT", "FAT32", "NTFS", "ReFS"
 //
+// If successful, the formatted volume is returned as a new Volume object. Close() must be called on the new Volume.
+//
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/format-msft-volume
 func (v *Volume) Format(fs string, fsLabel string, allocationUnitSize int,
-	full, force, compress, shortFileNameSupport, setIntegrityStreams, useLargeFRS, disableHeatGathering bool) error {
+	full, force, compress, shortFileNameSupport, setIntegrityStreams, useLargeFRS, disableHeatGathering bool) (Volume, ExtendedStatus, error) {
+	vol := Volume{}
+	stat := ExtendedStatus{}
 
 	var extendedStatus ole.VARIANT
 	ole.VariantInit(&extendedStatus)
@@ -56,9 +65,63 @@ func (v *Volume) Format(fs string, fsLabel string, allocationUnitSize int,
 	res, err := oleutil.CallMethod(v.handle, "Format", fs, fsLabel, allocationUnitSize, full, force, compress,
 		shortFileNameSupport, setIntegrityStreams, useLargeFRS, disableHeatGathering, &formattedVolume, &extendedStatus)
 	if err != nil {
-		return fmt.Errorf("Format: %w", err)
+		return vol, stat, fmt.Errorf("Format: %w", err)
 	} else if val, ok := res.Value().(int32); val != 0 || !ok {
-		return fmt.Errorf("error code returned during formatting: %d", val)
+		return vol, stat, fmt.Errorf("error code returned during formatting: %d", val)
+	}
+
+	vol.handle = formattedVolume.ToIDispatch()
+
+	return vol, stat, vol.Query()
+}
+
+// Query reads and populates the volume state.
+func (v *Volume) Query() error {
+	// DriveLetter
+	p, err := oleutil.GetProperty(v.handle, "DriveLetter")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(DriveLetter): %w", err)
+	}
+	// DriveLetter is represented as Char16 (Ascii)
+	v.DriveLetter = string(rune(p.Val))
+
+	// Path
+	p, err = oleutil.GetProperty(v.handle, "Path")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(Path): %w", err)
+	}
+	v.Path = p.ToString()
+
+	// FileSystem
+	p, err = oleutil.GetProperty(v.handle, "FileSystem")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(FileSystem): %w", err)
+	}
+	v.FileSystem = p.ToString()
+
+	// FileSystemLabel
+	p, err = oleutil.GetProperty(v.handle, "FileSystemLabel")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(FileSystemLabel): %w", err)
+	}
+	v.FileSystemLabel = p.ToString()
+
+	// All the non-strings
+	for _, p := range [][]interface{}{
+		[]interface{}{"HealthStatus", &v.HealthStatus},
+		[]interface{}{"FileSystemType", &v.FileSystemType},
+		[]interface{}{"Size", &v.Size},
+		[]interface{}{"SizeRemaining", &v.SizeRemaining},
+		[]interface{}{"DriveType", &v.DriveType},
+		[]interface{}{"DedupMode", &v.DedupMode},
+	} {
+		prop, err := oleutil.GetProperty(v.handle, p[0].(string))
+		if err != nil {
+			return fmt.Errorf("oleutil.GetProperty(%s): %w", p[0].(string), err)
+		}
+		if err := assignVariant(prop.Value(), p[1]); err != nil {
+			logger.Warningf("assignVariant(%s): %v", p[0].(string), err)
+		}
 	}
 	return nil
 }
@@ -71,7 +134,7 @@ type VolumeSet struct {
 // Close releases all Volume handles inside a VolumeSet.
 func (s *VolumeSet) Close() {
 	for _, v := range s.Volumes {
-		v.handle.Release()
+		v.Close()
 	}
 }
 
@@ -111,51 +174,8 @@ func (svc Service) GetVolumes(filter string) (VolumeSet, error) {
 		}
 		v.handle = itemRaw.ToIDispatch()
 
-		// DriveLetter
-		p, err := oleutil.GetProperty(v.handle, "DriveLetter")
-		if err != nil {
-			return vset, fmt.Errorf("oleutil.GetProperty(DriveLetter): %w", err)
-		}
-		// DriveLetter is represented as Char16 (Ascii)
-		v.DriveLetter = string(rune(p.Val))
-
-		// Path
-		p, err = oleutil.GetProperty(v.handle, "Path")
-		if err != nil {
-			return vset, fmt.Errorf("oleutil.GetProperty(Path): %w", err)
-		}
-		v.Path = p.ToString()
-
-		// FileSystem
-		p, err = oleutil.GetProperty(v.handle, "FileSystem")
-		if err != nil {
-			return vset, fmt.Errorf("oleutil.GetProperty(FileSystem): %w", err)
-		}
-		v.FileSystem = p.ToString()
-
-		// FileSystemLabel
-		p, err = oleutil.GetProperty(v.handle, "FileSystemLabel")
-		if err != nil {
-			return vset, fmt.Errorf("oleutil.GetProperty(FileSystemLabel): %w", err)
-		}
-		v.FileSystemLabel = p.ToString()
-
-		// All the non-strings
-		for _, p := range [][]interface{}{
-			[]interface{}{"HealthStatus", &v.HealthStatus},
-			[]interface{}{"FileSystemType", &v.FileSystemType},
-			[]interface{}{"Size", &v.Size},
-			[]interface{}{"SizeRemaining", &v.SizeRemaining},
-			[]interface{}{"DriveType", &v.DriveType},
-			[]interface{}{"DedupMode", &v.DedupMode},
-		} {
-			prop, err := oleutil.GetProperty(v.handle, p[0].(string))
-			if err != nil {
-				return vset, fmt.Errorf("oleutil.GetProperty(%s): %w", p[0].(string), err)
-			}
-			if err := assignVariant(prop.Value(), p[1]); err != nil {
-				logger.Warningf("assignVariant(%s): %v", p[0].(string), err)
-			}
+		if err := v.Query(); err != nil {
+			return vset, err
 		}
 
 		vset.Volumes = append(vset.Volumes, v)
