@@ -40,6 +40,29 @@ type Volume struct {
 	handle *ole.IDispatch
 }
 
+// Format formats a volume.
+//
+// fs can be one of "ExFAT", "FAT", "FAT32", "NTFS", "ReFS"
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/format-msft-volume
+func (v *Volume) Format(fs string, fsLabel string, allocationUnitSize int,
+	full, force, compress, shortFileNameSupport, setIntegrityStreams, useLargeFRS, disableHeatGathering bool) error {
+
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+	var formattedVolume ole.VARIANT
+	ole.VariantInit(&formattedVolume)
+
+	res, err := oleutil.CallMethod(v.handle, "Format", fs, fsLabel, allocationUnitSize, full, force, compress,
+		shortFileNameSupport, setIntegrityStreams, useLargeFRS, disableHeatGathering, &formattedVolume, &extendedStatus)
+	if err != nil {
+		return fmt.Errorf("Format: %w", err)
+	} else if val, ok := res.Value().(int32); val != 0 || !ok {
+		return fmt.Errorf("error code returned during formatting: %d", val)
+	}
+	return nil
+}
+
 // A VolumeSet contains one or more Volumes.
 type VolumeSet struct {
 	Volumes []Volume
