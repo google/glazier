@@ -48,17 +48,82 @@ type Partition struct {
 	handle *ole.IDispatch
 }
 
+// Close releases the handle to the partition.
+func (p *Partition) Close() {
+	p.handle.Release()
+}
+
 // Delete attempts to delete a partition.
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-partition-deleteobject
-func (p *Partition) Delete() error {
+func (p *Partition) Delete() (ExtendedStatus, error) {
+	stat := ExtendedStatus{}
 	var extendedStatus ole.VARIANT
 	ole.VariantInit(&extendedStatus)
 	resultRaw, err := oleutil.CallMethod(p.handle, "DeleteObject", &extendedStatus)
 	if err != nil {
-		return fmt.Errorf("DeleteObject: %w", err)
+		return stat, fmt.Errorf("DeleteObject: %w", err)
 	} else if val, ok := resultRaw.Value().(int32); val != 0 || !ok {
-		return fmt.Errorf("error code returned during deletion: %d", val)
+		return stat, fmt.Errorf("error code returned during deletion: %d", val)
+	}
+	return stat, nil
+}
+
+// Query reads and populates the partition state.
+func (p *Partition) Query() error {
+	// DriveLetter
+	prop, err := oleutil.GetProperty(p.handle, "DriveLetter")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(DriveLetter): %w", err)
+	}
+	// DriveLetter is represented as Char16 (Ascii)
+	p.DriveLetter = string(rune(prop.Val))
+
+	// AccessPaths
+	prop, err = oleutil.GetProperty(p.handle, "AccessPaths")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(AccessPaths): %w", err)
+	}
+	p.AccessPaths = prop.ToString()
+
+	// GptType
+	prop, err = oleutil.GetProperty(p.handle, "GptType")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(GptType): %w", err)
+	}
+	p.GptType = prop.ToString()
+
+	// GUID
+	prop, err = oleutil.GetProperty(p.handle, "Guid")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(Guid): %w", err)
+	}
+	p.GUID = prop.ToString()
+
+	// All the non-strings
+	for _, prop := range [][]interface{}{
+		[]interface{}{"DiskNumber", &p.DiskNumber},
+		[]interface{}{"PartitionNumber", &p.PartitionNumber},
+		[]interface{}{"OperationalStatus", &p.OperationalStatus},
+		[]interface{}{"TransitionState", &p.TransitionState},
+		[]interface{}{"Size", &p.Size},
+		[]interface{}{"MbrType", &p.MbrType},
+		[]interface{}{"IsReadOnly", &p.IsReadOnly},
+		[]interface{}{"IsOffline", &p.IsOffline},
+		[]interface{}{"IsSystem", &p.IsSystem},
+		[]interface{}{"IsBoot", &p.IsBoot},
+		[]interface{}{"IsActive", &p.IsActive},
+		[]interface{}{"IsHidden", &p.IsHidden},
+		[]interface{}{"IsShadowCopy", &p.IsShadowCopy},
+		[]interface{}{"NoDefaultDriveLetter", &p.NoDefaultDriveLetter},
+	} {
+		val, err := oleutil.GetProperty(p.handle, prop[0].(string))
+		if err != nil {
+			return fmt.Errorf("oleutil.GetProperty(%s): %w", prop[0].(string), err)
+		}
+		if err := assignVariant(val.Value(), prop[1]); err != nil {
+			logger.Warningf("assignVariant(%s): %v", prop[0].(string), err)
+		}
 	}
 	return nil
 }
@@ -66,16 +131,17 @@ func (p *Partition) Delete() error {
 // Resize attempts to resize a partition.
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-partition-resize
-func (p *Partition) Resize(size uint64) error {
+func (p *Partition) Resize(size uint64) (ExtendedStatus, error) {
+	stat := ExtendedStatus{}
 	var extendedStatus ole.VARIANT
 	ole.VariantInit(&extendedStatus)
 	resultRaw, err := oleutil.CallMethod(p.handle, "Resize", size, &extendedStatus)
 	if err != nil {
-		return fmt.Errorf("Resize: %w", err)
+		return stat, fmt.Errorf("Resize: %w", err)
 	} else if val, ok := resultRaw.Value().(int32); val != 0 || !ok {
-		return fmt.Errorf("error code returned during resize: %d", val)
+		return stat, fmt.Errorf("error code returned during resize: %d", val)
 	}
-	return nil
+	return stat, nil
 }
 
 // A PartitionSet contains one or more Partitions.
@@ -86,7 +152,7 @@ type PartitionSet struct {
 // Close releases all Partition handles inside a PartitionSet.
 func (s *PartitionSet) Close() {
 	for _, p := range s.Partitions {
-		p.handle.Release()
+		p.Close()
 	}
 }
 
@@ -126,59 +192,8 @@ func (svc *Service) GetPartitions(filter string) (PartitionSet, error) {
 		}
 		part.handle = itemRaw.ToIDispatch()
 
-		// DriveLetter
-		p, err := oleutil.GetProperty(part.handle, "DriveLetter")
-		if err != nil {
-			return parts, fmt.Errorf("oleutil.GetProperty(DriveLetter): %w", err)
-		}
-		// DriveLetter is represented as Char16 (Ascii)
-		part.DriveLetter = string(rune(p.Val))
-
-		// AccessPaths
-		p, err = oleutil.GetProperty(part.handle, "AccessPaths")
-		if err != nil {
-			return parts, fmt.Errorf("oleutil.GetProperty(AccessPaths): %w", err)
-		}
-		part.AccessPaths = p.ToString()
-
-		// GptType
-		p, err = oleutil.GetProperty(part.handle, "GptType")
-		if err != nil {
-			return parts, fmt.Errorf("oleutil.GetProperty(GptType): %w", err)
-		}
-		part.GptType = p.ToString()
-
-		// GUID
-		p, err = oleutil.GetProperty(part.handle, "Guid")
-		if err != nil {
-			return parts, fmt.Errorf("oleutil.GetProperty(Guid): %w", err)
-		}
-		part.GUID = p.ToString()
-
-		// All the non-strings
-		for _, p := range [][]interface{}{
-			[]interface{}{"DiskNumber", &part.DiskNumber},
-			[]interface{}{"PartitionNumber", &part.PartitionNumber},
-			[]interface{}{"OperationalStatus", &part.OperationalStatus},
-			[]interface{}{"TransitionState", &part.TransitionState},
-			[]interface{}{"Size", &part.Size},
-			[]interface{}{"MbrType", &part.MbrType},
-			[]interface{}{"IsReadOnly", &part.IsReadOnly},
-			[]interface{}{"IsOffline", &part.IsOffline},
-			[]interface{}{"IsSystem", &part.IsSystem},
-			[]interface{}{"IsBoot", &part.IsBoot},
-			[]interface{}{"IsActive", &part.IsActive},
-			[]interface{}{"IsHidden", &part.IsHidden},
-			[]interface{}{"IsShadowCopy", &part.IsShadowCopy},
-			[]interface{}{"NoDefaultDriveLetter", &part.NoDefaultDriveLetter},
-		} {
-			prop, err := oleutil.GetProperty(part.handle, p[0].(string))
-			if err != nil {
-				return parts, fmt.Errorf("oleutil.GetProperty(%s): %w", p[0].(string), err)
-			}
-			if err := assignVariant(prop.Value(), p[1]); err != nil {
-				logger.Warningf("assignVariant(%s): %v", p[0].(string), err)
-			}
+		if err := part.Query(); err != nil {
+			return parts, err
 		}
 
 		parts.Partitions = append(parts.Partitions, part)

@@ -215,7 +215,7 @@ func (d *Disk) CreatePartition(size int, useMaximumSize bool, offset int, alignm
 	}
 
 	part.handle = createdPartition.ToIDispatch()
-	return part, stat, nil
+	return part, stat, part.Query()
 }
 
 // PartitionStyle represents the partition scheme to be used for a disk.
