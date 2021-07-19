@@ -83,46 +83,62 @@ func (d *Disk) Clear(removeData, removeOEM, zeroDisk bool) error {
 // MbrType describes an MBR partition type.
 type MbrType int
 
-var (
+// MbrTypes holds the known MBR partition types.
+var MbrTypes = struct {
 	// FAT12 is a FAT12 file system partition.
-	FAT12 MbrType = 1
+	FAT12 MbrType
 	// FAT16 is a FAT16 file system partition.
-	FAT16 MbrType = 4
+	FAT16 MbrType
 	// Extended is an extended partition.
-	Extended MbrType = 5
+	Extended MbrType
 	// Huge is a huge partition. Use this value when creating a logical volume.
-	Huge MbrType = 6
+	Huge MbrType
 	// IFS is an NTFS or ExFAT partition.
-	IFS MbrType = 7
+	IFS MbrType
 	// FAT32 is a FAT32 partition.
-	FAT32 MbrType = 12
-)
+	FAT32 MbrType
+}{
+	FAT12:    1,
+	FAT16:    4,
+	Extended: 5,
+	Huge:     6,
+	IFS:      7,
+	FAT32:    12,
+}
 
 // GptType describes a GPT partition type.
 type GptType string
 
-var (
+// GptTypes holds the known GPT partition types.
+var GptTypes = struct {
 	// SystemPartition is the Windows system partition.
-	SystemPartition GptType = "{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}"
+	SystemPartition GptType
 	// MicrosoftReserved is the Microsoft Reserved partition.
-	MicrosoftReserved GptType = "{e3c9e316-0b5c-4db8-817d-f92df00215ae}"
+	MicrosoftReserved GptType
 	// BasicData is a basic data partition.
-	BasicData GptType = "{ebd0a0a2-b9e5-4433-87c0-68b6b72699c7}"
+	BasicData GptType
 	// LDMMetadata is a Logical Disk Manager (LDM) metadata partition on a dynamic disk.
-	LDMMetadata GptType = "5808c8aa-7e8f-42e0-85d2-e1e90434cfb3"
+	LDMMetadata GptType
 	// LDMData is an LDM data partition on a dynamic disk.
-	LDMData GptType = "af9b60a0-1431-4f62-bc68-3311714a69ad"
+	LDMData GptType
 	// MicrosoftRecovery is the Windows recovery partition.
-	MicrosoftRecovery GptType = "{de94bba4-06d1-4d40-a16a-bfd50179d6ac}"
-)
+	MicrosoftRecovery GptType
+}{
+	SystemPartition:   "c12a7328-f81f-11d2-ba4b-00a0c93ec93b",
+	MicrosoftReserved: "e3c9e316-0b5c-4db8-817d-f92df00215ae",
+	BasicData:         "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7",
+	LDMMetadata:       "5808c8aa-7e8f-42e0-85d2-e1e90434cfb3",
+	LDMData:           "af9b60a0-1431-4f62-bc68-3311714a69ad",
+	MicrosoftRecovery: "de94bba4-06d1-4d40-a16a-bfd50179d6ac",
+}
 
 // CreatePartition creates a partition on a disk.
 //
 // Creating a GPT Basic Data partition, 100000000b size, drive letter "e:":
-//		d.CreatePartition(100000000, false, 0, 0, "e", false, nil, &storage.BasicData, false, false)
+//		d.CreatePartition(100000000, false, 0, 0, "e", false, nil, &storage.GptTypes.BasicData, false, false)
 //
 // Creating an MBR FAT32 partition, full available space, marked active, with auto-assigned drive letter:
-// 		CreatePartition(0, true, 0, 0, "", true, &storage.FAT32, nil, false, true)
+// 		CreatePartition(0, true, 0, 0, "", true, &storage.MbrTypes.FAT32, nil, false, true)
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/createpartition-msft-disk
 func (d *Disk) CreatePartition(size int, useMaximumSize bool, offset int, alignment int, driveLetter string, assignDriveLetter bool, mbrType *MbrType, gptType *GptType, hidden, active bool) error {
