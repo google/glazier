@@ -80,14 +80,122 @@ func (d *Disk) Clear(removeData, removeOEM, zeroDisk bool) error {
 	return nil
 }
 
+// MbrType describes an MBR partition type.
+type MbrType int
+
+var (
+	// FAT12 is a FAT12 file system partition.
+	FAT12 MbrType = 1
+	// FAT16 is a FAT16 file system partition.
+	FAT16 MbrType = 4
+	// Extended is an extended partition.
+	Extended MbrType = 5
+	// Huge is a huge partition. Use this value when creating a logical volume.
+	Huge MbrType = 6
+	// IFS is an NTFS or ExFAT partition.
+	IFS MbrType = 7
+	// FAT32 is a FAT32 partition.
+	FAT32 MbrType = 12
+)
+
+// GptType describes a GPT partition type.
+type GptType string
+
+var (
+	// SystemPartition is the Windows system partition.
+	SystemPartition GptType = "{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}"
+	// MicrosoftReserved is the Microsoft Reserved partition.
+	MicrosoftReserved GptType = "{e3c9e316-0b5c-4db8-817d-f92df00215ae}"
+	// BasicData is a basic data partition.
+	BasicData GptType = "{ebd0a0a2-b9e5-4433-87c0-68b6b72699c7}"
+	// LDMMetadata is a Logical Disk Manager (LDM) metadata partition on a dynamic disk.
+	LDMMetadata GptType = "5808c8aa-7e8f-42e0-85d2-e1e90434cfb3"
+	// LDMData is an LDM data partition on a dynamic disk.
+	LDMData GptType = "af9b60a0-1431-4f62-bc68-3311714a69ad"
+	// MicrosoftRecovery is the Windows recovery partition.
+	MicrosoftRecovery GptType = "{de94bba4-06d1-4d40-a16a-bfd50179d6ac}"
+)
+
+// CreatePartition creates a partition on a disk.
+//
+// Creating a GPT Basic Data partition, 100000000b size, drive letter "e:":
+//		d.CreatePartition(100000000, false, 0, 0, "e", false, nil, &storage.BasicData, false, false)
+//
+// Creating an MBR FAT32 partition, full available space, marked active, with auto-assigned drive letter:
+// 		CreatePartition(0, true, 0, 0, "", true, &storage.FAT32, nil, false, true)
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/createpartition-msft-disk
+func (d *Disk) CreatePartition(size int, useMaximumSize bool, offset int, alignment int, driveLetter string, assignDriveLetter bool, mbrType *MbrType, gptType *GptType, hidden, active bool) error {
+	if size > 0 && useMaximumSize {
+		return fmt.Errorf("may not specify both size and useMaximumSize")
+	}
+	if driveLetter != "" && assignDriveLetter {
+		return fmt.Errorf("may not specify both driveLetter and assignDriveLetter")
+	}
+	if mbrType != nil && gptType != nil {
+		return fmt.Errorf("cannot specify both gpt and mbr partition types")
+	}
+
+	// Several parameters have to be nil in cases where they're meant to use defaults, or where they're excluded by other options.
+	var ialignment interface{}
+	if alignment > 0 {
+		ialignment = alignment
+	} else {
+		ialignment = nil
+	}
+
+	var iletter interface{}
+	if driveLetter != "" {
+		iletter = int16(driveLetter[0])
+	} else {
+		iletter = nil
+	}
+
+	var imbr interface{}
+	var igpt interface{}
+	if mbrType != nil {
+		imbr = int(*mbrType)
+		igpt = nil
+	} else {
+		imbr = nil
+		igpt = string(*gptType)
+	}
+
+	var ioffset interface{}
+	if offset > 0 {
+		ioffset = offset
+	} else {
+		ioffset = nil
+	}
+
+	var isize interface{}
+	if useMaximumSize {
+		isize = nil
+	} else {
+		isize = size
+	}
+
+	var createdPartition ole.VARIANT
+	ole.VariantInit(&createdPartition)
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+	res, err := oleutil.CallMethod(d.handle, "CreatePartition", isize, useMaximumSize, ioffset, ialignment, iletter, assignDriveLetter, imbr, igpt, hidden, active, &createdPartition, &extendedStatus)
+	if err != nil {
+		return fmt.Errorf("CreatePartition(): %w", err)
+	} else if val, ok := res.Value().(int32); val != 0 || !ok {
+		return fmt.Errorf("error code returned during partition creation: %d (%v)", val, extendedStatus.ToString())
+	}
+	return nil
+}
+
 // PartitionStyle represents the partition scheme to be used for a disk.
 type PartitionStyle int32
 
 const (
-	// GptStyle represents the GPT partition style for a disk.
-	GptStyle PartitionStyle = 1
 	// MbrStyle represents the MBR partition style for a disk.
-	MbrStyle PartitionStyle = 2
+	MbrStyle PartitionStyle = 1
+	// GptStyle represents the GPT partition style for a disk.
+	GptStyle PartitionStyle = 2
 )
 
 // Initialize initializes a new disk.
