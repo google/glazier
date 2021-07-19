@@ -84,6 +84,90 @@ func GetPartitionSupportedSize(diskNum, partNum int) (*PartitionSupportedSize, e
 	return p, nil
 }
 
+// ClearDisk attempts to clean a disk by removing all partition information and un-initializing it by erasing all data on the disk
+func ClearDisk(diskNum int) error {
+	cmd := fmt.Sprintf("Clear-Disk -Number %d -RemoveData -RemoveOEM -Confirm:$false", diskNum)
+	_, err := fnPSCmd(cmd, []string{}, nil)
+	return err
+}
+
+// InitializeGPTDisk will attempt to initalize a disk
+func InitializeGPTDisk(diskNum int) error {
+	cmd := fmt.Sprintf("Initialize-Disk -Number %d -PartitionStyle GPT -Confirm:$false", diskNum)
+	_, err := fnPSCmd(cmd, []string{}, nil)
+	return err
+}
+
+// UefiPartitionInfo contains the information needed to create a UEFI Partition.
+type UefiPartitionInfo struct {
+	GptType     string
+	DriveLetter string
+	SystemLabel string
+	Size        int
+}
+
+// CreateWindowsPartitions attempts to create a recovery, system, reserved and Windows partition
+func CreateWindowsPartitions(diskNum int, recoveryInfo UefiPartitionInfo, SystemInfo UefiPartitionInfo, MSRInfo UefiPartitionInfo, WindowsInfo UefiPartitionInfo) error {
+	var err error
+	//TODO(mjo) Check if any driveLetters are currently in use and unassign / unmount them.
+
+	err = ClearDisk(diskNum)
+	if err != nil {
+		return err
+	}
+
+	err = InitializeGPTDisk(diskNum)
+	if err != nil {
+		return err
+	}
+
+	// Create Recovery Partition.
+	_, err = fnPSCmd(fmt.Sprintf("New-Partition -Disknumber %d -GptType '%s' -Size %dMB -DriveLetter '%s'", diskNum, recoveryInfo.GptType, recoveryInfo.Size, recoveryInfo.DriveLetter), []string{}, nil)
+	if err != nil {
+		return err
+	}
+	_, err = fnPSCmd(fmt.Sprintf("Format-Volume -FileSystem NTFS -NewFileSystemLabel '%s' -DriveLetter '%s'", recoveryInfo.SystemLabel, recoveryInfo.DriveLetter), []string{}, nil)
+	if err != nil {
+		return err
+	}
+	_, err = fnPSCmd(fmt.Sprintf("Set-Partition -NoDefaultDriveLetter $true -DriveLetter '%s'", recoveryInfo.DriveLetter), []string{}, nil)
+	if err != nil {
+		return err
+	}
+
+	// Create System Partition.
+	_, err = fnPSCmd(fmt.Sprintf("New-Partition -Disknumber '%d' -GptType '%s' -Size %dMB -DriveLetter '%s'", diskNum, SystemInfo.GptType, SystemInfo.Size, SystemInfo.DriveLetter), []string{}, nil)
+	if err != nil {
+		return err
+	}
+	_, err = fnPSCmd(fmt.Sprintf("Format-Volume -FileSystem FAT32 -NewFileSystemLabel '%s' -DriveLetter '%s'", SystemInfo.SystemLabel, SystemInfo.DriveLetter), []string{}, nil)
+	if err != nil {
+		return err
+	}
+
+	// Create Microsoft Reserved (MSR) partition.
+	_, err = fnPSCmd(fmt.Sprintf("New-Partition -GptType '%s' -Size %dMB -Disknumber '%d'", MSRInfo.GptType, MSRInfo.Size, diskNum), []string{}, nil)
+	if err != nil {
+		return err
+	}
+
+	// Create Windows partition by using the maximum reamaining space unless user specified.
+	cmd := fmt.Sprintf("New-Partition -Disknumber %d -GptType '%s' -DriveLetter '%s' -UseMaximumSize", diskNum, WindowsInfo.GptType, WindowsInfo.DriveLetter)
+	if WindowsInfo.Size != 0 {
+		cmd = fmt.Sprintf("New-Partition -Disknumber %d -GptType '%s' -DriveLetter '%s' -Size %dMB", diskNum, WindowsInfo.GptType, WindowsInfo.DriveLetter, WindowsInfo.Size)
+	}
+	_, err = fnPSCmd(cmd, []string{}, nil)
+	if err != nil {
+		return err
+	}
+	_, err = fnPSCmd(fmt.Sprintf("Format-Volume -FileSystem NTFS -NewFileSystemLabel '%s' -DriveLetter '%s'", WindowsInfo.SystemLabel, WindowsInfo.DriveLetter), []string{}, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Service represents a connection to the host Storage service (in WMI).
 type Service struct {
 	wmiIntf *ole.IDispatch
