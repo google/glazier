@@ -116,7 +116,8 @@ func (svc Service) GetVolumes(filter string) (VolumeSet, error) {
 		if err != nil {
 			return vset, fmt.Errorf("oleutil.GetProperty(DriveLetter): %w", err)
 		}
-		v.DriveLetter = p.ToString()
+		// DriveLetter is represented as Char16 (Ascii)
+		v.DriveLetter = string(rune(p.Val))
 
 		// Path
 		p, err = oleutil.GetProperty(v.handle, "Path")

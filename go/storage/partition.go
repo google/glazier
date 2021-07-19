@@ -131,14 +131,8 @@ func (svc *Service) GetPartitions(filter string) (PartitionSet, error) {
 		if err != nil {
 			return parts, fmt.Errorf("oleutil.GetProperty(DriveLetter): %w", err)
 		}
-		part.DriveLetter = p.ToString()
-
-		// DriveLetter
-		p, err = oleutil.GetProperty(part.handle, "DriveLetter")
-		if err != nil {
-			return parts, fmt.Errorf("oleutil.GetProperty(DriveLetter): %w", err)
-		}
-		part.DriveLetter = p.ToString()
+		// DriveLetter is represented as Char16 (Ascii)
+		part.DriveLetter = string(rune(p.Val))
 
 		// AccessPaths
 		p, err = oleutil.GetProperty(part.handle, "AccessPaths")
