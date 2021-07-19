@@ -50,7 +50,9 @@ type Partition struct {
 
 // Close releases the handle to the partition.
 func (p *Partition) Close() {
-	p.handle.Release()
+	if p.handle != nil {
+		p.handle.Release()
+	}
 }
 
 // Delete attempts to delete a partition.
@@ -71,6 +73,10 @@ func (p *Partition) Delete() (ExtendedStatus, error) {
 
 // Query reads and populates the partition state.
 func (p *Partition) Query() error {
+	if p.handle == nil {
+		return fmt.Errorf("invalid handle")
+	}
+
 	// DriveLetter
 	prop, err := oleutil.GetProperty(p.handle, "DriveLetter")
 	if err != nil {

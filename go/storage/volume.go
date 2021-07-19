@@ -16,6 +16,7 @@ package storage
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/google/logger"
 	"github.com/go-ole/go-ole"
@@ -28,21 +29,23 @@ import (
 type Volume struct {
 	DriveLetter     string
 	Path            string
-	HealthStatus    uint16
+	HealthStatus    int32
 	FileSystem      string
 	FileSystemLabel string
-	FileSystemType  uint16
+	FileSystemType  int32
 	Size            uint64
 	SizeRemaining   uint64
-	DriveType       uint32
-	DedupMode       uint32
+	DriveType       int32
+	DedupMode       int32
 
 	handle *ole.IDispatch
 }
 
 // Close releases the handle to the volume.
 func (v *Volume) Close() {
-	v.handle.Release()
+	if v.handle != nil {
+		v.handle.Release()
+	}
 }
 
 // Format formats a volume.
@@ -52,7 +55,7 @@ func (v *Volume) Close() {
 // If successful, the formatted volume is returned as a new Volume object. Close() must be called on the new Volume.
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/format-msft-volume
-func (v *Volume) Format(fs string, fsLabel string, allocationUnitSize int,
+func (v *Volume) Format(fs string, fsLabel string, allocationUnitSize int32,
 	full, force, compress, shortFileNameSupport, setIntegrityStreams, useLargeFRS, disableHeatGathering bool) (Volume, ExtendedStatus, error) {
 	vol := Volume{}
 	stat := ExtendedStatus{}
@@ -62,21 +65,49 @@ func (v *Volume) Format(fs string, fsLabel string, allocationUnitSize int,
 	var formattedVolume ole.VARIANT
 	ole.VariantInit(&formattedVolume)
 
-	res, err := oleutil.CallMethod(v.handle, "Format", fs, fsLabel, allocationUnitSize, full, force, compress,
-		shortFileNameSupport, setIntegrityStreams, useLargeFRS, disableHeatGathering, &formattedVolume, &extendedStatus)
+	var ialloc interface{}
+	if allocationUnitSize != 0 {
+		ialloc = allocationUnitSize
+	} else {
+		ialloc = nil
+	}
+
+	var icompress interface{}
+	var iintegrity interface{}
+	var ilfrs interface{}
+	var ishortn interface{}
+	if strings.EqualFold("ReFS", fs) {
+		iintegrity = setIntegrityStreams
+		ilfrs = useLargeFRS
+		ishortn = nil
+		icompress = nil
+	} else {
+		iintegrity = nil
+		ilfrs = nil
+		ishortn = shortFileNameSupport
+		icompress = compress
+	}
+
+	res, err := oleutil.CallMethod(v.handle, "Format", fs, fsLabel, ialloc, full, force, icompress,
+		ishortn, iintegrity, ilfrs, disableHeatGathering, &formattedVolume, &extendedStatus)
 	if err != nil {
 		return vol, stat, fmt.Errorf("Format: %w", err)
 	} else if val, ok := res.Value().(int32); val != 0 || !ok {
 		return vol, stat, fmt.Errorf("error code returned during formatting: %d", val)
 	}
 
+	// TODO(mattl): figure out why this handle is invalid
 	vol.handle = formattedVolume.ToIDispatch()
 
-	return vol, stat, vol.Query()
+	return vol, stat, nil
 }
 
 // Query reads and populates the volume state.
 func (v *Volume) Query() error {
+	if v.handle == nil {
+		return fmt.Errorf("invalid handle")
+	}
+
 	// DriveLetter
 	p, err := oleutil.GetProperty(v.handle, "DriveLetter")
 	if err != nil {

@@ -83,7 +83,9 @@ func (d *Disk) Clear(removeData, removeOEM, zeroDisk bool) (ExtendedStatus, erro
 
 // Close releases the handle to the disk.
 func (d *Disk) Close() {
-	d.handle.Release()
+	if d.handle != nil {
+		d.handle.Release()
+	}
 }
 
 // MbrType describes an MBR partition type.
@@ -249,6 +251,10 @@ func (d *Disk) Initialize(ps PartitionStyle) (ExtendedStatus, error) {
 
 // Query reads and populates the disk state.
 func (d *Disk) Query() error {
+	if d.handle == nil {
+		return fmt.Errorf("invalid handle")
+	}
+
 	// Path
 	p, err := oleutil.GetProperty(d.handle, "Path")
 	if err != nil {
