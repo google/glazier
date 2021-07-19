@@ -68,16 +68,22 @@ type Disk struct {
 //		d.Clear(true, true, true)
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/clear-msft-disk
-func (d *Disk) Clear(removeData, removeOEM, zeroDisk bool) error {
+func (d *Disk) Clear(removeData, removeOEM, zeroDisk bool) (ExtendedStatus, error) {
+	stat := ExtendedStatus{}
 	var extendedStatus ole.VARIANT
 	ole.VariantInit(&extendedStatus)
 	res, err := oleutil.CallMethod(d.handle, "Clear", removeData, removeOEM, zeroDisk, &extendedStatus)
 	if err != nil {
-		return fmt.Errorf("Clear(): %w", err)
+		return stat, fmt.Errorf("Clear(): %w", err)
 	} else if val, ok := res.Value().(int32); val != 0 || !ok {
-		return fmt.Errorf("error code returned during disk wipe: %d", val)
+		return stat, fmt.Errorf("error code returned during disk wipe: %d", val)
 	}
-	return nil
+	return stat, nil
+}
+
+// Close releases the handle to the disk.
+func (d *Disk) Close() {
+	d.handle.Release()
 }
 
 // MbrType describes an MBR partition type.
@@ -124,15 +130,17 @@ var GptTypes = struct {
 	// MicrosoftRecovery is the Windows recovery partition.
 	MicrosoftRecovery GptType
 }{
-	SystemPartition:   "c12a7328-f81f-11d2-ba4b-00a0c93ec93b",
-	MicrosoftReserved: "e3c9e316-0b5c-4db8-817d-f92df00215ae",
-	BasicData:         "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7",
-	LDMMetadata:       "5808c8aa-7e8f-42e0-85d2-e1e90434cfb3",
-	LDMData:           "af9b60a0-1431-4f62-bc68-3311714a69ad",
-	MicrosoftRecovery: "de94bba4-06d1-4d40-a16a-bfd50179d6ac",
+	SystemPartition:   "{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}",
+	MicrosoftReserved: "{e3c9e316-0b5c-4db8-817d-f92df00215ae}",
+	BasicData:         "{ebd0a0a2-b9e5-4433-87c0-68b6b72699c7}",
+	LDMMetadata:       "{5808c8aa-7e8f-42e0-85d2-e1e90434cfb3}",
+	LDMData:           "{af9b60a0-1431-4f62-bc68-3311714a69ad}",
+	MicrosoftRecovery: "{de94bba4-06d1-4d40-a16a-bfd50179d6ac}",
 }
 
 // CreatePartition creates a partition on a disk.
+//
+// If successful, the partition is returned as a new Partition object. The new Partition must be Closed().
 //
 // Creating a GPT Basic Data partition, 100000000b size, drive letter "e:":
 //		d.CreatePartition(100000000, false, 0, 0, "e", false, nil, &storage.GptTypes.BasicData, false, false)
@@ -141,15 +149,19 @@ var GptTypes = struct {
 // 		CreatePartition(0, true, 0, 0, "", true, &storage.MbrTypes.FAT32, nil, false, true)
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/createpartition-msft-disk
-func (d *Disk) CreatePartition(size int, useMaximumSize bool, offset int, alignment int, driveLetter string, assignDriveLetter bool, mbrType *MbrType, gptType *GptType, hidden, active bool) error {
+func (d *Disk) CreatePartition(size int, useMaximumSize bool, offset int, alignment int, driveLetter string, assignDriveLetter bool,
+	mbrType *MbrType, gptType *GptType, hidden, active bool) (Partition, ExtendedStatus, error) {
+	part := Partition{}
+	stat := ExtendedStatus{}
+
 	if size > 0 && useMaximumSize {
-		return fmt.Errorf("may not specify both size and useMaximumSize")
+		return part, stat, fmt.Errorf("may not specify both size and useMaximumSize")
 	}
 	if driveLetter != "" && assignDriveLetter {
-		return fmt.Errorf("may not specify both driveLetter and assignDriveLetter")
+		return part, stat, fmt.Errorf("may not specify both driveLetter and assignDriveLetter")
 	}
 	if mbrType != nil && gptType != nil {
-		return fmt.Errorf("cannot specify both gpt and mbr partition types")
+		return part, stat, fmt.Errorf("cannot specify both gpt and mbr partition types")
 	}
 
 	// Several parameters have to be nil in cases where they're meant to use defaults, or where they're excluded by other options.
@@ -197,11 +209,13 @@ func (d *Disk) CreatePartition(size int, useMaximumSize bool, offset int, alignm
 	ole.VariantInit(&extendedStatus)
 	res, err := oleutil.CallMethod(d.handle, "CreatePartition", isize, useMaximumSize, ioffset, ialignment, iletter, assignDriveLetter, imbr, igpt, hidden, active, &createdPartition, &extendedStatus)
 	if err != nil {
-		return fmt.Errorf("CreatePartition(): %w", err)
+		return part, stat, fmt.Errorf("CreatePartition(): %w", err)
 	} else if val, ok := res.Value().(int32); val != 0 || !ok {
-		return fmt.Errorf("error code returned during partition creation: %d (%v)", val, extendedStatus.ToString())
+		return part, stat, fmt.Errorf("error code returned during partition creation: %d", val)
 	}
-	return nil
+
+	part.handle = createdPartition.ToIDispatch()
+	return part, stat, nil
 }
 
 // PartitionStyle represents the partition scheme to be used for a disk.
@@ -220,14 +234,115 @@ const (
 //		d.Initialize(storage.GptStyle)
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/initialize-msft-disk
-func (d *Disk) Initialize(ps PartitionStyle) error {
+func (d *Disk) Initialize(ps PartitionStyle) (ExtendedStatus, error) {
+	stat := ExtendedStatus{}
 	var extendedStatus ole.VARIANT
 	ole.VariantInit(&extendedStatus)
 	res, err := oleutil.CallMethod(d.handle, "Initialize", int32(ps), &extendedStatus)
 	if err != nil {
-		return fmt.Errorf("Initialize(%d): %w", ps, err)
+		return stat, fmt.Errorf("Initialize(%d): %w", ps, err)
 	} else if val, ok := res.Value().(int32); val != 0 || !ok {
-		return fmt.Errorf("error code returned during initialization: %d", val)
+		return stat, fmt.Errorf("error code returned during initialization: %d", val)
+	}
+	return stat, nil
+}
+
+// Query reads and populates the disk state.
+func (d *Disk) Query() error {
+	// Path
+	p, err := oleutil.GetProperty(d.handle, "Path")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(Path): %w", err)
+	}
+	d.Path = p.ToString()
+
+	// Location
+	p, err = oleutil.GetProperty(d.handle, "Location")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(Location): %w", err)
+	}
+	d.Location = p.ToString()
+
+	// FriendlyName
+	p, err = oleutil.GetProperty(d.handle, "FriendlyName")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(FriendlyName): %w", err)
+	}
+	d.FriendlyName = p.ToString()
+
+	// UniqueID
+	p, err = oleutil.GetProperty(d.handle, "UniqueId")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(UniqueId): %w", err)
+	}
+	d.UniqueID = p.ToString()
+
+	// SerialNumber
+	p, err = oleutil.GetProperty(d.handle, "SerialNumber")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(SerialNumber): %w", err)
+	}
+	d.SerialNumber = p.ToString()
+
+	// FirmwareVersion
+	p, err = oleutil.GetProperty(d.handle, "FirmwareVersion")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(FirmwareVersion): %w", err)
+	}
+	d.FirmwareVersion = p.ToString()
+
+	// Manufacturer
+	p, err = oleutil.GetProperty(d.handle, "Manufacturer")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(Manufacturer): %w", err)
+	}
+	d.Manufacturer = p.ToString()
+
+	// Model
+	p, err = oleutil.GetProperty(d.handle, "Model")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(Model): %w", err)
+	}
+	d.Model = p.ToString()
+
+	// GUID
+	p, err = oleutil.GetProperty(d.handle, "Guid")
+	if err != nil {
+		return fmt.Errorf("oleutil.GetProperty(Guid): %w", err)
+	}
+	d.GUID = p.ToString()
+
+	// All the non-strings
+	for _, p := range [][]interface{}{
+		[]interface{}{"UniqueIdFormat", &d.UniqueIDFormat},
+		[]interface{}{"Number", &d.Number},
+		[]interface{}{"Size", &d.Size},
+		[]interface{}{"AllocatedSize", &d.AllocatedSize},
+		[]interface{}{"LogicalSectorSize", &d.LogicalSectorSize},
+		[]interface{}{"PhysicalSectorSize", &d.PhysicalSectorSize},
+		[]interface{}{"LargestFreeExtent", &d.LargestFreeExtent},
+		[]interface{}{"NumberOfPartitions", &d.NumberOfPartitions},
+		[]interface{}{"ProvisioningType", &d.ProvisioningType},
+		// []interface{}{"OperationalStatus",},
+		[]interface{}{"HealthStatus", &d.HealthStatus},
+		[]interface{}{"BusType", &d.BusType},
+		[]interface{}{"PartitionStyle", &d.PartitionStyle},
+		[]interface{}{"Signature", &d.Signature},
+		[]interface{}{"IsOffline", &d.IsOffline},
+		[]interface{}{"OfflineReason", &d.OfflineReason},
+		[]interface{}{"IsReadOnly", &d.IsReadOnly},
+		[]interface{}{"IsSystem", &d.IsSystem},
+		[]interface{}{"IsClustered", &d.IsClustered},
+		[]interface{}{"IsBoot", &d.IsBoot},
+		[]interface{}{"BootFromDisk", &d.BootFromDisk},
+	} {
+		prop, err := oleutil.GetProperty(d.handle, p[0].(string))
+		if err != nil {
+			return fmt.Errorf("oleutil.GetProperty(%s): %w", p[0].(string), err)
+		}
+		if err := assignVariant(prop.Value(), p[1]); err != nil {
+			logger.Warningf("assignVariant(%s): %v", p[0].(string), err)
+		}
 	}
 	return nil
 }
@@ -240,7 +355,7 @@ type DiskSet struct {
 // Close releases all Disk handles inside a DiskSet.
 func (s *DiskSet) Close() {
 	for _, d := range s.Disks {
-		d.handle.Release()
+		d.Close()
 	}
 }
 
@@ -319,103 +434,9 @@ func (svc Service) GetDisks(filter string) (DiskSet, error) {
 			return dset, fmt.Errorf("oleutil.CallMethod(ItemIndex, %d): %w", i, err)
 		}
 		d.handle = itemRaw.ToIDispatch()
-
-		// Path
-		p, err := oleutil.GetProperty(d.handle, "Path")
-		if err != nil {
-			return dset, fmt.Errorf("oleutil.GetProperty(Path): %w", err)
+		if err := d.Query(); err != nil {
+			return dset, err
 		}
-		d.Path = p.ToString()
-
-		// Location
-		p, err = oleutil.GetProperty(d.handle, "Location")
-		if err != nil {
-			return dset, fmt.Errorf("oleutil.GetProperty(Location): %w", err)
-		}
-		d.Location = p.ToString()
-
-		// FriendlyName
-		p, err = oleutil.GetProperty(d.handle, "FriendlyName")
-		if err != nil {
-			return dset, fmt.Errorf("oleutil.GetProperty(FriendlyName): %w", err)
-		}
-		d.FriendlyName = p.ToString()
-
-		// UniqueID
-		p, err = oleutil.GetProperty(d.handle, "UniqueId")
-		if err != nil {
-			return dset, fmt.Errorf("oleutil.GetProperty(UniqueId): %w", err)
-		}
-		d.UniqueID = p.ToString()
-
-		// SerialNumber
-		p, err = oleutil.GetProperty(d.handle, "SerialNumber")
-		if err != nil {
-			return dset, fmt.Errorf("oleutil.GetProperty(SerialNumber): %w", err)
-		}
-		d.SerialNumber = p.ToString()
-
-		// FirmwareVersion
-		p, err = oleutil.GetProperty(d.handle, "FirmwareVersion")
-		if err != nil {
-			return dset, fmt.Errorf("oleutil.GetProperty(FirmwareVersion): %w", err)
-		}
-		d.FirmwareVersion = p.ToString()
-
-		// Manufacturer
-		p, err = oleutil.GetProperty(d.handle, "Manufacturer")
-		if err != nil {
-			return dset, fmt.Errorf("oleutil.GetProperty(Manufacturer): %w", err)
-		}
-		d.Manufacturer = p.ToString()
-
-		// Model
-		p, err = oleutil.GetProperty(d.handle, "Model")
-		if err != nil {
-			return dset, fmt.Errorf("oleutil.GetProperty(Model): %w", err)
-		}
-		d.Model = p.ToString()
-
-		// GUID
-		p, err = oleutil.GetProperty(d.handle, "Guid")
-		if err != nil {
-			return dset, fmt.Errorf("oleutil.GetProperty(Guid): %w", err)
-		}
-		d.GUID = p.ToString()
-
-		// All the non-strings
-		for _, p := range [][]interface{}{
-			[]interface{}{"UniqueIdFormat", &d.UniqueIDFormat},
-			[]interface{}{"Number", &d.Number},
-			[]interface{}{"Size", &d.Size},
-			[]interface{}{"AllocatedSize", &d.AllocatedSize},
-			[]interface{}{"LogicalSectorSize", &d.LogicalSectorSize},
-			[]interface{}{"PhysicalSectorSize", &d.PhysicalSectorSize},
-			[]interface{}{"LargestFreeExtent", &d.LargestFreeExtent},
-			[]interface{}{"NumberOfPartitions", &d.NumberOfPartitions},
-			[]interface{}{"ProvisioningType", &d.ProvisioningType},
-			// []interface{}{"OperationalStatus",},
-			[]interface{}{"HealthStatus", &d.HealthStatus},
-			[]interface{}{"BusType", &d.BusType},
-			[]interface{}{"PartitionStyle", &d.PartitionStyle},
-			[]interface{}{"Signature", &d.Signature},
-			[]interface{}{"IsOffline", &d.IsOffline},
-			[]interface{}{"OfflineReason", &d.OfflineReason},
-			[]interface{}{"IsReadOnly", &d.IsReadOnly},
-			[]interface{}{"IsSystem", &d.IsSystem},
-			[]interface{}{"IsClustered", &d.IsClustered},
-			[]interface{}{"IsBoot", &d.IsBoot},
-			[]interface{}{"BootFromDisk", &d.BootFromDisk},
-		} {
-			prop, err := oleutil.GetProperty(d.handle, p[0].(string))
-			if err != nil {
-				return dset, fmt.Errorf("oleutil.GetProperty(%s): %w", p[0].(string), err)
-			}
-			if err := assignVariant(prop.Value(), p[1]); err != nil {
-				logger.Warningf("assignVariant(%s): %v", p[0].(string), err)
-			}
-		}
-
 		dset.Disks = append(dset.Disks, d)
 	}
 

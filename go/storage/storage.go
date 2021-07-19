@@ -33,6 +33,11 @@ var (
 	fnPSCmd = powershell.Command
 )
 
+// ExtendedStatus is a placeholder for MSFT_StorageExtendedStatus
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-storageextendedstatus
+type ExtendedStatus struct {}
+
 // PartitionInfo holds information about a disk partition.
 type PartitionInfo struct {
 	DiskNumber      int
