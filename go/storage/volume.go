@@ -48,6 +48,19 @@ func (v *Volume) Close() {
 	}
 }
 
+// Flush flushes the cached data in the volume's file system to disk.
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-volume-flush
+func (v *Volume) Flush() error {
+	res, err := oleutil.CallMethod(v.handle, "Flush")
+	if err != nil {
+		return fmt.Errorf("Flush: %w", err)
+	} else if val, ok := res.Value().(int32); val != 0 || !ok {
+		return fmt.Errorf("error code returned during flush: %d", val)
+	}
+	return nil
+}
+
 // Format formats a volume.
 //
 // fs can be one of "ExFAT", "FAT", "FAT32", "NTFS", "ReFS"
@@ -100,6 +113,23 @@ func (v *Volume) Format(fs string, fsLabel string, allocationUnitSize int32,
 	vol.handle = formattedVolume.ToIDispatch()
 
 	return vol, stat, nil
+}
+
+// Optimize optimizes the volume.
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/optimize-msft-volume
+func (v *Volume) Optimize(reTrim, analyze, defrag, slabConslidate, tierOptimize bool) (ExtendedStatus, error) {
+	stat := ExtendedStatus{}
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+
+	res, err := oleutil.CallMethod(v.handle, "Optimize", reTrim, analyze, defrag, slabConslidate, tierOptimize, &extendedStatus)
+	if err != nil {
+		return stat, fmt.Errorf("Optimize: %w", err)
+	} else if val, ok := res.Value().(int32); val != 0 || !ok {
+		return stat, fmt.Errorf("error code returned during optimization: %d", val)
+	}
+	return stat, nil
 }
 
 // Query reads and populates the volume state.
