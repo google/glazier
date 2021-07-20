@@ -249,6 +249,63 @@ func (d *Disk) Initialize(ps PartitionStyle) (ExtendedStatus, error) {
 	return stat, nil
 }
 
+// Offline takes the disk offline.
+//
+// Example:
+//		d.Offline()
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-disk-offline
+func (d *Disk) Offline() (ExtendedStatus, error) {
+	stat := ExtendedStatus{}
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+	res, err := oleutil.CallMethod(d.handle, "Offline", &extendedStatus)
+	if err != nil {
+		return stat, fmt.Errorf("Offline(): %w", err)
+	} else if val, ok := res.Value().(int32); val != 0 || !ok {
+		return stat, fmt.Errorf("error code returned during offline: %d", val)
+	}
+	return stat, nil
+}
+
+// Online brings the disk online.
+//
+// Example:
+//		d.Online()
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-disk-online
+func (d *Disk) Online() (ExtendedStatus, error) {
+	stat := ExtendedStatus{}
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+	res, err := oleutil.CallMethod(d.handle, "Online", &extendedStatus)
+	if err != nil {
+		return stat, fmt.Errorf("Online(): %w", err)
+	} else if val, ok := res.Value().(int32); val != 0 || !ok {
+		return stat, fmt.Errorf("error code returned during online: %d", val)
+	}
+	return stat, nil
+}
+
+// Refresh refreshes the cached disk layout information.
+//
+// Example:
+//		d.Refresh()
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-disk-refresh
+func (d *Disk) Refresh() (ExtendedStatus, error) {
+	stat := ExtendedStatus{}
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+	res, err := oleutil.CallMethod(d.handle, "Refresh", &extendedStatus)
+	if err != nil {
+		return stat, fmt.Errorf("Refresh(): %w", err)
+	} else if val, ok := res.Value().(int32); val != 0 || !ok {
+		return stat, fmt.Errorf("error code returned during refresh: %d", val)
+	}
+	return stat, nil
+}
+
 // Query reads and populates the disk state.
 func (d *Disk) Query() error {
 	if d.handle == nil {
