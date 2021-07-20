@@ -71,6 +71,44 @@ func (p *Partition) Delete() (ExtendedStatus, error) {
 	return stat, nil
 }
 
+// Offline takes the partition offline.
+//
+// Example:
+//		p.Offline()
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-partition-offline
+func (p *Partition) Offline() (ExtendedStatus, error) {
+	stat := ExtendedStatus{}
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+	res, err := oleutil.CallMethod(p.handle, "Offline", &extendedStatus)
+	if err != nil {
+		return stat, fmt.Errorf("Offline(): %w", err)
+	} else if val, ok := res.Value().(int32); val != 0 || !ok {
+		return stat, fmt.Errorf("error code returned during offline: %d", val)
+	}
+	return stat, nil
+}
+
+// Online brings the partition online by mounting the associated volume (if one exists).
+//
+// Example:
+//		p.Online()
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-partition-online
+func (p *Partition) Online() (ExtendedStatus, error) {
+	stat := ExtendedStatus{}
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+	res, err := oleutil.CallMethod(p.handle, "Online", &extendedStatus)
+	if err != nil {
+		return stat, fmt.Errorf("Online(): %w", err)
+	} else if val, ok := res.Value().(int32); val != 0 || !ok {
+		return stat, fmt.Errorf("error code returned during online: %d", val)
+	}
+	return stat, nil
+}
+
 // Query reads and populates the partition state.
 func (p *Partition) Query() error {
 	if p.handle == nil {
