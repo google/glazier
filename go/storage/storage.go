@@ -16,7 +16,6 @@
 package storage
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -36,58 +35,7 @@ var (
 // ExtendedStatus is a placeholder for MSFT_StorageExtendedStatus
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-storageextendedstatus
-type ExtendedStatus struct {}
-
-// PartitionInfo holds information about a disk partition.
-type PartitionInfo struct {
-	DiskNumber      int
-	IsBoot          bool
-	GUID            string
-	PartitionNumber int
-	Size            int
-	Type            string
-}
-
-// GetPartitionInfo returns information about a specific disk partition.
-func GetPartitionInfo(diskNum, partNum int) (*PartitionInfo, error) {
-	p := &PartitionInfo{}
-	cmd := fmt.Sprintf("Get-Partition -DiskNumber %d -PartitionNumber %d | ConvertTo-JSON", diskNum, partNum)
-	out, err := fnPSCmd(cmd, []string{}, nil)
-	if err != nil {
-		return p, err
-	}
-	if err = json.Unmarshal(out, p); err != nil {
-		return p, fmt.Errorf("%w: %v", ErrUnmarshal, err)
-	}
-	return p, nil
-}
-
-// PartitionResize attempts to resize a given disk/partition.
-func PartitionResize(diskNum, partNum, size int) error {
-	cmd := fmt.Sprintf("Resize-Partition -DiskNumber %d -PartitionNumber %d -Size %d", diskNum, partNum, size)
-	_, err := fnPSCmd(cmd, []string{}, nil)
-	return err
-}
-
-// PartitionSupportedSize contains the maximum and minimum sizes supported by a partition.
-type PartitionSupportedSize struct {
-	SizeMin int
-	SizeMax int
-}
-
-// GetPartitionSupportedSize returns the supported minimum and maximum sizes for a given disk/partition.
-func GetPartitionSupportedSize(diskNum, partNum int) (*PartitionSupportedSize, error) {
-	p := &PartitionSupportedSize{}
-	cmd := fmt.Sprintf("Get-PartitionSupportedSize -DiskNumber %d -PartitionNumber %d | ConvertTo-JSON", diskNum, partNum)
-	out, err := fnPSCmd(cmd, []string{}, nil)
-	if err != nil {
-		return p, err
-	}
-	if err = json.Unmarshal(out, p); err != nil {
-		return p, fmt.Errorf("%w: %v", ErrUnmarshal, err)
-	}
-	return p, nil
-}
+type ExtendedStatus struct{}
 
 // Service represents a connection to the host Storage service (in WMI).
 type Service struct {
