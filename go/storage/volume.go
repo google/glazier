@@ -132,6 +132,23 @@ func (v *Volume) Optimize(reTrim, analyze, defrag, slabConslidate, tierOptimize 
 	return stat, nil
 }
 
+// SetFileSystemLabel Sets the file system label for the volume.
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-volume-setfilesystemlabel
+func (v *Volume) SetFileSystemLabel(fileSystemLabel string) (ExtendedStatus, error) {
+	stat := ExtendedStatus{}
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+
+	res, err := oleutil.CallMethod(v.handle, "SetFileSystemLabel", fileSystemLabel, &extendedStatus)
+	if err != nil {
+		return stat, fmt.Errorf("SetFileSystemLabel: %w", err)
+	} else if val, ok := res.Value().(int32); val != 0 || !ok {
+		return stat, fmt.Errorf("error code returned during setting file system label: %d", val)
+	}
+	return stat, nil
+}
+
 // Query reads and populates the volume state.
 func (v *Volume) Query() error {
 	if v.handle == nil {
