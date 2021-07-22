@@ -1,5 +1,7 @@
 # Glazier: Storage Package
 
+<!--* freshness: { exempt: true } *-->
+
 The Glazier Storage package is a wrapper for Microsoft's
 [Windows Storage Management API](https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/windows-storage-management-api-portal).
 

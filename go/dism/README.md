@@ -1,5 +1,7 @@
 # Glazier: DISM Package
 
+<!--* freshness: { exempt: true } *-->
+
 The Glazier DISM package is a wrapper for Microsoft's
 [Deployment Image Servicing and Management (DISM) API](https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/deployment-image-servicing-and-management--dism--api).
 

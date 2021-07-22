@@ -1,5 +1,7 @@
 # Glazier: Registry Package
 
+<!--* freshness: { exempt: true } *-->
+
 The Glazier registry package provides helper functions for simplifying common
 interactions with the Windows registry.
 

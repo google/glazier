@@ -1,5 +1,7 @@
 # Glazier: Bitlocker Package
 
+<!--* freshness: { exempt: true } *-->
+
 The Glazier Bitlocker package is a wrapper for Microsoft's
 [BitLocker Drive Encryption Provider](https://docs.microsoft.com/en-us/windows/win32/secprov/bitlocker-drive-encryption-provider).
 
