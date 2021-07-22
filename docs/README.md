@@ -1,5 +1,7 @@
 # Glazier Documentation
 
+<!--* freshness: { owner: '@tseknet' reviewed: '2021-01-11' } *-->
+
 TIP: Glazier docs are best viewed on our
 [docs site](https://google.github.io/glazier).
 

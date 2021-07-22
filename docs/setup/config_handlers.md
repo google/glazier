@@ -1,5 +1,7 @@
 # Glazier Configuration Handlers
 
+<!--* freshness: { owner: '@mbernhardt6' reviewed: '2020-10-19' } *-->
+
 The Glazier configuration handling libraries are responsible for taking the
 configuration language as input, determining which commands apply to the current
 system, and executing them as needed.

@@ -1,3 +1,5 @@
+<!--* freshness: { exempt: true } *-->
+
 ---
 name: Documentation Issue 📚
 about: Problems with Glazier documentation

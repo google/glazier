@@ -1,5 +1,7 @@
 # Contributing
 
+<!--* freshness: { exempt: true } *-->
+
 Unfortunately, we are not able to accept external contributions at this time.
 We'd love to hear about any issues you experience when using our product. Please
 file bugs and feature requests via GitHub's

@@ -1,5 +1,7 @@
 # About Glazier
 
+<!--* freshness: { owner: '@tseknet' reviewed: '2020-10-13' } *-->
+
 This document outlines the basic operating principles of Glazier.
 
 ## Overview

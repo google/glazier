@@ -1,5 +1,7 @@
 # Glazier Build YAML Specification
 
+<!--* freshness: { owner: '@tseknet' reviewed: '2020-10-13' } *-->
+
 Glazier uses YAML-based configuration files.
 
 ## Example

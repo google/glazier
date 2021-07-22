@@ -1,3 +1,5 @@
+<!--* freshness: { exempt: true } *-->
+
 ---
 name: Bug report 🐛
 about: Report errors or unexpected behavior 🤔

@@ -1,5 +1,7 @@
 # Tips for Writing Effective Glazier Configs
 
+<!--* freshness: { owner: '@tseknet' reviewed: '2020-10-13' } *-->
+
 *   YAML supports comments. Use them to delineate/decorate config blocks as well
     as communicating intent or documenting bugs/TODOs.
 *   Some parts of configs are strictly ordered and others are not. The
