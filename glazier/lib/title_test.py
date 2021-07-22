@@ -43,8 +43,7 @@ class TitleTest(absltest.TestCase):
     title.constants.FLAGS.config_root_path = '/some/directory'
     self.assertEqual(
         title._base_title(),
-        'WinPE - some/directory - Stage: {} - {} - {}'.format(
-            _STAGE, _RELEASE, _TEST_ID))
+        f'WinPE - some/directory - Stage: {_STAGE} - {_RELEASE} - {_TEST_ID}')
 
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
@@ -94,21 +93,18 @@ class TitleTest(absltest.TestCase):
   @mock.patch.object(title, '_base_title', autospec=True)
   def test_build_title_string(self, bt):
     bt.return_value = ''
-    self.assertEqual(
-        title._build_title(_STRING), '{0} [{1}]'.format(_PREFIX, _STRING))
+    self.assertEqual(title._build_title(_STRING), f'{_PREFIX} [{_STRING}]')
 
   @mock.patch.object(title, '_base_title', autospec=True)
   def test_build_title_string_base(self, bt):
     bt.return_value = _TEST_ID
     self.assertEqual(
-        title._build_title(_STRING),
-        '{0} [{1} - {2}]'.format(_PREFIX, _STRING, _TEST_ID))
+        title._build_title(_STRING), f'{_PREFIX} [{_STRING} - {_TEST_ID}]')
 
   @mock.patch.object(title, '_base_title', autospec=True)
   def test_build_title_base(self, bt):
     bt.return_value = _TEST_ID
-    self.assertEqual(title._build_title(),
-                     '{0} [{1}]'.format(_PREFIX, _TEST_ID))
+    self.assertEqual(title._build_title(), f'{_PREFIX} [{_TEST_ID}]')
 
   @mock.patch.object(title.os, 'system', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
@@ -119,10 +115,8 @@ class TitleTest(absltest.TestCase):
     ii.return_value = _TEST_ID
     release.return_value = None
     self.assertEqual(
-        title.set_title(_STRING),
-        '{0} [{1} - {2}]'.format(_PREFIX, _STRING, _TEST_ID))
-    sys.assert_called_with('title {0} [{1} - {2}]'.format(
-        _PREFIX, _STRING, _TEST_ID))
+        title.set_title(_STRING), f'{_PREFIX} [{_STRING} - {_TEST_ID}]')
+    sys.assert_called_with(f'title {_PREFIX} [{_STRING} - {_TEST_ID}]')
 
   @mock.patch.object(title.os, 'system', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
@@ -134,9 +128,8 @@ class TitleTest(absltest.TestCase):
     ii.return_value = None
     stage.return_value = _STAGE
     release.return_value = None
-    self.assertEqual(title.set_title(),
-                     '{0} [Stage: {1}]'.format(_PREFIX, _STAGE))
-    sys.assert_called_with('title {0} [Stage: {1}]'.format(_PREFIX, _STAGE))
+    self.assertEqual(title.set_title(), f'{_PREFIX} [Stage: {_STAGE}]')
+    sys.assert_called_with(f'title {_PREFIX} [Stage: {_STAGE}]')
 
   @mock.patch.object(title.os, 'system', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
@@ -146,22 +139,22 @@ class TitleTest(absltest.TestCase):
     wpe.return_value = False
     ii.return_value = None
     release.return_value = _RELEASE
-    self.assertEqual(title.set_title(), '{0} [{1}]'.format(_PREFIX, _RELEASE))
-    sys.assert_called_with('title {0} [{1}]'.format(_PREFIX, _RELEASE))
+    self.assertEqual(title.set_title(), f'{_PREFIX} [{_RELEASE}]')
+    sys.assert_called_with(f'title {_PREFIX} [{_RELEASE}]')
 
   @mock.patch.object(title.os, 'system', autospec=True)
   @mock.patch.object(title, '_build_title', autospec=True)
   def test_set_title_base(self, bt, sys):
-    bt.return_value = '{0} [{1}]'.format(_PREFIX, _TEST_ID)
-    self.assertEqual(title.set_title(), '{0} [{1}]'.format(_PREFIX, _TEST_ID))
-    sys.assert_called_with('title {0} [{1}]'.format(_PREFIX, _TEST_ID))
+    bt.return_value = f'{_PREFIX} [{_TEST_ID}]'
+    self.assertEqual(title.set_title(), f'{_PREFIX} [{_TEST_ID}]')
+    sys.assert_called_with(f'title {_PREFIX} [{_TEST_ID}]')
 
   @mock.patch.object(title.os, 'system', autospec=True)
   @mock.patch.object(title, '_build_title', autospec=True)
   def test_set_title_prefix(self, bt, sys):
     bt.return_value = _PREFIX
     self.assertEqual(title.set_title(), _PREFIX)
-    sys.assert_called_with('title {}'.format(_PREFIX))
+    sys.assert_called_with(f'title {_PREFIX}')
 
   @mock.patch.object(title.os, 'system', autospec=True)
   @mock.patch.object(title, '_build_title', autospec=True)

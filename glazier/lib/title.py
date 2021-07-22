@@ -95,8 +95,8 @@ def set_title(string: Optional[str] = None) -> str:
   """
   title = _build_title(string)
   try:
-    os.system('title {}'.format(title))
+    os.system(f'title {title}')
     logging.debug('Set console title: %s', title)
     return title
   except OSError as e:
-    raise Error('Failed to set console title: {}'.format(str(e)))
+    raise Error(f'Failed to set console title: {str(e)}')
