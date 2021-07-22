@@ -22,108 +22,151 @@ from absl.testing import absltest
 from glazier.lib import title
 import mock
 
-PREFIX = 'Glazier'
-STRING = 'Stage: 42'
-TEST_ID = '1A19SEL90000R90DZN7A-1234567'
+_PREFIX = 'Glazier'
+_STRING = 'Test string with spaces'
+_TEST_ID = '1A19SEL90000R90DZN7A-1234567'
+_RELEASE = '21.08.00'
+_STAGE = '42'
 
 
 class TitleTest(absltest.TestCase):
 
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
+  @mock.patch.object(title.stage, 'get_active_stage', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_base_title_all(self, wpe, ii):
+  def test_base_title_all(self, wpe, stage, release, ii):
     wpe.return_value = True
-    ii.return_value = TEST_ID
+    ii.return_value = _TEST_ID
+    stage.return_value = _STAGE
+    release.return_value = _RELEASE
     title.constants.FLAGS.config_root_path = '/some/directory'
-    self.assertEqual(title._base_title(),
-                     'WinPE - some/directory - {}'.format(TEST_ID))
+    self.assertEqual(
+        title._base_title(),
+        'WinPE - some/directory - Stage: {} - {} - {}'.format(
+            _STAGE, _RELEASE, _TEST_ID))
 
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_base_title_wpe(self, wpe, ii):
+  def test_base_title_wpe(self, wpe, release, ii):
     wpe.return_value = True
     title.constants.FLAGS.config_root_path = None
     ii.return_value = None
+    release.return_value = None
     self.assertEqual(title._base_title(), 'WinPE')
 
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_base_title_path(self, wpe, ii):
+  def test_base_title_path(self, wpe, release, ii):
     wpe.return_value = False
     title.constants.FLAGS.config_root_path = '/some/directory'
     ii.return_value = None
+    release.return_value = None
     self.assertEqual(title._base_title(), 'some/directory')
 
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_base_title_id(self, wpe, ii):
+  def test_base_title_id(self, wpe, release, ii):
     wpe.return_value = False
-    ii.return_value = TEST_ID
+    ii.return_value = _TEST_ID
+    release.return_value = None
     title.constants.FLAGS.config_root_path = None
-    self.assertEqual(
-        title._base_title(), TEST_ID)
+    self.assertEqual(title._base_title(), _TEST_ID)
 
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_base_title_none(self, wpe, ii):
+  def test_base_title_none(self, wpe, release, ii):
     wpe.return_value = False
     ii.return_value = None
+    release.return_value = None
     title.constants.FLAGS.config_root_path = None
     self.assertEqual(title._base_title(), '')
 
   @mock.patch.object(title, '_base_title', autospec=True)
   def test_build_title_prefix(self, bt):
     bt.return_value = ''
-    self.assertEqual(title._build_title(), PREFIX)
+    self.assertEqual(title._build_title(), _PREFIX)
 
   @mock.patch.object(title, '_base_title', autospec=True)
   def test_build_title_string(self, bt):
     bt.return_value = ''
-    self.assertEqual(title._build_title(STRING),
-                     '{0} [{1}]'.format(PREFIX, STRING))
+    self.assertEqual(
+        title._build_title(_STRING), '{0} [{1}]'.format(_PREFIX, _STRING))
 
   @mock.patch.object(title, '_base_title', autospec=True)
   def test_build_title_string_base(self, bt):
-    bt.return_value = TEST_ID
-    self.assertEqual(title._build_title(STRING),
-                     '{0} [{1} - {2}]'.format(PREFIX, STRING, TEST_ID))
+    bt.return_value = _TEST_ID
+    self.assertEqual(
+        title._build_title(_STRING),
+        '{0} [{1} - {2}]'.format(_PREFIX, _STRING, _TEST_ID))
 
   @mock.patch.object(title, '_base_title', autospec=True)
   def test_build_title_base(self, bt):
-    bt.return_value = TEST_ID
+    bt.return_value = _TEST_ID
     self.assertEqual(title._build_title(),
-                     '{0} [{1}]'.format(PREFIX, TEST_ID))
+                     '{0} [{1}]'.format(_PREFIX, _TEST_ID))
 
   @mock.patch.object(title.os, 'system', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_set_title_string(self, wpe, ii, sys):
+  def test_set_title_string(self, wpe, release, ii, sys):
     wpe.return_value = False
-    ii.return_value = TEST_ID
-    self.assertEqual(title.set_title(STRING),
-                     '{0} [{1} - {2}]'.format(PREFIX, STRING, TEST_ID))
-    sys.assert_called_with(
-        'title {0} [{1} - {2}]'.format(PREFIX, STRING, TEST_ID))
+    ii.return_value = _TEST_ID
+    release.return_value = None
+    self.assertEqual(
+        title.set_title(_STRING),
+        '{0} [{1} - {2}]'.format(_PREFIX, _STRING, _TEST_ID))
+    sys.assert_called_with('title {0} [{1} - {2}]'.format(
+        _PREFIX, _STRING, _TEST_ID))
+
+  @mock.patch.object(title.os, 'system', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
+  @mock.patch.object(title.stage, 'get_active_stage', autospec=True)
+  @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
+  def test_set_title_stage(self, wpe, stage, release, ii, sys):
+    wpe.return_value = False
+    ii.return_value = None
+    stage.return_value = _STAGE
+    release.return_value = None
+    self.assertEqual(title.set_title(),
+                     '{0} [Stage: {1}]'.format(_PREFIX, _STAGE))
+    sys.assert_called_with('title {0} [Stage: {1}]'.format(_PREFIX, _STAGE))
+
+  @mock.patch.object(title.os, 'system', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
+  @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
+  @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
+  def test_set_title_release(self, wpe, release, ii, sys):
+    wpe.return_value = False
+    ii.return_value = None
+    release.return_value = _RELEASE
+    self.assertEqual(title.set_title(), '{0} [{1}]'.format(_PREFIX, _RELEASE))
+    sys.assert_called_with('title {0} [{1}]'.format(_PREFIX, _RELEASE))
 
   @mock.patch.object(title.os, 'system', autospec=True)
   @mock.patch.object(title, '_build_title', autospec=True)
   def test_set_title_base(self, bt, sys):
-    bt.return_value = '{0} [{1}]'.format(PREFIX, TEST_ID)
-    self.assertEqual(
-        title.set_title(), '{0} [{1}]'.format(PREFIX, TEST_ID))
-    sys.assert_called_with('title {0} [{1}]'.format(PREFIX, TEST_ID))
+    bt.return_value = '{0} [{1}]'.format(_PREFIX, _TEST_ID)
+    self.assertEqual(title.set_title(), '{0} [{1}]'.format(_PREFIX, _TEST_ID))
+    sys.assert_called_with('title {0} [{1}]'.format(_PREFIX, _TEST_ID))
 
   @mock.patch.object(title.os, 'system', autospec=True)
   @mock.patch.object(title, '_build_title', autospec=True)
   def test_set_title_prefix(self, bt, sys):
-    bt.return_value = PREFIX
-    self.assertEqual(title.set_title(), PREFIX)
-    sys.assert_called_with('title {}'.format(PREFIX))
+    bt.return_value = _PREFIX
+    self.assertEqual(title.set_title(), _PREFIX)
+    sys.assert_called_with('title {}'.format(_PREFIX))
 
   @mock.patch.object(title.os, 'system', autospec=True)
   @mock.patch.object(title, '_build_title', autospec=True)
   def test_set_title_error(self, bt, sys):
-    bt.return_value = PREFIX
+    bt.return_value = _PREFIX
     sys.side_effect = OSError
     self.assertRaises(title.Error, title.set_title)
 

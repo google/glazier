@@ -24,6 +24,7 @@ from typing import Optional
 
 from glazier.lib import buildinfo
 from glazier.lib import constants
+from glazier.lib import stage
 from glazier.lib import winpe
 
 
@@ -39,12 +40,18 @@ def _base_title() -> Optional[str]:
   """
   build_info = buildinfo.BuildInfo()
   getid = build_info.ImageID()
+  getrelease = build_info.Release()
+  getstage = stage.get_active_stage()
   base = []
 
   if winpe.check_winpe():
     base.append('WinPE')
   if constants.FLAGS.config_root_path:
     base.append(constants.FLAGS.config_root_path.strip('/'))
+  if getstage:
+    base.append(f'Stage: {getstage}')
+  if getrelease:
+    base.append(getrelease)
   if getid:
     base.append(getid)
 
