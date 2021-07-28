@@ -31,6 +31,7 @@ import (
 	"golang.org/x/sys/windows/registry"
 	"golang.org/x/sys/windows/svc/mgr"
 	"golang.org/x/sys/windows/svc"
+	"golang.org/x/sys/windows"
 	"github.com/google/logger"
 	"github.com/iamacarpet/go-win64api"
 )
@@ -464,4 +465,15 @@ func StringToMap(s string) map[string]bool {
 		}
 	}
 	return m
+}
+
+// StringToPtrOrNil converts a non-empty string to a UTF16Ptr, but leaves a nil value for empty strings.
+//
+// This is primarily useful for Windows API calls where an "unset" parameter must be nil, and a pointer to
+// an empty string would be considered invalid.
+func StringToPtrOrNil(in string) (out *uint16) {
+	if in != "" {
+		out = windows.StringToUTF16Ptr(in)
+	}
+	return
 }
