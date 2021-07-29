@@ -305,3 +305,54 @@ type EvtVariant struct {
 	Type  EvtVariantType
 	Data  EvtVariantData
 }
+
+// Fragment describes a renderable fragment; an event or to a bookmark.
+type Fragment interface {
+	Handle() windows.Handle
+}
+
+// Render renders a fragment (bookmark or event) as an XML string.
+//
+// This function renders the entire fragment as XML. To render only specific elements of the event, use RenderValues.
+//
+// Flags can be either EvtRenderEventValues or EvtRenderEventXml.
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtrender
+func Render(fragment Fragment, flag uint32) (string, error) {
+	var bufferUsed uint32
+	var propertyCount uint32
+
+	if flag == wevtapi.EvtRenderEventValues {
+		return "", fmt.Errorf("EvtRenderEventValues requires the RenderValues function")
+	}
+
+	// Call EvtRender with a null buffer to get the required buffer size.
+	err := wevtapi.EvtRender(
+		0,
+		fragment.Handle(),
+		flag,
+		0,
+		nil,
+		&bufferUsed,
+		&propertyCount)
+	if err != syscall.ERROR_INSUFFICIENT_BUFFER {
+		return "", fmt.Errorf("wevtapi.EvtRender: %w", err)
+	}
+
+	// Create a buffer based on the buffer size required.
+	buf := make([]uint16, bufferUsed/2)
+
+	// Render the fragment according to the flag.
+	if err = wevtapi.EvtRender(
+		0,
+		fragment.Handle(),
+		flag,
+		bufferUsed,
+		unsafe.Pointer(&buf[0]),
+		&bufferUsed,
+		&propertyCount); err != nil {
+		return "", fmt.Errorf("wevtapi.EvtRender: %w", err)
+	}
+
+	return syscall.UTF16ToString(buf), nil
+}
