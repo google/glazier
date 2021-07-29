@@ -15,7 +15,64 @@
 // Package eventlog provides an interface to the Windows Event Log.
 package eventlog
 
-import "golang.org/x/sys/windows"
+import (
+	"errors"
+	"fmt"
+
+	"golang.org/x/sys/windows"
+	"github.com/google/winops/winlog/wevtapi"
+)
+
+// Handle maps a handle to an event log resource (EVT_HANDLE). Close() must be called to release the handle.
+//
+// Note that the order in which handles are closed may matter. Parent handles should not be closed until all
+// uses of the handles (queries, etc) are complete.
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtclose
+type Handle struct {
+	handle windows.Handle
+}
+
+// Close releases a Handle.
+func (h *Handle) Close() {
+	if h != nil {
+		wevtapi.EvtClose(h.handle)
+	}
+}
+
+// Query runs a query to retrieve events from a channel or log file that match the specified query criteria.
+//
+// Session is only required for remote connections; leave as nil for the local log. Flags can be any of
+// wevtapi.EVT_QUERY_FLAGS.
+//
+// The session handle must remain open until all subsequent processing on the query results have completed. Call
+// Close() once complete.
+//
+// Example:
+// 	 conn, err := eventlog.Query(nil, "Windows Powershell", "*", wevtapi.EvtQueryReverseDirection)
+// 	 if err != nil {
+//     return err
+//	 }
+//	 defer conn.Close()
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtquery
+func Query(session *Handle, path string, query string, flags uint32) (Handle, error) {
+	var hdl Handle
+	var err error
+
+	var s windows.Handle
+	if session != nil {
+		s = session.handle
+	}
+	hdl.handle, err = wevtapi.EvtQuery(s, windows.StringToUTF16Ptr(path), windows.StringToUTF16Ptr(query), flags)
+	if err != nil {
+		return hdl, fmt.Errorf("EvtQuery: %w", err)
+	}
+	if hdl.handle == windows.InvalidHandle {
+		return hdl, errors.New("invalid query")
+	}
+	return hdl, nil
+}
 
 // EvtVariantData models the union inside of the EVT_VARIANT structure.
 //
