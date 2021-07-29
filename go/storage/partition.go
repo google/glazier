@@ -109,6 +109,55 @@ func (p *Partition) Online() (ExtendedStatus, error) {
 	return stat, nil
 }
 
+// AddAccessPath adds a mount path or drive letter assignment to the partition.
+//
+// Example: assign a Drive letter with D:
+//		p.AddAccessPath("D:", false)
+//
+// Example: Automatically assign the next available Drive Letter:
+//		p.AddAccessPath("", true)
+//
+// Note: You cannot specify both a valid drive letter and auto assignment as true together.
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/addaccesspath-msft-partition
+func (p *Partition) AddAccessPath(accessPath string, autoAssign bool) (ExtendedStatus, error) {
+	stat := ExtendedStatus{}
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+	var resultRaw *ole.VARIANT
+	var err error
+	if autoAssign {
+		resultRaw, err = oleutil.CallMethod(p.handle, "AddAccessPath", nil, autoAssign, &extendedStatus)
+	} else {
+		resultRaw, err = oleutil.CallMethod(p.handle, "AddAccessPath", accessPath, nil, &extendedStatus)
+	}
+	if err != nil {
+		return stat, fmt.Errorf("AddAccessPath: %w", err)
+	} else if val, ok := resultRaw.Value().(int32); val != 0 || !ok {
+		return stat, fmt.Errorf("error code returned during AddAccessPath: %d", val)
+	}
+	return stat, nil
+}
+
+// RemoveAccessPath removes the access path from the partition.
+//
+// Example: Remove the driveLetter of D: from a partition
+//		p.RemoveAccessPath("D:")
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/removeaccesspath-msft-partition
+func (p *Partition) RemoveAccessPath(accessPath string) (ExtendedStatus, error) {
+	stat := ExtendedStatus{}
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+	resultRaw, err := oleutil.CallMethod(p.handle, "RemoveAccessPath", accessPath, &extendedStatus)
+	if err != nil {
+		return stat, fmt.Errorf("RemoveAccessPath: %w", err)
+	} else if val, ok := resultRaw.Value().(int32); val != 0 || !ok {
+		return stat, fmt.Errorf("error code returned during RemoveAccessPath: %d", val)
+	}
+	return stat, nil
+}
+
 // Query reads and populates the partition state.
 func (p *Partition) Query() error {
 	if p.handle == nil {
