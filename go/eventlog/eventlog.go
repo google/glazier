@@ -18,7 +18,9 @@ package eventlog
 import (
 	"errors"
 	"fmt"
+	"syscall"
 	"time"
+	"unsafe"
 
 	"golang.org/x/sys/windows"
 	"github.com/google/winops/winlog/wevtapi"
@@ -51,6 +53,16 @@ func (h *Event) Close() {
 	}
 }
 
+// A RenderContext is a Handle which tracks a Context as returned by EvtCreateRenderContext.
+type RenderContext Handle
+
+// Close releases a RenderContext.
+func (h *RenderContext) Close() {
+	if h != nil {
+		wevtapi.EvtClose(h.handle)
+	}
+}
+
 // A ResultSet is a Handle returned by a Query or Subscription
 type ResultSet Handle
 
@@ -69,6 +81,60 @@ func (h *Session) Close() {
 	if h != nil {
 		wevtapi.EvtClose(h.handle)
 	}
+}
+
+// EvtRenderContextFlags specify which types of values to render from a given event.
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/ne-winevt-evt_render_context_flags
+type EvtRenderContextFlags uint32
+
+const (
+	// EvtRenderContextValues renders specific properties from the event.
+	EvtRenderContextValues EvtRenderContextFlags = iota
+	// EvtRenderContextSystem renders the system properties under the System element.
+	EvtRenderContextSystem
+	// EvtRenderContextUser renders all user-defined properties under the UserData or EventData element.
+	EvtRenderContextUser
+)
+
+// CreateRenderContext creates a context that specifies the information in the event that you want to render.
+//
+// The RenderContext is used to obtain only a subset of event data when querying events.
+// Without a RenderContext, the entirety of the log data will be returned.
+//
+// Passing one of EvtRenderContextSystem or EvtRenderContextUser (with valuePaths nil)
+// will render all properties under the corresponding element (System or User). Passing
+// EvtRenderContextValues along with a list of valuePaths allows the caller to obtain individual
+// event elements. valuePaths must be well formed XPath expressions. See the documentation
+// for EvtCreateRenderContext and EVT_RENDER_CONTEXT_FLAGS for more detail.
+//
+// Example, rendering all System values:
+//		eventlog.CreateRenderContext(eventlog.EvtRenderContextSystem, nil)
+//
+// Example, rendering specific values:
+//		eventlog.CreateRenderContext(eventlog.EvtRenderContextValues, &[]string{
+//				"Event/System/TimeCreated/@SystemTime", "Event/System/Provider/@Name"})
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtcreaterendercontext
+func CreateRenderContext(flags EvtRenderContextFlags, valuePaths *[]string) (RenderContext, error) {
+	rc := RenderContext{}
+
+	pathsPtr := uintptr(0)
+	p := []*uint16{}
+	if valuePaths != nil {
+		for _, v := range *valuePaths {
+			ptr, err := syscall.UTF16PtrFromString(v)
+			if err != nil {
+				return rc, fmt.Errorf("syscall.UTF16PtrFromString(%s): %w", v, err)
+			}
+			p = append(p, ptr)
+		}
+		pathsPtr = uintptr(unsafe.Pointer(&p[0]))
+	}
+
+	var err error
+	rc.handle, err = wevtapi.EvtCreateRenderContext(uint32(len(p)), uintptr(pathsPtr), uint32(flags))
+	return rc, err
 }
 
 // An EventSet holds one or more event handles.

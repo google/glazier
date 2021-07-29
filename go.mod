@@ -9,7 +9,7 @@ require (
   github.com/google/go-cmp v0.5.6
   github.com/google/logger v1.1.1
   github.com/google/uuid v1.3.0
-  github.com/google/winops v0.0.0-20210623230015-3a11856c7ffe
+  github.com/google/winops v0.0.0-20210728170133-1594a3207cb1
   github.com/iamacarpet/go-win64api v0.0.0-20210311141720-fe38760bed28
   github.com/pkg/errors v0.9.1
   github.com/scjalliance/comshim v0.0.0-20190308082608-cf06d2532c4e
