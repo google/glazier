@@ -18,6 +18,7 @@ package eventlog
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"golang.org/x/sys/windows"
 	"github.com/google/winops/winlog/wevtapi"
@@ -40,6 +41,84 @@ func (h *Handle) Close() {
 	}
 }
 
+// An Event is a Handle to an event.
+type Event Handle
+
+// Close releases an Event.
+func (h *Event) Close() {
+	if h != nil {
+		wevtapi.EvtClose(h.handle)
+	}
+}
+
+// A ResultSet is a Handle returned by a Query or Subscription
+type ResultSet Handle
+
+// Close releases a ResultSet.
+func (h *ResultSet) Close() {
+	if h != nil {
+		wevtapi.EvtClose(h.handle)
+	}
+}
+
+// A Session is a Handle returned by OpenSession
+type Session Handle
+
+// Close releases a Session.
+func (h *Session) Close() {
+	if h != nil {
+		wevtapi.EvtClose(h.handle)
+	}
+}
+
+// An EventSet holds one or more event handles.
+//
+// Close() must be called to release the event handles when finished.
+type EventSet struct {
+	Events []Event
+	Count  uint32
+}
+
+// Close releases all events in the EventSet.
+func (e *EventSet) Close() {
+	for _, evt := range e.Events {
+		evt.Close()
+	}
+}
+
+// Next gets the next event(s) returned by a query or subscription.
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtnext
+func Next(handle ResultSet, count uint32, timeout *time.Duration) (EventSet, error) {
+	es := EventSet{}
+
+	defaultTimeout := 2000 * time.Millisecond
+	if timeout == nil {
+		timeout = &defaultTimeout
+	}
+
+	// Get handles to events from the result set.
+	evts := make([]windows.Handle, count)
+	err := wevtapi.EvtNext(
+		handle.handle,                  // Handle to query or subscription result set.
+		count,                          // The number of events to attempt to retrieve.
+		&evts[0],                       // Pointer to the array of event handles.
+		uint32(timeout.Milliseconds()), // Timeout in milliseconds to wait.
+		0,                              // Reserved. Must be zero.
+		&es.Count)                      // The number of handles in the array that are set by the API.
+	if err == windows.ERROR_NO_MORE_ITEMS {
+		return es, err
+	} else if err != nil {
+		return es, fmt.Errorf("wevtapi.EvtNext: %w", err)
+	}
+
+	for i := 0; i < int(es.Count); i++ {
+		es.Events = append(es.Events, Event{handle: evts[i]})
+	}
+
+	return es, nil
+}
+
 // Query runs a query to retrieve events from a channel or log file that match the specified query criteria.
 //
 // Session is only required for remote connections; leave as nil for the local log. Flags can be any of
@@ -56,22 +135,22 @@ func (h *Handle) Close() {
 //	 defer conn.Close()
 //
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtquery
-func Query(session *Handle, path string, query string, flags uint32) (Handle, error) {
-	var hdl Handle
+func Query(session *Session, path string, query string, flags uint32) (ResultSet, error) {
+	var rs ResultSet
 	var err error
 
 	var s windows.Handle
 	if session != nil {
 		s = session.handle
 	}
-	hdl.handle, err = wevtapi.EvtQuery(s, windows.StringToUTF16Ptr(path), windows.StringToUTF16Ptr(query), flags)
+	rs.handle, err = wevtapi.EvtQuery(s, windows.StringToUTF16Ptr(path), windows.StringToUTF16Ptr(query), flags)
 	if err != nil {
-		return hdl, fmt.Errorf("EvtQuery: %w", err)
+		return rs, fmt.Errorf("EvtQuery: %w", err)
 	}
-	if hdl.handle == windows.InvalidHandle {
-		return hdl, errors.New("invalid query")
+	if rs.handle == windows.InvalidHandle {
+		return rs, errors.New("invalid query")
 	}
-	return hdl, nil
+	return rs, nil
 }
 
 // EvtVariantData models the union inside of the EVT_VARIANT structure.
