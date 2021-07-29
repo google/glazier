@@ -23,6 +23,7 @@ import (
 	"unsafe"
 
 	"golang.org/x/sys/windows"
+	"github.com/google/logger"
 	"github.com/google/winops/winlog/wevtapi"
 )
 
@@ -355,4 +356,109 @@ func Render(fragment Fragment, flag uint32) (string, error) {
 	}
 
 	return syscall.UTF16ToString(buf), nil
+}
+
+// RenderValues renders specific elements from a fragment (event).
+//
+// You must supply a RenderContext from CreateRenderContext. The RenderContext determines which values are rendered from the fragment.
+//
+// The rendered events are returned by Windows as variants (EVT_VARIANT) in a wide variety of types. We do our best to
+// cast these into Go types, and return the results encapsulated in an EvtVariantData. EvtVariantData holds all possible types, but
+// only the rendered value should be non-nil on return. The EvtVariant.Type field will indicate which of the EvtVariantData fields
+// should hold the rendered data.
+//
+// For example, rendering a string fragment successfully should return:
+//		EvtVariant {
+//			Type: EvtVarTypeString
+//			Data: EvtVariantData {
+//				...
+//				StringVal: "my rendered string"
+//				...
+//			}
+//		}
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtrender
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/ns-winevt-evt_variant
+func RenderValues(renderCtx RenderContext, fragment Fragment) ([]EvtVariant, error) {
+	var bufferUsed uint32
+	var propertyCount uint32
+	var vals []EvtVariant
+
+	// Call EvtRender with a null buffer to get the required buffer size.
+	err := wevtapi.EvtRender(
+		renderCtx.handle,
+		fragment.Handle(),
+		wevtapi.EvtRenderEventValues,
+		0,
+		nil,
+		&bufferUsed,
+		&propertyCount)
+	if err != syscall.ERROR_INSUFFICIENT_BUFFER {
+		return nil, fmt.Errorf("wevtapi.EvtRender: %w", err)
+	}
+
+	// Create a buffer to hold the EVT_VARIANT objects returned by the query.
+	//
+	// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/ns-winevt-evt_variant
+	buf := make([]struct {
+		Raw   [8]byte // Go represents the union as a byte slice, sized based on the largest element in the union.
+		Count uint32
+		Type  uint32
+	}, propertyCount)
+
+	// Render the fragment according to the flag.
+	if err = wevtapi.EvtRender(
+		renderCtx.handle,
+		fragment.Handle(),
+		wevtapi.EvtRenderEventValues,
+		bufferUsed,
+		unsafe.Pointer(&buf[0]),
+		&bufferUsed,
+		&propertyCount); err != nil {
+		return nil, fmt.Errorf("wevtapi.EvtRender: %w", err)
+	}
+
+	// The EVT_VARIANT union can be holding any of the union's supported data types.
+	// To make it useable, we look for the type in the Type field and cast accordingly.
+	for i := 0; i < int(propertyCount); i++ {
+		v := EvtVariant{Type: EvtVariantType(buf[i].Type)}
+		switch buf[i].Type {
+		case uint32(EvtVarTypeNull):
+			continue
+		case uint32(EvtVarTypeString):
+			ptr := *(**uint16)(unsafe.Pointer(&buf[i].Raw))
+			v.Data.StringVal = windows.UTF16PtrToString(ptr)
+		case uint32(EvtVarTypeSByte):
+			v.Data.SByteVal = *(*int8)(unsafe.Pointer(&buf[i].Raw))
+		case uint32(EvtVarTypeByte):
+			v.Data.ByteVal = *(*uint8)(unsafe.Pointer(&buf[i].Raw))
+		case uint32(EvtVarTypeInt16):
+			v.Data.Int16Val = *(*int16)(unsafe.Pointer(&buf[i].Raw))
+		case uint32(EvtVarTypeInt32), uint32(EvtVarTypeHexInt32):
+			v.Data.Int32Val = *(*int32)(unsafe.Pointer(&buf[i].Raw))
+		case uint32(EvtVarTypeInt64), uint32(EvtVarTypeHexInt64):
+			v.Data.Int64Val = *(*int64)(unsafe.Pointer(&buf[i].Raw))
+		case uint32(EvtVarTypeUInt16):
+			v.Data.UInt16Val = *(*uint16)(unsafe.Pointer(&buf[i].Raw))
+		case uint32(EvtVarTypeUInt32):
+			v.Data.UInt32Val = *(*uint32)(unsafe.Pointer(&buf[i].Raw))
+		case uint32(EvtVarTypeUInt64):
+			v.Data.UInt64Val = *(*uint64)(unsafe.Pointer(&buf[i].Raw))
+		case uint32(EvtVarTypeBoolean):
+			v.Data.BooleanVal = *(*bool)(unsafe.Pointer(&buf[i].Raw))
+		case uint32(EvtVarTypeGuid):
+			v.Data.GuidVal = *(*windows.GUID)(unsafe.Pointer(&buf[i].Raw))
+		case uint32(EvtVarTypeFileTime):
+			v.Data.FileTimeVal = *(*windows.Filetime)(unsafe.Pointer(&buf[i].Raw))
+		case uint32(EvtVarTypeSid):
+			v.Data.SidVal = *(*windows.SID)(unsafe.Pointer(&buf[i].Raw))
+		case uint32(EvtVarTypeSysTime):
+			v.Data.SysTimeVal = *(*windows.Systemtime)(unsafe.Pointer(&buf[i].Raw))
+		default:
+			logger.Warningf("Unsupported type: %v", buf[i].Type)
+		}
+		vals = append(vals, v)
+	}
+
+	return vals, nil
 }
