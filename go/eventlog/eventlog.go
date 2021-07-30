@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// +build windows
+
 // Package eventlog provides an interface to the Windows Event Log.
 package eventlog
 
