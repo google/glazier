@@ -44,6 +44,16 @@ func (h *Handle) Close() {
 	}
 }
 
+// A Bookmark is a Handle returned by CreateBookmark
+type Bookmark Handle
+
+// Close releases a Bookmark.
+func (h *Bookmark) Close() {
+	if h != nil {
+		wevtapi.EvtClose(h.handle)
+	}
+}
+
 // An Event is a Handle to an event.
 type Event Handle
 
@@ -82,6 +92,18 @@ func (h *Session) Close() {
 	if h != nil {
 		wevtapi.EvtClose(h.handle)
 	}
+}
+
+// CreateBookmark creates a bookmark that identifies an event in a channel.
+func CreateBookmark(bookmark string) (Bookmark, error) {
+	book := Bookmark{}
+	var err error
+	if bookmark != "" {
+		book.handle, err = wevtapi.EvtCreateBookmark(windows.StringToUTF16Ptr(bookmark))
+	} else {
+		book.handle, err = wevtapi.EvtCreateBookmark(nil)
+	}
+	return book, err
 }
 
 // EvtRenderContextFlags specify which types of values to render from a given event.
@@ -461,4 +483,11 @@ func RenderValues(renderCtx RenderContext, fragment Fragment) ([]EvtVariant, err
 	}
 
 	return vals, nil
+}
+
+// UpdateBookmark updates a bookmark with information that identifies the specified event.
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtupdatebookmark
+func UpdateBookmark(bookmark Bookmark, event Event) error {
+	return wevtapi.EvtUpdateBookmark(bookmark.handle, event.handle)
 }
