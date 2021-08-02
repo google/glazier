@@ -44,6 +44,28 @@ type ExecResult struct {
 	ExitErr  error
 }
 
+// ExecError holds errors and output from failed subprocess executions.
+type ExecError struct {
+	errmsg     string
+	procresult ExecResult
+}
+
+// ExecConfig provides flexible execution configuration.
+type ExecConfig struct {
+	// A verifier, if specified, will attempt to verify the subprocess output and return an error if problems are detected.
+	Verifier *ExecVerifier
+
+	// A timeout will kill the subprocess if it doesn't execute within the duration. Leave nil to disable timeout.
+	Timeout *time.Duration
+
+	// If RetryCount is non-zero, Exec will attempt to retry a failed execution (one which returns err). Executions will retry
+	// every RetryInterval. Combine with a Verifier to retry until certain conditions are met.
+	RetryCount    int
+	RetryInterval *time.Duration
+
+	SpAttr *syscall.SysProcAttr
+}
+
 var (
 	// ErrExitCode indicates an exit-code related failure
 	ErrExitCode = errors.New("produced invalid exit code")
@@ -63,20 +85,14 @@ var (
 	fnSleep       = time.Sleep
 )
 
-// ExecConfig provides flexible execution configuration.
-type ExecConfig struct {
-	// A verifier, if specified, will attempt to verify the subprocess output and return an error if problems are detected.
-	Verifier *ExecVerifier
+// Satisfies the Error interface and returns the simple error string associated with the execution.
+func (e *ExecError) Error() string {
+	return e.errmsg
+}
 
-	// A timeout will kill the subprocess if it doesn't execute within the duration. Leave nil to disable timeout.
-	Timeout *time.Duration
-
-	// If RetryCount is non-zero, Exec will attempt to retry a failed execution (one which returns err). Executions will retry
-	// every RetryInterval. Combine with a Verifier to retry until certain conditions are met.
-	RetryCount    int
-	RetryInterval *time.Duration
-
-	SpAttr *syscall.SysProcAttr
+// Result returns any information that could be captured from the subprocess that was executed.
+func (e *ExecError) Result() ExecResult {
+	return e.procresult
 }
 
 // Exec executes a subprocess and returns the results.
@@ -249,7 +265,10 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 
 	// when the execution times out return a timeout error
 	if conf.Timeout != nil && !timer.Stop() {
-		return result, ErrTimeout
+		return result, &ExecError{
+			errmsg:     ErrTimeout.Error(),
+			procresult: result,
+		}
 	}
 
 	result.ExitCode = cmd.ProcessState.ExitCode()
