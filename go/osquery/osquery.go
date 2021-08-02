@@ -18,6 +18,8 @@ package osquery
 import (
 	"fmt"
 	"os"
+	"regexp"
+	"time"
 
 	"github.com/google/logger"
 	"github.com/google/glazier/go/helpers"
@@ -66,10 +68,20 @@ func Start() error {
 }
 
 // Stop attempts to stop the osquery service.
+//
+// The osqueryd and extension processes don't stop immediately, so restarting the service
+// (or stopping and starting it right away) could lead to zombie processes that maintain a DB lock
+// and cause subsequent processes to fail.
 func Stop() error {
 	if err := helpers.StopService(serviceID); err != nil {
 		return fmt.Errorf("helpers.StopService: %w", err)
 	}
 
+	// Wait for osqueryd and extensions to shut down cleanly. DB files will be locked until processes exit.
+	// TODO(b/192259933): Remove this timeout after confirming the new OSQuery shutdown process is working properly
+	re := regexp.MustCompile("osquery*")
+	if err := helpers.WaitForProcessExit(re, 5*time.Minute); err != nil {
+		return fmt.Errorf("helpers.WaitForProcessExit: %w", err)
+	}
 	return nil
 }
