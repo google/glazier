@@ -22,10 +22,11 @@ from absl.testing import absltest
 from absl.testing import flagsaver
 
 from glazier.lib import buildinfo
-from gwinpy.wmi.hw_info import DeviceId
 import mock
 from pyfakefs import fake_filesystem
 import yaml
+
+from gwinpy.wmi.hw_info import DeviceId
 
 FLAGS = flags.FLAGS
 

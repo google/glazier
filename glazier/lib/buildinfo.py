@@ -29,10 +29,11 @@ from glazier.lib import timers
 from glazier.lib import winpe
 from glazier.lib.config import files
 from glazier.lib.spec import spec
+import yaml
+
 from gwinpy.wmi import hw_info
 from gwinpy.wmi import net_info
 from gwinpy.wmi import tpm_info
-import yaml
 
 FLAGS = flags.FLAGS
 

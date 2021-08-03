@@ -32,9 +32,9 @@ import logging
 from absl import flags
 from glazier.lib import constants
 from glazier.lib import registry
+import requests
 from gwinpy.wmi import hw_info
 from gwinpy.wmi import wmi_query
-import requests
 
 FLAGS = flags.FLAGS
 

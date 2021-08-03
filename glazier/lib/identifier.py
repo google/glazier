@@ -24,9 +24,9 @@ import uuid
 from glazier.lib import constants
 from glazier.lib import registry
 from glazier.lib import winpe
-from gwinpy.wmi import hw_info
-
 import yaml
+
+from gwinpy.wmi import hw_info
 
 
 class Error(Exception):
