@@ -16,11 +16,6 @@
 // +build windows
 
 // Package eventlog provides an interface to the Windows Event Log.
-//
-// This package is a companion package to github.com/google/winops/tree/master/winlog/wevtapi.
-// The wevtapi package provides the low-level eventlog API and some of the API constants. While
-// wevtapi can be used directly for event log interactions, this package aims to make common event
-// log operations simpler and more organic for the typical user.
 package eventlog
 
 import (
@@ -46,6 +41,13 @@ type Handle struct {
 	handle windows.Handle
 }
 
+// Close releases a Handle.
+func (h *Handle) Close() {
+	if h != nil {
+		wevtapi.EvtClose(h.handle)
+	}
+}
+
 // A Bookmark is a Handle returned by CreateBookmark
 type Bookmark Handle
 
@@ -64,72 +66,15 @@ type Channel struct {
 // An Event is a Handle to an event.
 type Event Handle
 
-// Format formats a message string.
-//
-// MessageID is only set if using the EvtFormatMessageId flag. The ID is obtained using GetPublisherMetadataProperty.
-// Set to zero if unused.
-//
-// Flags should be one of the EVT_FORMAT_MESSAGE_FLAGS from wevtapi.
-//
-// This method does not support supplying insertion values.
-//
-// Example (evt is an open Event from the Openssh channel):
-//   pub, err := eventlog.LocalSession().OpenPublisherMetadata("Openssh", "", 2057)
-//   if err != nil {
-//	   return err
-//	 }
-// 	 defer pub.Close()
-//	 out, err := evt.Format(pub, 0, wevtapi.EvtFormatMessageXml)
-//	 if err != nil {
-//		 return err
-//	 }
-//
-// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtformatmessage
-func (e *Event) Format(pub PublisherMetadata, messageID uint32, flags uint32) (string, error) {
-
-	// Call EvtFormatMessage with a null buffer to get the required buffer size.
-	var bufferUsed uint32
-	err := wevtapi.EvtFormatMessage(
-		pub.handle,  // Handle to provider metadata.
-		e.Handle(),  // Handle to an event.
-		messageID,   // Resource identifier of the message string. Null if flag isn't EvtFormatMessageId.
-		0,           // Number of values in the values parameter.
-		0,           // An array of insertion values to be used when formatting the event string. Typically set to null.
-		flags,       // Format message as an XML string.
-		0,           // Size of buffer.
-		nil,         // Null buffer.
-		&bufferUsed) // Get the required buffer size.
-	if !errors.Is(err, syscall.ERROR_INSUFFICIENT_BUFFER) {
-		return "", err
-	}
-
-	buf := make([]uint16, bufferUsed/2)
-	err = wevtapi.EvtFormatMessage(
-		pub.handle,
-		e.Handle(),
-		messageID,
-		0,
-		0,
-		flags,
-		bufferUsed,
-		(*byte)(unsafe.Pointer(&buf[0])),
-		&bufferUsed)
-	if err != nil {
-		return "", err
-	}
-
-	return syscall.UTF16ToString(buf), nil
-}
-
 // Handle returns the event handle.
-func (e *Event) Handle() windows.Handle {
-	return e.handle
+func (h *Event) Handle() windows.Handle {
+	return h.handle
 }
 
 // Close releases an Event.
-func (e *Event) Close() {
-	if e != nil {
-		wevtapi.EvtClose(e.handle)
+func (h *Event) Close() {
+	if h != nil {
+		wevtapi.EvtClose(h.handle)
 	}
 }
 
@@ -156,21 +101,16 @@ func (h *RenderContext) Close() {
 // A ResultSet is a Handle returned by a Query or Subscription
 type ResultSet Handle
 
-// Handle returns the event handle.
-func (rs *ResultSet) Handle() windows.Handle {
-	return rs.handle
-}
-
 // Close releases a ResultSet.
-func (rs *ResultSet) Close() {
-	if rs != nil {
-		wevtapi.EvtClose(rs.handle)
+func (h *ResultSet) Close() {
+	if h != nil {
+		wevtapi.EvtClose(h.handle)
 	}
 }
 
 // Next is a helper that calls eventlog.Next() for ResultSets.
-func (rs *ResultSet) Next(count uint32, timeout *time.Duration) (EventSet, error) {
-	return Next(rs, count, timeout)
+func (h *ResultSet) Next(count uint32, timeout *time.Duration) (EventSet, error) {
+	return Next(*h, count, timeout)
 }
 
 // A Session is a Handle returned by OpenSession
@@ -216,34 +156,6 @@ func (s *Session) AvailableChannels() ([]Channel, error) {
 	}
 }
 
-// AvailablePublishers returns a slice of publishers registered on the system.
-func (s *Session) AvailablePublishers() ([]string, error) {
-	h, err := wevtapi.EvtOpenPublisherEnum(s.handle, 0)
-	if err != nil {
-		return nil, fmt.Errorf("wevtapi.EvtOpenPublisherEnum failed: %v", err)
-	}
-	defer wevtapi.EvtClose(h)
-
-	var publishers []string
-	buf := make([]uint16, 1)
-	for {
-		var bufferUsed uint32
-		err := wevtapi.EvtNextPublisherId(h, uint32(len(buf)), &buf[0], &bufferUsed)
-		switch err {
-		case nil:
-			publishers = append(publishers, syscall.UTF16ToString(buf[:bufferUsed]))
-		case syscall.ERROR_INSUFFICIENT_BUFFER:
-			// Grow buffer.
-			buf = make([]uint16, bufferUsed)
-			continue
-		case windows.ERROR_NO_MORE_ITEMS:
-			return publishers, nil
-		default:
-			return nil, err
-		}
-	}
-}
-
 // ClearLog removes all events from the specified channel.
 //
 // If targetFilePath is non-empty, the contents of the channel will be exported to a file before clearing.
@@ -268,14 +180,6 @@ func (s *Session) Close() {
 
 // OpenPublisherMetadata gets a handle that you use to read the specified provider's metadata.
 //
-// Publisher IDs can be enumerated by calling Session.AvailablePublishers.
-//
-// logFilePath is only needed if the provider is not on the local computer; otherwise leave blank.
-//
-// Locale can be set to an ID value from
-// https://docs.microsoft.com/en-us/previous-versions/windows/embedded/ms912047(v=winembedded.10).
-// Leave as zero to use the locale of the running thread.
-//
 // Call Close() on the PublisherMetadata once complete.
 //
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtopenpublishermetadata
@@ -285,7 +189,7 @@ func (s *Session) OpenPublisherMetadata(publisherID string, logFilePath string, 
 
 	ipub, err := syscall.UTF16PtrFromString(publisherID)
 	if err != nil {
-		return pm, err
+		return pm, fmt.Errorf("syscall.UTF16PtrFromString: %v", err)
 	}
 
 	pm.handle, err = wevtapi.EvtOpenPublisherMetadata(
@@ -328,7 +232,7 @@ func (s *Session) Query(path string, query string, flags uint32) (ResultSet, err
 
 	rs.handle, err = wevtapi.EvtQuery(s.handle, windows.StringToUTF16Ptr(path), windows.StringToUTF16Ptr(query), flags)
 	if err != nil {
-		return rs, err
+		return rs, fmt.Errorf("EvtQuery: %w", err)
 	}
 	if rs.handle == windows.InvalidHandle {
 		return rs, errors.New("invalid query")
@@ -336,96 +240,15 @@ func (s *Session) Query(path string, query string, flags uint32) (ResultSet, err
 	return rs, nil
 }
 
-// Subscribe creates a subscription that will receive current and/or future events from a channel or log file
-// which match the specified query criteria.
-//
-// This method uses SignalEvent rather than Callback for notifying of new events. You may create and provide a custom signal event using
-// windows.CreateEvent. If signalEvent is left as nil, a default event will be created for you. In either case, the event is returned inside the
-// resulting Subscription. This subscription model is referred to as a "pull subscription", as you must watch for the signal events to
-// arrive, and use Next to obtain the results.
-//
-// channelPath and query can be used in multiple combinations, including xpath and structured xml. See the API documentation for details.
-//
-// Bookmark should be supplied if using the EvtSubscribeStartAfterBookmark flag. Otherwise it should be left as nil.
-//
-// Flags should be one or more of the EVT_SUBSCRIBE_FLAGS from wevtapi.
-//
-// You must call Close() on the resulting Subscription when finished.
-//
-// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtsubscribe
-func (s *Session) Subscribe(signalEvent *windows.Handle, channelPath string, query string, bookmark *Bookmark, flags uint32) (Subscription, error) {
-	sub := Subscription{}
-	var err error
-
-	if signalEvent != nil {
-		sub.SignalEvent = *signalEvent
-	} else {
-		sub.SignalEvent, err = windows.CreateEvent(
-			nil, // Default security descriptor.
-			1,   // Manual reset.
-			1,   // Initial state is signaled.
-			nil) // Optional name.
-		if err != nil {
-			return sub, err
-		}
-	}
-
-	if bookmark == nil {
-		bookmark = &Bookmark{} // bookmark is nil unless using EvtSubscribeStartAfterBookmark
-	}
-
-	sub.handle, err = wevtapi.EvtSubscribe(
-		s.handle,
-		sub.SignalEvent,
-		helpers.StringToPtrOrNil(channelPath),
-		helpers.StringToPtrOrNil(query),
-		bookmark.handle,
-		uintptr(0),
-		uintptr(0), // nil for signal-based subscription
-		uint32(flags))
-
-	return sub, err
-}
-
-// Subscription tracks an event subscription created by Session.Subscribe.
-type Subscription struct {
-	handle      windows.Handle
-	SignalEvent windows.Handle
-}
-
-// Close releases a Subscription.
-func (s *Subscription) Close() {
-	if s != nil {
-		wevtapi.EvtClose(s.handle)
-		wevtapi.EvtClose(s.SignalEvent)
-	}
-}
-
-// Handle returns the subscription handle.
-func (s *Subscription) Handle() windows.Handle {
-	return s.handle
-}
-
-// Next attempts to get the next available events for the subscription.
-func (s *Subscription) Next(count uint32, timeout *time.Duration) (EventSet, error) {
-	return Next(s, count, timeout)
-}
-
-// WaitForSignal waits for new events to arrive via the SignalEvent. Returns true if the event
-// was signalled before the timeout expired. Timeout must be between 0 and 2^32us.
-func (s *Subscription) WaitForSignal(timeout time.Duration) (bool, error) {
-	status, err := windows.WaitForSingleObject(s.SignalEvent, uint32(timeout/time.Millisecond))
-	if err != nil {
-		return false, err
-	}
-	return status == syscall.WAIT_OBJECT_0, nil
-}
-
 // CreateBookmark creates a bookmark that identifies an event in a channel.
 func CreateBookmark(bookmark string) (Bookmark, error) {
 	book := Bookmark{}
 	var err error
-	book.handle, err = wevtapi.EvtCreateBookmark(helpers.StringToPtrOrNil(bookmark))
+	if bookmark != "" {
+		book.handle, err = wevtapi.EvtCreateBookmark(windows.StringToUTF16Ptr(bookmark))
+	} else {
+		book.handle, err = wevtapi.EvtCreateBookmark(nil)
+	}
 	return book, err
 }
 
@@ -498,15 +321,10 @@ func (e *EventSet) Close() {
 	}
 }
 
-// An EventGenerator provides a handle to a query or subscription that may yield events.
-type EventGenerator interface {
-	Handle() windows.Handle
-}
-
 // Next gets the next event(s) returned by a query or subscription.
 //
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtnext
-func Next(handle EventGenerator, count uint32, timeout *time.Duration) (EventSet, error) {
+func Next(handle ResultSet, count uint32, timeout *time.Duration) (EventSet, error) {
 	es := EventSet{}
 
 	defaultTimeout := 2000 * time.Millisecond
@@ -517,13 +335,13 @@ func Next(handle EventGenerator, count uint32, timeout *time.Duration) (EventSet
 	// Get handles to events from the result set.
 	evts := make([]windows.Handle, count)
 	err := wevtapi.EvtNext(
-		handle.Handle(),                // Handle to query or subscription result set.
+		handle.handle,                  // Handle to query or subscription result set.
 		count,                          // The number of events to attempt to retrieve.
 		&evts[0],                       // Pointer to the array of event handles.
 		uint32(timeout.Milliseconds()), // Timeout in milliseconds to wait.
 		0,                              // Reserved. Must be zero.
 		&es.Count)                      // The number of handles in the array that are set by the API.
-	if errors.Is(err, windows.ERROR_NO_MORE_ITEMS) {
+	if err == windows.ERROR_NO_MORE_ITEMS {
 		return es, err
 	} else if err != nil {
 		return es, fmt.Errorf("wevtapi.EvtNext: %w", err)
@@ -582,7 +400,7 @@ type EvtVariantData struct {
 	XmlValArr     *[]string
 }
 
-// EvtVariantType (EVT_VARIANT_TYPE) defines the possible data types of a EVT_VARIANT data item.
+// EvtVariantType(EVT_VARIANT_TYPE) defines the possible data types of a EVT_VARIANT data item.
 //
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/ne-winevt-evt_variant_type
 type EvtVariantType uint32
@@ -652,8 +470,8 @@ func Render(fragment Fragment, flag uint32) (string, error) {
 		nil,
 		&bufferUsed,
 		&propertyCount)
-	if !errors.Is(err, syscall.ERROR_INSUFFICIENT_BUFFER) {
-		return "", err
+	if err != syscall.ERROR_INSUFFICIENT_BUFFER {
+		return "", fmt.Errorf("wevtapi.EvtRender: %w", err)
 	}
 
 	// Create a buffer based on the buffer size required.
@@ -668,7 +486,7 @@ func Render(fragment Fragment, flag uint32) (string, error) {
 		unsafe.Pointer(&buf[0]),
 		&bufferUsed,
 		&propertyCount); err != nil {
-		return "", err
+		return "", fmt.Errorf("wevtapi.EvtRender: %w", err)
 	}
 
 	return syscall.UTF16ToString(buf), nil
@@ -709,8 +527,8 @@ func RenderValues(renderCtx RenderContext, fragment Fragment) ([]EvtVariant, err
 		nil,
 		&bufferUsed,
 		&propertyCount)
-	if !errors.Is(err, syscall.ERROR_INSUFFICIENT_BUFFER) {
-		return nil, err
+	if err != syscall.ERROR_INSUFFICIENT_BUFFER {
+		return nil, fmt.Errorf("wevtapi.EvtRender: %w", err)
 	}
 
 	// Create a buffer to hold the EVT_VARIANT objects returned by the query.
@@ -731,7 +549,7 @@ func RenderValues(renderCtx RenderContext, fragment Fragment) ([]EvtVariant, err
 		unsafe.Pointer(&buf[0]),
 		&bufferUsed,
 		&propertyCount); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("wevtapi.EvtRender: %w", err)
 	}
 
 	// The EVT_VARIANT union can be holding any of the union's supported data types.
