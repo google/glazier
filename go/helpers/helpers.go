@@ -86,12 +86,12 @@ var (
 )
 
 // Satisfies the Error interface and returns the simple error string associated with the execution.
-func (e *ExecError) Error() string {
+func (e ExecError) Error() string {
 	return e.errmsg
 }
 
 // Result returns any information that could be captured from the subprocess that was executed.
-func (e *ExecError) Result() ExecResult {
+func (e ExecError) Result() ExecResult {
 	return e.procresult
 }
 
