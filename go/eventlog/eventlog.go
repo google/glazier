@@ -140,6 +140,38 @@ func (s *Session) Close() {
 	}
 }
 
+// OpenPublisherMetadata gets a handle that you use to read the specified provider's metadata.
+//
+// Call Close() on the PublisherMetadata once complete.
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtopenpublishermetadata
+func (s *Session) OpenPublisherMetadata(publisherID string, logFilePath string, locale uint32) (PublisherMetadata, error) {
+	var err error
+	pm := PublisherMetadata{}
+
+	ipub, err := syscall.UTF16PtrFromString(publisherID)
+	if err != nil {
+		return pm, fmt.Errorf("syscall.UTF16PtrFromString failed: %v", err)
+	}
+
+	pm.handle, err = wevtapi.EvtOpenPublisherMetadata(
+		s.handle,                              // EVT_HANDLE Session
+		ipub,                                  // LPCWSTR    PublisherId
+		helpers.StringToPtrOrNil(logFilePath), //	LPCWSTR LogFilePath
+		locale,                                // LCID       Locale
+		0,                                     // Reserved. Must be zero.
+	)
+
+	// If there is no publisher metadata available return the original event.
+	if err == syscall.ERROR_FILE_NOT_FOUND {
+		return pm, fmt.Errorf("no publisher metadata")
+	} else if err != nil {
+		return pm, fmt.Errorf("OpenPublisherMetadata failed: %v", err)
+	}
+
+	return pm, nil
+}
+
 // Query runs a query to retrieve events from a channel or log file that match the specified query criteria.
 //
 // Session is only required for remote connections; leave as nil for the local log. Flags can be any of
@@ -282,43 +314,6 @@ func Next(handle ResultSet, count uint32, timeout *time.Duration) (EventSet, err
 	}
 
 	return es, nil
-}
-
-// OpenPublisherMetadata gets a handle that you use to read the specified provider's metadata.
-//
-// Call Close() on the PublisherMetadata once complete.
-//
-// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtopenpublishermetadata
-func OpenPublisherMetadata(session *Session, publisherID string, logFilePath string, locale uint32) (PublisherMetadata, error) {
-	var err error
-	pm := PublisherMetadata{}
-
-	var s windows.Handle
-	if session != nil {
-		s = session.handle
-	}
-
-	ipub, err := syscall.UTF16PtrFromString(publisherID)
-	if err != nil {
-		return pm, fmt.Errorf("syscall.UTF16PtrFromString failed: %v", err)
-	}
-
-	pm.handle, err = wevtapi.EvtOpenPublisherMetadata(
-		s,                                     // EVT_HANDLE Session
-		ipub,                                  // LPCWSTR    PublisherId
-		helpers.StringToPtrOrNil(logFilePath), //	LPCWSTR LogFilePath
-		locale,                                // LCID       Locale
-		0,                                     // Reserved. Must be zero.
-	)
-
-	// If there is no publisher metadata available return the original event.
-	if err == syscall.ERROR_FILE_NOT_FOUND {
-		return pm, fmt.Errorf("no publisher metadata")
-	} else if err != nil {
-		return pm, fmt.Errorf("OpenPublisherMetadata failed: %v", err)
-	}
-
-	return pm, nil
 }
 
 // EvtVariantData models the union inside of the EVT_VARIANT structure.
