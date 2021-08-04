@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build windows
 // +build windows
 
 // Package eventlog provides an interface to the Windows Event Log.
@@ -60,6 +61,11 @@ func (h *Bookmark) Close() {
 // An Event is a Handle to an event.
 type Event Handle
 
+// Handle returns the event handle.
+func (h *Event) Handle() windows.Handle {
+	return h.handle
+}
+
 // Close releases an Event.
 func (h *Event) Close() {
 	if h != nil {
@@ -95,6 +101,11 @@ func (h *ResultSet) Close() {
 	if h != nil {
 		wevtapi.EvtClose(h.handle)
 	}
+}
+
+// Next is a helper that calls eventlog.Next() for ResultSets.
+func (h *ResultSet) Next(count uint32, timeout *time.Duration) (EventSet, error) {
+	return Next(*h, count, timeout)
 }
 
 // A Session is a Handle returned by OpenSession
