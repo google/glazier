@@ -111,11 +111,63 @@ func (h *ResultSet) Next(count uint32, timeout *time.Duration) (EventSet, error)
 // A Session is a Handle returned by OpenSession
 type Session Handle
 
-// Close releases a Session.
-func (h *Session) Close() {
-	if h != nil {
-		wevtapi.EvtClose(h.handle)
+// LocalSession returns a session object that can be used for queries against the local system event log.
+func LocalSession() *Session {
+	return &Session{
+		// API calls take a NULL session handle for local queries
 	}
+}
+
+// ClearLog removes all events from the specified channel.
+//
+// If targetFilePath is non-empty, the contents of the channel will be exported to a file before clearing.
+// If set to an empty string, the content of the channel will not be saved.
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtclearlog
+func (s *Session) ClearLog(channelPath string, targetFilePath string) error {
+	return wevtapi.EvtClearLog(
+		s.handle,
+		windows.StringToUTF16Ptr(channelPath),
+		helpers.StringToPtrOrNil(targetFilePath),
+		0, //Reserved. Must be zero.
+	)
+}
+
+// Close releases a Session.
+func (s *Session) Close() {
+	if s != nil {
+		wevtapi.EvtClose(s.handle)
+	}
+}
+
+// Query runs a query to retrieve events from a channel or log file that match the specified query criteria.
+//
+// Session is only required for remote connections; leave as nil for the local log. Flags can be any of
+// wevtapi.EVT_QUERY_FLAGS.
+//
+// The session handle must remain open until all subsequent processing on the query results have completed. Call
+// Close() once complete.
+//
+// Example:
+// 	 conn, err := eventlog.LocalSession().Query("Windows Powershell", "*", wevtapi.EvtQueryReverseDirection)
+// 	 if err != nil {
+//     return err
+//	 }
+//	 defer conn.Close()
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtquery
+func (s *Session) Query(path string, query string, flags uint32) (ResultSet, error) {
+	var rs ResultSet
+	var err error
+
+	rs.handle, err = wevtapi.EvtQuery(s.handle, windows.StringToUTF16Ptr(path), windows.StringToUTF16Ptr(query), flags)
+	if err != nil {
+		return rs, fmt.Errorf("EvtQuery: %w", err)
+	}
+	if rs.handle == windows.InvalidHandle {
+		return rs, errors.New("invalid query")
+	}
+	return rs, nil
 }
 
 // CreateBookmark creates a bookmark that identifies an event in a channel.
@@ -267,40 +319,6 @@ func OpenPublisherMetadata(session *Session, publisherID string, logFilePath str
 	}
 
 	return pm, nil
-}
-
-// Query runs a query to retrieve events from a channel or log file that match the specified query criteria.
-//
-// Session is only required for remote connections; leave as nil for the local log. Flags can be any of
-// wevtapi.EVT_QUERY_FLAGS.
-//
-// The session handle must remain open until all subsequent processing on the query results have completed. Call
-// Close() once complete.
-//
-// Example:
-// 	 conn, err := eventlog.Query(nil, "Windows Powershell", "*", wevtapi.EvtQueryReverseDirection)
-// 	 if err != nil {
-//     return err
-//	 }
-//	 defer conn.Close()
-//
-// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtquery
-func Query(session *Session, path string, query string, flags uint32) (ResultSet, error) {
-	var rs ResultSet
-	var err error
-
-	var s windows.Handle
-	if session != nil {
-		s = session.handle
-	}
-	rs.handle, err = wevtapi.EvtQuery(s, windows.StringToUTF16Ptr(path), windows.StringToUTF16Ptr(query), flags)
-	if err != nil {
-		return rs, fmt.Errorf("EvtQuery: %w", err)
-	}
-	if rs.handle == windows.InvalidHandle {
-		return rs, errors.New("invalid query")
-	}
-	return rs, nil
 }
 
 // EvtVariantData models the union inside of the EVT_VARIANT structure.
