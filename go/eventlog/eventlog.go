@@ -58,6 +58,11 @@ func (h *Bookmark) Close() {
 	}
 }
 
+// Channel represents an event log channel.
+type Channel struct {
+	Name string
+}
+
 // An Event is a Handle to an event.
 type Event Handle
 
@@ -118,6 +123,39 @@ func LocalSession() *Session {
 	}
 }
 
+// AvailableChannels returns a slice of channels registered on the system.
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtopenchannelenum
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtnextchannelpath
+func (s *Session) AvailableChannels() ([]Channel, error) {
+	h, err := wevtapi.EvtOpenChannelEnum(s.handle, 0)
+	if err != nil {
+		return nil, err
+	}
+	defer wevtapi.EvtClose(h)
+
+	// Enumerate all the channel names. Dynamically allocate the buffer to receive
+	// channel names depending on the buffer size required as reported by the API.
+	var channels []Channel
+	buf := make([]uint16, 1)
+	for {
+		var bufferUsed uint32
+		err := wevtapi.EvtNextChannelPath(h, uint32(len(buf)), &buf[0], &bufferUsed)
+		switch err {
+		case nil:
+			channels = append(channels, Channel{Name: syscall.UTF16ToString(buf[:bufferUsed])})
+		case syscall.ERROR_INSUFFICIENT_BUFFER:
+			// Grow buffer.
+			buf = make([]uint16, bufferUsed)
+			continue
+		case syscall.Errno(259): // ERROR_NO_MORE_ITEMS
+			return channels, nil
+		default:
+			return nil, err
+		}
+	}
+}
+
 // ClearLog removes all events from the specified channel.
 //
 // If targetFilePath is non-empty, the contents of the channel will be exported to a file before clearing.
@@ -151,7 +189,7 @@ func (s *Session) OpenPublisherMetadata(publisherID string, logFilePath string, 
 
 	ipub, err := syscall.UTF16PtrFromString(publisherID)
 	if err != nil {
-		return pm, fmt.Errorf("syscall.UTF16PtrFromString failed: %v", err)
+		return pm, fmt.Errorf("syscall.UTF16PtrFromString: %v", err)
 	}
 
 	pm.handle, err = wevtapi.EvtOpenPublisherMetadata(
@@ -166,7 +204,7 @@ func (s *Session) OpenPublisherMetadata(publisherID string, logFilePath string, 
 	if err == syscall.ERROR_FILE_NOT_FOUND {
 		return pm, fmt.Errorf("no publisher metadata")
 	} else if err != nil {
-		return pm, fmt.Errorf("OpenPublisherMetadata failed: %v", err)
+		return pm, err
 	}
 
 	return pm, nil
