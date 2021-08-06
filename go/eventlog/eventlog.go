@@ -64,15 +64,61 @@ type Channel struct {
 // An Event is a Handle to an event.
 type Event Handle
 
+// Format formats a message string.
+//
+// MessageID is only set if using the EvtFormatMessageId flag. The ID is obtained using GetPublisherMetadataProperty.
+// Set to zero if unused.
+//
+// Flags should be one of the EVT_FORMAT_MESSAGE_FLAGS from wevtapi.
+//
+// This method does not support supplying insertion values.
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtformatmessage
+func (e *Event) Format(pub PublisherMetadata, messageID uint32, flags uint32) (string, error) {
+
+	// Call EvtFormatMessage with a null buffer to get the required buffer size.
+	var bufferUsed uint32
+	err := wevtapi.EvtFormatMessage(
+		pub.handle,  // Handle to provider metadata.
+		e.Handle(),  // Handle to an event.
+		messageID,   // Resource identifier of the message string. Null if flag isn't EvtFormatMessageId.
+		0,           // Number of values in the values parameter.
+		0,           // An array of insertion values to be used when formatting the event string. Typically set to null.
+		flags,       // Format message as an XML string.
+		0,           // Size of buffer.
+		nil,         // Null buffer.
+		&bufferUsed) // Get the required buffer size.
+	if !errors.Is(err, syscall.ERROR_INSUFFICIENT_BUFFER) {
+		return "", err
+	}
+
+	buf := make([]uint16, bufferUsed/2)
+	err = wevtapi.EvtFormatMessage(
+		pub.handle,
+		e.Handle(),
+		messageID,
+		0,
+		0,
+		flags,
+		bufferUsed,
+		(*byte)(unsafe.Pointer(&buf[0])),
+		&bufferUsed)
+	if err != nil {
+		return "", err
+	}
+
+	return syscall.UTF16ToString(buf), nil
+}
+
 // Handle returns the event handle.
-func (h *Event) Handle() windows.Handle {
-	return h.handle
+func (e *Event) Handle() windows.Handle {
+	return e.handle
 }
 
 // Close releases an Event.
-func (h *Event) Close() {
-	if h != nil {
-		wevtapi.EvtClose(h.handle)
+func (e *Event) Close() {
+	if e != nil {
+		wevtapi.EvtClose(e.handle)
 	}
 }
 
@@ -192,7 +238,7 @@ func (s *Session) OpenPublisherMetadata(publisherID string, logFilePath string, 
 
 	ipub, err := syscall.UTF16PtrFromString(publisherID)
 	if err != nil {
-		return pm, fmt.Errorf("syscall.UTF16PtrFromString: %v", err)
+		return pm, err
 	}
 
 	pm.handle, err = wevtapi.EvtOpenPublisherMetadata(
@@ -235,7 +281,7 @@ func (s *Session) Query(path string, query string, flags uint32) (ResultSet, err
 
 	rs.handle, err = wevtapi.EvtQuery(s.handle, windows.StringToUTF16Ptr(path), windows.StringToUTF16Ptr(query), flags)
 	if err != nil {
-		return rs, fmt.Errorf("EvtQuery: %w", err)
+		return rs, err
 	}
 	if rs.handle == windows.InvalidHandle {
 		return rs, errors.New("invalid query")
@@ -430,7 +476,7 @@ func Next(handle EventGenerator, count uint32, timeout *time.Duration) (EventSet
 		uint32(timeout.Milliseconds()), // Timeout in milliseconds to wait.
 		0,                              // Reserved. Must be zero.
 		&es.Count)                      // The number of handles in the array that are set by the API.
-	if err == windows.ERROR_NO_MORE_ITEMS {
+	if errors.Is(err, windows.ERROR_NO_MORE_ITEMS) {
 		return es, err
 	} else if err != nil {
 		return es, fmt.Errorf("wevtapi.EvtNext: %w", err)
@@ -559,8 +605,8 @@ func Render(fragment Fragment, flag uint32) (string, error) {
 		nil,
 		&bufferUsed,
 		&propertyCount)
-	if err != syscall.ERROR_INSUFFICIENT_BUFFER {
-		return "", fmt.Errorf("wevtapi.EvtRender: %w", err)
+	if !errors.Is(err, syscall.ERROR_INSUFFICIENT_BUFFER) {
+		return "", err
 	}
 
 	// Create a buffer based on the buffer size required.
@@ -575,7 +621,7 @@ func Render(fragment Fragment, flag uint32) (string, error) {
 		unsafe.Pointer(&buf[0]),
 		&bufferUsed,
 		&propertyCount); err != nil {
-		return "", fmt.Errorf("wevtapi.EvtRender: %w", err)
+		return "", err
 	}
 
 	return syscall.UTF16ToString(buf), nil
@@ -616,8 +662,8 @@ func RenderValues(renderCtx RenderContext, fragment Fragment) ([]EvtVariant, err
 		nil,
 		&bufferUsed,
 		&propertyCount)
-	if err != syscall.ERROR_INSUFFICIENT_BUFFER {
-		return nil, fmt.Errorf("wevtapi.EvtRender: %w", err)
+	if !errors.Is(err, syscall.ERROR_INSUFFICIENT_BUFFER) {
+		return nil, err
 	}
 
 	// Create a buffer to hold the EVT_VARIANT objects returned by the query.
@@ -638,7 +684,7 @@ func RenderValues(renderCtx RenderContext, fragment Fragment) ([]EvtVariant, err
 		unsafe.Pointer(&buf[0]),
 		&bufferUsed,
 		&propertyCount); err != nil {
-		return nil, fmt.Errorf("wevtapi.EvtRender: %w", err)
+		return nil, err
 	}
 
 	// The EVT_VARIANT union can be holding any of the union's supported data types.
