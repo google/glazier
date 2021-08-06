@@ -318,6 +318,16 @@ func (s *Subscription) Next(count uint32, timeout *time.Duration) (EventSet, err
 	return Next(s, count, timeout)
 }
 
+// WaitForSignal waits for new events to arrive via the SignalEvent. Returns true if the event
+// was signalled before the timeout expired. Timeout must be between 0 and 2^32us.
+func (s *Subscription) WaitForSignal(timeout time.Duration) (bool, error) {
+	status, err := windows.WaitForSingleObject(s.SignalEvent, uint32(timeout/time.Millisecond))
+	if err != nil {
+		return false, err
+	}
+	return status == syscall.WAIT_OBJECT_0, nil
+}
+
 // CreateBookmark creates a bookmark that identifies an event in a channel.
 func CreateBookmark(bookmark string) (Bookmark, error) {
 	book := Bookmark{}
