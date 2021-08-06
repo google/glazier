@@ -16,6 +16,11 @@
 // +build windows
 
 // Package eventlog provides an interface to the Windows Event Log.
+//
+// This package is a companion package to github.com/google/winops/tree/master/winlog/wevtapi.
+// The wevtapi package provides the low-level eventlog API and some of the API constants. While
+// wevtapi can be used directly for event log interactions, this package aims to make common event
+// log operations simpler and more organic for the typical user.
 package eventlog
 
 import (
@@ -39,13 +44,6 @@ import (
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtclose
 type Handle struct {
 	handle windows.Handle
-}
-
-// Close releases a Handle.
-func (h *Handle) Close() {
-	if h != nil {
-		wevtapi.EvtClose(h.handle)
-	}
 }
 
 // A Bookmark is a Handle returned by CreateBookmark
@@ -101,16 +99,21 @@ func (h *RenderContext) Close() {
 // A ResultSet is a Handle returned by a Query or Subscription
 type ResultSet Handle
 
+// Handle returns the event handle.
+func (rs *ResultSet) Handle() windows.Handle {
+	return rs.handle
+}
+
 // Close releases a ResultSet.
-func (h *ResultSet) Close() {
-	if h != nil {
-		wevtapi.EvtClose(h.handle)
+func (rs *ResultSet) Close() {
+	if rs != nil {
+		wevtapi.EvtClose(rs.handle)
 	}
 }
 
 // Next is a helper that calls eventlog.Next() for ResultSets.
-func (h *ResultSet) Next(count uint32, timeout *time.Duration) (EventSet, error) {
-	return Next(*h, count, timeout)
+func (rs *ResultSet) Next(count uint32, timeout *time.Duration) (EventSet, error) {
+	return Next(rs, count, timeout)
 }
 
 // A Session is a Handle returned by OpenSession
@@ -240,15 +243,86 @@ func (s *Session) Query(path string, query string, flags uint32) (ResultSet, err
 	return rs, nil
 }
 
+// Subscribe creates a subscription that will receive current and/or future events from a channel or log file
+// which match the specified query criteria.
+//
+// This method uses SignalEvent rather than Callback for notifying of new events. You may create and provide a custom signal event using
+// windows.CreateEvent. If signalEvent is left as nil, a default event will be created for you. In either case, the event is returned inside the
+// resulting Subscription. This subscription model is referred to as a "pull subscription", as you must watch for the signal events to
+// arrive, and use Next to obtain the results.
+//
+// channelPath and query can be used in multiple combinations, including xpath and structured xml. See the API documentation for details.
+//
+// Bookmark should be supplied if using the EvtSubscribeStartAfterBookmark flag. Otherwise it should be left as nil.
+//
+// Flags should be one or more of the EVT_SUBSCRIBE_FLAGS from wevtapi.
+//
+// You must call Close() on the resulting Subscription when finished.
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtsubscribe
+func (s *Session) Subscribe(signalEvent *windows.Handle, channelPath string, query string, bookmark *Bookmark, flags uint32) (Subscription, error) {
+	sub := Subscription{}
+	var err error
+
+	if signalEvent != nil {
+		sub.SignalEvent = *signalEvent
+	} else {
+		sub.SignalEvent, err = windows.CreateEvent(
+			nil, // Default security descriptor.
+			1,   // Manual reset.
+			1,   // Initial state is signaled.
+			nil) // Optional name.
+		if err != nil {
+			return sub, err
+		}
+	}
+
+	if bookmark == nil {
+		bookmark = &Bookmark{} // bookmark is nil unless using EvtSubscribeStartAfterBookmark
+	}
+
+	sub.handle, err = wevtapi.EvtSubscribe(
+		s.handle,
+		sub.SignalEvent,
+		helpers.StringToPtrOrNil(channelPath),
+		helpers.StringToPtrOrNil(query),
+		bookmark.handle,
+		uintptr(0),
+		uintptr(0), // nil for signal-based subscription
+		uint32(flags))
+
+	return sub, err
+}
+
+// Subscription tracks an event subscription created by Session.Subscribe.
+type Subscription struct {
+	handle      windows.Handle
+	SignalEvent windows.Handle
+}
+
+// Close releases a Subscription.
+func (s *Subscription) Close() {
+	if s != nil {
+		wevtapi.EvtClose(s.handle)
+		wevtapi.EvtClose(s.SignalEvent)
+	}
+}
+
+// Handle returns the subscription handle.
+func (s *Subscription) Handle() windows.Handle {
+	return s.handle
+}
+
+// Next attempts to get the next available events for the subscription.
+func (s *Subscription) Next(count uint32, timeout *time.Duration) (EventSet, error) {
+	return Next(s, count, timeout)
+}
+
 // CreateBookmark creates a bookmark that identifies an event in a channel.
 func CreateBookmark(bookmark string) (Bookmark, error) {
 	book := Bookmark{}
 	var err error
-	if bookmark != "" {
-		book.handle, err = wevtapi.EvtCreateBookmark(windows.StringToUTF16Ptr(bookmark))
-	} else {
-		book.handle, err = wevtapi.EvtCreateBookmark(nil)
-	}
+	book.handle, err = wevtapi.EvtCreateBookmark(helpers.StringToPtrOrNil(bookmark))
 	return book, err
 }
 
@@ -321,10 +395,15 @@ func (e *EventSet) Close() {
 	}
 }
 
+// An EventGenerator provides a handle to a query or subscription that may yield events.
+type EventGenerator interface {
+	Handle() windows.Handle
+}
+
 // Next gets the next event(s) returned by a query or subscription.
 //
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtnext
-func Next(handle ResultSet, count uint32, timeout *time.Duration) (EventSet, error) {
+func Next(handle EventGenerator, count uint32, timeout *time.Duration) (EventSet, error) {
 	es := EventSet{}
 
 	defaultTimeout := 2000 * time.Millisecond
@@ -335,7 +414,7 @@ func Next(handle ResultSet, count uint32, timeout *time.Duration) (EventSet, err
 	// Get handles to events from the result set.
 	evts := make([]windows.Handle, count)
 	err := wevtapi.EvtNext(
-		handle.handle,                  // Handle to query or subscription result set.
+		handle.Handle(),                // Handle to query or subscription result set.
 		count,                          // The number of events to attempt to retrieve.
 		&evts[0],                       // Pointer to the array of event handles.
 		uint32(timeout.Milliseconds()), // Timeout in milliseconds to wait.
@@ -400,7 +479,7 @@ type EvtVariantData struct {
 	XmlValArr     *[]string
 }
 
-// EvtVariantType(EVT_VARIANT_TYPE) defines the possible data types of a EVT_VARIANT data item.
+// EvtVariantType (EVT_VARIANT_TYPE) defines the possible data types of a EVT_VARIANT data item.
 //
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/ne-winevt-evt_variant_type
 type EvtVariantType uint32
