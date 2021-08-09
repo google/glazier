@@ -73,6 +73,17 @@ type Event Handle
 //
 // This method does not support supplying insertion values.
 //
+// Example (evt is an open Event from the Openssh channel):
+//   pub, err := eventlog.LocalSession().OpenPublisherMetadata("Openssh", "", 2057)
+//   if err != nil {
+//	   return err
+//	 }
+// 	 defer pub.Close()
+//	 out, err := evt.Format(pub, 0, wevtapi.EvtFormatMessageXml)
+//	 if err != nil {
+//		 return err
+//	 }
+//
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtformatmessage
 func (e *Event) Format(pub PublisherMetadata, messageID uint32, flags uint32) (string, error) {
 
@@ -205,6 +216,34 @@ func (s *Session) AvailableChannels() ([]Channel, error) {
 	}
 }
 
+// AvailablePublishers returns a slice of publishers registered on the system.
+func (s *Session) AvailablePublishers() ([]string, error) {
+	h, err := wevtapi.EvtOpenPublisherEnum(s.handle, 0)
+	if err != nil {
+		return nil, fmt.Errorf("wevtapi.EvtOpenPublisherEnum failed: %v", err)
+	}
+	defer wevtapi.EvtClose(h)
+
+	var publishers []string
+	buf := make([]uint16, 1)
+	for {
+		var bufferUsed uint32
+		err := wevtapi.EvtNextPublisherId(h, uint32(len(buf)), &buf[0], &bufferUsed)
+		switch err {
+		case nil:
+			publishers = append(publishers, syscall.UTF16ToString(buf[:bufferUsed]))
+		case syscall.ERROR_INSUFFICIENT_BUFFER:
+			// Grow buffer.
+			buf = make([]uint16, bufferUsed)
+			continue
+		case windows.ERROR_NO_MORE_ITEMS:
+			return publishers, nil
+		default:
+			return nil, err
+		}
+	}
+}
+
 // ClearLog removes all events from the specified channel.
 //
 // If targetFilePath is non-empty, the contents of the channel will be exported to a file before clearing.
@@ -228,6 +267,14 @@ func (s *Session) Close() {
 }
 
 // OpenPublisherMetadata gets a handle that you use to read the specified provider's metadata.
+//
+// Publisher IDs can be enumerated by calling Session.AvailablePublishers.
+//
+// logFilePath is only needed if the provider is not on the local computer; otherwise leave blank.
+//
+// Locale can be set to an ID value from
+// https://docs.microsoft.com/en-us/previous-versions/windows/embedded/ms912047(v=winembedded.10).
+// Leave as zero to use the locale of the running thread.
 //
 // Call Close() on the PublisherMetadata once complete.
 //
