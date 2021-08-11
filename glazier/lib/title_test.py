@@ -40,10 +40,10 @@ class TitleTest(absltest.TestCase):
     ii.return_value = _TEST_ID
     stage.return_value = _STAGE
     release.return_value = _RELEASE
-    title.constants.FLAGS.config_root_path = '/some/directory'
+    title.constants.FLAGS.config_root_path = '/'
     self.assertEqual(
         title._base_title(),
-        f'WinPE - some/directory - Stage: {_STAGE} - {_RELEASE} - {_TEST_ID}')
+        f'WinPE - Stage: {_STAGE} - {_RELEASE} - {_TEST_ID}')
 
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)

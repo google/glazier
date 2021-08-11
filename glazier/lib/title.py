@@ -47,7 +47,10 @@ def _base_title() -> Optional[str]:
   if winpe.check_winpe():
     base.append('WinPE')
   if constants.FLAGS.config_root_path:
-    base.append(constants.FLAGS.config_root_path.strip('/'))
+    # Existence of the constant must be checked before strip to avoid null error
+    path = constants.FLAGS.config_root_path.strip('/')
+    if path:
+      base.append(path)
   if getstage:
     base.append(f'Stage: {getstage}')
   if getrelease:
