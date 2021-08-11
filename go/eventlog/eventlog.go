@@ -62,6 +62,63 @@ type Channel struct {
 	Name string
 }
 
+// ChannelConfig represents a handle to a Channel's configuration.
+//
+// Use Session.OpenChannelConfig to obtain a ChannelConfig.
+type ChannelConfig Handle
+
+// Close releases a ChannelConfig.
+func (cc *ChannelConfig) Close() {
+	if cc != nil {
+		wevtapi.EvtClose(cc.handle)
+	}
+}
+
+// GetProperty allows you to read a channel config's properties.
+//
+// PropertyID must be a wevtapi.EvtChannelConfigPropertyID.
+//
+// Results are returned as an EvtVariant with the corresponding property type populated.
+//
+// Example:
+//   p, err = cc.GetProperty(wevtapi.EvtChannelConfigOwningPublisher)
+// 	 if err != nil {
+//	   return err
+//	 }
+//   fmt.Println(p.Data.StringVal)
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtgetchannelconfigproperty
+func (cc *ChannelConfig) GetProperty(propertyID wevtapi.EvtChannelConfigPropertyID) (EvtVariant, error) {
+	var bufferUsed uint32
+	v := EvtVariant{}
+
+	// Call with a null buffer to get the required buffer size.
+	err := wevtapi.EvtGetChannelConfigProperty(
+		cc.handle,
+		propertyID,
+		0,
+		0,
+		nil,
+		&bufferUsed)
+	if err != syscall.ERROR_INSUFFICIENT_BUFFER {
+		return v, err
+	}
+
+	buf := make([]byte, bufferUsed)
+	err = wevtapi.EvtGetChannelConfigProperty(
+		cc.handle,
+		propertyID,
+		0,
+		bufferUsed,
+		unsafe.Pointer(&buf[0]),
+		&bufferUsed)
+	if err != nil {
+		return v, err
+	}
+
+	return makeVariant(buf, 0)
+}
+
 // An Event is a Handle to an event.
 type Event Handle
 
@@ -265,6 +322,26 @@ func (s *Session) Close() {
 	if s != nil {
 		wevtapi.EvtClose(s.handle)
 	}
+}
+
+// OpenChannelConfig allows you to read and modify channel config properties.
+//
+// You must call Close() on the resulting ChannelConfig when finished.
+//
+// Example:
+//   s.OpenChannelConfig("Microsoft-Windows-DriverFrameworks-UserMode/Operational")
+//
+// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtopenchannelconfig
+func (s *Session) OpenChannelConfig(logID string) (ChannelConfig, error) {
+	cc := ChannelConfig{}
+	var err error
+
+	if logID == "" {
+		return cc, fmt.Errorf("must supply a log id")
+	}
+
+	cc.handle, err = wevtapi.EvtOpenChannelConfig(s.handle, syscall.StringToUTF16Ptr(logID), 0)
+	return cc, err
 }
 
 // OpenPublisherMetadata gets a handle that you use to read the specified provider's metadata.
