@@ -24,6 +24,8 @@
 package eventlog
 
 import (
+	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"syscall"
@@ -31,7 +33,6 @@ import (
 	"unsafe"
 
 	"golang.org/x/sys/windows"
-	"github.com/google/logger"
 	"github.com/google/glazier/go/helpers"
 	"github.com/google/winops/winlog/wevtapi"
 )
@@ -614,6 +615,13 @@ const (
 	EvtVarTypeEvtXml
 )
 
+// RawVariant is like EvtVariant but holds the raw, un-typed data in the Data field.
+type RawVariant struct {
+	Data  uint64
+	Count uint32
+	Type  uint32
+}
+
 // EvtVariant (EVT_VARIANT) contains event data or property values.
 //
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/ns-winevt-evt_variant
@@ -621,6 +629,63 @@ type EvtVariant struct {
 	Count uint32
 	Type  EvtVariantType
 	Data  EvtVariantData
+}
+
+// MakeVariant attempts to make an EvtVariant from a raw buffer.
+func makeVariant(buf []byte, index int) (EvtVariant, error) {
+	ev := EvtVariant{}
+	raw := RawVariant{}
+
+	// In evt_variant arrays, each variant is offset by 16; the index gives us the location
+	// we're supposed to look at.
+	start := index * 16
+	end := start + 16
+
+	// Put the buffer slice into a RawVariant so we can type it
+	if err := binary.Read(
+		bytes.NewBuffer(buf[start:end]), binary.LittleEndian, &raw); err != nil {
+		return ev, err
+	}
+
+	// The EVT_VARIANT union can be holding any of the union's supported data types.
+	// To make it useable, we look for the type in the Type field and cast accordingly.
+	ev.Type = EvtVariantType(raw.Type)
+	switch raw.Type {
+	case uint32(EvtVarTypeNull):
+		return ev, nil
+	case uint32(EvtVarTypeString):
+		ptr := *(**uint16)(unsafe.Pointer(&raw.Data))
+		ev.Data.StringVal = windows.UTF16PtrToString(ptr)
+	case uint32(EvtVarTypeSByte):
+		ev.Data.SByteVal = *(*int8)(unsafe.Pointer(&raw.Data))
+	case uint32(EvtVarTypeByte):
+		ev.Data.ByteVal = *(*uint8)(unsafe.Pointer(&raw.Data))
+	case uint32(EvtVarTypeInt16):
+		ev.Data.Int16Val = *(*int16)(unsafe.Pointer(&raw.Data))
+	case uint32(EvtVarTypeInt32), uint32(EvtVarTypeHexInt32):
+		ev.Data.Int32Val = *(*int32)(unsafe.Pointer(&raw.Data))
+	case uint32(EvtVarTypeInt64), uint32(EvtVarTypeHexInt64):
+		ev.Data.Int64Val = *(*int64)(unsafe.Pointer(&raw.Data))
+	case uint32(EvtVarTypeUInt16):
+		ev.Data.UInt16Val = *(*uint16)(unsafe.Pointer(&raw.Data))
+	case uint32(EvtVarTypeUInt32):
+		ev.Data.UInt32Val = *(*uint32)(unsafe.Pointer(&raw.Data))
+	case uint32(EvtVarTypeUInt64):
+		ev.Data.UInt64Val = *(*uint64)(unsafe.Pointer(&raw.Data))
+	case uint32(EvtVarTypeBoolean):
+		ev.Data.BooleanVal = *(*bool)(unsafe.Pointer(&raw.Data))
+	case uint32(EvtVarTypeGuid):
+		ev.Data.GuidVal = *(*windows.GUID)(unsafe.Pointer(&raw.Data))
+	case uint32(EvtVarTypeFileTime):
+		ev.Data.FileTimeVal = *(*windows.Filetime)(unsafe.Pointer(&raw.Data))
+	case uint32(EvtVarTypeSid):
+		ev.Data.SidVal = *(*windows.SID)(unsafe.Pointer(&raw.Data))
+	case uint32(EvtVarTypeSysTime):
+		ev.Data.SysTimeVal = *(*windows.Systemtime)(unsafe.Pointer(&raw.Data))
+	default:
+		return ev, fmt.Errorf("unsupported type %v", raw.Type)
+	}
+	return ev, nil
 }
 
 // Fragment describes a renderable fragment; an event or to a bookmark.
@@ -716,12 +781,8 @@ func RenderValues(renderCtx RenderContext, fragment Fragment) ([]EvtVariant, err
 	// Create a buffer to hold the EVT_VARIANT objects returned by the query.
 	//
 	// Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/ns-winevt-evt_variant
-	buf := make([]struct {
-		Raw   [8]byte // Go represents the union as a byte slice, sized based on the largest element in the union.
-		Count uint32
-		Type  uint32
-	}, propertyCount)
 
+	buf := make([]byte, bufferUsed)
 	// Render the fragment according to the flag.
 	if err = wevtapi.EvtRender(
 		renderCtx.handle,
@@ -734,44 +795,10 @@ func RenderValues(renderCtx RenderContext, fragment Fragment) ([]EvtVariant, err
 		return nil, err
 	}
 
-	// The EVT_VARIANT union can be holding any of the union's supported data types.
-	// To make it useable, we look for the type in the Type field and cast accordingly.
 	for i := 0; i < int(propertyCount); i++ {
-		v := EvtVariant{Type: EvtVariantType(buf[i].Type)}
-		switch buf[i].Type {
-		case uint32(EvtVarTypeNull):
-			continue
-		case uint32(EvtVarTypeString):
-			ptr := *(**uint16)(unsafe.Pointer(&buf[i].Raw))
-			v.Data.StringVal = windows.UTF16PtrToString(ptr)
-		case uint32(EvtVarTypeSByte):
-			v.Data.SByteVal = *(*int8)(unsafe.Pointer(&buf[i].Raw))
-		case uint32(EvtVarTypeByte):
-			v.Data.ByteVal = *(*uint8)(unsafe.Pointer(&buf[i].Raw))
-		case uint32(EvtVarTypeInt16):
-			v.Data.Int16Val = *(*int16)(unsafe.Pointer(&buf[i].Raw))
-		case uint32(EvtVarTypeInt32), uint32(EvtVarTypeHexInt32):
-			v.Data.Int32Val = *(*int32)(unsafe.Pointer(&buf[i].Raw))
-		case uint32(EvtVarTypeInt64), uint32(EvtVarTypeHexInt64):
-			v.Data.Int64Val = *(*int64)(unsafe.Pointer(&buf[i].Raw))
-		case uint32(EvtVarTypeUInt16):
-			v.Data.UInt16Val = *(*uint16)(unsafe.Pointer(&buf[i].Raw))
-		case uint32(EvtVarTypeUInt32):
-			v.Data.UInt32Val = *(*uint32)(unsafe.Pointer(&buf[i].Raw))
-		case uint32(EvtVarTypeUInt64):
-			v.Data.UInt64Val = *(*uint64)(unsafe.Pointer(&buf[i].Raw))
-		case uint32(EvtVarTypeBoolean):
-			v.Data.BooleanVal = *(*bool)(unsafe.Pointer(&buf[i].Raw))
-		case uint32(EvtVarTypeGuid):
-			v.Data.GuidVal = *(*windows.GUID)(unsafe.Pointer(&buf[i].Raw))
-		case uint32(EvtVarTypeFileTime):
-			v.Data.FileTimeVal = *(*windows.Filetime)(unsafe.Pointer(&buf[i].Raw))
-		case uint32(EvtVarTypeSid):
-			v.Data.SidVal = *(*windows.SID)(unsafe.Pointer(&buf[i].Raw))
-		case uint32(EvtVarTypeSysTime):
-			v.Data.SysTimeVal = *(*windows.Systemtime)(unsafe.Pointer(&buf[i].Raw))
-		default:
-			logger.Warningf("Unsupported type: %v", buf[i].Type)
+		v, err := makeVariant(buf, i)
+		if err != nil {
+			return vals, err
 		}
 		vals = append(vals, v)
 	}
