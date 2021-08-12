@@ -16,7 +16,6 @@ package storage
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/google/logger"
 	"github.com/go-ole/go-ole"
@@ -61,15 +60,46 @@ func (v *Volume) Flush() error {
 	return nil
 }
 
+// FormatFAT32 is a helper for calling Format using only the options supported by FAT32.
+func (v *Volume) FormatFAT32(label string, allocationUnitSize int32, full, force bool) (Volume, ExtendedStatus, error) {
+	return v.Format("FAT32", label, allocationUnitSize, full, force, nil, nil, nil, nil, nil)
+}
+
+// FormatNTFS is a helper for calling Format using only the options supported by NTFS.
+func (v *Volume) FormatNTFS(label string, allocationUnitSize int32, full, force, compress, shortFileNameSupport, useLargeFRS, disableHeatGathering bool) (Volume, ExtendedStatus, error) {
+	return v.Format("NTFS", label, allocationUnitSize, full, force, compress, shortFileNameSupport, nil, useLargeFRS, disableHeatGathering)
+}
+
+// FormatReFS is a helper for calling Format using only the options supported by ReFS.
+func (v *Volume) FormatReFS(label string, allocationUnitSize int32, full, force, setIntegrityStreams, disableHeatGathering bool) (Volume, ExtendedStatus, error) {
+	return v.Format("ReFS", label, allocationUnitSize, full, force, nil, nil, setIntegrityStreams, nil, disableHeatGathering)
+}
+
 // Format formats a volume.
 //
-// fs can be one of "ExFAT", "FAT", "FAT32", "NTFS", "ReFS"
+// You may want to use one of the filesystem-specific helpers instead of calling this directly.
+//
+// fs can be one of "ExFAT", "FAT", "FAT32", "NTFS", "ReFS". Set allocationUnitSize to 0 for default.
+//
+// Note: The Windows API requires any parameters not supported by a given filesystem to be nil (NOT zero value).
+// To enable this here, any non-universal parameters are implemented as interfaces and must be passed as either the
+// correct type for the underlying API field or nil. Attempting to pass a field to a filesystem that doesn't
+// support it will result in a vague and unhelpful code 1 (unsupported) from the API.
 //
 // If successful, the formatted volume is returned as a new Volume object. Close() must be called on the new Volume.
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/format-msft-volume
-func (v *Volume) Format(fs string, fsLabel string, allocationUnitSize int32,
-	full, force, compress, shortFileNameSupport, setIntegrityStreams, useLargeFRS, disableHeatGathering bool) (Volume, ExtendedStatus, error) {
+func (v *Volume) Format(
+	fs string,
+	fsLabel string,
+	allocationUnitSize int32,
+	full bool,
+	force bool,
+	compress interface{},
+	shortFileNameSupport interface{},
+	setIntegrityStreams interface{},
+	useLargeFRS interface{},
+	disableHeatGathering interface{}) (Volume, ExtendedStatus, error) {
 	vol := Volume{}
 	stat := ExtendedStatus{}
 
@@ -85,24 +115,18 @@ func (v *Volume) Format(fs string, fsLabel string, allocationUnitSize int32,
 		ialloc = nil
 	}
 
-	var icompress interface{}
-	var iintegrity interface{}
-	var ilfrs interface{}
-	var ishortn interface{}
-	if strings.EqualFold("ReFS", fs) {
-		iintegrity = setIntegrityStreams
-		ilfrs = useLargeFRS
-		ishortn = nil
-		icompress = nil
-	} else {
-		iintegrity = nil
-		ilfrs = nil
-		ishortn = shortFileNameSupport
-		icompress = compress
-	}
-
-	res, err := oleutil.CallMethod(v.handle, "Format", fs, fsLabel, ialloc, full, force, icompress,
-		ishortn, iintegrity, ilfrs, disableHeatGathering, &formattedVolume, &extendedStatus)
+	res, err := oleutil.CallMethod(v.handle, "Format",
+		fs,
+		fsLabel,
+		ialloc,
+		full,
+		force,
+		compress,
+		shortFileNameSupport,
+		setIntegrityStreams,
+		useLargeFRS,
+		disableHeatGathering,
+		&formattedVolume, &extendedStatus) // outputs
 	if err != nil {
 		return vol, stat, fmt.Errorf("Format: %w", err)
 	} else if val, ok := res.Value().(int32); val != 0 || !ok {
@@ -231,6 +255,8 @@ func (svc Service) GetVolumes(filter string) (VolumeSet, error) {
 	if filter != "" {
 		query = fmt.Sprintf("%s %s", query, filter)
 	}
+
+	logger.V(1).Info(query)
 	raw, err := oleutil.CallMethod(svc.wmiSvc, "ExecQuery", query)
 	if err != nil {
 		return vset, fmt.Errorf("ExecQuery(%s): %w", query, err)
