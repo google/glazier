@@ -16,6 +16,7 @@ package storage
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/google/logger"
 	"github.com/go-ole/go-ole"
@@ -46,6 +47,14 @@ type Partition struct {
 	NoDefaultDriveLetter bool
 
 	handle *ole.IDispatch
+}
+
+// PartitionSupportedSize represents the minimum and maximum sizes a partition can be resized to.
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-partition-getsupportedsizes
+type PartitionSupportedSize struct {
+	SizeMin uint64
+	SizeMax uint64
 }
 
 // Close releases the handle to the partition.
@@ -247,6 +256,39 @@ func (s *PartitionSet) Close() {
 	for _, p := range s.Partitions {
 		p.Close()
 	}
+}
+
+// GetSupportedSize retrieves the minimum and maximum sizes that the partition can be resized to
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-partition-getsupportedsizes
+func (p *Partition) GetSupportedSize() (PartitionSupportedSize, ExtendedStatus, error) {
+	size := PartitionSupportedSize{}
+	stat := ExtendedStatus{}
+
+	var sizemin ole.VARIANT
+	ole.VariantInit(&sizemin)
+	var sizemax ole.VARIANT
+	ole.VariantInit(&sizemax)
+	var extendedstatus ole.VARIANT
+	ole.VariantInit(&extendedstatus)
+
+	resultRaw, err := oleutil.CallMethod(p.handle, "GetSupportedSize", &sizemin, &sizemax, &extendedstatus)
+	if err != nil {
+		return size, stat, fmt.Errorf("GetSupportedSize: %w", err)
+	} else if val, ok := resultRaw.Value().(int32); val != 0 || !ok {
+		return size, stat, fmt.Errorf("error code returned during GetSupportedSize: %d", val)
+	}
+
+	//Convert the results from an interface to uint64
+	size.SizeMin, err = strconv.ParseUint(sizemin.Value().(string), 10, 64)
+	if err != nil {
+		return size, stat, fmt.Errorf("error attempting to parse sizemin: %w", err)
+	}
+	size.SizeMax, err = strconv.ParseUint(sizemax.Value().(string), 10, 64)
+	if err != nil {
+		return size, stat, fmt.Errorf("error attempting to parse sizemax: %w", err)
+	}
+	return size, stat, nil
 }
 
 // GetPartitions queries for local partitions.
