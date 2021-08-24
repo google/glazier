@@ -88,6 +88,22 @@ func (d *Disk) Close() {
 	}
 }
 
+// ConvertStyle converts the partition style of an already initialized disk.
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-disk-convertstyle
+func (d *Disk) ConvertStyle(style PartitionStyle) (ExtendedStatus, error) {
+	stat := ExtendedStatus{}
+	var extendedStatus ole.VARIANT
+	ole.VariantInit(&extendedStatus)
+	res, err := oleutil.CallMethod(d.handle, "ConvertStyle", int32(style), &extendedStatus)
+	if err != nil {
+		return stat, fmt.Errorf("ConvertStyle(): %w", err)
+	} else if val, ok := res.Value().(int32); val != 0 || !ok {
+		return stat, fmt.Errorf("error code returned during convert style: %d", val)
+	}
+	return stat, nil
+}
+
 // MbrType describes an MBR partition type.
 type MbrType int
 
@@ -236,13 +252,13 @@ const (
 //		d.Initialize(storage.GptStyle)
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/initialize-msft-disk
-func (d *Disk) Initialize(ps PartitionStyle) (ExtendedStatus, error) {
+func (d *Disk) Initialize(style PartitionStyle) (ExtendedStatus, error) {
 	stat := ExtendedStatus{}
 	var extendedStatus ole.VARIANT
 	ole.VariantInit(&extendedStatus)
-	res, err := oleutil.CallMethod(d.handle, "Initialize", int32(ps), &extendedStatus)
+	res, err := oleutil.CallMethod(d.handle, "Initialize", int32(style), &extendedStatus)
 	if err != nil {
-		return stat, fmt.Errorf("Initialize(%d): %w", ps, err)
+		return stat, fmt.Errorf("Initialize(%d): %w", style, err)
 	} else if val, ok := res.Value().(int32); val != 0 || !ok {
 		return stat, fmt.Errorf("error code returned during initialization: %d", val)
 	}
