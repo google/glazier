@@ -94,7 +94,7 @@ class Splice(object):
       try:
         execute.execute_binary(self.splice_binary, args, shell=True)
       except execute.Error:
-        if max_retries < 0 or attempt < max_retries:
+        if max_retries < 0 or attempt < max_retries:  # pytype: disable=unsupported-operands
           logging.warning(
               'Domain join attempt %d of %d failed. Retrying in %d second(s).',
               attempt, max_retries, sleep)
