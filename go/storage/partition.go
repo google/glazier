@@ -15,6 +15,7 @@
 package storage
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -30,7 +31,7 @@ type Partition struct {
 	DiskNumber           int32
 	PartitionNumber      int32
 	DriveLetter          string
-	AccessPaths          string
+	AccessPaths          []string
 	OperationalStatus    int32
 	TransitionState      int32
 	Size                 uint64
@@ -186,7 +187,13 @@ func (p *Partition) Query() error {
 	if err != nil {
 		return fmt.Errorf("oleutil.GetProperty(AccessPaths): %w", err)
 	}
-	p.AccessPaths = prop.ToString()
+	for _, pa := range prop.ToArray().ToValueArray() {
+		conv, ok := pa.(string)
+		if !ok {
+			return errors.New("error converting access path")
+		}
+		p.AccessPaths = append(p.AccessPaths, conv)
+	}
 
 	// GptType
 	prop, err = oleutil.GetProperty(p.handle, "GptType")
