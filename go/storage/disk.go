@@ -167,7 +167,7 @@ var GptTypes = struct {
 // 		CreatePartition(0, true, 0, 0, "", true, &storage.MbrTypes.FAT32, nil, false, true)
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/createpartition-msft-disk
-func (d *Disk) CreatePartition(size int, useMaximumSize bool, offset int, alignment int, driveLetter string, assignDriveLetter bool,
+func (d *Disk) CreatePartition(size uint64, useMaximumSize bool, offset uint64, alignment int, driveLetter string, assignDriveLetter bool,
 	mbrType *MbrType, gptType *GptType, hidden, active bool) (Partition, ExtendedStatus, error) {
 	part := Partition{}
 	stat := ExtendedStatus{}
@@ -209,7 +209,7 @@ func (d *Disk) CreatePartition(size int, useMaximumSize bool, offset int, alignm
 
 	var ioffset interface{}
 	if offset > 0 {
-		ioffset = offset
+		ioffset = strconv.FormatUint(offset, 10)
 	} else {
 		ioffset = nil
 	}
@@ -218,7 +218,7 @@ func (d *Disk) CreatePartition(size int, useMaximumSize bool, offset int, alignm
 	if useMaximumSize {
 		isize = nil
 	} else {
-		isize = size
+		isize = strconv.FormatUint(size, 10)
 	}
 
 	var createdPartition ole.VARIANT
