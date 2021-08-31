@@ -244,7 +244,8 @@ func (p *Partition) Resize(size uint64) (ExtendedStatus, error) {
 	stat := ExtendedStatus{}
 	var extendedStatus ole.VARIANT
 	ole.VariantInit(&extendedStatus)
-	resultRaw, err := oleutil.CallMethod(p.handle, "Resize", size, &extendedStatus)
+	// Convert the unint to a string because of because of https://docs.microsoft.com/en-us/previous-versions//aa393262%28v=vs.85%29?redirectedfrom=MSDN
+	resultRaw, err := oleutil.CallMethod(p.handle, "Resize", strconv.FormatUint(size, 10), &extendedStatus)
 	if err != nil {
 		return stat, fmt.Errorf("Resize: %w", err)
 	} else if val, ok := resultRaw.Value().(int32); val != 0 || !ok {
@@ -286,7 +287,8 @@ func (p *Partition) GetSupportedSize() (PartitionSupportedSize, ExtendedStatus, 
 		return size, stat, fmt.Errorf("error code returned during GetSupportedSize: %d", val)
 	}
 
-	//Convert the results from an interface to uint64
+	// Convert the results from an interface to uint64
+	// Results are returned as strings because of https://docs.microsoft.com/en-us/previous-versions//aa393262%28v=vs.85%29?redirectedfrom=MSDN
 	size.SizeMin, err = strconv.ParseUint(sizemin.Value().(string), 10, 64)
 	if err != nil {
 		return size, stat, fmt.Errorf("error attempting to parse sizemin: %w", err)
