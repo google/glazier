@@ -180,7 +180,9 @@ func (p *Partition) Query() error {
 		return fmt.Errorf("oleutil.GetProperty(DriveLetter): %w", err)
 	}
 	// DriveLetter is represented as Char16 (Ascii)
-	p.DriveLetter = string(rune(prop.Val))
+	if prop.Val != 0 { // leave NUL as empty string
+		p.DriveLetter = string(rune(prop.Val))
+	}
 
 	// AccessPaths
 	prop, err = oleutil.GetProperty(p.handle, "AccessPaths")
