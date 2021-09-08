@@ -12,26 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build windows
-
 // Package storage provides storage management functionality.
 package storage
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/scjalliance/comshim"
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
-	"github.com/google/winops/powershell"
-)
-
-var (
-	// ErrUnmarshal indicates an error attempting to unmarshal a response from a PowerShell cmdlet.
-	ErrUnmarshal = errors.New("unable to unmarshal powershell output")
-
-	fnPSCmd = powershell.Command
 )
 
 // ExtendedStatus is a placeholder for MSFT_StorageExtendedStatus
