@@ -244,6 +244,8 @@ const (
 	MbrStyle PartitionStyle = 1
 	// GptStyle represents the GPT partition style for a disk.
 	GptStyle PartitionStyle = 2
+	// UnknownStyle represents an unknown partition style.
+	UnknownStyle PartitionStyle = 0
 )
 
 // Initialize initializes a new disk.
