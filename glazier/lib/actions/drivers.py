@@ -89,7 +89,7 @@ class DriverWIM(BaseAction):
     try:
       execute.execute_binary(
           constants.SYS_PNPUTIL,
-          ['/add-driver', f'{mount_dir}*', '/subdirs'],
+          ['/add-driver', f'{mount_dir}*.inf', '/subdirs'],
           shell=True)
     except execute.Error as e:
       raise ActionError('Error adding drivers to DriverStore from %s. (%s)' %
