@@ -34,6 +34,8 @@ SYS_LOGS_PATH = os.path.join(SYS_ROOT, os.sep, 'Windows', 'Logs', 'Glazier')
 SYS_BUILD_LOG = os.path.join(SYS_LOGS_PATH, BUILD_LOG_FILE)
 SYS_SYSTEM32 = os.path.join(SYS_ROOT, os.sep, 'Windows', 'System32')
 SYS_TASK_LIST = os.path.join(SYS_CACHE, 'task_list.yaml')
+SYS_DISM = os.path.join(SYS_SYSTEM32, 'dism.exe')
+SYS_PNPUTIL = os.path.join(SYS_SYSTEM32, 'pnputil.exe')
 SYS_POWERSHELL = os.path.join(SYS_SYSTEM32, 'WindowsPowerShell', 'v1.0',
                               'powershell.exe')
 SYS_GOOGETROOT = os.path.join(SYS_ROOT, os.sep, 'ProgramData', 'GooGet')

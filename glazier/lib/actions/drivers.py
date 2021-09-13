@@ -19,6 +19,7 @@ import os
 from glazier.lib import constants
 from glazier.lib import execute
 from glazier.lib import file_util
+from glazier.lib import winpe
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import ValidationError
@@ -68,10 +69,38 @@ class DriverWIM(BaseAction):
         for arg in cmd_arg[2]:
           self._TypeValidator(arg, str)
 
-  def _AddDriver(self, mount_dir):
+  def _AddDriverSYS(self, mount_dir):
     """Command used to process drivers in a given directory.
 
-    This command will process all fo the .inf file in a folder recursively. It
+    This command will be run while in the live System adn we must use PnpUtil.
+
+    This command will process all of the .inf file in a folder recursively. It
+    can be used regardless of how the drivers are added to the local machine.
+
+    If the exit code for the parsed command is anything other than zero, report
+    fatal error.
+
+    Args:
+      mount_dir: local directory where the driver .inf files can be found.
+
+    Raises:
+      ConfigRunnerError: Error during driver application.
+    """
+    try:
+      execute.execute_binary(
+          constants.SYS_PNPUTIL,
+          ['/add-driver', f'{mount_dir}*', '/subdirs'],
+          shell=True)
+    except execute.Error as e:
+      raise ActionError('Error adding drivers to DriverStore from %s. (%s)' %
+                        (mount_dir, e))
+
+  def _AddDriverWinPE(self, mount_dir):
+    """Command used to process drivers in a given directory.
+
+    This command will be run while in WinPE and we can use DISM.
+
+    This command will process all of the .inf file in a folder recursively. It
     can be used regardless of how the drivers are added to the local machine.
 
     If the exit code for the parsed command is anything other than zero, report
@@ -105,13 +134,19 @@ class DriverWIM(BaseAction):
     """
     mount_dir = '%s\\Drivers\\' % constants.SYS_CACHE
 
+    # set dism path
+    if winpe.check_winpe():
+      dism_path = constants.WINPE_DISM
+    else:
+      dism_path = constants.SYS_DISM
+
     # create mount directory
     file_util.CreateDirectories(mount_dir)
 
     # mount image
     try:
       execute.execute_binary(
-          constants.WINPE_DISM, [
+          dism_path, [
               '/Mount-Image', f'/ImageFile:{wim_file}',
               f'/MountDir:{mount_dir}', '/ReadOnly', '/Index:1'
           ],
@@ -120,12 +155,15 @@ class DriverWIM(BaseAction):
       raise ActionError('Unable to mount image %s. (%s)' % (wim_file, e))
 
     logging.info('Applying %s image to main disk.', wim_file)
-    self._AddDriver(mount_dir)
+    if winpe.check_winpe():
+      self._AddDriverWinPE(mount_dir)
+    else:
+      self._AddDriverSYS(mount_dir)
 
     # Unmount after running
     try:
       execute.execute_binary(
-          constants.WINPE_DISM,
+          dism_path,
           ['/Unmount-Image', f'/MountDir:{mount_dir}', '/Discard'],
           shell=True)
     except execute.Error as e:
