@@ -16,8 +16,10 @@
 package helpers
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -64,6 +66,10 @@ type ExecConfig struct {
 	RetryInterval *time.Duration
 
 	SpAttr *syscall.SysProcAttr
+
+	// If specified will write stdout/err as it happens during process execution.
+	WriteStdOut io.WriteCloser
+	WriteStdErr io.WriteCloser
 }
 
 var (
@@ -249,6 +255,19 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 		timer = time.AfterFunc(*conf.Timeout, func() {
 			cmd.Process.Kill()
 		})
+	}
+
+	if conf.WriteStdOut != nil {
+		s := bufio.NewScanner(stdout)
+		for s.Scan() {
+			conf.WriteStdOut.Write([]byte(s.Text() + "\n"))
+		}
+	}
+	if conf.WriteStdErr != nil {
+		e := bufio.NewScanner(stderr)
+		for e.Scan() {
+			conf.WriteStdErr.Write([]byte(e.Text() + "\n"))
+		}
 	}
 
 	// Make output human readable
