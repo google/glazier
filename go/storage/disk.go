@@ -24,6 +24,96 @@ import (
 	"github.com/go-ole/go-ole/oleutil"
 )
 
+// BusType describes a Bus Type
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-disk
+type BusType int
+
+const (
+	// Unknown is a type of Bus
+	Unknown BusType = iota
+	// SCSI is a type of Bus
+	SCSI
+	// ATAPI is a type of Bus
+	ATAPI
+	// ATA is a type of Bus
+	ATA
+	// Firewire is a type of Bus
+	Firewire
+	// SSA is a type of Bus
+	SSA
+	// FibreChannel is a type of Bus
+	FibreChannel
+	// USB is a type of Bus
+	USB
+	// RAID is a type of Bus
+	RAID
+	// iSCSI is a type of Bus
+	iSCSI
+	// SAS is a type of Bus
+	SAS
+	// SATA is a type of Bus
+	SATA
+	// SD is a type of Bus
+	SD
+	// MMC is a type of Bus
+	MMC
+	// Virtual is a type of Bus
+	Virtual
+	// FileBackedVirtual is a type of Bus
+	FileBackedVirtual
+	// StorageSpaces is a type of Bus
+	StorageSpaces
+	// NVMe is a type of Bus
+	NVMe
+)
+
+// BusTypeValue returns a BusType value from the human readable Bus Type name.
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-disk
+func BusTypeValue(b string) (BusType, error) {
+	switch b {
+	case "Unknown":
+		return Unknown, nil
+	case "SCSI":
+		return SCSI, nil
+	case "ATAPI":
+		return ATAPI, nil
+	case "ATA":
+		return ATA, nil
+	case "1394":
+		return Firewire, nil
+	case "SSA":
+		return SSA, nil
+	case "Fibre Channel":
+		return FibreChannel, nil
+	case "USB":
+		return USB, nil
+	case "RAID":
+		return RAID, nil
+	case "iSCSI":
+		return iSCSI, nil
+	case "SAS":
+		return SAS, nil
+	case "SATA":
+		return SATA, nil
+	case "SD":
+		return SD, nil
+	case "MMC":
+		return MMC, nil
+	case "Virtual":
+		return Virtual, nil
+	case "File Backed Virtual":
+		return FileBackedVirtual, nil
+	case "Storage Spaces":
+		return StorageSpaces, nil
+	case "NVMe":
+		return NVMe, nil
+	default:
+		return Unknown, fmt.Errorf("unable to convert %s to bus type", b)
+	}
+}
+
 // Disk represents a MSFT_Disk object.
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-disk
