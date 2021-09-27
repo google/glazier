@@ -228,6 +228,28 @@ func (v *Volume) Query() error {
 	return nil
 }
 
+// DriveType describes a Drive Type
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-volume
+type DriveType int
+
+const (
+	// UnknownDriveType is a type of Drive Type
+	UnknownDriveType DriveType = iota
+	// Invalid is a type of Drive Type
+	Invalid
+	// Removable is a type of Drive Type
+	Removable
+	// Fixed is a type of Drive Type
+	Fixed
+	// Remote is a type of Drive Type
+	Remote
+	// CDROM is a type of Drive Type
+	CDROM
+	// RAM is a type of Drive Type
+	RAM
+)
+
 // A VolumeSet contains one or more Volumes.
 type VolumeSet struct {
 	Volumes []Volume
