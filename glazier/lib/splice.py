@@ -12,13 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Levarage Splice for offline domain join."""
 
 import logging
 import os
 import time
-from typing import Optional
+# from typing import Optional
 from glazier.lib import constants
 from glazier.lib import execute
 from glazier.lib import identity
@@ -70,21 +69,39 @@ class Splice(object):
 
     return fr'{constants.DOMAIN_NAME}\{username}'
 
-  def domain_join(self, max_retries: Optional[int] = 5):
-    """Execute the Splice CLI with defined flags.
+  def _splice_unattended(self):
+    args = [
+        '-cert_issuer=client', f'-cert_container={self.cert_container}',
+        f'-name={self._get_hostname()}', f'-server={self.splice_server}',
+        '-really_join=true', '-unattended=true'
+    ]
+    execute.execute_binary(self.splice_binary, args, shell=True)
 
-    Args:
-      max_retries: The number of times to attempt to download a file if the
-      first attempt fails. A negative number implies infinite.
-
-    Raises:
-      Error: Domain join failed.
-    """
+  def _splice_user(self):
     args = [
         '-cert_issuer=client', f'-cert_container={self.cert_container}',
         f'-name={self._get_hostname()}', f'-server={self.splice_server}',
         '-really_join=true', f'-user_name={self._get_username()}'
     ]
+    execute.execute_binary(self.splice_binary, args, shell=True)
+
+  def domain_join(self,
+                  max_retries: int = 5,
+                  unattended: bool = True,
+                  fallback: bool = True):
+    """Execute the Splice CLI with defined flags.
+
+    Args:
+      max_retries: The number of times to attempt to download a file if the
+        first attempt fails. A negative number implies infinite.
+      unattended: If true, execute splice in unattended mode and do not prompt
+        for user credentials.
+      fallback: If true and an unattended join fails, reattempt and request user
+        credentials.
+
+    Raises:
+      Error: Domain join failed.
+    """
 
     attempt = 0
     sleep = 30
@@ -92,7 +109,10 @@ class Splice(object):
     while True:
       attempt += 1
       try:
-        execute.execute_binary(self.splice_binary, args, shell=True)
+        if unattended:
+          self._splice_unattended()
+        else:
+          self._splice_user()
       except execute.Error:
         if max_retries < 0 or attempt < max_retries:  # pytype: disable=unsupported-operands
           logging.warning(
@@ -100,8 +120,33 @@ class Splice(object):
               attempt, max_retries, sleep)
           time.sleep(sleep)
         else:
-          raise Error(f'Failed to join domain after {max_retries} attempt(s).')
+          if unattended and fallback:
+            logging.warning('Failed to join domain after %d attempt(s).',
+                            attempt)
+            logging.info(
+                'Falling back to user authed domain join with %d attempts.',
+                max_retries)
+            break
+          else:
+            raise Error(f'Failed to join domain after {attempt} attempt(s).')
       else:
-        logging.info('Domain join succeeded after %d attempt(s).',
+        logging.info('Domain join succeeded after %d attempt(s).', attempt)
+        return
+
+    attempt = 0
+    while True:
+      attempt += 1
+      try:
+        self._splice_unattended()
+      except execute.Error:
+        if max_retries < 0 or attempt < max_retries:  # pytype: disable=unsupported-operands
+          logging.warning(
+              'Domain join attempt %d of %d failed. Retrying in %d second(s).',
+              attempt, max_retries, sleep)
+          time.sleep(sleep)
+        else:
+          raise Error(f'Failed to join domain after {attempt} attempt(s).')
+      else:
+        logging.info('Fallback domain join succeeded after %d attempt(s).',
                      attempt)
-        break
+        return
