@@ -137,7 +137,7 @@ class Splice(object):
     while True:
       attempt += 1
       try:
-        self._splice_unattended()
+        self._splice_user()
       except execute.Error:
         if max_retries < 0 or attempt < max_retries:  # pytype: disable=unsupported-operands
           logging.warning(
