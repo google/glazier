@@ -101,3 +101,6 @@ class BaseAction(object):
     if not isinstance(args, expect_types):
       raise ValidationError('Invalid type for arg %s. Found: %s, Expected: %s' %
                             (args, type(args), str(expect_types)))
+    if isinstance(args, str):
+      if not args.strip():
+        raise ValidationError('Empty string detected in arg %s' % args)
