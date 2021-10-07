@@ -18,6 +18,7 @@
 from glazier.lib import splice
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
+from glazier.lib.actions.base import ValidationError
 
 
 class SpliceDomainJoin(BaseAction):
@@ -25,7 +26,35 @@ class SpliceDomainJoin(BaseAction):
 
   def Run(self):
     self._splice = splice.Splice()
+
+    max_retries: int
+    unattended: bool
+    fallback: bool
+
+    if self._args:
+      max_retries = int(self._args[0])
+    else:
+      max_retries = 5
+    if len(self._args) > 1:
+      unattended = bool(self._args[1])
+    else:
+      unattended = True
+    if len(self._args) > 2:
+      fallback = bool(self._args[2])
+    else:
+      fallback = True
     try:
-      self._splice.domain_join()
+      self._splice.domain_join(max_retries, unattended, fallback)
     except splice.Error as e:
       raise ActionError(e)
+
+  def Validate(self):
+    self._TypeValidator(self._args, list)
+    if not 0 <= len(self._args) <= 3:
+      raise ValidationError('Invalid args length: %s' % self._args)
+    if self._args:
+      self._TypeValidator(self._args[0], int)
+    if len(self._args) > 1:
+      self._TypeValidator(self._args[1], bool)
+    if len(self._args) > 2:
+      self._TypeValidator(self._args[2], bool)
