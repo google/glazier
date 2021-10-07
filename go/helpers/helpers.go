@@ -72,6 +72,11 @@ type ExecConfig struct {
 	WriteStdErr io.WriteCloser
 }
 
+// LoggerWrapper allows streaming output to std outputs and logger sinks. Channel must be set before use; channel may be any of "info", "warning", "error", or "fatal". Info tees output to stdout, all others tee to stderr.
+type LoggerWrapper struct {
+	Channel string
+}
+
 var (
 	// ErrExitCode indicates an exit-code related failure
 	ErrExitCode = errors.New("produced invalid exit code")
@@ -515,3 +520,41 @@ func StringToPtrOrNil(in string) (out *uint16) {
 	}
 	return
 }
+
+// Write satisfies an io.Writer interface
+func (l *LoggerWrapper) Write(p []byte) (int,   error) {
+	switch strings.ToLower(l.Channel) {
+	case "info":
+		logger.Info(string(p))
+		return os.Stdout.Write(p)
+	case "warning":
+		logger.Warning(string(p))
+		return os.Stderr.Write(p)
+	case "error":
+		logger.Error(string(p))
+		return os.Stderr.Write(p)
+	case "fatal":
+		defer logger.Fatal(string(p))
+		return os.Stderr.Write(p)
+	default:
+		return len(string(p)), errors.New("logger wrapper channel not set")
+	}
+}
+
+// Close satisfies the Closer interface
+func (l *LoggerWrapper) Close() error {
+	switch strings.ToLower(l.Channel) {
+	case "info":
+		return os.Stdout.Close()
+	case "warning":
+		return os.Stderr.Close()
+	case "error":
+		return os.Stderr.Close()
+	case "fatal":
+		return os.Stderr.Close()
+	default:
+		return errors.New("logger wrapper channel not set")
+	}
+}
+
+
