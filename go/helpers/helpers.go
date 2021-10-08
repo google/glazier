@@ -72,6 +72,22 @@ type ExecConfig struct {
 	WriteStdErr io.WriteCloser
 }
 
+// LoggerChannel specifies the severity to use when logging messages with LoggerWrapper
+type LoggerChannel int
+
+// Specify channel values for LoggerWrapper
+const (
+	WrapInfo LoggerChannel = iota
+	WrapWarning
+	WrapError
+	WrapFatal
+)
+
+// LoggerWrapper allows streaming output to std outputs and logger sinks. Channel must be set before use; channel may be any of "info", "warning", "error", or "fatal". Info tees output to stdout, all others tee to stderr.
+type LoggerWrapper struct {
+	Channel LoggerChannel
+}
+
 var (
 	// ErrExitCode indicates an exit-code related failure
 	ErrExitCode = errors.New("produced invalid exit code")
@@ -514,4 +530,40 @@ func StringToPtrOrNil(in string) (out *uint16) {
 		out = windows.StringToUTF16Ptr(in)
 	}
 	return
+}
+
+// Write satisfies an io.Writer interface
+func (l *LoggerWrapper) Write(p []byte) (int, error) {
+	switch l.Channel {
+	case WrapInfo:
+		logger.Info(string(p))
+		return os.Stdout.Write(p)
+	case WrapWarning:
+		logger.Warning(string(p))
+		return os.Stderr.Write(p)
+	case WrapError:
+		logger.Error(string(p))
+		return os.Stderr.Write(p)
+	case WrapFatal:
+		defer logger.Fatal(string(p))
+		return os.Stderr.Write(p)
+	default:
+		return len(string(p)), errors.New("logger wrapper channel not set")
+	}
+}
+
+// Close satisfies the Closer interface
+func (l *LoggerWrapper) Close() error {
+	switch l.Channel {
+	case WrapInfo:
+		return os.Stdout.Close()
+	case WrapWarning:
+		return os.Stderr.Close()
+	case WrapError:
+		return os.Stderr.Close()
+	case WrapFatal:
+		return os.Stderr.Close()
+	default:
+		return errors.New("logger wrapper channel not set")
+	}
 }
