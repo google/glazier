@@ -12,18 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package os supports querying information about the local operating system.
 package os
 
-import (
-	"errors"
-
-	"github.com/StackExchange/wmi"
-)
+import "errors"
 
 var (
 	// ErrWMIEmptyResult indicates a condition where WMI failed to return the expected values.
 	ErrWMIEmptyResult = errors.New("WMI returned without error, but zero results")
+	// ErrNotImplemented is returned for unimplemented calls
+	ErrNotImplemented = errors.New("call is not implemented on this platform")
 )
 
 // Win32_OperatingSystem models the WMI object of the same name.
@@ -37,23 +34,10 @@ type Type string
 var (
 	// Client represents a client operating system (eg Windows 10)
 	Client Type = "client"
+	// DomainController represents a server operating system acting as a domain controller
+	DomainController Type = "domain controller"
 	// Server represents a server operating system (eg Windows Server 2019)
 	Server Type = "server"
+	// Unknown represents an unsupported type
+	Unknown Type = "unknown"
 )
-
-// GetType attempts to distinguish between client and server OS.
-func GetType() (Type, error) {
-	var result []Win32_OperatingSystem
-	if err := wmi.Query(wmi.CreateQuery(&result, ""), &result); err != nil {
-		return Server, err
-	}
-	if len(result) < 1 {
-		return Server, ErrWMIEmptyResult
-	}
-
-	if result[0].ProductType == 1 {
-		return Client, nil
-	}
-
-	return Server, nil
-}
