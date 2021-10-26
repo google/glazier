@@ -16,7 +16,6 @@
 package helpers
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -67,7 +66,7 @@ type ExecConfig struct {
 
 	SpAttr *syscall.SysProcAttr
 
-	// If specified will write stdout/err as it happens during process execution.
+	// WriteStdOut and WriteStdErr if set will redirect the child process's output streams to the supplied WriteCloser. When these are specified stdout and stderr output will not be available in the result struct that is returned.
 	WriteStdOut io.WriteCloser
 	WriteStdErr io.WriteCloser
 }
@@ -234,13 +233,23 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 		cmd = exec.Command(path, args...)
 	}
 
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return result, err
+	var stdout, stderr io.ReadCloser
+	var err error
+	if conf.WriteStdOut != nil {
+		cmd.Stdout = conf.WriteStdOut
+	} else {
+		stdout, err = cmd.StdoutPipe()
+		if err != nil {
+			return result, err
+		}
 	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return result, err
+	if conf.WriteStdErr != nil {
+		cmd.Stderr = conf.WriteStdErr
+	} else {
+		stderr, err = cmd.StderrPipe()
+		if err != nil {
+			return result, err
+		}
 	}
 
 	// Start command asynchronously
@@ -257,27 +266,19 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 		})
 	}
 
-	if conf.WriteStdOut != nil {
-		s := bufio.NewScanner(stdout)
-		for s.Scan() {
-			conf.WriteStdOut.Write([]byte(s.Text() + "\n"))
-		}
-	}
-	if conf.WriteStdErr != nil {
-		e := bufio.NewScanner(stderr)
-		for e.Scan() {
-			conf.WriteStdErr.Write([]byte(e.Text() + "\n"))
+	// Make output human readable
+	if conf.WriteStdOut == nil {
+		result.Stdout, err = ioutil.ReadAll(stdout)
+		if err != nil {
+			return result, err
 		}
 	}
 
-	// Make output human readable
-	result.Stdout, err = ioutil.ReadAll(stdout)
-	if err != nil {
-		return result, err
-	}
-	result.Stderr, err = ioutil.ReadAll(stderr)
-	if err != nil {
-		return result, err
+	if conf.WriteStdErr == nil {
+		result.Stderr, err = ioutil.ReadAll(stderr)
+		if err != nil {
+			return result, err
+		}
 	}
 
 	result.ExitErr = cmd.Wait()
