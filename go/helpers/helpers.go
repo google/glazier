@@ -232,7 +232,7 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 	}
 
 	// create our own buffer to hold a copy of the output and err
-	var outbuf, errbuf bytes.Buffer
+	var errbuf, outbuf bytes.Buffer
 
 	// add our buffers to any supplied by the user and pass to cmd
 	if conf.WriteStdOut != nil {
@@ -260,10 +260,12 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 		})
 	}
 
+	// Wait for execution
+	result.ExitErr = cmd.Wait()
+
 	// Populate the result object
 	result.Stdout = outbuf.Bytes()
 	result.Stderr = errbuf.Bytes()
-	result.ExitErr = cmd.Wait()
 
 	// when the execution times out return a timeout error
 	if conf.Timeout != nil && !timer.Stop() {
