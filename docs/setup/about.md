@@ -1,21 +1,21 @@
 # About Glazier
 
-<!--* freshness: { owner: '@tseknet' reviewed: '2020-10-13' } *-->
+<!--* freshness: { owner: '@tseknet' reviewed: '2021-10-29' } *-->
 
 This document outlines the basic operating principles of Glazier.
 
 ## Overview
 
-From a high level, any imaging system does some variation of the following:
+From a high level, imaging any system requires the following:
 
-*   Boots the physical (or virtual) device into a working environment
-*   Applies an operating system to permanent storage attached to the device
-*   Performs customization of said operating system
+1.  Booting the physical (or virtual) device into a working environment
+1.  Applying an operating system to permanent storage attached to the device
+1.  Performing customization of said operating system
 
-Glazier is no different. Glazier's [Autobuild](#autobuild) tool provides a means
-of dynamically selecting the image(s), application(s), and configuration(s) to
-be applied to a host. It retrieves any required files over the network, executes
-scripts and binaries, and modifies the host as required.
+Glazier is no different. Glazier's [Autobuild](#autobuild) library provides a
+means of dynamically selecting the image(s), application(s), and
+configuration(s) to be applied to a host. It retrieves any required files over
+the network, executes scripts and binaries, and modifies the host as required.
 
 Glazier is heavily network-based. Rather than attempt to provide complete,
 pre-configured operating system images, which are laborious to maintain, Glazier
@@ -28,9 +28,9 @@ and most powerful.
 
 A Glazier environment will consist of a minimum of:
 
-*   One boot image containing Python and the Glazier tools
-*   One HTTP server host to distribute configs, scripts, and binaries
-*   One set of configs and associated scripts and binaries
+1.  One boot image containing Python and the Glazier tools
+1.  One HTTP server host to distribute configs, scripts, and binaries
+1.  One set of configs and associated scripts and binaries
 
 ## First Boot
 
@@ -51,7 +51,7 @@ the PE, or for more advanced users, you can write a custom launcher to
 accomplish this.
 
 WinPE should be configured to automatically launch the installer tool. For
-Glazier, this is usually Autobuild \(autobuild.py\).
+Glazier, this is usually [Autobuild](#autobuild).
 
 ### Custom Launchers (Advanced)
 
@@ -64,8 +64,8 @@ changes. In other words, we always attempt to minimize the need to generate new
 boot images by pushing most routine changes into Glazier's dynamic environment.
 
 For advanced users, we recommend creating a simple launcher which will run
-directly from _winpeshl.exe_ that leverages the configuration file
-(_winpeshl.ini_) to retrieve the initial files required from a web server. This
+directly from *winpeshl.exe* that leverages the configuration file
+(*winpeshl.ini*) to retrieve the initial files required from a web server. This
 prevents the need to generate a new PE if any changes are required to Python,
 Glazier, or any other bundled dependencies.
 
