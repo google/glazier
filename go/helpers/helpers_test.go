@@ -29,20 +29,18 @@ func TestVerify(t *testing.T) {
 	err1 := errors.New("direct error")
 	def := NewExecVerifier()
 	tests := []struct {
-		ver    ExecVerifier
-		res    ExecResult
-		resErr error
-		want   error
+		ver  ExecVerifier
+		res  ExecResult
+		want error
 	}{
-		{*def, ExecResult{}, err1, err1},
-		{*def, ExecResult{ExitErr: err1}, nil, err1},
-		{*def, ExecResult{ExitCode: 1}, nil, ErrExitCode},
-		{ExecVerifier{SuccessCodes: []int{2, 3, 4}}, ExecResult{ExitCode: 3}, nil, nil},
-		{ExecVerifier{SuccessCodes: []int{2, 3, 4}}, ExecResult{ExitCode: 5}, nil, ErrExitCode},
+		{*def, ExecResult{ExitErr: err1}, err1},
+		{*def, ExecResult{ExitCode: 1}, ErrExitCode},
+		{ExecVerifier{SuccessCodes: []int{2, 3, 4}}, ExecResult{ExitCode: 3}, nil},
+		{ExecVerifier{SuccessCodes: []int{2, 3, 4}}, ExecResult{ExitCode: 5}, ErrExitCode},
 		{*def, ExecResult{
 			Stdout: []byte("This is harmless output."),
 			Stderr: []byte("This too."),
-		}, nil, nil},
+		}, nil},
 		{ExecVerifier{
 			SuccessCodes: []int{0},
 			StdOutMatch:  regexp.MustCompile(".*harmful.*"),
@@ -50,7 +48,7 @@ func TestVerify(t *testing.T) {
 		}, ExecResult{
 			Stdout: []byte("This is harmless output."),
 			Stderr: []byte("This too."),
-		}, nil, nil},
+		}, nil},
 		{ExecVerifier{
 			SuccessCodes: []int{0},
 			StdOutMatch:  regexp.MustCompile(".*harmful.*"),
@@ -58,7 +56,7 @@ func TestVerify(t *testing.T) {
 		}, ExecResult{
 			Stdout: []byte("This is harmful output."),
 			Stderr: []byte("This isn't."),
-		}, nil, ErrStdOut},
+		}, ErrStdOut},
 		{ExecVerifier{
 			SuccessCodes: []int{0},
 			StdOutMatch:  regexp.MustCompile(".*harmful.*"),
@@ -66,12 +64,12 @@ func TestVerify(t *testing.T) {
 		}, ExecResult{
 			Stderr: []byte("This is harmful output."),
 			Stdout: []byte("This isn't."),
-		}, nil, ErrStdErr},
+		}, ErrStdErr},
 	}
 	for i, tt := range tests {
 		testID := fmt.Sprintf("Test%d", i)
 		t.Run(testID, func(t *testing.T) {
-			_, got := verify(testID, tt.res, tt.resErr, tt.ver)
+			_, got := verify(testID, tt.res, tt.ver)
 			if !errors.Is(got, tt.want) {
 				t.Errorf("got %v; want %v", got, tt.want)
 			}

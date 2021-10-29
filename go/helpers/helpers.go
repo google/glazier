@@ -16,10 +16,10 @@
 package helpers
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -66,9 +66,10 @@ type ExecConfig struct {
 
 	SpAttr *syscall.SysProcAttr
 
-	// WriteStdOut and WriteStdErr if set will redirect the child process's output streams to the supplied WriteCloser. When these are specified stdout and stderr output will not be available in the result struct that is returned.
-	WriteStdOut io.WriteCloser
-	WriteStdErr io.WriteCloser
+	// WriteStdOut and WriteStdErr will receive a copy of the child process's output and/or error streams as they're written.
+	// If nil, output is returned at the end of execution via the ExecResult.
+	WriteStdOut io.Writer
+	WriteStdErr io.Writer
 }
 
 var (
@@ -181,10 +182,7 @@ func ExecWithVerify(path string, args []string, timeout *time.Duration, verifier
 	return fnExec(path, args, conf)
 }
 
-func verify(path string, res ExecResult, err error, verifier ExecVerifier) (ExecResult, error) {
-	if err != nil {
-		return res, err
-	}
+func verify(path string, res ExecResult, verifier ExecVerifier) (ExecResult, error) {
 	if res.ExitErr != nil {
 		return res, res.ExitErr
 	}
@@ -233,23 +231,19 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 		cmd = exec.Command(path, args...)
 	}
 
-	var stdout, stderr io.ReadCloser
-	var err error
+	// create our own buffer to hold a copy of the output and err
+	var outbuf, errbuf bytes.Buffer
+
+	// add our buffers to any supplied by the user and pass to cmd
 	if conf.WriteStdOut != nil {
-		cmd.Stdout = conf.WriteStdOut
+		cmd.Stdout = io.MultiWriter(&outbuf, conf.WriteStdOut)
 	} else {
-		stdout, err = cmd.StdoutPipe()
-		if err != nil {
-			return result, err
-		}
+		cmd.Stdout = &outbuf
 	}
 	if conf.WriteStdErr != nil {
-		cmd.Stderr = conf.WriteStdErr
+		cmd.Stderr = io.MultiWriter(&errbuf, conf.WriteStdErr)
 	} else {
-		stderr, err = cmd.StderrPipe()
-		if err != nil {
-			return result, err
-		}
+		cmd.Stderr = &errbuf
 	}
 
 	// Start command asynchronously
@@ -266,21 +260,9 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 		})
 	}
 
-	// Make output human readable
-	if conf.WriteStdOut == nil {
-		result.Stdout, err = ioutil.ReadAll(stdout)
-		if err != nil {
-			return result, err
-		}
-	}
-
-	if conf.WriteStdErr == nil {
-		result.Stderr, err = ioutil.ReadAll(stderr)
-		if err != nil {
-			return result, err
-		}
-	}
-
+	// Populate the result object
+	result.Stdout = outbuf.Bytes()
+	result.Stderr = errbuf.Bytes()
 	result.ExitErr = cmd.Wait()
 
 	// when the execution times out return a timeout error
@@ -294,7 +276,7 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 	result.ExitCode = cmd.ProcessState.ExitCode()
 
 	if conf.Verifier != nil {
-		return verify(path, result, err, *conf.Verifier)
+		return verify(path, result, *conf.Verifier)
 	}
 
 	return result, nil
