@@ -1,6 +1,6 @@
 # Glazier
 
-<!--* freshness: { owner: '@tseknet' reviewed: '2020-10-02' } *-->
+<!--* freshness: { owner: '@tseknet' reviewed: '2021-10-29' } *-->
 
 Support                                                                                                                                          | Python Tests                                                                                                                                                           | Go Tests                                                                                                                                                   | Contributing                                                                                                                            | Open Issues                                                                                                     | License
 ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | -------
@@ -19,14 +19,14 @@ deployments.
 *   Applies a base operating system
 *   Installs applications and configurations to said operating system
 
-Want to dive right in? See [our docs site](https://google.github.io/glazier) for
+Want to dive right in? See our [docs site](https://google.github.io/glazier) for
 how you can get started with Glazier.
 
 ## Why Glazier?
 
-Glazier was created with the following 3 core principles in mind:
+Glazier was created with the following three core principles in mind:
 
-### Text-Based & Code-Driven
+### 1. Text-Based & Code-Driven
 
 With Glazier, imaging is configured entirely via YAML files. This allows
 engineers to leverage source control systems to maintain and develop their
@@ -43,7 +43,7 @@ Source controlled text makes it easy to integrate configs across multiple
 branches, making it easy to QA new changes before releasing them to the general
 population.
 
-### Scalability
+### 2. Scalability
 
 Glazier distributes all data over HTTPS, which means you can use as simple or as
 advanced of a distribution platform as you need. Run it from a simple free web
@@ -51,7 +51,7 @@ server or a large cloud-based CDN. HTTPS is a requirement.
 
 Proxies make it easy to accelerate image deployment to remote sites.
 
-### Extensibility
+### 3. Extensibility
 
 Glazier makes it simple to extend the installer by writing a bit of Python or
 PowerShell code. See creating new actions under docs to get started.
