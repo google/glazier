@@ -1,6 +1,6 @@
 # Creating New Actions
 
-<!--* freshness: { owner: '@mbernhardt6' reviewed: '2020-10-19' } *-->
+<!--* freshness: { owner: 'winops-imaging' reviewed: '2021-10-19' } *-->
 
 Glazier's Actions are the core of the system's configuration language. Glazier
 ships with some [existing actions](../actions.md), but for more custom
