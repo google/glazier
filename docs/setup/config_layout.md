@@ -1,6 +1,6 @@
 # Glazier Configuration Layout & Branches
 
-<!--* freshness: { owner: '@mbernhardt6' reviewed: '2020-10-19' } *-->
+<!--* freshness: { owner: 'winops-imaging' reviewed: '2021-10-19' } *-->
 
 This page discusses how Glazier's configuration files are laid out at the
 distribution point (web server).
