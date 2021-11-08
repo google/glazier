@@ -47,7 +47,7 @@ func NewTimer(name string, at *time.Time) *Timer {
 }
 
 // Load loads a timer object into the registry.
-func (t *Timer) Load() error {
+func (t *Timer) Load(TimersRoot string) error {
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE, TimersRoot, registry.QUERY_VALUE)
 	if err != nil {
 		return fmt.Errorf("reg.OpenKey: %w", err)
@@ -66,7 +66,7 @@ func (t *Timer) Load() error {
 }
 
 // Record records a timer object into the registry.
-func (t *Timer) Record() error {
+func (t *Timer) Record(TimersRoot string) error {
 	k, _, err := registry.CreateKey(registry.LOCAL_MACHINE, TimersRoot, registry.WRITE)
 	if err != nil {
 		return err

@@ -84,7 +84,7 @@ func TestLoad(t *testing.T) {
 		}
 		defer delTimer(tt.name)
 		timer := Timer{Name: tt.name}
-		err := timer.Load()
+		err := timer.Load(tt.in)
 		if err != nil {
 			t.Errorf("Verifying timer.Load(%s) returned unexpected error %v", tt.name, err)
 		}
@@ -107,7 +107,7 @@ func TestRecord(t *testing.T) {
 	for _, tt := range tests {
 		defer delTimer(tt.name)
 		timer := Timer{Name: tt.name, Time: tt.in}
-		err := timer.Record()
+		err := timer.Record(tt.want)
 		if err != nil {
 			t.Errorf("timer.Record(%s) returned unexpected error %v", tt.name, err)
 		}
