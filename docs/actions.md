@@ -1,6 +1,6 @@
 # Glazier Installer Actions
 
-<!--* freshness: { owner: '@itsmattl' reviewed: '2020-07-09' } *-->
+<!--* freshness: { owner: 'winops-imaging' reviewed: '2021-07-09' } *-->
 
 Actions are classes which the configuration handler may call to perform a
 variety of tasks during imaging.
@@ -660,12 +660,23 @@ Directory domain without direct line of sight to a domain controller.
 
 #### Arguments
 
-*   None
+*   Format: List
+    *   Arg1[int]: Times to attempt a retry. (Optional)
+        *   Default: 5
+    *   Arg2[bool]: Whether to attempt an unattended domain join. (Optional)
+        *   Default: True
+    *   Arg3[bool]: Whether to fall back to user authn after unsuccessful unattended attempt(s). (Optional)
+        *   Default: True
 
 #### Examples
 
 ```yaml
+# Using defaults.
 SpliceDomainJoin: []
+# Attempt unattend, without fallback, and 3 retry attempts.
+SpliceDomainJoin: [3, True, False]
+# Don't attempt unattend with 5 retry attemps.
+SpliceDomainJoin: [5, False]
 ```
 
 ### StartStage
