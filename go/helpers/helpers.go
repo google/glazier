@@ -217,6 +217,9 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 	case ".ps1":
 		// Escape spaces in PowerShell paths.
 		args = append([]string{"-NoProfile", "-NoLogo", "-Command", strings.ReplaceAll(path, " ", "` ")}, args...)
+		// Append $LASTEXITCODE so exitcode can be inferred.
+		// ref: https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_powershell_exe
+		args = append(args, ";", "exit", "$LASTEXITCODE")
 		path = PsPath
 	case ".exe", ".bat":
 		// path and args unmodified
