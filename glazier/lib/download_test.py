@@ -17,7 +17,6 @@
 
 from absl import flags
 from absl.testing import absltest
-from absl.testing import flagsaver
 from glazier.lib import beyondcorp
 from glazier.lib import buildinfo
 from glazier.lib import download
