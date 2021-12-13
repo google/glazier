@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for glazier.lib.actions.files."""
-from absl.testing import absltest
 
+from unittest import mock
+
+from absl.testing import absltest
 from glazier.lib import buildinfo
 from glazier.lib.actions import files
 
-import mock
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 

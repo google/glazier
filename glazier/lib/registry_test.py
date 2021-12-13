@@ -14,13 +14,10 @@
 # limitations under the License.
 """Tests for glazier.lib.registry."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import registry
-import mock
 
 
 class RegistryTest(absltest.TestCase):

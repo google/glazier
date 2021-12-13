@@ -14,6 +14,7 @@
 """Tests for glazier.lib.logs."""
 
 import os
+from unittest import mock
 import zipfile
 
 from absl.testing import absltest
@@ -21,7 +22,6 @@ from glazier.lib import constants
 from glazier.lib import file_util
 from glazier.lib import logs
 
-import mock
 from pyfakefs.fake_filesystem_unittest import Patcher
 
 TEST_ID = '1A19SEL90000R90DZN7A-1234567'

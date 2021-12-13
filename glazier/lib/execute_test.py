@@ -15,11 +15,10 @@
 """Tests for glazier.lib.execute."""
 
 import io
+from unittest import mock
+
 from absl.testing import absltest
-
 from glazier.lib import execute
-
-import mock
 from pyfakefs import fake_filesystem
 
 

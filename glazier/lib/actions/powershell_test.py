@@ -15,11 +15,12 @@
 
 """Tests for glazier.lib.actions.powershell."""
 
+from unittest import mock
+
 from absl.testing import absltest
 from absl.testing import parameterized
 from glazier.lib import buildinfo
 from glazier.lib.actions import powershell
-import mock
 
 SCRIPT = '#Some-Script.ps1'
 SCRIPT_PATH = r'C:\Cache\Some-Script.ps1'

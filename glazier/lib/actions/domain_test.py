@@ -14,9 +14,10 @@
 
 """Tests for glazier.lib.actions.domain."""
 
+from unittest import mock
+
 from absl.testing import absltest
 from glazier.lib.actions import domain
-import mock
 
 
 class DomainTest(absltest.TestCase):

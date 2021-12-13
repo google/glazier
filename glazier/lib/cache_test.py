@@ -15,9 +15,10 @@
 """Tests for glazier.lib.cache."""
 
 import os
+from unittest import mock
+
 from absl.testing import absltest
 from glazier.lib import cache
-import mock
 from pyfakefs import fake_filesystem
 
 

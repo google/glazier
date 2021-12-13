@@ -14,13 +14,14 @@
 
 """Tests for glazier.lib.powershell."""
 
+from unittest import mock
+
 from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
 
 from glazier.lib import powershell
 
-import mock
 from pyfakefs import fake_filesystem
 
 FLAGS = flags.FLAGS

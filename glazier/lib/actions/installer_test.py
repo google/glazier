@@ -13,14 +13,13 @@
 # limitations under the License.
 """Tests for glazier.lib.actions.installer."""
 
+from unittest import mock
 
 from absl.testing import absltest
-
 from glazier.lib import buildinfo
 from glazier.lib import stage
 from glazier.lib.actions import installer
 
-import mock
 from pyfakefs import fake_filesystem
 
 

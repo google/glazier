@@ -14,11 +14,11 @@
 # limitations under the License.
 """Tests for glazier.lib.terminator."""
 
+from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import terminator
 from glazier.lib import winpe
-import mock
 
 _HELP_MSG = (
     f'See {terminator.constants.SYS_BUILD_LOG} for more info. Need help? Visit '

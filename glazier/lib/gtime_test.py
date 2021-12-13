@@ -19,10 +19,10 @@ from __future__ import division
 from __future__ import print_function
 
 import datetime
+from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import gtime
-import mock
 
 
 class GTimeTest(absltest.TestCase):

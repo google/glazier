@@ -14,9 +14,10 @@
 # limitations under the License.
 """Tests for glazier.lib.splice."""
 
+from unittest import mock
+
 from absl.testing import absltest
 from glazier.lib import splice
-import mock
 from pyfakefs import fake_filesystem
 
 _USERNAME = 'bert'

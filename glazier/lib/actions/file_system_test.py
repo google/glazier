@@ -13,12 +13,12 @@
 # limitations under the License.
 """Tests for glazier.lib.actions.file_system."""
 
-from absl.testing import absltest
+from unittest import mock
 
+from absl.testing import absltest
 from glazier.lib import file_util
 from glazier.lib.actions import file_system
 
-import mock
 from pyfakefs.fake_filesystem_unittest import Patcher
 
 

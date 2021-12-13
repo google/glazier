@@ -14,13 +14,10 @@
 # limitations under the License.
 """Tests for glazier.lib.title."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import title
-import mock
 
 _PREFIX = 'Glazier'
 _STRING = 'Test string with spaces'

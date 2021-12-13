@@ -15,10 +15,11 @@
 
 """Tests for glazier.lib.actions.registry."""
 
+from unittest import mock
+
 from absl.testing import absltest
 from glazier.lib import constants
 from glazier.lib.actions import registry
-import mock
 
 ROOT = 'HKLM'
 PATH = constants.REG_ROOT

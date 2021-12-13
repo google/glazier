@@ -15,6 +15,7 @@
 """Tests for glazier.lib.googet."""
 
 import time
+from unittest import mock
 
 from absl.testing import absltest
 
@@ -22,7 +23,6 @@ from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib import googet
 
-import mock
 from pyfakefs import fake_filesystem
 
 

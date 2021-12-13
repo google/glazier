@@ -14,12 +14,12 @@
 # limitations under the License.
 """Tests for glazier.lib.identity."""
 
+from unittest import mock
+
 from absl.testing import absltest
 
 from glazier.lib import constants
 from glazier.lib import identity
-
-import mock
 
 USERNAME = 'bert'
 HOSTNAME = 'earnie-pc'

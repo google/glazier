@@ -16,10 +16,11 @@
 
 import os
 import time
+from unittest import mock
+
 from absl.testing import absltest
 from glazier.lib import constants
 from glazier.lib import ntp
-import mock
 
 
 class NtpTest(absltest.TestCase):

@@ -19,11 +19,12 @@ from __future__ import division
 from __future__ import print_function
 
 import datetime
+from unittest import mock
+
 from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
 from glazier.lib import stage
-import mock
 
 
 FLAGS = flags.FLAGS

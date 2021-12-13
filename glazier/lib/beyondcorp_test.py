@@ -19,12 +19,12 @@ from __future__ import division
 from __future__ import print_function
 
 import json
+from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import flagsaver
 from glazier.lib import beyondcorp
 from glazier.lib import registry
-import mock
 from pyfakefs import fake_filesystem
 from requests.models import Response
 

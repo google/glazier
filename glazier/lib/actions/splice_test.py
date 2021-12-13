@@ -16,10 +16,11 @@
 """Tests for glazier.lib.actions.splice."""
 
 import os
+from unittest import mock
+
 from absl.testing import absltest
 from glazier.lib.actions import splice
 from glazier.lib.actions.splice import ValidationError
-import mock
 
 
 class SpliceDomainJoinTest(absltest.TestCase):
