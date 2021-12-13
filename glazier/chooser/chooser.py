@@ -28,6 +28,7 @@ file, to be consumed by the caller.
 """
 
 import logging
+# do not remove: internal placeholder 1
 from glazier.chooser import fields
 from glazier.lib import resources
 

@@ -22,6 +22,7 @@
 """
 import logging
 from xml.dom.minidom import parse
+# do not remove: internal placeholder 1
 from absl import flags
 from glazier.lib import resources
 

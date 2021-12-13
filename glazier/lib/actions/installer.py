@@ -16,6 +16,7 @@
 import logging
 import os
 import time
+# do not remove: internal placeholder 1
 from glazier.chooser import chooser
 from glazier.lib import constants
 from glazier.lib import log_copy

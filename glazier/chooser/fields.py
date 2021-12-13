@@ -22,6 +22,7 @@ Each Frame type that accepts user input is expected to offer a public Value
 function which will return the state of the field in a yaml-compatible format.
 This is called at the UI exit for final response storage.
 """
+# do not remove: internal placeholder 1
 
 from six.moves import tkinter as tk
 

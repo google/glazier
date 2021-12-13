@@ -14,6 +14,7 @@
 
 """Generic class for determining the desired host operating system."""
 
+# do not remove: internal placeholder 1
 from absl import flags
 from glazier.lib.spec import flags as flag_spec
 

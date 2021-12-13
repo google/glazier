@@ -21,6 +21,7 @@ import socket
 import subprocess
 import time
 
+# do not remove: internal placeholder 1
 
 from glazier.lib.constants import WINPE_SYSTEM32
 import ntplib
