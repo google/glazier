@@ -15,6 +15,7 @@
 """Constants and Flags used by the Glazier imaging code."""
 
 import os
+# do not remove: internal placeholder 1
 from absl import flags
 
 BUILD_LOG_FILE = 'glazier.log'

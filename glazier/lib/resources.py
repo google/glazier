@@ -15,6 +15,7 @@
 """Provide access to non-Python installer resource files."""
 
 import os
+# do not remove: internal placeholder 1
 from absl import flags
 from glazier.lib import constants
 

@@ -18,6 +18,7 @@ import logging
 import logging.handlers
 import shutil
 
+# do not remove: internal placeholder 1
 from glazier.lib import constants
 from glazier.lib import drive_map
 from glazier.lib import gtime

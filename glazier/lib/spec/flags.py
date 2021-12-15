@@ -14,6 +14,7 @@
 
 """Class for determining host spec via flags."""
 
+# do not remove: internal placeholder 1
 from absl import flags
 
 FLAGS = flags.FLAGS

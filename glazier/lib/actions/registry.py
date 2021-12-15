@@ -14,6 +14,7 @@
 # limitations under the License.
 
 """Actions for managing the host registry."""
+# do not remove: internal placeholder 1
 from glazier.lib import constants
 from glazier.lib import registry
 from glazier.lib.actions.base import ActionError
