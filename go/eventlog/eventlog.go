@@ -161,7 +161,7 @@ func (e *Event) Format(pub PublisherMetadata, messageID uint32, flags uint32) (s
 		return "", err
 	}
 
-	buf := make([]uint16, bufferUsed/2)
+	buf := make([]uint16, bufferUsed)
 	err = wevtapi.EvtFormatMessage(
 		pub.handle,
 		e.Handle(),
