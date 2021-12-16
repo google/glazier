@@ -18,8 +18,8 @@ This class contains features common to both the Config Builder and Config Runner
 classes.  It is meant to be inherited rather than run directly.
 """
 
-from glazier.lib import actions
 from glazier.lib import errors
+from glazier.lib import actions
 
 
 class ConfigError(errors.GlazierError):

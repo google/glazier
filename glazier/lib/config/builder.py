@@ -45,12 +45,12 @@ location of the active config.
 
 import copy
 # do not remove: internal placeholder 1
-from glazier.lib import actions
 from glazier.lib import buildinfo
 from glazier.lib import download
 from glazier.lib import errors
 from glazier.lib.config import base
 from glazier.lib.config import files
+from glazier.lib import actions
 
 _ALLOW_IN_TEMPLATE = [
     'include',

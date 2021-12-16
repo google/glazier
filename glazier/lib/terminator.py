@@ -19,11 +19,11 @@ import os
 import sys
 import traceback
 from typing import Optional
-from glazier.lib import actions
 from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib import logs
 from glazier.lib import winpe
+from glazier.lib import actions
 
 
 def log_and_exit(msg: str,

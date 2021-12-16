@@ -20,10 +20,10 @@ import sys
 from glazier.lib import constants
 from glazier.lib import download
 from glazier.lib import errors
-from glazier.lib import policies
 from glazier.lib import power
 from glazier.lib.config import base
 from glazier.lib.config import files
+from glazier.lib import policies
 
 
 class ConfigRunnerError(base.ConfigError):

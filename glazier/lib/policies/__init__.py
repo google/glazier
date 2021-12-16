@@ -22,7 +22,6 @@ from glazier.lib.policies import device_model
 from glazier.lib.policies import disk_encryption
 from glazier.lib.policies import os
 
-# pylint: disable=invalid-name
 BannedPlatform = device_model.BannedPlatform
 DeviceModel = device_model.DeviceModel
 DiskEncryption = disk_encryption.DiskEncryption
