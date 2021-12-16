@@ -14,9 +14,6 @@
 
 """Actions for stopping the image."""
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import logging
 import re
 from glazier.lib import interact
@@ -36,7 +33,7 @@ class Abort(BaseAction):
     if not isinstance(self._args, list):
       raise ValidationError('Invalid args type (%s): %s' %
                             (type(self._args), self._args))
-    if len(self._args) is not 1:
+    if len(self._args) != 1:
       raise ValidationError('Invalid args length: %s' % self._args)
     if not isinstance(self._args[0], str):
       raise ValidationError('Invalid argument type: %s' % self._args[0])
@@ -56,7 +53,7 @@ class Warn(BaseAction):
     if not isinstance(self._args, list):
       raise ValidationError('Invalid args type (%s): %s' %
                             (type(self._args), self._args))
-    if len(self._args) is not 1:
+    if len(self._args) != 1:
       raise ValidationError('Invalid args length: %s' % self._args)
     if not isinstance(self._args[0], str):
       raise ValidationError('Invalid argument type: %s' % self._args[0])
