@@ -193,4 +193,4 @@ class ConfigBuilder(base.ConfigBase):
               'server': copy.deepcopy(self._build_info.ConfigServer())
           })
       else:
-        raise errors.GUnknownActionError(replacments=[str(element)])
+        raise errors.GUnknownActionError(replacements=[str(element)])
