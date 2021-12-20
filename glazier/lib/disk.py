@@ -48,6 +48,7 @@ def set_disk_space() -> None:
 
   for k, v in space._asdict().items():
     try:
-      registry.set_value(f'{k}_disk_space', v, path=constants.REG_ROOT)
+      registry.set_value(
+          f'disk_space_{k}_bytes', str(v), path=constants.REG_ROOT)
     except registry.Error as e:
       logging.error('Failed to write %s_disk_space to registry: %s', k, str(e))

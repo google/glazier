@@ -75,7 +75,7 @@ StartStage = installer.StartStage
 Unzip = files.Unzip
 UpdateMSU = updates.UpdateMSU
 Warn = abort.Warn
-WriteDiskSize = disk.WriteDiskSize
+WriteDiskSpace = disk.WriteDiskSpace
 
 ActionError = base.ActionError
 ValidationError = base.ValidationError

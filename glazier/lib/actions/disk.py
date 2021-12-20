@@ -19,7 +19,7 @@ from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 
 
-class WriteDiskSize(BaseAction):
+class WriteDiskSpace(BaseAction):
   """Writes the current total, used, and free disk space to registry."""
 
   def Run(self):

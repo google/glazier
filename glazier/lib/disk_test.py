@@ -45,11 +45,17 @@ class DiskTest(absltest.TestCase):
     disk.set_disk_space()
     sv.assert_has_calls([
         mock.call(
-            'total_disk_space', mock.ANY, path=disk.constants.REG_ROOT),
+            'disk_space_total_bytes',
+            mock.ANY,
+            path=disk.constants.REG_ROOT),
         mock.call(
-            'used_disk_space', mock.ANY, path=disk.constants.REG_ROOT),
+            'disk_space_used_bytes',
+            mock.ANY,
+            path=disk.constants.REG_ROOT),
         mock.call(
-            'free_disk_space', mock.ANY, path=disk.constants.REG_ROOT)
+            'disk_space_free_bytes',
+            mock.ANY,
+            path=disk.constants.REG_ROOT)
     ])
 
   @mock.patch.object(disk.registry.registry, 'Registry', autospec=True)
