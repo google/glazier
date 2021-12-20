@@ -745,3 +745,13 @@ Issue a warning that can be bypassed by the user.
 ```
 Warn: ["You probably don't want to do this, or bad things will happen."]
 ```
+
+### WriteDiskSize
+
+Writes the current total, used, and free disk space to registry.
+
+#### Examples
+
+```
+WriteDiskSize: []
+```

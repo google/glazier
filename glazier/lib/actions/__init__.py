@@ -20,6 +20,7 @@ from __future__ import absolute_import
 
 from glazier.lib.actions import abort
 from glazier.lib.actions import base
+from glazier.lib.actions import disk
 from glazier.lib.actions import domain
 from glazier.lib.actions import drivers
 from glazier.lib.actions import file_system
@@ -74,6 +75,7 @@ StartStage = installer.StartStage
 Unzip = files.Unzip
 UpdateMSU = updates.UpdateMSU
 Warn = abort.Warn
+WriteDiskSize = disk.WriteDiskSize
 
 ActionError = base.ActionError
 ValidationError = base.ValidationError
