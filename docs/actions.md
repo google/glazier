@@ -748,7 +748,7 @@ Warn: ["You probably don't want to do this, or bad things will happen."]
 
 ### WriteDiskSize
 
-Writes the current total, used, and free disk space to registry.
+Writes the current total, used, and free disk space to registry (in bytes).
 
 #### Examples
 
