@@ -58,6 +58,24 @@ type PartitionSupportedSize struct {
 	SizeMax uint64
 }
 
+// OperationalStatus describes an operational status.
+//
+// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-partition
+type OperationalStatus uint16
+
+const (
+	// UnknownOperationalStatus is a type of Operational Status
+	UnknownOperationalStatus OperationalStatus = 0
+	// OnlineOperationalStatus is a type of Operational Status
+	OnlineOperationalStatus OperationalStatus = 1
+	// NoMediaOperationalStatus is a type of Operational Status
+	NoMediaOperationalStatus OperationalStatus = 3
+	// FailedOperationalStatus is a type of Operational Status
+	FailedOperationalStatus OperationalStatus = 5
+	// OfflineOperationalStatus is a type of Operational Status
+	OfflineOperationalStatus OperationalStatus = 4
+)
+
 // Close releases the handle to the partition.
 func (p *Partition) Close() {
 	if p.handle != nil {
