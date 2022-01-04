@@ -29,18 +29,14 @@ from glazier.lib import registry
 from glazier.lib import timers
 from glazier.lib import winpe
 from glazier.lib.config import files
+from glazier.lib.spec import spec
 import yaml
 
-from glazier.lib.spec import spec
 from gwinpy.wmi import hw_info
 from gwinpy.wmi import net_info
 from gwinpy.wmi import tpm_info
 
 FLAGS = flags.FLAGS
-flags.DEFINE_enum(
-    'glazier_spec', 'flag', list(spec.SPEC_OPTS.keys()),
-    ('Which host specification module to use for determining host features '
-     'like Hostname and OS.'))
 
 
 class Error(Exception):
