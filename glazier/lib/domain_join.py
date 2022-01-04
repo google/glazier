@@ -27,6 +27,7 @@ from glazier.lib import constants
 from glazier.lib import interact
 from glazier.lib import powershell
 
+
 AUTH_OPTS = [
     'auto',
     'interactive',

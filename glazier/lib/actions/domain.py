@@ -14,10 +14,10 @@
 
 """Actions for interacting with the company domain."""
 
-from glazier.lib import domain_join
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import ValidationError
+from glazier.lib import domain_join
 
 
 class DomainJoin(BaseAction):
