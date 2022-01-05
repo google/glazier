@@ -11,22 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Generic class for determining the desired host operating system."""
+
+from typing import Any, Dict
 
 # do not remove: internal placeholder 1
 from absl import flags
 from glazier.lib.spec import flags as flag_spec
 
-SPEC_OPTS = {
+SPEC_OPTS: Dict[str, Any] = {
     'flag': flag_spec,
 }
-
 FLAGS = flags.FLAGS
-flags.DEFINE_enum(
-    'glazier_spec', 'flag', list(SPEC_OPTS.keys()),
-    ('Which host specification module to use for determining host features '
-     'like Hostname and OS.'))
 
 
 class UnknownSpec(Exception):

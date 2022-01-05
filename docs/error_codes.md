@@ -1,6 +1,6 @@
 # Error Codes
 
-<!--* freshness: { owner: '@tseknet' reviewed: '2020-11-17' } *-->
+<!--* freshness: { owner: '@tseknet' reviewed: '2022-01-05' } *-->
 
 The question of how to implement error codes has already been answered a
 plethora of ways. An example is how Microsoft uses BSOD codes to identify fatal
