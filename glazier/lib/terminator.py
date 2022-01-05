@@ -23,7 +23,6 @@ from glazier.lib import buildinfo
 from glazier.lib import logs
 from glazier.lib import winpe
 
-from glazier.lib import actions
 from glazier.lib import constants
 
 
