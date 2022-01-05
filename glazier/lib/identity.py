@@ -19,9 +19,10 @@ import logging
 import socket
 from typing import Optional
 
-from glazier.lib import constants
 from glazier.lib import interact
 from glazier.lib import registry
+
+from glazier.lib import constants
 
 
 class Error(Exception):

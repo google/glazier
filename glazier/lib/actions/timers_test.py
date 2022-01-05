@@ -17,9 +17,10 @@
 from unittest import mock
 
 from absl.testing import absltest
-from glazier.lib import constants
 from glazier.lib.actions import timers
 from glazier.lib.actions.base import ValidationError
+
+from glazier.lib import constants
 
 KEY_PATH = r'{0}\{1}'.format(constants.REG_ROOT, 'Timers')
 VALUE_NAME = 'build_yaml'

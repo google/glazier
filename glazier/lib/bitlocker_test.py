@@ -19,6 +19,8 @@ from unittest import mock
 from absl.testing import absltest
 from glazier.lib import bitlocker
 
+from glazier.lib import constants
+
 
 class BitlockerTest(absltest.TestCase):
 
@@ -31,8 +33,9 @@ class BitlockerTest(absltest.TestCase):
         mock.call(mock.ANY, [
             "$ErrorActionPreference='Stop'", ';', 'Enable-BitLocker', 'C:',
             '-TpmProtector', '-UsedSpaceOnly', '-SkipHardwareTest ', '>>',
-            '%s\\enable-bitlocker.txt' % bitlocker.constants.SYS_LOGS_PATH
-        ]), mock.call(mock.ANY, [
+            '%s\\enable-bitlocker.txt' % constants.SYS_LOGS_PATH
+        ]),
+        mock.call(mock.ANY, [
             "$ErrorActionPreference='Stop'", ';', 'Add-BitLockerKeyProtector',
             'C:', '-RecoveryPasswordProtector', '>NUL'
         ])

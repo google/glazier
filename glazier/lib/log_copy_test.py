@@ -20,10 +20,11 @@ import sys
 
 from absl.testing import absltest
 
-from glazier.lib import constants
 from glazier.lib import log_copy
 from glazier.lib import winpe
 import mock
+
+from glazier.lib import constants
 
 
 class LogCopyTest(absltest.TestCase):

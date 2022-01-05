@@ -20,6 +20,8 @@ from unittest import mock
 from absl.testing import absltest
 from glazier.lib import disk
 
+from glazier.lib import constants
+
 _SPACE = collections.namedtuple('space', 'total used free')
 _DISK = _SPACE(total=1073741824000, used=536870912000, free=536870912000)
 
@@ -45,17 +47,11 @@ class DiskTest(absltest.TestCase):
     disk.set_disk_space()
     sv.assert_has_calls([
         mock.call(
-            'disk_space_total_bytes',
-            mock.ANY,
-            path=disk.constants.REG_ROOT),
+            'disk_space_total_bytes', mock.ANY, path=constants.REG_ROOT),
         mock.call(
-            'disk_space_used_bytes',
-            mock.ANY,
-            path=disk.constants.REG_ROOT),
+            'disk_space_used_bytes', mock.ANY, path=constants.REG_ROOT),
         mock.call(
-            'disk_space_free_bytes',
-            mock.ANY,
-            path=disk.constants.REG_ROOT)
+            'disk_space_free_bytes', mock.ANY, path=constants.REG_ROOT)
     ])
 
   @mock.patch.object(disk.registry.registry, 'Registry', autospec=True)

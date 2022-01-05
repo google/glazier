@@ -19,11 +19,12 @@ import logging.handlers
 import shutil
 
 # do not remove: internal placeholder 1
-from glazier.lib import constants
 from glazier.lib import drive_map
 from glazier.lib import gtime
 from glazier.lib import logs
 from glazier.lib import registry
+
+from glazier.lib import constants
 
 
 class LogCopyError(Exception):

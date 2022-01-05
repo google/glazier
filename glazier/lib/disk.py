@@ -16,8 +16,9 @@
 import logging
 import shutil
 
-from glazier.lib import constants
 from glazier.lib import registry
+
+from glazier.lib import constants
 
 
 class Error(Exception):

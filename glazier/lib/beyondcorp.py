@@ -19,10 +19,6 @@ with the path of the file being requested. The sign_endpoint will return
 a signed URL, which will be returned to download new files.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import base64
 import functools
 import hashlib
@@ -30,9 +26,10 @@ import json
 import logging
 
 from absl import flags
-from glazier.lib import constants
 from glazier.lib import registry
 import requests
+
+from glazier.lib import constants
 from gwinpy.wmi import hw_info
 from gwinpy.wmi import wmi_query
 

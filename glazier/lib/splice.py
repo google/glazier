@@ -17,10 +17,11 @@
 import logging
 import os
 import time
-# from typing import Optional
-from glazier.lib import constants
+
 from glazier.lib import execute
 from glazier.lib import identity
+
+from glazier.lib import constants
 
 
 class Error(Exception):

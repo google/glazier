@@ -18,7 +18,6 @@ import os
 import time
 # do not remove: internal placeholder 1
 from glazier.chooser import chooser
-from glazier.lib import constants
 from glazier.lib import log_copy
 from glazier.lib import registry
 from glazier.lib import stage
@@ -29,6 +28,8 @@ from glazier.lib.actions.base import RestartEvent
 from glazier.lib.actions.base import ServerChangeEvent
 from glazier.lib.actions.base import ValidationError
 import yaml
+
+from glazier.lib import constants
 
 
 class AddChoice(BaseAction):

@@ -18,8 +18,9 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from glazier.lib import constants
 from glazier.lib import identity
+
+from glazier.lib import constants
 
 USERNAME = 'bert'
 HOSTNAME = 'earnie-pc'

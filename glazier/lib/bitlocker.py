@@ -18,8 +18,9 @@
 import logging
 import subprocess
 
-from glazier.lib import constants
 from glazier.lib import powershell
+
+from glazier.lib import constants
 
 SUPPORTED_MODES = ['ps_tpm', 'bde_tpm']
 

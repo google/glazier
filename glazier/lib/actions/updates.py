@@ -16,13 +16,14 @@
 
 import logging
 import os
-from glazier.lib import constants
 from glazier.lib import execute
 from glazier.lib import file_util
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import ValidationError
 from glazier.lib.actions.files import Get
+
+from glazier.lib import constants
 
 
 class UpdateMSU(BaseAction):

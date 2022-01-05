@@ -14,18 +14,15 @@
 # limitations under the License.
 """Encapsulates information pertaining to WinPE during the image."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 import logging
 import os
 import uuid
 
-from glazier.lib import constants
 from glazier.lib import registry
 from glazier.lib import winpe
 import yaml
 
+from glazier.lib import constants
 from gwinpy.wmi import hw_info
 
 

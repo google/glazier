@@ -22,6 +22,8 @@ from glazier.lib.actions import installer
 
 from pyfakefs import fake_filesystem
 
+from glazier.lib import constants
+
 
 class InstallerTest(absltest.TestCase):
 
@@ -105,7 +107,7 @@ class InstallerTest(absltest.TestCase):
     d = installer.BuildInfoDump(None, build_info)
     d.Run()
     build_info.Serialize.assert_called_with('{}/build_info.yaml'.format(
-        installer.constants.SYS_CACHE))
+        constants.SYS_CACHE))
 
   @mock.patch.object(installer.registry, 'set_value', autospec=True)
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
@@ -113,17 +115,17 @@ class InstallerTest(absltest.TestCase):
     fs = fake_filesystem.FakeFilesystem()
     installer.open = fake_filesystem.FakeFileOpen(fs)
     installer.os = fake_filesystem.FakeOsModule(fs)
-    timer_root = r'{0}\{1}'.format(installer.constants.REG_ROOT, 'Timers')
+    timer_root = r'{0}\{1}'.format(constants.REG_ROOT, 'Timers')
     fs.create_file(
-        '{}/build_info.yaml'.format(installer.constants.SYS_CACHE),
+        '{}/build_info.yaml'.format(constants.SYS_CACHE),
         contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, opt 3: 12345}}\n'
     )
     s = installer.BuildInfoSave(None, build_info)
     s.Run()
     sv.assert_has_calls([
-        mock.call('opt 1', True, 'HKLM', installer.constants.REG_ROOT),
+        mock.call('opt 1', True, 'HKLM', constants.REG_ROOT),
         mock.call('TIMER_opt 2', 'some value', 'HKLM', timer_root),
-        mock.call('opt 3', 12345, 'HKLM', installer.constants.REG_ROOT),
+        mock.call('opt 3', 12345, 'HKLM', constants.REG_ROOT),
     ],
                         any_order=True)
     s.Run()
@@ -132,9 +134,8 @@ class InstallerTest(absltest.TestCase):
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
   def testBuildInfoSaveError(self, build_info, d):
     installer.BuildInfoSave(None, build_info).Run()
-    d.assert_called_with(
-        '%s does not exist - skipped processing.',
-        '{}/build_info.yaml'.format(installer.constants.SYS_CACHE))
+    d.assert_called_with('%s does not exist - skipped processing.',
+                         '{}/build_info.yaml'.format(constants.SYS_CACHE))
 
   def testChangeServer(self):
     build_info = buildinfo.BuildInfo()
@@ -146,7 +147,7 @@ class InstallerTest(absltest.TestCase):
 
   @mock.patch.object(installer.file_system, 'CopyFile', autospec=True)
   def testExitWinPE(self, copy):
-    cache = installer.constants.SYS_CACHE
+    cache = constants.SYS_CACHE
     ex = installer.ExitWinPE(None, None)
     with self.assertRaises(installer.RestartEvent):
       ex.Run()

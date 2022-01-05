@@ -14,17 +14,14 @@
 # limitations under the License.
 """Tests for glazier.lib.winpe."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 from absl.testing import absltest
 
-from glazier.lib import constants
 from glazier.lib import identifier
 
 import mock
 from pyfakefs import fake_filesystem
+
+from glazier.lib import constants
 
 TEST_UUID = identifier.uuid.UUID('12345678123456781234567812345678')
 TEST_SERIAL = '1A19SEL90000R90DZN7A'
