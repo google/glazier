@@ -21,7 +21,6 @@ import sys
 from absl import app
 from absl import flags
 from glazier.lib import buildinfo
-from glazier.lib import errors
 from glazier.lib import logs
 from glazier.lib import title
 from glazier.lib import winpe
@@ -29,6 +28,7 @@ from glazier.lib.config import builder
 from glazier.lib.config import runner
 
 from glazier.lib import constants
+from glazier.lib import errors
 from glazier.lib import terminator
 
 FLAGS = flags.FLAGS

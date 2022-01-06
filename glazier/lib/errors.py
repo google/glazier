@@ -113,7 +113,7 @@ class GlazierError(Exception):
     return string
 
 
-def _new_err(code: int, message: str) -> Type[GlazierError]:
+def new_err(code: int, message: str) -> Type[GlazierError]:
   """Captures code and message pairs for every error.
 
   This method acts to store the error codes and the associated messages to be
@@ -145,4 +145,4 @@ def _new_err(code: int, message: str) -> Type[GlazierError]:
 
 
 for key, value in _ERRORS.items():
-  vars()[key] = _new_err(value[0], value[1])
+  vars()[key] = new_err(value[0], value[1])
