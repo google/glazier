@@ -15,10 +15,10 @@
 
 """Actions to run Splice domain join during the image."""
 
-from glazier.lib import splice
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import ValidationError
+from glazier.lib import splice
 
 
 class SpliceDomainJoin(BaseAction):
