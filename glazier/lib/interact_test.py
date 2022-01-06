@@ -23,7 +23,7 @@ from glazier.lib import interact
 
 class InteractTest(absltest.TestCase):
 
-  @mock.patch.object(interact, 'input', autospec=True)
+  @mock.patch('builtins.input', autospec=True)
   def testGetUsername(self, raw):
     raw.side_effect = iter(['invalid-name', '', '  ', 'username1'])
     self.assertEqual(interact.GetUsername(), 'username1')
@@ -62,7 +62,7 @@ class InteractTest(absltest.TestCase):
     result = interact.Keystroke('mesg', validator='[0-9]')
     self.assertEqual(result, None)
 
-  @mock.patch.object(interact, 'input', autospec=True)
+  @mock.patch('builtins.input', autospec=True)
   def testPrompt(self, raw):
     raw.return_value = 'user*name'
     result = interact.Prompt('mesg', '^\\w+$')

@@ -14,10 +14,11 @@
 
 """Tests for glazier.lib.config.base."""
 
+from unittest import mock
+
 from absl.testing import absltest
 from glazier.lib import buildinfo
 from glazier.lib.config import base
-import mock
 
 
 class BaseTest(absltest.TestCase):

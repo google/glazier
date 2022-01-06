@@ -33,12 +33,12 @@ import time
 
 import typing
 from typing import List, Optional
+import urllib.request
 
 from absl import flags
 from glazier.lib import beyondcorp
 from glazier.lib import file_util
 from glazier.lib import winpe
-from six.moves import urllib
 
 if typing.TYPE_CHECKING:
   import http.client

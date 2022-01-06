@@ -14,12 +14,11 @@
 
 """Tests for glazier.lib.config.files."""
 
-from absl.testing import absltest
+from unittest import mock
 
+from absl.testing import absltest
 from glazier.lib import file_util
 from glazier.lib.config import files
-
-import mock
 from pyfakefs import fake_filesystem
 
 

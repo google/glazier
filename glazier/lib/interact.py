@@ -15,15 +15,10 @@
 
 """Glazier user interaction."""
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import logging
 import re
 import time
 from typing import Optional
-
-from six.moves import input
 
 
 def GetUsername(purpose: Optional[str] = None) -> str:

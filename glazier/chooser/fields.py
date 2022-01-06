@@ -24,7 +24,7 @@ This is called at the UI exit for final response storage.
 """
 # do not remove: internal placeholder 1
 
-from six.moves import tkinter as tk
+import tkinter as tk
 
 
 class RadioMenu(tk.Frame):

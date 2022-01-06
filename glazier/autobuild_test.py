@@ -14,12 +14,13 @@
 """Unit tests for autobuild."""
 
 
+from unittest import mock
+
 from absl.testing import absltest
 from glazier import autobuild
 from glazier.lib import buildinfo
 from glazier.lib import title
 from glazier.lib import winpe
-import mock
 from pyfakefs import fake_filesystem
 
 

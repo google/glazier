@@ -14,9 +14,10 @@
 
 """Tests for glazier.chooser.fields."""
 
+from unittest import mock
+
 from absl.testing import absltest
 from glazier.chooser import fields
-import mock
 
 
 @mock.patch.object(fields, 'tk', autospec=True)

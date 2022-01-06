@@ -13,11 +13,13 @@
 # limitations under the License.
 """Tests for glazier.lib.config.builder."""
 
+from unittest import mock
+
 from absl.testing import absltest
 from glazier.lib import buildinfo
 from glazier.lib.config import builder
 from glazier.lib.config import files
-import mock
+
 from glazier.lib import actions
 
 

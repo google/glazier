@@ -14,9 +14,10 @@
 
 """Tests for glazier.lib.actions.tpm."""
 
+from unittest import mock
+
 from absl.testing import absltest
 from glazier.lib.actions import tpm
-import mock
 
 
 class TpmTest(absltest.TestCase):

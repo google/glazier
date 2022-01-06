@@ -14,11 +14,10 @@
 # limitations under the License.
 """Tests for glazier.lib.winpe."""
 
+from unittest import mock
+
 from absl.testing import absltest
-
 from glazier.lib import identifier
-
-import mock
 from pyfakefs import fake_filesystem
 
 from glazier.lib import constants

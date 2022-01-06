@@ -15,16 +15,16 @@
 
 """Tests for glazier.lib.download."""
 
+import io
+from unittest import mock
+
 from absl import flags
 from absl.testing import absltest
 from glazier.lib import beyondcorp
 from glazier.lib import buildinfo
 from glazier.lib import download
 from glazier.lib import file_util
-
-import mock
 from pyfakefs import fake_filesystem
-import six
 
 
 _TEST_INI = """
@@ -235,7 +235,7 @@ class DownloadTest(absltest.TestCase):
   @mock.patch.object(download.BaseDownloader, '_StoreDebugInfo', autospec=True)
   def testStreamToDisk(self, store_info):
     # setup
-    http_stream = six.BytesIO()
+    http_stream = io.BytesIO()
     http_stream.write(b'First line.\nSecond line.\n')
     http_stream.seek(0)
     download.CHUNK_BYTE_SIZE = 5
