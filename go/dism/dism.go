@@ -26,6 +26,7 @@ import (
 	"unsafe"
 
 	"github.com/google/glazier/go/helpers"
+	"github.com/google/logger"
 	"golang.org/x/sys/windows"
 )
 
@@ -167,10 +168,14 @@ func (s Session) Close() error {
 // checkError validates the error returned by DISM API and reloads the session if needed
 func (s Session) checkError(err error) error {
 	if err == DISMAPI_S_RELOAD_IMAGE_SESSION_REQUIRED {
-		_ = DismCloseSession(*s.Handle)
+		if err := DismCloseSession(*s.Handle); err != nil {
+			logger.Warningf("Closing session before reloading failed: %w", err)
+		}
+
 		if err := DismOpenSession(helpers.StringToPtrOrNil(s.imagePath), helpers.StringToPtrOrNil(s.optWindowsDir), helpers.StringToPtrOrNil(s.optSystemDrive), s.Handle); err != nil {
 			return fmt.Errorf("reloading session: %w", err)
 		}
+		logger.Infof("Reloaded image session as requested by DISM API")
 
 		return nil
 	}
