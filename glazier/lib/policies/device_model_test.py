@@ -14,16 +14,15 @@
 
 """Tests for glazier.lib.policies.device_model."""
 
+from unittest import mock
 from absl.testing import absltest
 from glazier.lib.policies import device_model
-import mock
-from six.moves import builtins
 
 
 class DeviceModelTest(absltest.TestCase):
 
-  @mock.patch.object(device_model, 'input', autospec=True)
-  @mock.patch.object(builtins, 'print', autospec=True)
+  @mock.patch('builtins.input', autospec=True)
+  @mock.patch('builtins.print', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testVerify(self, build_info, user_out, user_in):
     dm = device_model.DeviceModel(build_info)
@@ -37,13 +36,13 @@ class DeviceModelTest(absltest.TestCase):
     dm._build_info.ComputerModel.return_value = 'Test Workstation'
     dm._build_info.SupportTier.return_value = 2
     self.assertTrue(dm.Verify())
-    user_out.assert_called_with(device_model._PARTIAL_NOTICE %
+    user_out.assert_called_with(device_model.DeviceModel.PARTIAL_NOTICE %
                                 'Test Workstation')
     # Unsupported: Continue
     user_in.return_value = 'Y'
     dm._build_info.SupportTier.return_value = 0
     self.assertTrue(dm.Verify())
-    user_out.assert_called_with(device_model._UNSUPPORTED_NOTICE %
+    user_out.assert_called_with(device_model.DeviceModel.UNSUPPORTED_NOTICE %
                                 'Test Workstation')
     # Unsupported: Abort
     user_in.return_value = 'n'

@@ -12,45 +12,39 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Ensure the device hardware is supported."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 import logging
 import re
 
 from glazier.lib.policies.base import BasePolicy
 from glazier.lib.policies.base import ImagingPolicyException
 
-from six.moves import input
-
-_PARTIAL_NOTICE = ("""
-                  !!!!! Notice !!!!!
-
-    The installer considers this hardware model obsolete or experimental (%s).
-
-    The hardware you are using is not part of active inventory.
-    While the installer may support this device, it is not being tested for
-    compatibility.  There is a chance you may experience problems imaging.
-    We recommend considering a hardware refresh before continuing.
-    """)
-
-_UNSUPPORTED_NOTICE = ("""
-                  !!!!! Warning !!!!!
-
-    The installer does not recognize this hardware model (%s).
-
-    If you chose to continue, this will be an unsupported build.  The
-    final install MAY BE BROKEN.  You should only continue if you are
-    sure you know what you're doing.  When in doubt, contact support
-    for assistance.
-    """)
-
 
 class DeviceModel(BasePolicy):
   """Verify that the device hardware is supported."""
+
+  PARTIAL_NOTICE = ("""
+                    !!!!! Notice !!!!!
+
+      The installer considers this hardware model obsolete or experimental (%s).
+
+      The hardware you are using is not part of active inventory.
+      While the installer may support this device, it is not being tested for
+      compatibility.  There is a chance you may experience problems imaging.
+      We recommend considering a hardware refresh before continuing.
+      """)
+
+  UNSUPPORTED_NOTICE = ("""
+                    !!!!! Warning !!!!!
+
+      The installer does not recognize this hardware model (%s).
+
+      If you chose to continue, this will be an unsupported build.  The
+      final install MAY BE BROKEN.  You should only continue if you are
+      sure you know what you're doing.  When in doubt, contact support
+      for assistance.
+      """)
 
   def _ModelSupportPrompt(self, message: str, this_model: str) -> bool:
     """Prompts the user whether to halt an unsupported build.
@@ -79,9 +73,9 @@ class DeviceModel(BasePolicy):
 
     build_anyway = False
     if tier == 2:
-      build_anyway = self._ModelSupportPrompt(_PARTIAL_NOTICE, model)
+      build_anyway = self._ModelSupportPrompt(self.PARTIAL_NOTICE, model)
     else:
-      build_anyway = self._ModelSupportPrompt(_UNSUPPORTED_NOTICE, model)
+      build_anyway = self._ModelSupportPrompt(self.UNSUPPORTED_NOTICE, model)
 
     if not build_anyway:
       raise ImagingPolicyException(
