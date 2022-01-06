@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tests for glazier.lib.download."""
 
 import io
@@ -25,7 +24,6 @@ from glazier.lib import buildinfo
 from glazier.lib import download
 from glazier.lib import file_util
 from pyfakefs import fake_filesystem
-
 
 _TEST_INI = """
 [BUILD]

@@ -17,9 +17,10 @@
 
 import re
 from typing import Any
-from glazier.lib import download
 from glazier.lib import file_util
 import yaml
+
+from glazier.lib import download
 
 
 class Error(Exception):

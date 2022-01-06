@@ -26,7 +26,6 @@ import os
 import re
 import socket
 import ssl
-import subprocess
 import sys
 import tempfile
 import time
@@ -167,6 +166,12 @@ class BaseDownloader(object):
   def _GetHandlers(self):
     return [urllib.request.HTTPSHandler()]
 
+  def _InstallOpeners(self):
+    opener = urllib.request.OpenerDirector()
+    for handler in self._GetHandlers():
+      opener.add_handler(handler)
+    urllib.request.install_opener(opener)
+
   def _AttemptResource(self, attempt: int, max_retries: int, resource: str):
     r"""Loop logic for retrying failed requests.
 
@@ -219,11 +224,7 @@ class BaseDownloader(object):
     """
     attempt = 0
     file_stream = None
-
-    opener = urllib.request.OpenerDirector()
-    for handler in self._GetHandlers():
-      opener.add_handler(handler)
-    urllib.request.install_opener(opener)
+    self._InstallOpeners()
 
     url = url.strip()
     parsed = urllib.parse.urlparse(url)
