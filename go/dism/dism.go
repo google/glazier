@@ -169,7 +169,7 @@ func (s Session) Close() error {
 func (s Session) checkError(err error) error {
 	if err == DISMAPI_S_RELOAD_IMAGE_SESSION_REQUIRED {
 		if err := DismCloseSession(*s.Handle); err != nil {
-			logger.Warningf("Closing session before reloading failed: %w", err)
+			logger.Warningf("Closing session before reloading failed: %s", err.Error())
 		}
 
 		if err := DismOpenSession(helpers.StringToPtrOrNil(s.imagePath), helpers.StringToPtrOrNil(s.optWindowsDir), helpers.StringToPtrOrNil(s.optSystemDrive), s.Handle); err != nil {
