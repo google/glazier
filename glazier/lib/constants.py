@@ -22,7 +22,6 @@ BUILD_LOG_FILE = 'glazier.log'
 REG_ROOT = r'SOFTWARE\Glazier'
 
 # Network
-
 DOMAIN = 'domain.example.com'
 DOMAIN_DN = 'DC=domain,DC=example,DC=com'
 DOMAIN_NAME = 'EXAMPLE'
