@@ -22,9 +22,11 @@ package dism
 
 import (
 	"fmt"
+	"syscall"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
+	"github.com/google/logger"
 	"github.com/google/glazier/go/helpers"
 )
 
@@ -37,6 +39,8 @@ const (
 	DISM_MOUNT_READONLY        = 0x00000001
 	DISM_MOUNT_OPTIMIZE        = 0x00000002
 	DISM_MOUNT_CHECK_INTEGRITY = 0x00000004
+
+	DISMAPI_S_RELOAD_IMAGE_SESSION_REQUIRED syscall.Errno = 0x00000001
 )
 
 // DismPackageIdentifier specifies whether a package is identified by name or by file path.
@@ -53,7 +57,10 @@ const (
 
 // Session holds a dism session. You must call Close() to free up the session upon completion.
 type Session struct {
-	Handle uint32
+	Handle         *uint32
+	imagePath      string
+	optWindowsDir  string
+	optSystemDrive string
 }
 
 // AddCapability adds a Windows capability from an image.
@@ -71,7 +78,7 @@ func (s Session) AddCapability(
 	if p := helpers.StringToPtrOrNil(sourcePaths); p != nil {
 		sp = &p
 	}
-	return DismAddCapability(s.Handle, helpers.StringToPtrOrNil(name), limitAccess, sp, sourcePathsCount, cancelEvent, progressCallback, nil)
+	return s.checkError(DismAddCapability(*s.Handle, helpers.StringToPtrOrNil(name), limitAccess, sp, sourcePathsCount, cancelEvent, progressCallback, nil))
 }
 
 // AddPackage adds Windows packages(s) to an image.
@@ -84,7 +91,7 @@ func (s Session) AddPackage(
 	cancelEvent *windows.Handle,
 	progressCallback unsafe.Pointer,
 ) error {
-	return DismAddPackage(s.Handle, helpers.StringToPtrOrNil(packagePath), ignoreCheck, preventPending, cancelEvent, progressCallback, nil)
+	return s.checkError(DismAddPackage(*s.Handle, helpers.StringToPtrOrNil(packagePath), ignoreCheck, preventPending, cancelEvent, progressCallback, nil))
 }
 
 // DisableFeature disables Windows Feature(s).
@@ -103,7 +110,7 @@ func (s Session) DisableFeature(
 	cancelEvent *windows.Handle,
 	progressCallback unsafe.Pointer,
 ) error {
-	return DismDisableFeature(s.Handle, helpers.StringToPtrOrNil(feature), helpers.StringToPtrOrNil(optPackageName), false, cancelEvent, progressCallback, nil)
+	return s.checkError(DismDisableFeature(*s.Handle, helpers.StringToPtrOrNil(feature), helpers.StringToPtrOrNil(optPackageName), false, cancelEvent, progressCallback, nil))
 }
 
 // EnableFeature enables Windows Feature(s).
@@ -124,7 +131,7 @@ func (s Session) EnableFeature(
 	cancelEvent *windows.Handle,
 	progressCallback unsafe.Pointer,
 ) error {
-	return DismEnableFeature(s.Handle, helpers.StringToPtrOrNil(feature), helpers.StringToPtrOrNil(optIdentifier), optPackageIdentifier, false, nil, 0, enableAll, cancelEvent, progressCallback, nil)
+	return s.checkError(DismEnableFeature(*s.Handle, helpers.StringToPtrOrNil(feature), helpers.StringToPtrOrNil(optIdentifier), optPackageIdentifier, false, nil, 0, enableAll, cancelEvent, progressCallback, nil))
 }
 
 // RemoveCapability removes a Windows capability from an image.
@@ -135,7 +142,7 @@ func (s Session) RemoveCapability(
 	cancelEvent *windows.Handle,
 	progressCallback unsafe.Pointer,
 ) error {
-	return DismRemoveCapability(s.Handle, helpers.StringToPtrOrNil(name), cancelEvent, progressCallback, nil)
+	return s.checkError(DismRemoveCapability(*s.Handle, helpers.StringToPtrOrNil(name), cancelEvent, progressCallback, nil))
 }
 
 // RemovePackage removes Windows packages(s) from an image.
@@ -147,15 +154,33 @@ func (s Session) RemovePackage(
 	cancelEvent *windows.Handle,
 	progressCallback unsafe.Pointer,
 ) error {
-	return DismRemovePackage(s.Handle, helpers.StringToPtrOrNil(identifier), packageIdentifier, cancelEvent, progressCallback, nil)
+	return s.checkError(DismRemovePackage(*s.Handle, helpers.StringToPtrOrNil(identifier), packageIdentifier, cancelEvent, progressCallback, nil))
 }
 
 // Close closes the session and shuts down dism. This must be called prior to exiting.
 func (s Session) Close() error {
-	if err := DismCloseSession(s.Handle); err != nil {
+	if err := DismCloseSession(*s.Handle); err != nil {
 		return err
 	}
 	return DismShutdown()
+}
+
+// checkError validates the error returned by DISM API and reloads the session if needed
+func (s Session) checkError(err error) error {
+	if err == DISMAPI_S_RELOAD_IMAGE_SESSION_REQUIRED {
+		if err := DismCloseSession(*s.Handle); err != nil {
+			logger.Warningf("Closing session before reloading failed: %s", err.Error())
+		}
+
+		if err := DismOpenSession(helpers.StringToPtrOrNil(s.imagePath), helpers.StringToPtrOrNil(s.optWindowsDir), helpers.StringToPtrOrNil(s.optSystemDrive), s.Handle); err != nil {
+			return fmt.Errorf("reloading session: %w", err)
+		}
+		logger.Infof("Reloaded image session as requested by DISM API")
+
+		return nil
+	}
+
+	return err
 }
 
 // DismLogLevel specifies the kind of information that is reported in the log file.
@@ -181,13 +206,19 @@ const (
 // Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/disminitialize-function
 // Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dismopensession-function
 func OpenSession(imagePath, optWindowsDir, optSystemDrive string, logLevel DismLogLevel, optLogFilePath, optScratchDir string) (Session, error) {
-	s := Session{}
+	var handleVal uint32
+	s := Session{
+		Handle:         &handleVal,
+		imagePath:      imagePath,
+		optWindowsDir:  optWindowsDir,
+		optSystemDrive: optSystemDrive,
+	}
 
 	if err := DismInitialize(logLevel, helpers.StringToPtrOrNil(optLogFilePath), helpers.StringToPtrOrNil(optScratchDir)); err != nil {
 		return s, fmt.Errorf("DismInitialize: %w", err)
 	}
 
-	if err := DismOpenSession(helpers.StringToPtrOrNil(imagePath), helpers.StringToPtrOrNil(optWindowsDir), helpers.StringToPtrOrNil(optSystemDrive), &s.Handle); err != nil {
+	if err := DismOpenSession(helpers.StringToPtrOrNil(imagePath), helpers.StringToPtrOrNil(optWindowsDir), helpers.StringToPtrOrNil(optSystemDrive), s.Handle); err != nil {
 		return s, fmt.Errorf("DismOpenSession: %w", err)
 	}
 
