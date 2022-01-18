@@ -29,12 +29,11 @@ class Error(Exception):
   pass
 
 
-def get_value(
-    name: str,
-    root: Optional[str] = 'HKLM',
-    path: Optional[str] = constants.REG_ROOT,
-    use_64bit: Optional[bool] = constants.USE_REG_64,
-    log: Optional[bool] = True) -> Optional[str]:
+def get_value(name: str,
+              root: Optional[str] = 'HKLM',
+              path: Optional[str] = constants.REG_ROOT,
+              use_64bit: Optional[bool] = constants.USE_REG_64,
+              log: Optional[bool] = True) -> Optional[str]:
   r"""Get a registry key value from registry.
 
   Args:
@@ -64,7 +63,8 @@ def get_value(
   return None
 
 
-def set_value(name: str, value: Union[str, int],
+def set_value(name: str,
+              value: Union[str, int],
               root: Optional[str] = 'HKLM',
               path: Optional[str] = constants.REG_ROOT,
               reg_type: Optional[str] = 'REG_SZ',

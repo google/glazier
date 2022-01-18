@@ -14,10 +14,13 @@
 # limitations under the License.
 """Tests for glazier.lib.registry."""
 
+import logging
+
 from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import registry
+from glazier.lib import constants
 
 
 class RegistryTest(absltest.TestCase):
@@ -33,9 +36,9 @@ class RegistryTest(absltest.TestCase):
     self.assertEqual(registry.get_value(self.name), self.value)
     reg.assert_called_with('HKLM')
     reg.return_value.GetKeyValue.assert_called_with(
-        key_path=registry.constants.REG_ROOT,
+        key_path=constants.REG_ROOT,
         key_name=self.name,
-        use_64bit=registry.constants.USE_REG_64)
+        use_64bit=constants.USE_REG_64)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   def test_get_value_none(self, reg):
@@ -43,7 +46,7 @@ class RegistryTest(absltest.TestCase):
     self.assertIsNone(registry.get_value(self.name))
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  @mock.patch.object(registry.logging, 'debug', autospec=True)
+  @mock.patch.object(logging, 'debug', autospec=True)
   def test_get_value_silent(self, d, reg):
     reg.return_value.GetKeyValue.return_value = self.value
     registry.get_value(self.name, log=False)
@@ -55,8 +58,7 @@ class RegistryTest(absltest.TestCase):
     self.assertEqual(registry.get_values(self.name), self.value)
     reg.assert_called_with('HKLM')
     reg.return_value.GetRegKeys.assert_called_with(
-        key_path=self.name,
-        use_64bit=registry.constants.USE_REG_64)
+        key_path=self.name, use_64bit=constants.USE_REG_64)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   def test_get_values_none(self, reg):
@@ -64,7 +66,7 @@ class RegistryTest(absltest.TestCase):
     self.assertIsNone(registry.get_values(self.name))
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  @mock.patch.object(registry.logging, 'debug', autospec=True)
+  @mock.patch.object(logging, 'debug', autospec=True)
   def test_get_values_silent(self, d, reg):
     reg.return_value.GetRegKeys.return_value = self.value
     registry.get_values(self.name, log=False)
@@ -76,11 +78,11 @@ class RegistryTest(absltest.TestCase):
     reg.assert_called_with('HKLM')
     reg.return_value.SetKeyValue.assert_has_calls([
         mock.call(
-            key_path=registry.constants.REG_ROOT,
+            key_path=constants.REG_ROOT,
             key_name=self.name,
             key_value=self.value,
             key_type='REG_SZ',
-            use_64bit=registry.constants.USE_REG_64),
+            use_64bit=constants.USE_REG_64),
     ])
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
@@ -89,7 +91,7 @@ class RegistryTest(absltest.TestCase):
     self.assertRaises(registry.Error, registry.set_value, self.name, self.value)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  @mock.patch.object(registry.logging, 'debug', autospec=True)
+  @mock.patch.object(logging, 'debug', autospec=True)
   def test_set_value_silent(self, d, unused_reg):
     registry.set_value(self.name, self.value, log=False)
     self.assertFalse(d.called)
@@ -100,20 +102,20 @@ class RegistryTest(absltest.TestCase):
     reg.assert_called_with('HKLM')
     reg.return_value.RemoveKeyValue.assert_has_calls([
         mock.call(
-            key_path=registry.constants.REG_ROOT,
+            key_path=constants.REG_ROOT,
             key_name=self.name,
-            use_64bit=registry.constants.USE_REG_64),
+            use_64bit=constants.USE_REG_64),
     ])
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  @mock.patch.object(registry.logging, 'warning', autospec=True)
+  @mock.patch.object(logging, 'warning', autospec=True)
   def test_remove_value_not_found(self, w, reg):
     reg.return_value.RemoveKeyValue.side_effect = registry.registry.RegistryError(
         'Test', errno=2)
     registry.remove_value(self.name)
-    w.assert_called_with(r'Failed to delete non-existant registry key: '
-                         r'%s:\%s\%s', 'HKLM', registry.constants.REG_ROOT,
-                         self.name)
+    w.assert_called_with(
+        r'Failed to delete non-existant registry key: '
+        r'%s:\%s\%s', 'HKLM', constants.REG_ROOT, self.name)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   def test_remove_value_error(self, reg):
@@ -121,7 +123,7 @@ class RegistryTest(absltest.TestCase):
     self.assertRaises(registry.Error, registry.remove_value, self.name)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  @mock.patch.object(registry.logging, 'debug', autospec=True)
+  @mock.patch.object(logging, 'debug', autospec=True)
   def test_remove_value_silent(self, d, unused_reg):
     registry.remove_value(self.name, log=False)
     self.assertFalse(d.called)
