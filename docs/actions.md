@@ -255,7 +255,7 @@ Get:
     *   Arg1[list]: The first file to retrieve.
         *   ArgA[str]: The remote path to the source file.
         *   ArgB[str]: The local destination path for the file.
-        *   ArgC[str]: The sha256 sum of the flie for verification. (optional)
+        *   ArgC[str]: The sha256 sum of the file for verification. (optional)
     *   Arg2[list]: The second file to retrieve. (optional)
     *   ...
 
