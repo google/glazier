@@ -62,7 +62,7 @@ class ConfigRunner(base.ConfigBase):
     if constants.FLAGS.verify_urls:
       dl = download.Download()
       for url in constants.FLAGS.verify_urls:
-        if not dl.CheckUrl(url, [200], max_retries=-1):
+        if not dl.CheckUrl(url, [200]):
           raise errors.GCheckUrlError(replacements=[url])
 
     while tasks:

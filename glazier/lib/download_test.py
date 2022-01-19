@@ -115,14 +115,28 @@ class PathsTest(absltest.TestCase):
 
 class DownloadTest(absltest.TestCase):
 
+  def PatchConstant(self, module, constant_name, new_value):
+    patcher = mock.patch.object(module, constant_name, new_value)
+    self.addCleanup(patcher.stop)
+    return patcher.start()
+
+  def FailingURLOpen(self, *unused_args, **unused_kwargs):
+    raise download.urllib.error.HTTPError('Error', None, None, None, None)
+
   def setUp(self):
+
     super(DownloadTest, self).setUp()
     self._dl = download.BaseDownloader()
+
     # filesystem
     self.filesystem = fake_filesystem.FakeFilesystem()
     self.filesystem.create_file(r'C:\input.ini', contents=_TEST_INI)
     download.os = fake_filesystem.FakeOsModule(self.filesystem)
     download.open = fake_filesystem.FakeFileOpen(self.filesystem)
+
+    # Very important, unless you want tests that fail indefinitely to backoff
+    # for 10 minutes.
+    self.PatchConstant(download, 'BACKOFF_MAX_TIME', 20)  # in seconds
 
   def testConvertBytes(self):
     self.assertEqual(self._dl._ConvertBytes(123), '123.00B')
@@ -132,55 +146,43 @@ class DownloadTest(absltest.TestCase):
     self.assertEqual(self._dl._ConvertBytes(56755555555), '52.86GB')
     self.assertEqual(self._dl._ConvertBytes(6785555555555), '6.17TB')
 
-  @mock.patch.object(download.logging, 'info', autospec=True)
-  @mock.patch.object(download.time, 'sleep', autospec=True)
-  def testAttemptResource(self, sleep, i):
-    self._dl._AttemptResource(1, 2, 'file download')
-    i.assert_called_with(
-        'Failed attempt %d of %d: Sleeping for %d second(s) '
-        'before retrying the %s.', 1, 2, 20, 'file download')
-    sleep.assert_called_with(20)
-
-  @mock.patch.object(download.logging, 'info', autospec=True)
-  @mock.patch.object(download.time, 'sleep', autospec=True)
-  def testAttemptResourceUnlimited(self, sleep, i):
-    self._dl._AttemptResource(1, -1, 'file download')
-    i.assert_called_with(
-        'Failed attempt %d of Unlimited: Sleeping for %d second(s) before '
-        'retrying the %s.', 1, 20, 'file download')
-    sleep.assert_called_with(20)
-
-  def testAttemptResourceError(self):
-    self.assertRaises(download.DownloadError, self._dl._AttemptResource, 1, 1,
-                      'file download')
-
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
-  def testOpenStreamInternal(self, urlopen, wpe):
+  def testOpenStreamInternal(self, mock_urlopen, mock_check_winpe):
+
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
     url = TEST_URL
     httperr = download.urllib.error.HTTPError('Error', None, None, None, None)
     urlerr = download.urllib.error.URLError('Error')
-    wpe.return_value = False
+    mock_check_winpe.return_value = False
 
     # 200
-    urlopen.side_effect = iter([httperr, urlerr, file_stream])
-    res = self._dl._OpenStream(url, max_retries=4)
+    mock_urlopen.side_effect = iter([httperr, urlerr, file_stream])
+    res = self._dl._OpenStream(url)
     self.assertEqual(res, file_stream)
+
     # Invalid URL
-    with self.assertRaisesRegex(download.DownloadError,
-                                'Invalid remote server URL*'):
-      self._dl._OpenStream('not_a_real_url', max_retries=0)
+    with self.assertRaisesRegex(
+        download.DownloadError, 'Invalid remote server URL*'):
+      self._dl._OpenStream('not_a_real_url')
+
     # 404
     file_stream.getcode.return_value = 404
-    urlopen.side_effect = iter([httperr, file_stream])
+    mock_urlopen.side_effect = iter([httperr, file_stream])
     self.assertRaises(download.DownloadError, self._dl._OpenStream, url)
-    # retries
+
+  @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
+  def testOpenFileStream_GivesUp(
+      self, mock_urlopen, mock_check_winpe):
+
+    file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
-    urlopen.side_effect = iter([httperr, httperr, file_stream])
-    self.assertRaises(
-        download.DownloadError, self._dl._OpenStream, url, max_retries=2)
+    mock_check_winpe.return_value = False
+
+    mock_urlopen.side_effect = self.FailingURLOpen
+    self.assertRaises(download.DownloadError, self._dl._OpenStream, TEST_URL)
 
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
@@ -194,8 +196,7 @@ class DownloadTest(absltest.TestCase):
     self.assertTrue(self._dl.CheckUrl(TEST_URL, status_codes=[200]))
     # miss
     urlopen.side_effect = iter([file_stream])
-    self.assertFalse(
-        self._dl.CheckUrl(TEST_URL, max_retries=1, status_codes=[201]))
+    self.assertFalse(self._dl.CheckUrl(TEST_URL, status_codes=[201]))
 
   @mock.patch.object(file_util, 'Copy', autospec=True)
   def testDownloadFileLocal(self, copy):
@@ -219,15 +220,15 @@ class DownloadTest(absltest.TestCase):
     url = TEST_URL
     path = r'C:\Windows\Temp\tmpblahblah'
     tempf.return_value.name = path
-    self._dl.DownloadFileTemp(url, max_retries=5)
-    downf.assert_called_with(self._dl, url, 5)
+    self._dl.DownloadFileTemp(url)
+    downf.assert_called_with(self._dl, url)
     todisk.assert_called_with(self._dl, downf.return_value, False)
     self.assertEqual(self._dl._save_location, path)
-    self._dl.DownloadFileTemp(url, max_retries=5, show_progress=True)
-    downf.assert_called_with(self._dl, url, 5)
+    self._dl.DownloadFileTemp(url, show_progress=True)
+    downf.assert_called_with(self._dl, url)
     todisk.assert_called_with(self._dl, downf.return_value, True)
-    self._dl.DownloadFileTemp(url, max_retries=5, show_progress=False)
-    downf.assert_called_with(self._dl, url, 5)
+    self._dl.DownloadFileTemp(url, show_progress=False)
+    downf.assert_called_with(self._dl, url)
     todisk.assert_called_with(self._dl, downf.return_value, False)
 
   @mock.patch.object(download.BaseDownloader, '_StoreDebugInfo', autospec=True)

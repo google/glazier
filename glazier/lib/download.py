@@ -35,6 +35,7 @@ from typing import List, Optional
 import urllib.request
 
 from absl import flags
+import backoff
 from glazier.lib import beyondcorp
 from glazier.lib import file_util
 from glazier.lib import winpe
@@ -45,7 +46,24 @@ if typing.TYPE_CHECKING:
 CHUNK_BYTE_SIZE = 65536
 SLEEP = 20
 
+# Maximum amount of time to spend on all backoff retries, in seconds.
+BACKOFF_MAX_TIME = 600
+
 FLAGS = flags.FLAGS
+
+
+# Required in order to patch BACKOFF_MAX_TIME to a more reasonable value in the
+# unit tests. Passing a callable to the max_time argument of
+# @backoff.on_exception() pushes the evaluation of that value to runtime,
+# rather than at module load, which gives us time to modify BACKOFF_MAX_TIME
+# during test setup.
+def GetBackoffMaxTime():
+  return BACKOFF_MAX_TIME
+
+
+def BackoffGiveupHandler(details):
+  raise DownloadError(
+      'Failed after {tries} attempt(s) over {elapsed:0.1f}'.format(**details))
 
 
 def IsLocal(string: str) -> bool:
@@ -172,46 +190,19 @@ class BaseDownloader(object):
       opener.add_handler(handler)
     urllib.request.install_opener(opener)
 
-  def _AttemptResource(self, attempt: int, max_retries: int, resource: str):
-    r"""Loop logic for retrying failed requests.
-
-    Use logger to log messages to standard output streams, and print to write to
-    console without newlines by using the return (\r) character.
-
-    Args:
-      attempt: Incrementing number of attempts.
-      max_retries: Number of times to attempt to download a file if the first
-        attempt fails. A negative number implies infinite.
-      resource: Resource to attempt to reach.
-
-    Raises:
-      DownloadError: The resource was unreachable.
-    """
-    if max_retries < 0:
-      logging.info(
-          'Failed attempt %d of Unlimited: Sleeping for %d second(s) '
-          'before retrying the %s.', attempt, SLEEP, resource)
-      time.sleep(SLEEP)
-    elif attempt < max_retries:
-      logging.info(
-          'Failed attempt %d of %d: Sleeping for %d second(s) '
-          'before retrying the %s.', attempt, max_retries, SLEEP, resource)
-      time.sleep(SLEEP)
-    else:
-      raise DownloadError('Failed to reach %s after %d attempt(s).' %
-                          (resource, max_retries))
-
-  def _OpenStream(
+  @backoff.on_exception(
+      backoff.expo,
+      (urllib.error.HTTPError, urllib.error.URLError),
+      max_time=GetBackoffMaxTime,
+      on_giveup=BackoffGiveupHandler)
+  def _OpenFileStream(
       self,
       url: str,
-      max_retries: int = 5,
       status_codes: Optional[List[int]] = None) -> 'http.client.HTTPResponse':
-    """Opens a connection to a remote resource.
+    """Opens a connection to a remote resource, with retries.
 
     Args:
-      url:  The address of the file to be downloaded.
-      max_retries:  The number of times to attempt to download a file if the
-        first attempt fails. A negative number implies infinite.
+      url: The address of the file to be downloaded.
       status_codes: A list of acceptable status codes to be returned by the
         remote endpoint.
 
@@ -222,8 +213,72 @@ class BaseDownloader(object):
       DownloadError: The resource was unreachable or failed to return with the
         expected code.
     """
-    attempt = 0
-    file_stream = None
+    try:
+      if winpe.check_winpe():
+        file_stream = urllib.request.urlopen(url, cafile=self._ca_cert_file)
+      else:
+        file_stream = urllib.request.urlopen(url)
+
+    # First attempt failed with HTTPError. Reraise and trigger a retry.
+    except urllib.error.HTTPError:
+      logging.error('File not found on remote server: %s.', url)
+      raise
+
+    # First attempt failed with URLError. Try something else before giving up.
+    except urllib.error.URLError as e:
+      logging.exception(
+          'Error connecting to remote server to download file '
+          '"%s". The error was: %s', url, e)
+
+      try:
+        logging.info('Trying again with machine context...')
+        ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        file_stream = urllib.request.urlopen(url, context=ctx)
+
+      # Second attempt failed with HTTPError. Reraise and trigger a retry.
+      except urllib.error.HTTPError:
+        logging.error('File not found on remote server: %s.', url)
+        raise
+
+      # Second attempt failed with URLError. Reraise and trigger a retry.
+      except urllib.error.URLError as e:
+        logging.exception(
+            'Error connecting to remote server to download file '
+            '"%s". The error was: %s', url, e)
+        raise
+
+    # We successfully retrieved a file stream, so just return it.
+    if file_stream.getcode() in (status_codes or [200]):
+      return file_stream
+
+    # In the case of a redirection, just call into _OpenFileStream() again with
+    # the redirect URL.
+    elif file_stream.getcode() in [302]:
+      return self._OpenFileStream(file_stream.geturl(), status_codes)
+
+    # For anything else, fail permanently with a DownloadError.
+    else:
+      raise DownloadError('Invalid return code for file %s. [%d]' %
+                          (url, file_stream.getcode()))
+
+  def _OpenStream(
+      self,
+      url: str,
+      status_codes: Optional[List[int]] = None) -> 'http.client.HTTPResponse':
+    """Opens a connection to a remote resource.
+
+    Args:
+      url:  The address of the file to be downloaded.
+      status_codes: A list of acceptable status codes to be returned by the
+        remote endpoint.
+
+    Returns:
+      file_stream: urlopen's file stream
+
+    Raises:
+      DownloadError: The resource was unreachable or failed to return with the
+        expected code.
+    """
     self._InstallOpeners()
 
     url = url.strip()
@@ -231,56 +286,20 @@ class BaseDownloader(object):
     if not parsed.netloc:
       raise DownloadError('Invalid remote server URL "%s".' % url)
 
-    while True:
-      try:
-        attempt += 1
-        if winpe.check_winpe():
-          file_stream = urllib.request.urlopen(url, cafile=self._ca_cert_file)
-        else:
-          file_stream = urllib.request.urlopen(url)
-      except urllib.error.HTTPError:
-        logging.error('File not found on remote server: %s.', url)
-      except urllib.error.URLError as e:
-        logging.error(
-            'Error connecting to remote server to download file '
-            '"%s". The error was: %s', url, e)
-        try:
-          logging.info('Trying again with machine context...')
-          ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-          file_stream = urllib.request.urlopen(url, context=ctx)
-        except urllib.error.HTTPError:
-          logging.error('File not found on remote server: %s.', url)
-        except urllib.error.URLError as e:
-          logging.error(
-              'Error connecting to remote server to download file '
-              '"%s". The error was: %s', url, e)
-      if file_stream:
-        if file_stream.getcode() in (status_codes or [200]):
-          return file_stream
-        elif file_stream.getcode() in [302]:
-          url = file_stream.geturl()
-        else:
-          raise DownloadError('Invalid return code for file %s. [%d]' %
-                              (url, file_stream.getcode()))
+    return self._OpenFileStream(url, status_codes)
 
-      self._AttemptResource(attempt, max_retries, 'file download')
-
-  def CheckUrl(self,
-               url: str,
-               status_codes: List[int],
-               max_retries: int = 5) -> bool:
+  def CheckUrl(self, url: str, status_codes: List[int]) -> bool:
     """Check a remote URL for availability.
 
     Args:
       url: A URL to access.
       status_codes: Acceptable status codes for the connection (list).
-      max_retries: Number of retries before giving up.
 
     Returns:
       True if accessing the file produced one of status_codes.
     """
     try:
-      self._OpenStream(url, max_retries=max_retries, status_codes=status_codes)
+      self._OpenStream(url, status_codes=status_codes)
       return True
     except DownloadError as e:
       logging.error(e)
@@ -289,7 +308,6 @@ class BaseDownloader(object):
   def DownloadFile(self,
                    url: str,
                    save_location: str,
-                   max_retries: int = 5,
                    show_progress: bool = False):
     """Downloads a file from one location to another.
 
@@ -299,8 +317,6 @@ class BaseDownloader(object):
     Args:
       url:  The address of the file to be downloaded.
       save_location: The full path of where the file should be saved.
-      max_retries:  The number of times to attempt to download a file if the
-        first attempt fails.
       show_progress: Print download progress to stdout (overrides default).
 
     Raises:
@@ -310,8 +326,7 @@ class BaseDownloader(object):
     if IsRemote(url):
       if self._beyondcorp.CheckBeyondCorp():
         url = self._SetUrl(url)
-        max_retries = -1
-      file_stream = self._OpenStream(url, max_retries)
+      file_stream = self._OpenStream(url)
       self._StreamToDisk(file_stream, show_progress)
     else:
       try:
@@ -319,16 +334,11 @@ class BaseDownloader(object):
       except file_util.Error as e:
         raise DownloadError(e)
 
-  def DownloadFileTemp(self,
-                       url: str,
-                       max_retries: int = 5,
-                       show_progress: bool = False) -> str:
+  def DownloadFileTemp(self, url: str, show_progress: bool = False) -> str:
     """Downloads a file to temporary storage.
 
     Args:
       url:  The address of the file to be downloaded.
-      max_retries:  The number of times to attempt to download a file if the
-        first attempt fails.
       show_progress: Print download progress to stdout (overrides default).
 
     Returns:
@@ -339,8 +349,7 @@ class BaseDownloader(object):
     destination.close()
     if self._beyondcorp.CheckBeyondCorp():
       url = self._SetUrl(url)
-      max_retries = -1
-    file_stream = self._OpenStream(url, max_retries)
+    file_stream = self._OpenStream(url)
     self._StreamToDisk(file_stream, show_progress)
     return self._save_location
 
@@ -412,17 +421,24 @@ class BaseDownloader(object):
         print('%s: %s' % (key, value))
       print('\n\n\n')
 
+  @backoff.on_exception(
+      backoff.expo,
+      AttributeError,
+      max_time=GetBackoffMaxTime,
+      on_giveup=BackoffGiveupHandler)
+  def _GetFileStreamSize(self, file_stream: 'http.client.HTTPResponse'):
+    url = file_stream.geturl()
+    total_size = int(file_stream.headers.get('Content-Length').strip())
+    return (url, total_size)
+
   def _StreamToDisk(self,
                     file_stream: 'http.client.HTTPResponse',
-                    show_progress: bool = None,
-                    max_retries: int = 5):
+                    show_progress: bool = None):
     """Save a file stream to disk.
 
     Args:
       file_stream: The file stream returned by a successful urlopen()
       show_progress: Print download progress to stdout (overrides default).
-      max_retries:  The number of times to attempt to download a file if the
-        first attempt fails. A negative number implies infinite.
 
     Raises:
       DownloadError: Error retrieving file or saving to disk.
@@ -431,16 +447,11 @@ class BaseDownloader(object):
     if show_progress is not None:
       progress = show_progress
 
+    if file_stream is None:
+      raise DownloadError('Cannot save to disk, missing file stream')
+
     bytes_so_far = 0
-    attempt = 0
-    while True:
-      attempt += 1
-      try:
-        url = file_stream.geturl()
-        total_size = int(file_stream.headers.get('Content-Length').strip())
-        break
-      except AttributeError:
-        self._AttemptResource(attempt, max_retries, 'server URL')
+    url, total_size = self._GetFileStreamSize(file_stream)
 
     try:
       with open(self._save_location, 'wb') as output_file:
