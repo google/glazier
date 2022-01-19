@@ -17,7 +17,6 @@
 import os
 # do not remove: internal placeholder 1
 from absl import flags
-from glazier.lib import constants
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('resource_path', '',
@@ -33,7 +32,7 @@ class Resources(object):
   def __init__(self, resource_dir=None):
     self._path = resource_dir
     if not self._path:
-      self._path = constants.FLAGS.resource_path
+      self._path = FLAGS.resource_path
     if not self._path:
       path = os.path.dirname(os.path.realpath(__file__))
       self._path = os.path.join(path, 'resources')
