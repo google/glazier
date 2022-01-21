@@ -63,7 +63,8 @@ def GetBackoffMaxTime():
 
 def BackoffGiveupHandler(details):
   raise DownloadError(
-      'Failed after {tries} attempt(s) over {elapsed:0.1f}'.format(**details))
+      'Failed after {tries} attempt(s) over {elapsed:0.1f} seconds'.format(
+          **details))
 
 
 def IsLocal(string: str) -> bool:
@@ -226,9 +227,7 @@ class BaseDownloader(object):
 
     # First attempt failed with URLError. Try something else before giving up.
     except urllib.error.URLError as e:
-      logging.exception(
-          'Error connecting to remote server to download file '
-          '"%s". The error was: %s', url, e)
+      logging.error('Error while downloading "%s": %s', url, e)
 
       try:
         logging.info('Trying again with machine context...')
@@ -242,9 +241,7 @@ class BaseDownloader(object):
 
       # Second attempt failed with URLError. Reraise and trigger a retry.
       except urllib.error.URLError as e:
-        logging.exception(
-            'Error connecting to remote server to download file '
-            '"%s". The error was: %s', url, e)
+        logging.error('Error while downloading "%s": %s', url, e)
         raise
 
     # We successfully retrieved a file stream, so just return it.
