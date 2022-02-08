@@ -1,6 +1,6 @@
 # Glazier Build YAML Specification
 
-<!--* freshness: { owner: 'winops-imaging' reviewed: '2021-10-13' } *-->
+<!--* freshness: { owner: 'winops-imaging' reviewed: '2022-02-08' } *-->
 
 Glazier uses YAML-based configuration files.
 
@@ -102,13 +102,13 @@ Actions are the preferred method for adding new functionality to the autobuild
 tool. Unlike hard-coded commands, actions are almost fully self-contained and
 capable of self-validating.
 
-See the [Actions README](../../glazier/lib/actions/README.md) for a list of available
+See the [Actions README](../../docs/actions.md) for a list of available
 actions.
 
 ### Pin
 
 Exclusive to control elements, the pin attaches the current block to a specific
-set of build info tags. The tags are inclusive, and must *all *match for the
+set of build info tags. The tags are inclusive, and must *all* match for the
 command block to be executed by the build. The format is a dictionary, where the
 key is the variable name from buildinfo and the value is a list of acceptable
 values. If the key-value in buildinfo matches any of the strings in the list,
@@ -134,7 +134,7 @@ While direct match pins are exclusive, skipping any values not named in the set,
 inverse match pins are inclusive, accepting any values not named directly. If
 the pin is not negated by a matching inverse pin, the outcome is a successful
 match. For example: `'os_code': ['!win10', '!win8']` is False for os_code=win10
-and False for os_code=win8, but True for os_code=win2022.
+and False for os_code=win8, but True for `os_code=win2022`.
 
 *Direct pins are only considered if no inverse pins are present.* This is to
 compensate for direct matches being exclusive in nature. It would not make sense
@@ -157,7 +157,7 @@ controls:
     - 'DeviceModel'
 ```
 
-See also the [Policies README](../../glazier/lib/policies/README.md)
+See also the [Policies README](../../docs/policies.md)
 
 ### Template
 
@@ -190,20 +190,20 @@ installing host. Not all of build info is exported for the purposes of pinning,
 although it's always possible to extend the code to support different pins in
 the future.
 
-*   computer_model
+*   `computer_model`
     *   The computer model hardware string (eg HP Z620 Workstation)
     *   Supports partial model matching from the left.
-*   device_id
+*   `device_id`
     *   A hardware device id string in the format of
         \[vendor-device-subsystem-revision\]. Will be matched against every
         device id detected in hardware.
     *   Supports partial device matching from the left (eg AA-BB in the config
         will match AA-BB-CC-DD in hardware).
-*   encryption_type
+*   `encryption_type`
     *   TPM, none
-*   graphics
+*   `graphics`
     *   Detected graphics cards (by name).
-*   os_code
+*   `os_code`
     *   Corresponds to the generic operating system code as defined in
         release-info.yaml. Used for generalized identification of the target
         platform.
