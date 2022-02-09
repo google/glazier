@@ -67,7 +67,7 @@ class PowerShell(object):
                                     ['-NoProfile', '-NoLogo', op] + args,
                                     ok_result, self.shell, self.log)
     except execute.Error as e:
-      raise PowerShellError(e)
+      raise PowerShellError(e) from e
 
   def RunCommand(self,
                  command: List[str],
@@ -103,7 +103,7 @@ class PowerShell(object):
     try:
       path = r.GetResourceFileName(path)
     except resources.FileNotFound as e:
-      raise PowerShellError(e)
+      raise PowerShellError(e) from e
     return os.path.normpath(path)
 
   def RunResource(self, path: str, args: List[str],
@@ -165,4 +165,4 @@ class PowerShell(object):
       execute.execute_binary(_Powershell(), ['-NoProfile', '-NoLogo'],
                              shell=self.shell, log=self.log)
     except execute.Error as e:
-      raise PowerShellError(e)
+      raise PowerShellError(e) from e

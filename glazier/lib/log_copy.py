@@ -67,10 +67,10 @@ class LogCopy(object):
         content = f.readlines()
         for line in content:
           logger.info(line)
-    except IOError:
+    except IOError as e:
       raise LogCopyError(
           'Unable to open log file. It will not be imported into '
-          'the Windows Event Log.')
+          'the Windows Event Log.') from e
 
   def _GetLogFileName(self):
     """Creates the destination file name for a text log file.
@@ -82,7 +82,7 @@ class LogCopy(object):
       hostname = registry.get_value('name', path=constants.REG_ROOT)
     except registry.Error as e:
       raise LogCopyError('Hostname could not be determined for log copy: %s' %
-                         str(e))
+                         str(e)) from e
     destination_file_date = gtime.now().replace(microsecond=0)
     destination_file_date = destination_file_date.isoformat()
     destination_file_date = destination_file_date.replace(':', '')
@@ -108,8 +108,8 @@ class LogCopy(object):
       destination = self._GetLogFileName()
       try:
         shutil.copy(source_log, destination)
-      except shutil.Error:
-        raise LogCopyError('Log copy failed.')
+      except shutil.Error as e:
+        raise LogCopyError('Log copy failed.') from e
       mapper.UnmapDrive('l:')
     else:
       raise LogCopyError('Drive mapping failed.')

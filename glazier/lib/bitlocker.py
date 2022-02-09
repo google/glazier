@@ -63,7 +63,7 @@ class Bitlocker(object):
                      '-RecoveryPasswordProtector', '>NUL'])
     except powershell.PowerShellError as e:
       raise BitlockerError('Error enabling Bitlocker via Powershell: %s.' %
-                           str(e))
+                           str(e)) from e
 
   def Enable(self):
     """Enable bitlocker."""

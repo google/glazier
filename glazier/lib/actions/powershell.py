@@ -53,13 +53,13 @@ class PSScript(BaseAction):
     try:
       script = cache.Cache().CacheFromLine(script, self._build_info)  # pytype: disable=annotation-type-mismatch
     except cache.CacheError as e:
-      raise ActionError(e)
+      raise ActionError(e) from e
 
     try:
       result = powershell.PowerShell(shell, log).RunLocal(
           script, ps_args, success_codes + reboot_codes)
     except powershell.PowerShellError as e:
-      raise ActionError(e)
+      raise ActionError(e) from e
 
     if result in reboot_codes:
       raise RestartEvent('Restart triggered by exit code %d' % result, 5,
@@ -97,14 +97,15 @@ class MultiPSScript(BaseAction):
     for arg in self._args:
       try:
         PSScript(arg, self._build_info).Run()
-      except IndexError:
-        raise ActionError(f'Unable to determine PowerShell scripts from {arg}')
+      except IndexError as e:
+        raise ActionError(
+            f'Unable to determine PowerShell scripts from {arg}') from e
 
   def Validate(self):
     try:
       self._TypeValidator(self._args, list)
     except ValidationError as e:
-      raise ActionError(e)
+      raise ActionError(e) from e
     for arg in self._args:
       PSScript(arg, self._build_info).Validate()
 
@@ -141,7 +142,7 @@ class PSCommand(BaseAction):
       try:
         command[0] = cache.Cache().CacheFromLine(command[0], self._build_info)  # pytype: disable=container-type-mismatch
       except cache.CacheError as e:
-        raise ActionError(e)
+        raise ActionError(e) from e
 
     try:
       # Exit $LASTEXITCODE is necessary because PowerShell.exe -Command only
@@ -149,7 +150,7 @@ class PSCommand(BaseAction):
       result = powershell.PowerShell(shell, log).RunCommand(
           command + ['; exit $LASTEXITCODE'], success_codes + reboot_codes)
     except powershell.PowerShellError as e:
-      raise ActionError(e)
+      raise ActionError(e) from e
 
     if result in reboot_codes:
       raise RestartEvent(
@@ -187,13 +188,14 @@ class MultiPSCommand(BaseAction):
     for arg in self._args:
       try:
         PSCommand(arg, self._build_info).Run()
-      except IndexError:
-        raise ActionError(f'Unable to determine PowerShell commands from {arg}')
+      except IndexError as e:
+        raise ActionError(
+            f'Unable to determine PowerShell commands from {arg}') from e
 
   def Validate(self):
     try:
       self._TypeValidator(self._args, list)
     except ValidationError as e:
-      raise ActionError(e)
+      raise ActionError(e) from e
     for arg in self._args:
       PSCommand(arg, self._build_info).Validate()

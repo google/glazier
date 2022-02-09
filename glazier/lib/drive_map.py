@@ -87,12 +87,13 @@ class DriveMap(object):
     try:
       import win32wnet  # pylint: disable=g-import-not-at-top
       self._win32wnet = win32wnet
-    except ImportError:
-      raise ModuleImportError('No win32wnet module available on this platform.')
+    except ImportError as e:
+      raise ModuleImportError(
+          'No win32wnet module available on this platform.') from e
 
     try:
       import win32netcon  # pylint: disable=g-import-not-at-top
       self._win32netcon = win32netcon
-    except ImportError:
+    except ImportError as e:
       raise ModuleImportError(
-          'No win32netcon module available on this platform.')
+          'No win32netcon module available on this platform.') from e

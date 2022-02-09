@@ -94,7 +94,7 @@ class DriverWIM(BaseAction):
           shell=True)
     except execute.Error as e:
       raise ActionError('Error adding drivers to DriverStore from %s. (%s)' %
-                        (mount_dir, e))
+                        (mount_dir, e)) from e
 
   def _AddDriverWinPE(self, mount_dir):
     """Command used to process drivers in a given directory.
@@ -120,7 +120,7 @@ class DriverWIM(BaseAction):
           shell=True)
     except execute.Error as e:
       raise ActionError('Error applying drivers to image from %s. (%s)' %
-                        (mount_dir, e))
+                        (mount_dir, e)) from e
 
   def _ProcessWim(self, wim_file):
     """Processes WIM driver files using DISM commands.
@@ -153,7 +153,7 @@ class DriverWIM(BaseAction):
           ],
           shell=True)
     except execute.Error as e:
-      raise ActionError('Unable to mount image %s. (%s)' % (wim_file, e))
+      raise ActionError('Unable to mount image %s. (%s)' % (wim_file, e)) from e
 
     logging.info('Applying %s image to main disk.', wim_file)
     if winpe.check_winpe():
@@ -168,4 +168,5 @@ class DriverWIM(BaseAction):
           ['/Unmount-Image', f'/MountDir:{mount_dir}', '/Discard'],
           shell=True)
     except execute.Error as e:
-      raise ActionError('Error unmounting image. Unable to continue. (%s)' % e)
+      raise ActionError(
+          'Error unmounting image. Unable to continue. (%s)' % e) from e

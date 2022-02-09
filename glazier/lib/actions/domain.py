@@ -33,7 +33,7 @@ class DomainJoin(BaseAction):
     try:
       joiner.JoinDomain()
     except domain_join.DomainJoinError as e:
-      raise ActionError('Unable to complete domain join.  %s' % str(e))
+      raise ActionError('Unable to complete domain join.  %s' % str(e)) from e
 
   def Validate(self):
     self._ListOfStringsValidator(self._args, length=2, max_length=3)

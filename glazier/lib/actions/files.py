@@ -38,7 +38,7 @@ class Execute(BaseAction):
     try:
       command_cache = cache.Cache().CacheFromLine(command, self._build_info)
     except cache.CacheError as e:
-      raise ActionError(e)
+      raise ActionError(e) from e
 
     try:
       command_list = shlex.split(command_cache, posix=False)
@@ -48,9 +48,9 @@ class Execute(BaseAction):
           success_codes + reboot_codes,
           shell=shell)
     except (execute.Error, ValueError) as e:
-      raise ActionError(e)
-    except KeyboardInterrupt:
-      raise ActionError('KeyboardInterrupt detected, exiting.')
+      raise ActionError(e) from e
+    except KeyboardInterrupt as e:
+      raise ActionError('KeyboardInterrupt detected, exiting.') from e
 
     if result in reboot_codes:
       raise RestartEvent(
@@ -106,13 +106,13 @@ class Get(BaseAction):
         file_util.CreateDirectories(dst)
       except file_util.Error as e:
         raise ActionError('Could not create destination directory %s. %s' %
-                          (dst, e))
+                          (dst, e)) from e
       try:
         downloader.DownloadFile(full_url, dst, show_progress=True)
       except download.DownloadError as e:
         downloader.PrintDebugInfo()
         raise ActionError('Transfer error while downloading %s: %s' %
-                          (full_url, str(e)))
+                          (full_url, str(e))) from e
       if len(arg) > 2 and arg[2]:
         logging.info('Verifying SHA256 hash for %s.', dst)
         hash_ok = downloader.VerifyShaHash(dst, arg[2])
@@ -132,20 +132,20 @@ class Unzip(BaseAction):
     try:
       zip_file = self._args[0]
       out_path = self._args[1]
-    except IndexError:
+    except IndexError as e:
       raise ActionError('Unable to determine desired paths from %s.' %
-                        str(self._args))
+                        str(self._args)) from e
 
     try:
       file_util.CreateDirectories(out_path)
-    except file_util.Error:
-      raise ActionError('Unable to create output path %s.' % out_path)
+    except file_util.Error as e:
+      raise ActionError('Unable to create output path %s.' % out_path) from e
 
     try:
       zf = zipfile.ZipFile(zip_file)
       zf.extractall(out_path)
     except (IOError, zipfile.BadZipfile) as e:
-      raise ActionError('Bad zip file given as input.  %s' % e)
+      raise ActionError('Bad zip file given as input.  %s' % e) from e
 
   def Validate(self):
     self._ListOfStringsValidator(self._args, 2)

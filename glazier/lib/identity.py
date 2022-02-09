@@ -63,7 +63,7 @@ def set_username(username: Optional[str] = None,
   try:
     registry.set_value('Username', username, path=constants.REG_ROOT)
   except registry.Error as e:
-    raise Error(e)
+    raise Error(e) from e
 
   return username
 
@@ -105,6 +105,6 @@ def set_hostname(hostname: Optional[str] = None) -> str:
   try:
     registry.set_value('Name', hostname, path=constants.REG_ROOT)
   except registry.Error as e:
-    raise Error(e)
+    raise Error(e) from e
 
   return hostname

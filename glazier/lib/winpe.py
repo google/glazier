@@ -42,4 +42,4 @@ def check_winpe() -> bool:
     else:
       return False
   except registry.Error as e:
-    raise Error('Failed to detect image environment (%s)' % str(e))
+    raise Error('Failed to detect image environment (%s)' % str(e)) from e

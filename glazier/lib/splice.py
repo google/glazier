@@ -48,7 +48,7 @@ class Splice(object):
       try:
         hostname = identity.set_hostname()
       except identity.Error as e:
-        raise Error(e)
+        raise Error(e) from e
 
     return hostname
 
@@ -66,7 +66,7 @@ class Splice(object):
       try:
         username = identity.set_username(prompt='domain join')
       except identity.Error as e:
-        raise Error(e)
+        raise Error(e) from e
 
     return fr'{constants.DOMAIN_NAME}\{username}'
 
@@ -114,7 +114,7 @@ class Splice(object):
           self._splice_unattended()
         else:
           self._splice_user()
-      except execute.Error:
+      except execute.Error as e:
         if max_retries < 0 or attempt < max_retries:  # pytype: disable=unsupported-operands
           logging.warning(
               'Domain join attempt %d of %d failed. Retrying in %d second(s).',
@@ -129,7 +129,8 @@ class Splice(object):
                 max_retries)
             break
           else:
-            raise Error(f'Failed to join domain after {attempt} attempt(s).')
+            raise Error(
+                f'Failed to join domain after {attempt} attempt(s).') from e
       else:
         logging.info('Domain join succeeded after %d attempt(s).', attempt)
         return
@@ -139,14 +140,15 @@ class Splice(object):
       attempt += 1
       try:
         self._splice_user()
-      except execute.Error:
+      except execute.Error as e:
         if max_retries < 0 or attempt < max_retries:  # pytype: disable=unsupported-operands
           logging.warning(
               'Domain join attempt %d of %d failed. Retrying in %d second(s).',
               attempt, max_retries, sleep)
           time.sleep(sleep)
         else:
-          raise Error(f'Failed to join domain after {attempt} attempt(s).')
+          raise Error(
+              f'Failed to join domain after {attempt} attempt(s).') from e
       else:
         logging.info('Fallback domain join succeeded after %d attempt(s).',
                      attempt)

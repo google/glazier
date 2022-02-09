@@ -46,7 +46,8 @@ class SetUnattendTimeZone(BaseAction):
       with open(unattend_path, 'w') as unattend:
         unattend.write(''.join(lines))
     except IOError as e:
-      raise ActionError('Unable to set time zone in unattend.xml (%s)' % str(e))
+      raise ActionError(
+          'Unable to set time zone in unattend.xml (%s)' % str(e)) from e
 
   def Run(self):
     """Sets the timezone inside unattend.xml."""

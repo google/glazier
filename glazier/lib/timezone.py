@@ -50,9 +50,9 @@ class Timezone(object):
     res = resources.Resources()
     try:
       win_zones = parse(res.GetResourceFileName(FLAGS.windows_zones_resource))
-    except resources.FileNotFound:
-      raise TimezoneError('Cannot load zone map from %s.' %
-                          FLAGS.windows_zones_resource)
+    except resources.FileNotFound as e:
+      raise TimezoneError(
+          'Cannot load zone map from %s.' % FLAGS.windows_zones_resource) from e
     for zone in win_zones.getElementsByTagName('mapZone'):
       self.zones[zone.getAttribute('type')] = zone.getAttribute('other')
 

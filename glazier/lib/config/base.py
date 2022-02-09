@@ -36,8 +36,9 @@ class ConfigBase(object):
     try:
       act_obj = getattr(actions, str(action))
       return act_obj(args=params, build_info=self._build_info)
-    except AttributeError:
-      raise ConfigError('Unknown imaging action: %s' % str(action))  # pytype: disable=wrong-arg-types
+    except AttributeError as e:
+      msg = 'Unknown imaging action: %s' % str(action)
+      raise ConfigError(msg) from e  # pytype: disable=wrong-arg-types
 
   def _IsRealtimeAction(self, action, params):
     """Determine whether $action should happen in realtime."""
@@ -60,4 +61,4 @@ class ConfigBase(object):
       a = self._GetAction(action, params)
       a.Run()
     except actions.ActionError as e:
-      raise ConfigError(e)
+      raise ConfigError(e) from e

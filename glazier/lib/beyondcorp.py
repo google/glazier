@@ -58,7 +58,7 @@ class BeyondCorp(object):
       with open(FLAGS.seed_path) as p:
         return json.load(p)
     except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
-      raise BCError(e)
+      raise BCError(e) from e
 
   @functools.lru_cache()
   def CheckBeyondCorp(self) -> bool:
@@ -74,7 +74,7 @@ class BeyondCorp(object):
         registry.set_value('beyond_corp', 'True', path=constants.REG_ROOT)
         return True
       except registry.Error as e:
-        raise BCError(e)
+        raise BCError(e) from e
     else:
       try:
         bc = registry.get_value('beyond_corp', path=constants.REG_ROOT)
@@ -89,7 +89,7 @@ class BeyondCorp(object):
     try:
       registry.set_value('beyond_corp', 'False', path=constants.REG_ROOT)
     except registry.Error as e:
-      raise BCError(e)
+      raise BCError(e) from e
     return False
 
   @functools.lru_cache()
@@ -131,7 +131,8 @@ class BeyondCorp(object):
     try:
       drive_letter = wmi_query.WMIQuery().Query(query)[0].Name
     except wmi_query.WmiError as e:
-      raise BCError(f'Failed to query WMI for BeyondCorp drive letter: {e}')
+      raise BCError(
+          f'Failed to query WMI for BeyondCorp drive letter: {e}') from e
 
     if not drive_letter:
       raise BCError('BeyondCorp drive letter was empty.')
@@ -185,7 +186,7 @@ class BeyondCorp(object):
     try:
       res = requests.post(FLAGS.sign_endpoint, data=req)
     except requests.exceptions.ConnectionError as e:
-      raise BCError(e)
+      raise BCError(e) from e
 
     if res.status_code != 200 or res.json(
     )['Status'] != 'Success' or not res.json()['SignedURL']:

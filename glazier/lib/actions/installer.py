@@ -96,7 +96,7 @@ class BuildInfoSave(BaseAction):
       try:
         registry.set_value(value_name, value_data, 'HKLM', key_path)
       except registry.Error as e:
-        raise ActionError(e)
+        raise ActionError(e) from e
 
   def Run(self):
     path = os.path.join(constants.SYS_CACHE, 'build_info.yaml')
@@ -211,7 +211,7 @@ class StartStage(BaseAction):
       if len(self._args) > 1 and self._args[1]:
         stage.exit_stage(int(self._args[0]))
     except stage.Error as e:
-      raise ActionError(e)
+      raise ActionError(e) from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)

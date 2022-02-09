@@ -46,7 +46,7 @@ class SpliceDomainJoin(BaseAction):
     try:
       self._splice.domain_join(max_retries, unattended, fallback)
     except splice.Error as e:
-      raise ActionError(e)
+      raise ActionError(e) from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)

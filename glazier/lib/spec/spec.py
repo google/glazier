@@ -32,5 +32,5 @@ class UnknownSpec(Exception):
 def GetModule():
   try:
     return SPEC_OPTS[FLAGS.glazier_spec]
-  except KeyError:
-    raise UnknownSpec(FLAGS.glazier_spec)
+  except KeyError as e:
+    raise UnknownSpec(FLAGS.glazier_spec) from e

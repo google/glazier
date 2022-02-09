@@ -329,7 +329,7 @@ class BaseDownloader(object):
       try:
         file_util.Copy(url, save_location)
       except file_util.Error as e:
-        raise DownloadError(e)
+        raise DownloadError(e) from e
 
   def DownloadFileTemp(self, url: str, show_progress: bool = False) -> str:
     """Downloads a file to temporary storage.
@@ -387,7 +387,7 @@ class BaseDownloader(object):
       return self._beyondcorp.GetSignedUrl(
           url[url.startswith(config_server) and len(config_server):])
     except beyondcorp.BCError as e:
-      raise DownloadError(e)
+      raise DownloadError(e) from e
 
   def _StoreDebugInfo(self,
                       file_stream: 'http.client.HTTPResponse',
@@ -464,10 +464,10 @@ class BaseDownloader(object):
             self._DownloadChunkReport(bytes_so_far, total_size)
     except socket.error as e:
       self._StoreDebugInfo(file_stream, str(e))
-      raise DownloadError('Socket error during download.')
-    except IOError:
+      raise DownloadError('Socket error during download.') from e
+    except IOError as e:
       raise DownloadError('File location could not be opened for writing: %s' %
-                          self._save_location)
+                          self._save_location) from e
     self._Validate(file_stream, total_size)
     file_stream.close()
 

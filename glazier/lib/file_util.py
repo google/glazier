@@ -39,7 +39,7 @@ def Copy(src: str, dst: str):
     shutil.copy2(src, dst)
     logging.info('Copying: %s to %s', src, dst)
   except (shutil.Error, IOError) as e:
-    raise Error('Unable to copy %s to %s: %s' % (src, dst, str(e)))
+    raise Error('Unable to copy %s to %s: %s' % (src, dst, str(e))) from e
 
 
 def CreateDirectories(path: str):
@@ -56,8 +56,8 @@ def CreateDirectories(path: str):
     logging.debug('Creating directory %s ', dirname)
     try:
       os.makedirs(dirname)
-    except (shutil.Error, OSError):
-      raise Error('Unable to make directory: %s' % dirname)
+    except (shutil.Error, OSError) as e:
+      raise Error('Unable to make directory: %s' % dirname) from e
 
 
 def Move(src: str, dst: str):
@@ -76,7 +76,8 @@ def Move(src: str, dst: str):
     Remove(dst)
     os.rename(src, dst)
   except OSError as e:
-    raise Error('Failure moving file from %s to %s. (%s)' % (src, dst, str(e)))
+    raise Error(
+        'Failure moving file from %s to %s. (%s)' % (src, dst, str(e))) from e
 
 
 def Remove(path: str):
@@ -92,4 +93,4 @@ def Remove(path: str):
     if os.path.exists(path):
       os.remove(path)
   except OSError as e:
-    raise Error('Failure removing file %s. (%s)' % (path, str(e)))
+    raise Error('Failure removing file %s. (%s)' % (path, str(e))) from e

@@ -52,7 +52,7 @@ def Collect(path: str):
         arc.write(os.path.join(root, f))
     arc.close()
   except (IOError, ValueError) as e:
-    raise LogError(e)
+    raise LogError(e) from e
 
 
 def Setup():
@@ -84,8 +84,8 @@ def Setup():
   # Create file handler and set level
   try:
     fh = logging.FileHandler(log_file)
-  except IOError:
-    raise LogError('Failed to open log file %s.' % log_file)
+  except IOError as e:
+    raise LogError('Failed to open log file %s.' % log_file) from e
   fh.setLevel(logging.DEBUG)
   fh.setFormatter(debug_formatter)
   logger.addHandler(fh)

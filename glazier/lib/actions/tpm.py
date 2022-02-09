@@ -28,7 +28,7 @@ class BitlockerEnable(BaseAction):
       bl = bitlocker.Bitlocker(mode)
       bl.Enable()
     except bitlocker.BitlockerError as e:
-      raise ActionError('Failure enabling Bitlocker. (%s)' % str(e))
+      raise ActionError('Failure enabling Bitlocker. (%s)' % str(e)) from e
 
   def Validate(self):
     self._ListOfStringsValidator(self._args, 1)

@@ -79,7 +79,7 @@ def execute_binary(binary: str, args: Optional[List[str]] = None,
     process = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, shell=shell,
                                universal_newlines=True)
   except WindowsError as e:  # pylint: disable=undefined-variable
-    raise Error(f'Failed to execute [{string}]: {str(e)}')
+    raise Error(f'Failed to execute [{string}]: {str(e)}') from e
 
   # Optionally log output to standard logger
   if not shell and log:

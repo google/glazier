@@ -87,7 +87,7 @@ class ConfigBuilder(base.ConfigBase):
     try:
       files.Dump(out_file, self._task_list, mode='a')
     except files.Error as e:
-      raise ConfigBuilderError(e)
+      raise ConfigBuilderError(e) from e
 
   def _Start(self, conf_path, conf_file):
     """Pull and process a config file.
@@ -101,7 +101,7 @@ class ConfigBuilder(base.ConfigBase):
       path = download.PathCompile(self._build_info, file_name=conf_file)
       yaml_config = files.Read(path)
     except (files.Error, buildinfo.Error) as e:
-      raise ConfigBuilderError(e)
+      raise ConfigBuilderError(e) from e
     timer_start = 'start_{}_{}'.format(conf_path.rstrip('/'), conf_file)
     active_path = copy.deepcopy(self._build_info.ActiveConfigPath())
     config_server = copy.deepcopy(self._build_info.ConfigServer())

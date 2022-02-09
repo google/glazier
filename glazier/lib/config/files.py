@@ -41,12 +41,12 @@ def Remove(path: str, backup: bool = True):
     try:
       file_util.Move(path, path + '.bak')
     except file_util.Error as e:
-      raise Error('Failed to create backup file (%s)' % str(e))
+      raise Error('Failed to create backup file (%s)' % str(e)) from e
   else:
     try:
       file_util.Remove(path)
     except file_util.Error as e:
-      raise Error('Failed to remove file (%s)' % str(e))
+      raise Error('Failed to remove file (%s)' % str(e)) from e
 
 
 def Dump(path: str, data: Any, mode: str = 'w'):
@@ -64,12 +64,13 @@ def Dump(path: str, data: Any, mode: str = 'w'):
     with open(tmp_f, mode) as handle:
       handle.write(yaml.dump(data))
   except IOError as e:
-    raise Error('Could not save data to yaml file %s: %s' % (path, str(e)))
+    raise Error(
+        'Could not save data to yaml file %s: %s' % (path, str(e))) from e
   # Replace the original with the tmp.
   try:
     file_util.Move(tmp_f, path)
   except file_util.Error as e:
-    raise Error('Could not replace config file. (%s)' % str(e))
+    raise Error('Could not replace config file. (%s)' % str(e)) from e
 
 
 def Read(path: str):
@@ -91,7 +92,7 @@ def Read(path: str):
     try:
       path = downloader.DownloadFileTemp(path)
     except download.DownloadError as e:
-      raise Error('Could not download yaml file %s: %s' % (path, str(e)))
+      raise Error('Could not download yaml file %s: %s' % (path, str(e))) from e
   return _YamlReader(path)
 
 
@@ -110,5 +111,5 @@ def _YamlReader(path: str) -> str:
     with open(path, 'r') as yaml_file:
       yaml_config = yaml.safe_load(yaml_file)
   except IOError as e:
-    raise Error('Could not read yaml file %s: %s' % (path, str(e)))
+    raise Error('Could not read yaml file %s: %s' % (path, str(e))) from e
   return yaml_config

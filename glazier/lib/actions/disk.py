@@ -26,4 +26,4 @@ class WriteDiskSpace(BaseAction):
     try:
       disk.set_disk_space()
     except disk.Error as e:
-      raise ActionError(e)
+      raise ActionError(e) from e

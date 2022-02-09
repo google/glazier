@@ -154,7 +154,7 @@ class BuildInfo(object):
     try:
       data = files.Read(rel_id_file)
     except files.Error as e:
-      raise Error(e)
+      raise Error(e) from e
     if data and 'release_id' in data:
       return data['release_id']
     return None
@@ -166,7 +166,7 @@ class BuildInfo(object):
       try:
         self._release_info = files.Read(rel_info_file)
       except files.Error as e:
-        raise Error(e)
+        raise Error(e) from e
     return self._release_info
 
   def ReleasePath(self) -> str:
@@ -212,7 +212,7 @@ class BuildInfo(object):
       try:
         self._version_info = files.Read(info_file)
       except files.Error as e:
-        raise Error(e)
+        raise Error(e) from e
     return self._version_info
 
   #

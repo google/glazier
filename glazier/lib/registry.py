@@ -94,7 +94,7 @@ def set_value(name: str,
       logging.debug(r'Set registry value: %s:\%s\%s = %s', root, path, name,
                     str(value))
   except registry.RegistryError as e:
-    raise Error(e)
+    raise Error(e) from e
 
 
 def get_values(path: str,
@@ -155,4 +155,4 @@ def remove_value(name: str,
       logging.warning(r'Failed to delete non-existant registry key: %s:\%s\%s',
                       root, path, name)
     else:
-      raise Error(e)
+      raise Error(e) from e

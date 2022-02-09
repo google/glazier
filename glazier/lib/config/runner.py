@@ -37,7 +37,7 @@ class ConfigRunner(base.ConfigBase):
     try:
       data = files.Read(self._task_list_path)
     except files.Error as e:
-      raise ConfigRunnerError(e)
+      raise ConfigRunnerError(e) from e
     self._ProcessTasks(data)
 
   def _PopTask(self, tasks):
@@ -48,7 +48,7 @@ class ConfigRunner(base.ConfigBase):
       if not tasks:
         files.Remove(self._task_list_path)
     except files.Error as e:
-      raise ConfigRunnerError(e)
+      raise ConfigRunnerError(e) from e
 
   def _ProcessTasks(self, tasks):
     """Process the pending tasks list.
@@ -111,7 +111,7 @@ class ConfigRunner(base.ConfigBase):
       check = getattr(policies, str(line))
       policy = check(build_info=self._build_info)
       policy.Verify()
-    except AttributeError:
-      raise errors.GUnknownPolicyError(replacements=[str(line)])
+    except AttributeError as e:
+      raise errors.GUnknownPolicyError(replacements=[str(line)]) from e
     except policies.ImagingPolicyException as e:
-      raise ConfigRunnerError(e)
+      raise ConfigRunnerError(e) from e

@@ -102,4 +102,4 @@ def set_title(string: Optional[str] = None) -> str:
     logging.debug('Set console title: %s', title)
     return title
   except OSError as e:
-    raise Error(f'Failed to set console title: {str(e)}')
+    raise Error(f'Failed to set console title: {str(e)}') from e

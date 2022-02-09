@@ -90,7 +90,8 @@ class Cache(object):
           self._downloader.DownloadFile(dl, destination)
         except download.DownloadError as e:
           self._downloader.PrintDebugInfo()
-          raise CacheError('Unable to download required file %s: %s' % (dl, e))
+          raise CacheError(
+              'Unable to download required file %s: %s' % (dl, e)) from e
       else:  # bypass download for local files
         destination = dl
       line = line.replace(match, destination)

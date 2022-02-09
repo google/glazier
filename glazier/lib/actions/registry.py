@@ -36,10 +36,10 @@ class RegAdd(BaseAction):
                          self._args[0], self._args[1],
                          self._args[4], use_64bit=use_64bit)
     except registry.Error as e:
-      raise ActionError(e)
-    except IndexError:
+      raise ActionError(e) from e
+    except IndexError as e:
       raise ActionError('Unable to access all required arguments. [%s]' %
-                        str(self._args))
+                        str(self._args)) from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)
@@ -67,9 +67,9 @@ class MultiRegAdd(BaseAction):
       for arg in self._args:
         ra = RegAdd(arg, self._build_info)
         ra.Run()
-    except IndexError:
+    except IndexError as e:
       raise ActionError('Unable to determine registry sets from %s.' %
-                        str(self._args))
+                        str(self._args)) from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)
@@ -91,10 +91,10 @@ class RegDel(BaseAction):
       registry.remove_value(self._args[2], self._args[0],
                             self._args[1], use_64bit=use_64bit)
     except registry.Error as e:
-      raise ActionError(e)
-    except IndexError:
-      raise ActionError(
-          'Unable to access all required arguments. [%s]' % str(self._args))
+      raise ActionError(e) from e
+    except IndexError as e:
+      msg = 'Unable to access all required arguments. [%s]' % str(self._args)
+      raise ActionError(msg) from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)
@@ -115,9 +115,9 @@ class MultiRegDel(BaseAction):
       for arg in self._args:
         rd = RegDel(arg, self._build_info)
         rd.Run()
-    except IndexError:
+    except IndexError as e:
       raise ActionError('Unable to determine registry sets from %s.' %
-                        str(self._args))
+                        str(self._args)) from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)

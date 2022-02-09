@@ -100,4 +100,5 @@ class UpdateMSU(BaseAction):
           ],
           shell=True)
     except execute.Error as e:
-      raise ActionError('Failed to process update %s: %s' % (msu_file, e))
+      raise ActionError(
+          'Failed to process update %s: %s' % (msu_file, e)) from e
