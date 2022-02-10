@@ -64,6 +64,19 @@ class CopyDir(FileSystem):
       self._TypeValidator(self._args[2], bool)
 
 
+class MultiCopyDir(BaseAction):
+  """Perform CopyDir on multiple sets of directories."""
+
+  def Run(self):
+    for copydir_args in self._args:
+      CopyDir(copydir_args, self._build_info).Run()
+
+  def Validate(self):
+    self._TypeValidator(self._args, list)
+    for copydir_args in self._args:
+      CopyDir(copydir_args, self._build_info).Validate()
+
+
 class CopyFile(FileSystem):
   """Copies files on disk."""
 

@@ -16,6 +16,7 @@
 from unittest import mock
 
 from absl.testing import absltest
+from absl.testing import parameterized
 from glazier.lib import file_util
 from glazier.lib.actions import file_system
 
@@ -62,6 +63,80 @@ class CopyDirTest(absltest.TestCase):
       cd.Validate()
     with self.assertRaises(file_system.ActionError):
       cd.Run()
+
+
+class MultiCopyDirTest(parameterized.TestCase):
+
+  @mock.patch.object(file_system.shutil, 'copytree', autospec=True)
+  @mock.patch.object(file_system.shutil, 'rmtree', autospec=True)
+  @mock.patch.object(file_system.os.path, 'exists', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  def testSuccess(
+      self, mock_build_info, mock_exists, mock_rmtree, mock_copytree):
+
+    # exists=True, remove_existing=True
+    copydir_args1 = [r'/src/dir/one/', r'/dst/dir/one/', True]
+    # exists=True, remove_existing=False
+    copydir_args2 = [r'/src/dir/two/', r'/dst/dir/two/', False]
+    # exists=True, remove_existing=None
+    copydir_args3 = [r'/src/dir/three/', r'/dst/dir/three/']
+    # exists=False, remove_existing=True
+    copydir_args4 = [r'/src/dir/four/', r'/dst/dir/four/', True]
+    # exists=False, remove_existing=False
+    copydir_args5 = [r'/src/dir/five/', r'/dst/dir/five/', False]
+    # exists=False, remove_existing=None
+    copydir_args6 = [r'/src/dir/six/', r'/dst/dir/six/']
+
+    mock_exists.side_effect = [True] * 3 + [False] * 3
+
+    multicopydir_args = [
+        copydir_args1, copydir_args2, copydir_args3, copydir_args4,
+        copydir_args5, copydir_args6]
+    file_system.MultiCopyDir(
+        multicopydir_args, mock_build_info).Run()
+
+    self.assertEqual(mock_exists.call_count, 6)
+    mock_rmtree.assert_called_once_with(r'/dst/dir/one/')
+    mock_copytree.assert_has_calls([
+        mock.call(r'/src/dir/one/', r'/dst/dir/one/'),
+        mock.call(r'/src/dir/two/', r'/dst/dir/two/'),
+        mock.call(r'/src/dir/three/', r'/dst/dir/three/'),
+        mock.call(r'/src/dir/four/', r'/dst/dir/four/'),
+        mock.call(r'/src/dir/five/', r'/dst/dir/five/'),
+        mock.call(r'/src/dir/six/', r'/dst/dir/six/'),
+    ])
+
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  def testInvalidMultiArgs(self, mock_build_info):
+    with self.assertRaises(file_system.ActionError):
+      copydir_args = [r'/src/dir/one/']
+      file_system.MultiCopyDir([copydir_args], mock_build_info).Run()
+
+  # NOTE: Reverse decoration is intentional, due to @parameterized and @mock.
+  @parameterized.parameters(
+      ([r'/src/dir/one/', r'/dst/dir/one/', True],),
+      ([r'/src/dir/two/', r'/dst/dir/two/', False],),
+      ([r'/src/dir/three/', r'/dst/dir/three/'],),
+  )
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  def testValidate_ValidArgs(self, copydir_args, mock_build_info):
+    multicopydir_args = [copydir_args]
+    file_system.MultiCopyDir(multicopydir_args, mock_build_info).Validate()
+
+  # NOTE: Reverse decoration is intentional, due to @parameterized and @mock.
+  @parameterized.parameters(
+      ('String',),  # wrong overall type
+      (['/src/dir/one/'],),  # too short
+      (['a', 'b', 'c', 'd'],),  # too long
+      ([2, '/dst/dir/two/', True],),  # wrong type [0]
+      (['/src/dir/three/', 3, True],),  # wrong type [1]
+      (['/src/dir/four/', '/dst/dir/four/', 4],),  # wrong type [2]
+  )
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  def testValidate_InvalidArgs(self, copydir_args, mock_build_info):
+    with self.assertRaises(file_system.ValidationError):
+      multicopydir_args = [copydir_args]
+      file_system.MultiCopyDir(multicopydir_args, mock_build_info).Validate()
 
 
 class MultiCopyFileTest(absltest.TestCase):
