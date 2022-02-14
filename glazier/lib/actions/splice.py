@@ -30,6 +30,7 @@ class SpliceDomainJoin(BaseAction):
     max_retries: int
     unattended: bool
     fallback: bool
+    generator: str
 
     if self._args:
       max_retries = int(self._args[0])
@@ -43,8 +44,12 @@ class SpliceDomainJoin(BaseAction):
       fallback = bool(self._args[2])
     else:
       fallback = True
+    if len(self._args) > 3:
+      generator = str(self._args[3])
+    else:
+      generator = ''
     try:
-      self._splice.domain_join(max_retries, unattended, fallback)
+      self._splice.domain_join(max_retries, unattended, fallback, generator)
     except splice.Error as e:
       raise ActionError(e) from e
 

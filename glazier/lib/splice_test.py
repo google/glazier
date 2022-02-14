@@ -149,6 +149,35 @@ class SpliceTest(absltest.TestCase):
     self.splice.domain_join()
     i.assert_called_with('Domain join succeeded after %d attempt(s).', 1)
 
+  @mock.patch.object(splice.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
+  def test_domain_join_empty_generator(self, hostname, eb):
+    self.fs.CreateFile(self.splice.splice_binary)
+    hostname.return_value = 'foo'
+    eb.return_value = 0
+    self.splice.domain_join()
+    args = [
+        '-cert_issuer=client', f'-cert_container={self.splice.cert_container}',
+        f'-server={self.splice.splice_server}',
+        '-really_join=true', '-unattended=true',
+        f'-name={self.splice._get_hostname()}'
+    ]
+    eb.assert_called_with(self.splice.splice_binary, args, shell=True)
+
+  @mock.patch.object(splice.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
+  def test_domain_join_generator(self, hostname, eb):
+    self.fs.CreateFile(self.splice.splice_binary)
+    hostname.return_value = 'foo'
+    eb.return_value = 0
+    self.splice.domain_join(generator='baz')
+    args = [
+        '-cert_issuer=client', f'-cert_container={self.splice.cert_container}',
+        f'-server={self.splice.splice_server}',
+        '-really_join=true', '-unattended=true', '-generator_id=baz'
+    ]
+    eb.assert_called_with(self.splice.splice_binary, args, shell=True)
+
 
 if __name__ == '__main__':
   absltest.main()

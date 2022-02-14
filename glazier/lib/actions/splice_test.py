@@ -35,14 +35,14 @@ class SpliceDomainJoinTest(absltest.TestCase):
   def test_default(self, dj, bi):
     self._splice = splice.SpliceDomainJoin([], bi)
     self._splice.Run()
-    dj.assert_called_with(mock.ANY, 5, True, True)
+    dj.assert_called_with(mock.ANY, 5, True, True, '')
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(splice.splice.Splice, 'domain_join', autospec=True)
   def test_custom(self, dj, bi):
-    self._splice = splice.SpliceDomainJoin([1, False, False], bi)
+    self._splice = splice.SpliceDomainJoin([1, False, False, 'baz'], bi)
     self._splice.Run()
-    dj.assert_called_with(mock.ANY, 1, False, False)
+    dj.assert_called_with(mock.ANY, 1, False, False, 'baz')
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(splice.splice.Splice, 'domain_join', autospec=True)
