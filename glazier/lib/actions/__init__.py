@@ -53,6 +53,7 @@ Get = files.Get
 GooGetInstall = googet.GooGetInstall
 LogCopy = installer.LogCopy
 MkDir = file_system.MkDir
+MultiCopyDir = file_system.MultiCopyDir
 MultiCopyFile = file_system.MultiCopyFile
 PSScript = powershell.PSScript
 MultiPSScript = powershell.MultiPSScript
