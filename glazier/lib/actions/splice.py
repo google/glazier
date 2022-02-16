@@ -55,11 +55,8 @@ class SpliceDomainJoin(BaseAction):
 
   def Validate(self):
     self._TypeValidator(self._args, list)
-    if not 0 <= len(self._args) <= 3:
+    if not 0 <= len(self._args) <= 4:
       raise ValidationError('Invalid args length: %s' % self._args)
-    if self._args:
-      self._TypeValidator(self._args[0], int)
-    if len(self._args) > 1:
-      self._TypeValidator(self._args[1], bool)
-    if len(self._args) > 2:
-      self._TypeValidator(self._args[2], bool)
+    expected_types = (int, bool, bool, str)
+    for arg, expected in zip(self._args, expected_types):
+      self._TypeValidator(arg, expected)

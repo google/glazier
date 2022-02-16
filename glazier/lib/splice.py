@@ -89,8 +89,8 @@ class Splice(object):
     """Call splice binary in user auth mode."""
     args = [
         '-cert_issuer=client', f'-cert_container={self.cert_container}',
-        f'-name={self._get_hostname()}', f'-server={self.splice_server}',
-        '-really_join=true', f'-user_name={self._get_username()}'
+        f'-server={self.splice_server}', '-really_join=true',
+        f'-user_name={self._get_username()}'
     ]
     if self.splice_generator:
       args.append(f'-generator_id={self.splice_generator}')

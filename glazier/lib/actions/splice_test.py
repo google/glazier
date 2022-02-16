@@ -68,7 +68,8 @@ class SpliceDomainJoinTest(absltest.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_validate_num_args(self, bi):
-    self._splice = splice.SpliceDomainJoin([5, False, False, 'too many'], bi)
+    self._splice = splice.SpliceDomainJoin([5, False, False, 'baz', 'too many'],
+                                           bi)
     self.assertRaises(ValidationError, self._splice.Validate)
 
 if __name__ == '__main__':
