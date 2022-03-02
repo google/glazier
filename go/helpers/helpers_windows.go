@@ -234,6 +234,24 @@ func GetServiceState(name string) (svc.Status, mgr.Config, error) {
 	return status, config, err
 }
 
+// ChangeService can change a services type or/and startup behaviour
+// https://docs.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicestartmode
+// https://docs.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicetype
+func ChangeService(name string, c mgr.Config) error {
+	m, err := mgr.Connect()
+	if err != nil {
+		return err
+	}
+	defer m.Disconnect()
+	s, err := m.OpenService(name)
+	if err != nil {
+		return fmt.Errorf("could not access service: %v", err)
+	}
+	defer s.Close()
+
+	return s.UpdateConfig(c)
+}
+
 const (
 	HWND_BROADCAST   = uintptr(0xffff)
 	WM_SETTINGCHANGE = uintptr(0x001A)
