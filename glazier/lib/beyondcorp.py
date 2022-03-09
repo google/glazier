@@ -26,6 +26,7 @@ import json
 import logging
 
 from absl import flags
+import backoff
 from glazier.lib import registry
 import requests
 
@@ -35,10 +36,28 @@ from gwinpy.wmi import wmi_query
 
 FLAGS = flags.FLAGS
 
+# Maximum amount of time to spend on all backoff retries, in seconds.
+BACKOFF_MAX_TIME = 600
+
 flags.DEFINE_boolean('use_signed_url', False,
                      'Select whether or not to use signed urls')
 flags.DEFINE_string('sign_endpoint', None, 'The signing URL endpoint to use')
 flags.DEFINE_string('seed_path', None, 'Path to the seed file on disk')
+
+
+# Required in order to patch BACKOFF_MAX_TIME to a more reasonable value in the
+# unit tests. Passing a callable to the max_time argument of
+# @backoff.on_exception() pushes the evaluation of that value to runtime,
+# rather than at module load, which gives us time to modify BACKOFF_MAX_TIME
+# during test setup.
+def GetBackoffMaxTime():
+  return BACKOFF_MAX_TIME
+
+
+def BackoffGiveupHandler(details):
+  raise BCError(
+      'Failed after {tries} attempt(s) over {elapsed:0.1f} seconds'.format(
+          **details) + '\n\nDo you have a valid network configuration?')
 
 
 class BCError(Exception):
@@ -141,6 +160,11 @@ class BeyondCorp(object):
 
     return drive_letter
 
+  @backoff.on_exception(
+      backoff.expo,
+      requests.exceptions.ConnectionError,
+      max_time=GetBackoffMaxTime,
+      on_giveup=BackoffGiveupHandler)
   def GetSignedUrl(self, relative_path: str) -> str:
     """Passes data the sign endpoint to retrieve signed URL.
 
@@ -183,10 +207,8 @@ class BeyondCorp(object):
         sort_keys=True,
         indent=None,
         separators=(',', ': '))
-    try:
-      res = requests.post(FLAGS.sign_endpoint, data=req)
-    except requests.exceptions.ConnectionError as e:
-      raise BCError(e) from e
+
+    res = requests.post(FLAGS.sign_endpoint, data=req)
 
     if res.status_code != 200 or res.json(
     )['Status'] != 'Success' or not res.json()['SignedURL']:

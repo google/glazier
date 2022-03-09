@@ -46,6 +46,11 @@ def _CreateSignResponse(code, status, wim_hash):
 
 class BeyondcorpTest(absltest.TestCase):
 
+  def PatchConstant(self, module, constant_name, new_value):
+    patcher = mock.patch.object(module, constant_name, new_value)
+    self.addCleanup(patcher.stop)
+    return patcher.start()
+
   def setUp(self):
     super(BeyondcorpTest, self).setUp()
     self.__saved_flags = flagsaver.save_flag_values()
@@ -59,6 +64,10 @@ class BeyondcorpTest(absltest.TestCase):
     beyondcorp.os = fake_filesystem.FakeOsModule(self.filesystem)
     beyondcorp.open = fake_filesystem.FakeFileOpen(self.filesystem)
     self.beyondcorp = beyondcorp.BeyondCorp()
+
+    # Very important, unless you want tests that fail indefinitely to backoff
+    # for 10 minutes.
+    self.PatchConstant(beyondcorp, 'BACKOFF_MAX_TIME', 20)  # in seconds
 
   def tearDown(self):
     super(BeyondcorpTest, self).tearDown()
