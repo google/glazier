@@ -5,4 +5,4 @@ ntplib
 pyfakefs
 PyYAML
 requests
-git+git://github.com/google/winops@master#egg=gwinpy
+git+http://github.com/google/winops@master#egg=gwinpy
