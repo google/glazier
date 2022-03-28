@@ -135,6 +135,47 @@ func Installed(initial string, conf *Config) ([]Package, error) {
 	return p, nil
 }
 
+// Repo represents a googet repository configuration.
+type Repo struct {
+	Name string
+	URL  string
+}
+
+// ListRepos lists the googet repos configured on the local system.
+func ListRepos(conf *Config) ([]Repo, error) {
+	if conf == nil {
+		conf = NewConfig()
+	}
+
+	repos := []Repo{}
+	args := []string{"listrepos"}
+	res, err := funcExec(conf.GooGetExe, args, &conf.ExecConfig)
+	if err != nil {
+		return repos, err
+	}
+
+	lines := strings.Split(string(res.Stdout), "\n")
+	for i, r := range lines {
+		r = strings.TrimSpace(r)
+		if i == 0 || r == "" {
+			continue
+		}
+		if !strings.Contains(r, "http") { // skip repo file lines
+			continue
+		}
+		dat := strings.SplitN(r, ":", 2)
+		if len(dat) < 2 {
+			logger.Errorf("unable to parse googet output %v", r)
+			continue
+		}
+		repos = append(repos, Repo{
+			Name: strings.TrimSpace(dat[0]),
+			URL:  strings.TrimSpace(dat[1]),
+		})
+	}
+	return repos, nil
+}
+
 // PackageVersion attempts to retrieve the current version
 // of the named package from the local system.
 func PackageVersion(pkg string) (string, error) {

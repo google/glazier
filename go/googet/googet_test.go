@@ -116,6 +116,68 @@ No package matching filter "foo" installed.
 	}
 }
 
+func TestListRepos(t *testing.T) {
+	fail := errors.New("test failure")
+	tests := []struct {
+		desc    string
+		in      helpers.ExecResult
+		inErr   error
+		want    []Repo
+		wantErr error
+	}{
+		{
+			desc: "normal output with matches",
+			in: helpers.ExecResult{
+				ExitErr: nil,
+				Stdout: []byte(`C:\ProgramData\GooGet\repos\first_set.repo:
+  repo-one:  https://googet-server.example.com/univ/repos/first
+  repo-two: https://googet-server.example.com/univ/repos/second
+C:\ProgramData\GooGet\repos\second_set.repo:
+  repo-three:  https://googet-server.example.com/univ/repos/third
+	`),
+			},
+			want: []Repo{
+				Repo{"repo-one", "https://googet-server.example.com/univ/repos/first"},
+				Repo{"repo-two", "https://googet-server.example.com/univ/repos/second"},
+				Repo{"repo-three", "https://googet-server.example.com/univ/repos/third"},
+			},
+			wantErr: nil,
+		},
+		{
+			desc: "zero repos",
+			in: helpers.ExecResult{
+				ExitErr: nil,
+				Stdout:  []byte(``),
+			},
+			want:    []Repo{},
+			wantErr: nil,
+		},
+		{
+			desc: "execution error",
+			in: helpers.ExecResult{
+				ExitErr: fail,
+				Stdout:  []byte(``),
+			},
+			inErr:   fail,
+			want:    []Repo{},
+			wantErr: fail,
+		},
+	}
+	for _, tt := range tests {
+		funcExec = func(path string, args []string, v *helpers.ExecConfig) (helpers.ExecResult, error) {
+			return tt.in, tt.inErr
+		}
+		o, err := ListRepos(nil)
+		diff := cmp.Diff(tt.want, o)
+		if diff != "" {
+			t.Errorf("ListRepos(%s) diff = %v", tt.desc, diff)
+		}
+		if !errors.Is(err, tt.wantErr) {
+			t.Errorf("ListRepos(%s) returned unexpected error %v", tt.desc, err)
+		}
+	}
+}
+
 func TestPackageVersion(t *testing.T) {
 	fail := errors.New("test failure")
 	tests := []struct {
