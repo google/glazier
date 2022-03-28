@@ -50,6 +50,28 @@ func TestContainsString(t *testing.T) {
 	}
 }
 
+func TestStringInSlice(t *testing.T) {
+	for _, tt := range []struct {
+		sl  []string
+		st  string
+		out bool
+	}{
+		{[]string{"abc"}, "abc", true},
+		{[]string{"abc"}, "ab", false},
+		{[]string{"abc"}, "", false},
+		{[]string{"abc"}, "def", false},
+		{[]string{"123", "abc", "def"}, "def", true},
+		{[]string{"", "abc", "def"}, "df", false},
+		{[]string{}, "df", false},
+		{[]string{"   "}, "df", false},
+	} {
+		o := StringInSlice(tt.st, tt.sl)
+		if o != tt.out {
+			t.Errorf("got %t, want %t", o, tt.out)
+		}
+	}
+}
+
 // TestStringToSlice ensures StringToSlice correctly parses passed params
 func TestStringToSlice(t *testing.T) {
 	tests := []struct {

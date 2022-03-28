@@ -133,6 +133,16 @@ func PathExists(path string) (bool, error) {
 	return false, nil
 }
 
+// StringInSlice checks if a slice contains a string.
+func StringInSlice(e string, s []string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
 // StringToSlice converts a comma separated string to a slice.
 func StringToSlice(s string) []string {
 	if strings.TrimSpace(s) == "" {
