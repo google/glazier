@@ -324,7 +324,15 @@ func StartService(name string) error {
 }
 
 func stopService(s *mgr.Service) error {
-	stat, err := s.Control(svc.Stop)
+	// although s.Control returns stat, if the service is already stopped it returns an error
+	stat, err := s.Query()
+	if err != nil {
+		return err
+	}
+	if stat.State == svc.Stopped {
+		return nil
+	}
+	stat, err = s.Control(svc.Stop)
 	if err != nil {
 		return err
 	}
