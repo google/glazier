@@ -1,6 +1,6 @@
 # Chooser UI
 
-<!--* freshness: { owner: '@tseknet' reviewed: '2021-04-26' } *-->
+<!--* freshness: { owner: '@tseknet' reviewed: '2022-04-21' } *-->
 
 The Chooser setup UI is an enhancement to autobuild which allows Glazier to
 present the user with a dynamic list of options as part of the installation
@@ -27,7 +27,7 @@ selections.
 Once the UI exits, the Chooser will make the responses available via a
 dictionary to the caller. The resulting "response" values are returned to
 buildinfo where they will be saved in state. These same values (dynamically
-named as USER\_\*) can be referenced via pinning at any point later on in the
+named as `USER_*`) can be referenced via pinning at any point later on in the
 build.
 
 ## Syntax
@@ -42,21 +42,21 @@ data.
 The top level YAML command *choice* indicates a chooser option. Each choice
 consists of several required sub-fields:
 
-### name
+### `name`
 
 Name designates the option's internal name, and should be unique. Buildinfo will
-aggregate all options as USER_\[name\] where name is determined by this field.
+aggregate all options as `USER_[name]` where name is determined by this field.
 
-### type
+### `type`
 
 Type indicates the UI field type to be shown ([see below](#field-types)).
 
-### prompt
+### `prompt`
 
 Prompt is the text label shown in the UI next to the interactive fields (ex:
 System Locale).
 
-### options
+### `options`
 
 An ordered list of dictionaries containing all options to be presented. Each
 dictionary in the list should have the following sub-fields.
@@ -69,7 +69,7 @@ dictionary in the list should have the following sub-fields.
 
 ## Field Types
 
-### radio_menu
+### `radio_menu`
 
 The radio_menu field provides a multiple choice drop-down menu. The menu allows
 one and only one selection at a time from the available options.
@@ -87,7 +87,7 @@ choice:
   ]
 ```
 
-### toggle
+### `toggle`
 
 A simple pair of on/off (or true/false) radio buttons.
 
