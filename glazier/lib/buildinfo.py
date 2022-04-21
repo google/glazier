@@ -285,6 +285,15 @@ class BuildInfo(object):
     return self._beyondcorp.CheckBeyondCorp()
 
   @functools.lru_cache()
+  def BIOSVersion(self) -> str:
+    """Get the BIOS version from WMI.
+
+    Returns:
+      A string containing the BIOS version.
+    """
+    return self._HWInfo().BIOSVersion()
+
+  @functools.lru_cache()
   def CachePath(self):
     """Get the path to the local build cache.
 
@@ -508,6 +517,7 @@ class BuildInfo(object):
 
     build_data = {
         'BUILD': {
+            'bios_version': str(self.BIOSVersion()),
             'beyond_corp': str(self.BeyondCorp()),
             'Binary Path': str(self.BinaryPath()),
             'branch': str(self.Branch()),

@@ -18,6 +18,11 @@ This will not abort the build, but may present the warning to the user.
 
 ## Modules
 
+### BIOSVersion
+
+*BIOSVersion* checks whether the local bios version is a supported. If
+the device is not fully supported (lower than a given version), the build fails.
+
 ### DeviceModel
 
 *DeviceModel* checks whether the local device is a supported hardware model. If
