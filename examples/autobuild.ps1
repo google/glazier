@@ -9,7 +9,6 @@ $py_args = @(
   '--config_root_path=/sub/path/on/your/web/server',
   '--resource_path=X:\path\to\glazier\resources',
   '--ca_certs_resource=X:\path\to\glazier\resources\ca_certs.crt',
-  '--glazier_spec=flag',
   '--glazier_spec_os=windows10-stable',
   '--preserve_tasks=true'
 )
