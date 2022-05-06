@@ -19,7 +19,6 @@ import time
 from typing import Any, Dict, List, Optional
 
 # do not remove: internal placeholder 1
-
 from absl import flags
 from glazier.lib import beyondcorp
 from glazier.lib import identifier
@@ -27,13 +26,14 @@ from glazier.lib import registry
 from glazier.lib import timers
 from glazier.lib import winpe
 from glazier.lib.config import files
+from glazier.lib.spec import spec
 import yaml
 
 from glazier.lib import constants
-from glazier.lib.spec import spec
 from gwinpy.wmi import hw_info
 from gwinpy.wmi import net_info
 from gwinpy.wmi import tpm_info
+
 
 FLAGS = flags.FLAGS
 flags.DEFINE_enum(
