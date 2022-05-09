@@ -32,13 +32,10 @@ def check_winpe() -> bool:
   Returns:
     True for WinPE, else False.
   """
-  try:
-    value = registry.get_value('EditionID', 'HKLM',
-                               r'SOFTWARE\Microsoft\Windows NT\CurrentVersion',
-                               log=False)
-    if value == 'WindowsPE':
-      return True
-    else:
-      return False
-  except registry.Error as e:
-    raise Error('Failed to detect image environment (%s)' % str(e)) from e
+  value = registry.get_value(
+      'EditionID', 'HKLM', r'SOFTWARE\Microsoft\Windows NT\CurrentVersion',
+      log=False)
+  if value == 'WindowsPE':
+    return True
+  else:
+    return False

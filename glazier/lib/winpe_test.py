@@ -22,22 +22,17 @@ from glazier.lib import winpe
 class WinPETest(absltest.TestCase):
 
   @mock.patch.object(winpe.registry, 'get_value', autospec=True)
-  def test_check_winpe_true(self, gv):
+  def test_check_winpe_true(self, mock_get_value):
     winpe.check_winpe.cache_clear()
-    gv.return_value = 'WindowsPE'
+    mock_get_value.return_value = 'WindowsPE'
     self.assertEqual(winpe.check_winpe(), True)
 
   @mock.patch.object(winpe.registry, 'get_value', autospec=True)
-  def test_check_winpe_false(self, gv):
+  def test_check_winpe_false(self, mock_get_value):
     winpe.check_winpe.cache_clear()
-    gv.return_value = 'Enterprise'
+    mock_get_value.return_value = 'Enterprise'
     self.assertEqual(winpe.check_winpe(), False)
 
-  @mock.patch.object(winpe.registry, 'get_value', autospec=True)
-  def test_check_winpe_error(self, gv):
-    winpe.check_winpe.cache_clear()
-    gv.side_effect = winpe.registry.Error
-    self.assertRaises(winpe.Error, winpe.check_winpe)
 
 if __name__ == '__main__':
   absltest.main()
