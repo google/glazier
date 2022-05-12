@@ -37,7 +37,7 @@ class ConfigRunner(base.ConfigBase):
     try:
       data = files.Read(self._task_list_path)
     except files.Error as e:
-      raise ConfigRunnerError(e) from e
+      raise ConfigRunnerError() from e
     self._ProcessTasks(data)
 
   def _PopTask(self, tasks):
@@ -48,7 +48,7 @@ class ConfigRunner(base.ConfigBase):
       if not tasks:
         files.Remove(self._task_list_path)
     except files.Error as e:
-      raise ConfigRunnerError(e) from e
+      raise ConfigRunnerError() from e
 
   def _ProcessTasks(self, tasks):
     """Process the pending tasks list.
@@ -63,7 +63,7 @@ class ConfigRunner(base.ConfigBase):
       dl = download.Download()
       for url in constants.FLAGS.verify_urls:
         if not dl.CheckUrl(url, [200]):
-          raise errors.GCheckUrlError(replacements=[url])
+          raise errors.CheckUrlError(url=url)
 
     while tasks:
       self._build_info.ActiveConfigPath(set_to=tasks[0]['path'])
@@ -77,7 +77,7 @@ class ConfigRunner(base.ConfigBase):
           try:
             self._ProcessAction(element, entry[element])
           except base.ConfigError as e:
-            raise ConfigRunnerError(e)
+            raise ConfigRunnerError() from e
           except base.actions.RestartEvent as e:
             if e.task_list_path:
               self._task_list_path = e.task_list_path
@@ -112,6 +112,6 @@ class ConfigRunner(base.ConfigBase):
       policy = check(build_info=self._build_info)
       policy.Verify()
     except AttributeError as e:
-      raise errors.GUnknownPolicyError(replacements=[str(line)]) from e
+      raise errors.UnknownPolicyError(policy=str(line)) from e
     except policies.ImagingPolicyException as e:
-      raise ConfigRunnerError(e) from e
+      raise ConfigRunnerError() from e

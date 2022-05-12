@@ -16,14 +16,29 @@
 See https://google.github.io/glazier/error_codes more information.
 """
 
-from typing import Dict, List, Optional, Type, Union
+from typing import Optional
 
-# Format: 'G<NameofError>': [Code, 'Message with optional replacements']
-_ERRORS: Dict[str, List[Union[int, str]]] = {
-    'GReservedError': [1337, 'Reserved {} {} {}'],
-    'GUncaughtError': [4000, 'Uncaught exception'],
-    'GUnsupportedPEError': [
-        4100, """
+
+class GlazierError(Exception):
+  """Base error for all other Glazier errors."""
+
+  def __init__(
+      self, error_code: Optional[int] = None, message: Optional[str] = None):
+
+    error_code = error_code if error_code is not None else 4000
+    message = message if message is not None else 'Unknown Exception'
+
+    self.error_code = error_code
+    message = f'{message} (Error Code: {error_code})'
+
+    super().__init__(message)
+
+
+class UnsupportedPEError(GlazierError):
+  """Error raised when an image has an outdated version of WinPE."""
+
+  def __init__(self):
+    message = """
                   !!!!! Warning !!!!!
 
     This image is not running the latest WinPE version.
@@ -32,116 +47,94 @@ _ERRORS: Dict[str, List[Union[int, str]]] = {
     .iso file. Please update before continuing.
 
     """
-    ],
-    'GUnsupportedModelError': [
-        4101, 'System OS/model does not have imaging support {}'
-    ],
-    'GExecError': [4141, 'Failed to execute [{}]'],
-    'GExecTimeOutError': [4142, 'Failed to execute [{}] after [{}] second(s)'],
-    'GExecReturnError': [
-        4143, 'Executing [{}] returned invalid exit code [{}]'
-    ],
-    'GExecReturnOutError': [
-        4144, 'Executing [{}] returned invalid exit code [{}]: {}'
-    ],
-    'GConfigBuilderError': [4300, 'Failed to build the task list'],
-    'GConfigRunnerError': [4301, 'Failed to execute the task list'],
-    'GSysInfoError': [4311, 'Error gathering system information'],
-    'GUnknownActionError': [4312, 'Unknown imaging action [{}]'],
-    'GUnknownPolicyError': [4313, 'Unknown imaging policy [{}]'],
-    'GCheckUrlError': [4314, 'Failed to verify url [{}]'],
-    'GRegSetError': [4340, 'Failed to set registry value'],
-    'GWebServerError': [5000, 'Failed to reach web server'],
-    'GServiceError': [5300, 'Service unavailable'],
-}
-
-# Required for Pytype to work with dynamic error objects
-_HAS_DYNAMIC_ATTRIBUTES = True
+    super().__init__(4100, message)
 
 
-class GlazierError(Exception):
-  """Creates an error object.
+class UnsupportedModelError(GlazierError):
 
-  This error object can be interacted with via it's attributes directly. For
-  example, the following code can be used to determine the attributes of this
-  class:
-
-  try:
-    raise GlazierError('SomeException', [
-                       'SomeReplacement', 'SomeOtherReplacement'])
-  except GlazierError as e:
-    for att in dir(e):
-        print(att, getattr(e, att))
-
-  The default code if all fails is 4000. This acts as a fallback for when there
-  is an unknown exception.
-
-  Attributes:
-    code: Error code with an associated message
-    message: Error message string with an associated code
-    exception: Exception message string
-    replacements: Any number of values that the error message should contain
-  """
-
-  def __init__(self,
-               exception: Optional[Exception] = None,
-               replacements: Optional[List[Union[bool, int, str]]] = None):
-    self.code = 4000
-    self.message = 'Unknown Exception'
-    self.exception = exception
-
-    if isinstance(exception, GlazierError):
-      self.code = exception.code
-      self.message = exception.message
-      self.exception = exception.exception
-
-    self.replacements = replacements
-    super().__init__(exception, replacements)
-
-  def __str__(self) -> str:
-    string = ''
-
-    if self.message:
-      string = f'{self.message} '
-
-    string += f'({self.code})'
-
-    if self.exception:
-      string += f': {self.exception}'
-
-    return string
+  def __init__(self, model: str):
+    super().__init__(
+        4101, f'System OS/model does not have imaging support: {model}')
 
 
-def new_err(code: int, message: str) -> Type[GlazierError]:
-  """Captures code and message pairs for every error.
+class ExecError(GlazierError):
 
-  This method acts to store the error codes and the associated messages to be
-  passed to the GlazierException class.
-
-  Args:
-    code: Error code with an associated message
-    message: Error message string with an associated code
-
-  Returns:
-    GlazierError exception with all required attributes.
-  """
-
-  class Error(GlazierError):
-    """Stores error information used in GlazierError."""
-
-    def __init__(self,
-                 exception: Optional[Exception] = None,
-                 replacements: Optional[List[Union[bool, int, str]]] = None):
-      super().__init__(exception, replacements)
-      self.code: int = code
-      if message and replacements:
-        # Asterisk is used to unpack the values of the list
-        self.message: str = f'{message.format(*replacements)}'
-      elif message:
-        self.message: str = message
-
-  return Error
+  def __init__(self, command: str):
+    super().__init__(4141, f'Failed to execute [{command}]')
 
 
-for key, value in _ERRORS.items():
-  vars()[key] = new_err(value[0], value[1])
+class ExecTimeoutError(GlazierError):
+
+  def __init__(self, command: str, seconds: int):
+    super().__init__(
+        4142, f'Failed to execute [{command}] after [{seconds}] second(s)')
+
+
+class ExecReturnError(GlazierError):
+
+  def __init__(self, command: str, exit_code: int):
+    super().__init__(
+        4143, f'Executing [{command}] returned invalid exit code [{exit_code}]')
+
+
+class ExecReturnOutError(GlazierError):
+
+  def __init__(self, command: str, exit_code: int, output: str):
+    message = (
+        f'Executing [{command}] returned invalid exit code [{exit_code}]: '
+        f'{output}')
+    super().__init__(4144, message)
+
+
+class ConfigBuilderError(GlazierError):
+
+  def __init__(self):
+    super().__init__(4300, 'Failed to build the task list')
+
+
+class ConfigRunnerError(GlazierError):
+
+  def __init__(self):
+    super().__init__(4301, 'Failed to execute the task list')
+
+
+class SysInfoError(GlazierError):
+
+  def __init__(self):
+    super().__init__(4311, 'Error gathering system information')
+
+
+class UnknownActionError(GlazierError):
+
+  def __init__(self, action: str):
+    super().__init__(4312, f'Unknown imaging action [{action}]')
+
+
+class UnknownPolicyError(GlazierError):
+
+  def __init__(self, policy: str):
+    super().__init__(4313, f'Unknown imaging policy [{policy}]')
+
+
+class CheckUrlError(GlazierError):
+
+  def __init__(self, url: str):
+    super().__init__(4314, f'Failed to verify url [{url}]')
+
+
+class RegistrySetError(GlazierError):
+
+  def __init__(self):
+    super().__init__(4340, 'Failed to set registry value')
+
+
+class WebServerError(GlazierError):
+
+  def __init__(self):
+    super().__init__(5000, 'Failed to reach web server')
+
+
+class ServiceError(GlazierError):
+
+  def __init__(self):
+    super().__init__(5300, 'Service unavailable')

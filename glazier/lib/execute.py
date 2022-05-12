@@ -115,8 +115,8 @@ def check_output(binary: str,
     Process stdout if the operation completed successfully.
 
   Raises:
-    GExecReturnOutError
-    GExecTimeOutError
+    ExecReturnOutError
+    ExecTimeoutError
   """
   cmd, string = format_command(binary, args)
 
@@ -136,9 +136,9 @@ def check_output(binary: str,
     # Exception object contains the code and output
     out = e.output.strip()
     if e.returncode not in return_codes:
-      raise errors.GExecReturnOutError(replacements=[string, e.returncode, out])
+      raise errors.ExecReturnOutError(string, e.returncode, out)
     return out
   except subprocess.TimeoutExpired as e:
-    raise errors.GExecTimeOutError(e, [string, timeout])
+    raise errors.ExecTimeoutError(string, timeout) from e
 
   return process

@@ -13,27 +13,65 @@
 # limitations under the License.
 """Tests for glazier.lib.errors."""
 
+import inspect
+import random
+import string
 
 from absl.testing import absltest
 from glazier.lib import errors
 
 
-class ErrorsTest(absltest.TestCase):
+class GlazierErrorTest(absltest.TestCase):
 
-  def test_glazier_reserved_error_replacements(self):
-    self.assertEqual(
-        str(errors.GReservedError('exception', [1, 2, 3])),
-        'Reserved 1 2 3 (1337): exception')
+  def testStr(self):
+    err = errors.GlazierError(9999, 'some error message')
+    expected_str = 'some error message (Error Code: 9999)'
+    self.assertEqual(expected_str, str(err))
 
-  def test_glazier_reserved_error_no_replacements(self):
-    self.assertEqual(
-        str(errors.GUncaughtError('exception')),
-        'Uncaught exception (4000): exception')
+  def testSubclasses(self):
 
-  def test_glazier_error_str(self):
-    self.assertEqual(
-        str(errors.GlazierError('exception')),
-        'Unknown Exception (4000): exception')
+    # Collect all subclasses of GlazierError in the "errors" module.
+    tuples = inspect.getmembers(
+        errors, lambda sc: inspect.isclass(sc) and sc != errors.GlazierError)
+    subclasses = [t[1] for t in tuples]
+
+    # Track the encountered error codes, in order to detect duplicates.
+    encountered_error_codes = set([])
+
+    # For each GlazierError subclass, use inspection to figure out all the
+    # positional arguments.
+    for subclass in subclasses:
+
+      init_args = []
+
+      # Inspect the __init__ method, which returns a dict of
+      # (str, inspect.Parameter) pairs.
+      init_params = inspect.signature(subclass.__init__).parameters
+      for param_name, param_obj in init_params.items():
+
+        # Just skip the 'self' arg.
+        if param_name == 'self':
+          continue
+
+        # Try to intelligently create a dummy value for the arg based on the
+        # type annotation. If there isn't one, just default to str.
+        if param_obj.annotation == int:
+          init_args.append(random.randint(0, 100))
+        elif param_obj.annotation == float:
+          init_args.append(random.random() * 10)
+        else:
+          random_str = ''.join(random.sample(string.ascii_lowercase, 8))
+          init_args.append(random_str)
+
+      # Verify that the given subclass can be constructed without issue, using
+      # the randomly generated args. This should catch any name mismatches or
+      # size discrepancies between the constructor args, and the inner message
+      # format string.
+      err_obj = subclass(*init_args)
+
+      # If this error has a duplicate error code, bail.
+      self.assertNotIn(err_obj.error_code, encountered_error_codes)
+      encountered_error_codes.add(err_obj.error_code)
 
 
 if __name__ == '__main__':

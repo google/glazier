@@ -66,7 +66,7 @@ class ConfigBuilderTest(absltest.TestCase):
     self.assertFalse(self.cb._MatchPin(pins))
     # Error
     bpm.side_effect = buildinfo.Error
-    self.assertRaises(builder.errors.GSysInfoError, self.cb._MatchPin, pins)
+    self.assertRaises(builder.errors.SysInfoError, self.cb._MatchPin, pins)
 
   @mock.patch.object(builder.ConfigBuilder, '_ProcessAction', autospec=True)
   def testRealtime(self, process):

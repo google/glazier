@@ -206,7 +206,7 @@ class ConfigRunnerTest(absltest.TestCase):
     dl.assert_called_with(mock.ANY, 'http://www.example.com/', [200])
     # fail
     dl.return_value = False
-    self.assertRaises(runner.errors.GCheckUrlError, self.cr._ProcessTasks, [])
+    self.assertRaises(runner.errors.CheckUrlError, self.cr._ProcessTasks, [])
 
 
 if __name__ == '__main__':

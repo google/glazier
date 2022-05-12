@@ -61,4 +61,4 @@ class ConfigBase(object):
       a = self._GetAction(action, params)
       a.Run()
     except actions.ActionError as e:
-      raise ConfigError(e) from e
+      raise ConfigError() from e

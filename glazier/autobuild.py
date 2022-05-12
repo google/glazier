@@ -90,7 +90,7 @@ class AutoBuild(object):
       logging.info('KeyboardInterrupt detected, exiting.')
       sys.exit(1)
     except errors.GlazierError as e:
-      terminator.log_and_exit(e.message, self._build_info, e.code, e.exception)
+      terminator.log_and_exit(str(e), self._build_info, e.error_code, e)
     except Exception as e:  # pylint: disable=broad-except
       terminator.log_and_exit('Unknown Exception', self._build_info, 4000, e)
 
