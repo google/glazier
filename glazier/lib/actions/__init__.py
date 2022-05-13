@@ -33,13 +33,11 @@ from glazier.lib.actions import splice
 from glazier.lib.actions import sysprep
 from glazier.lib.actions import system
 from glazier.lib.actions import timers
-from glazier.lib.actions import tpm
 from glazier.lib.actions import updates
 
 # pylint: disable=invalid-name
 Abort = abort.Abort
 AddChoice = installer.AddChoice
-BitlockerEnable = tpm.BitlockerEnable
 BuildInfoDump = installer.BuildInfoDump
 BuildInfoSave = installer.BuildInfoSave
 ChangeServer = installer.ChangeServer
