@@ -35,7 +35,7 @@ def Shutdown(timeout: str, reason: str):
       to the user and written to the Windows event log.
   """
   execute.execute_binary(f'{_System32()}/shutdown.exe',
-                         ['-s', '-t', timeout, '-c', reason])
+                         ['-s', '-t', timeout, '-c', f'"{reason}"'])
 
 
 def Restart(timeout: str, reason: str):
@@ -47,4 +47,4 @@ def Restart(timeout: str, reason: str):
       the user and written to the Windows event log.
   """
   execute.execute_binary(f'{_System32()}/shutdown.exe',
-                         ['-r', '-t', timeout, '-c', reason])
+                         ['-r', '-t', timeout, '-c', f'"{reason}"'])
