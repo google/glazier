@@ -20,32 +20,35 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import constants
+from glazier.lib import execute
 from glazier.lib import ntp
 
 
 class NtpTest(absltest.TestCase):
 
   @mock.patch.object(ntp.time, 'sleep', autospec=True)
-  @mock.patch.object(ntp.subprocess, 'call', autospec=True)
+  @mock.patch.object(execute, 'execute_binary', autospec=True)
   @mock.patch.object(ntp.ntplib.NTPClient, 'request', autospec=True)
-  def testSyncClockToNtp(self, request, subproc, sleep):
+  def testSyncClockToNtp(self, request, eb, sleep):
     os.environ['TZ'] = 'UTC'
     time.tzset()
     return_time = mock.Mock()
     return_time.ref_time = 1453220630.64458
     request.side_effect = iter([None, None, None, return_time])
-    subproc.return_value = True
+    eb.return_value = True
     # Too Few Retries
     self.assertRaises(ntp.NtpException, ntp.SyncClockToNtp)
     sleep.assert_has_calls([mock.call(30), mock.call(30)])
     # Sufficient Retries
     ntp.SyncClockToNtp(retries=3, server='time.google.com')
     request.assert_called_with(mock.ANY, 'time.google.com', version=3)
-    subproc.assert_has_calls([
+    eb.assert_has_calls([
         mock.call(
-            f'{constants.SYS_SYSTEM32}/cmd.exe /c date 01-19-2016', shell=True),
+            f'{constants.SYS_SYSTEM32}/cmd.exe', ['/c', 'date', '01-19-2016'],
+            shell=True),
         mock.call(
-            f'{constants.SYS_SYSTEM32}/cmd.exe /c time 16:23:50', shell=True)
+            f'{constants.SYS_SYSTEM32}/cmd.exe', ['/c', 'time', '16:23:50'],
+            shell=True)
     ])
     # Socket Error
     request.side_effect = ntp.socket.gaierror
