@@ -27,9 +27,9 @@ from glazier.lib import gtime
 class GTimeTest(absltest.TestCase):
 
   @mock.patch.object(gtime.datetime, 'datetime', autospec=True)
-  def test_now(self, dt):
+  def test_now(self, mock_datetime):
     now = datetime.datetime.now(datetime.timezone.utc)
-    dt.utcnow.return_value = now
+    mock_datetime.utcnow.return_value = now
     self.assertEqual(gtime.now(), now)
 
 

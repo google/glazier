@@ -25,74 +25,82 @@ USERNAME = 'bert'
 HOSTNAME = 'earnie-pc'
 
 
-class RegUtilTest(absltest.TestCase):
+class IdentityTest(absltest.TestCase):
+
+  def setUp(self):
+    super(IdentityTest, self).setUp()
+    identity.get_username.cache_clear()
+    identity.get_hostname.cache_clear()
 
   @mock.patch.object(identity.registry, 'get_value', autospec=True)
-  def test_get_username(self, gv):
-    gv.return_value = USERNAME
+  def test_get_username_success(self, mock_get_value):
+    mock_get_value.return_value = USERNAME
     self.assertEqual(identity.get_username(), USERNAME)
 
   @mock.patch.object(identity.registry, 'get_value', autospec=True)
   @mock.patch.object(identity.logging, 'error', autospec=True)
-  def test_get_username_error(self, e, gv):
-    identity.get_username.cache_clear()
-    gv.side_effect = identity.registry.Error
+  def test_get_username_error(self, mock_error, mock_get_value):
+    mock_get_value.side_effect = identity.registry.Error
     identity.get_username()
-    self.assertTrue(e.called)
+    self.assertTrue(mock_error.called)
 
   @mock.patch.object(identity.interact, 'GetUsername', autospec=True)
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
-  def test_set_username_domain(self, sv, prompt):
-    prompt.return_value = USERNAME
+  def test_set_username_domain(self, mock_set_value, mock_get_username):
+    mock_get_username.return_value = USERNAME
     self.assertEqual(identity.set_username(prompt='domain join'), USERNAME)
-    prompt.assert_called_with('domain join')
-    sv.assert_called_with('Username', USERNAME, path=constants.REG_ROOT)
+    mock_get_username.assert_called_with('domain join')
+    mock_set_value.assert_called_with(
+        'Username', USERNAME, path=constants.REG_ROOT)
 
   @mock.patch.object(identity.interact, 'GetUsername', autospec=True)
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
-  def test_set_username_none(self, sv, prompt):
-    prompt.return_value = USERNAME
+  def test_set_username_none(self, mock_set_value, mock_get_username):
+    mock_get_username.return_value = USERNAME
     self.assertEqual(identity.set_username(), USERNAME)
-    sv.assert_called_with('Username', USERNAME, path=constants.REG_ROOT)
+    mock_set_value.assert_called_with(
+        'Username', USERNAME, path=constants.REG_ROOT)
 
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
-  def test_set_username(self, sv):
+  def test_set_username_success(self, mock_set_value):
     self.assertEqual(identity.set_username(USERNAME), USERNAME)
-    sv.assert_called_with('Username', USERNAME, path=constants.REG_ROOT)
+    mock_set_value.assert_called_with(
+        'Username', USERNAME, path=constants.REG_ROOT)
 
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
-  def test_set_username_error(self, sv):
-    sv.side_effect = identity.registry.Error
+  def test_set_username_error(self, mock_set_value):
+    mock_set_value.side_effect = identity.registry.Error
     self.assertRaises(identity.Error, identity.set_username, USERNAME)
 
   @mock.patch.object(identity.registry, 'get_value', autospec=True)
-  def test_get_hostname(self, gv):
-    gv.return_value = HOSTNAME
+  def test_get_hostname_success(self, mock_get_value):
+    mock_get_value.return_value = HOSTNAME
     self.assertEqual(identity.get_hostname(), HOSTNAME)
 
   @mock.patch.object(identity.registry, 'get_value', autospec=True)
   @mock.patch.object(identity.logging, 'error', autospec=True)
-  def test_get_hostname_error(self, e, gv):
-    identity.get_hostname.cache_clear()
-    gv.side_effect = identity.registry.Error
+  def test_get_hostname_error(self, mock_error, mock_get_value):
+    mock_get_value.side_effect = identity.registry.Error
     identity.get_hostname()
-    self.assertTrue(e.called)
+    self.assertTrue(mock_error.called)
 
   @mock.patch.object(identity.socket, 'gethostname', autospec=True)
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
-  def test_set_hostname_none(self, sv, gh):
-    gh.return_value = HOSTNAME
+  def test_set_hostname_none(self, mock_set_value, mock_gethostname):
+    mock_gethostname.return_value = HOSTNAME
     self.assertEqual(identity.set_hostname(), HOSTNAME)
-    sv.assert_called_with('Name', HOSTNAME, path=constants.REG_ROOT)
+    mock_set_value.assert_called_with(
+        'Name', HOSTNAME, path=constants.REG_ROOT)
 
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
-  def test_set_hostname(self, sv):
+  def test_set_hostname_success(self, mock_set_value):
     self.assertEqual(identity.set_hostname(HOSTNAME), HOSTNAME)
-    sv.assert_called_with('Name', HOSTNAME, path=constants.REG_ROOT)
+    mock_set_value.assert_called_with(
+        'Name', HOSTNAME, path=constants.REG_ROOT)
 
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
-  def test_set_hostname_error(self, sv):
-    sv.side_effect = identity.registry.Error
+  def test_set_hostname_error(self, mock_set_value):
+    mock_set_value.side_effect = identity.registry.Error
     self.assertRaises(identity.Error, identity.set_hostname)
 
 

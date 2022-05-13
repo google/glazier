@@ -24,17 +24,17 @@ from glazier.chooser import fields
 class FieldsTest(absltest.TestCase):
 
   @mock.patch.object(fields, 'tk', autospec=True)
-  def setUp(self, tk):
+  def setUp(self, mock_tk):
     super(FieldsTest, self).setUp()
-    self.root = tk.Tk()
+    self.root = mock_tk.Tk()
 
-  def testLabel(self, unused_tk):
+  def test_label(self, unused_tk):
     fields.Label(self.root, 'some label')
 
-  def testSeparator(self, unused_tk):
+  def test_separator(self, unused_tk):
     fields.Separator(self.root)
 
-  def testToggle(self, unused_tk):
+  def test_toggle(self, unused_tk):
     opts = {'prompt': 'enable puppet',
             'options': [{'label': 'true', 'value': True, 'default': True},
                         {'label': 'false', 'value': False}]}
@@ -46,10 +46,10 @@ class FieldsTest(absltest.TestCase):
 class RadioMenuTest(absltest.TestCase):
 
   @mock.patch.object(fields, 'tk', autospec=True)
-  def setUp(self, tk):
+  def setUp(self, mock_tk):
     super(RadioMenuTest, self).setUp()
-    self.tk = tk
-    self.root = tk.Tk()
+    self.tk = mock_tk
+    self.root = mock_tk.Tk()
     opts = {
         'prompt': 'choose locale',
         'options': [
@@ -57,10 +57,10 @@ class RadioMenuTest(absltest.TestCase):
             {'label': 'en-us', 'value': 'en-us', 'tip': '', 'default': True},
             {'label': 'es-es', 'value': 'es-es', 'tip': ''}
         ]}
-    tk.StringVar.return_value.get.return_value = 'en-us'
+    mock_tk.StringVar.return_value.get.return_value = 'en-us'
     self.rm = fields.RadioMenu(self.root, opts)
 
-  def testRadioMenu(self):
+  def test_radio_menu(self):
     self.rm.select.set.assert_called_with('en-us')
     self.rm.button.configure.assert_called_with(text='en-us')
 
@@ -71,17 +71,17 @@ class TimerTest(absltest.TestCase):
     pass
 
   @mock.patch.object(fields, 'tk', autospec=True)
-  def setUp(self, tk):
+  def setUp(self, mock_tk):
     super(TimerTest, self).setUp()
-    self.root = tk.Tk()
+    self.root = mock_tk.Tk()
     self.root.quit.side_effect = TimerTest.Quit
     self.timer = fields.Timer(self.root, timeout=10)
 
-  def testPause(self):
+  def test_pause(self):
     self.timer.Pause(None)
     self.assertEqual(self.timer._counter, -1)
 
-  def testCountdown(self):
+  def test_countdown(self):
     # countdown
     self.assertEqual(self.timer._counter, 10)
     self.timer.Countdown()

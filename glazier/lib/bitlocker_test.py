@@ -27,10 +27,10 @@ class BitlockerTest(absltest.TestCase):
 
   @mock.patch.object(
       bitlocker.powershell.PowerShell, 'RunCommand', autospec=True)
-  def testPowershell(self, ps):
+  def test_powershell(self, mock_runcommand):
     bit = bitlocker.Bitlocker(mode='ps_tpm')
     bit.Enable()
-    ps.assert_has_calls([
+    mock_runcommand.assert_has_calls([
         mock.call(mock.ANY, [
             "$ErrorActionPreference='Stop'", ';', 'Enable-BitLocker', 'C:',
             '-TpmProtector', '-UsedSpaceOnly', '-SkipHardwareTest ', '>>',
@@ -41,24 +41,24 @@ class BitlockerTest(absltest.TestCase):
             'C:', '-RecoveryPasswordProtector', '>NUL'
         ])
     ])
-    ps.side_effect = bitlocker.powershell.PowerShellError
+    mock_runcommand.side_effect = bitlocker.powershell.PowerShellError
     self.assertRaises(bitlocker.BitlockerError, bit.Enable)
 
   @mock.patch.object(execute, 'execute_binary', autospec=True)
-  def testManageBde(self, eb):
+  def test_manage_bde(self, mock_execute_binary):
     bit = bitlocker.Bitlocker(mode='bde_tpm')
-    eb.return_value = 0
+    mock_execute_binary.return_value = 0
     bit.Enable()
-    eb.assert_called_with(
+    mock_execute_binary.assert_called_with(
         'C:/Windows/System32/cmd.exe', [
             '/c', 'C:/Windows/System32/manage-bde.exe', '-on', 'c:', '-rp',
             '>NUL'
         ],
         shell=True)
-    eb.side_effect = execute.Error
+    mock_execute_binary.side_effect = execute.Error
     self.assertRaises(bitlocker.BitlockerError, bit.Enable)
 
-  def testFailure(self):
+  def test_failure(self):
     bit = bitlocker.Bitlocker(mode='unsupported')
     self.assertRaises(bitlocker.BitlockerError, bit.Enable)
 
