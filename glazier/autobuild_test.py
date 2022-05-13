@@ -23,6 +23,8 @@ from glazier.lib import title
 from glazier.lib import winpe
 from pyfakefs import fake_filesystem
 
+from glazier.lib import errors
+
 
 class AutobuildTest(absltest.TestCase):
 
@@ -107,8 +109,9 @@ class AutobuildTest(absltest.TestCase):
   def testMainException(self, st, log_and_exit):
     st.side_effect = Exception
     self.autobuild.RunBuild()
-    log_and_exit.assert_called_with('Unknown Exception',
-                                    self.autobuild._build_info, 4000, mock.ANY)
+    log_and_exit.assert_called_with(
+        'Unknown Exception', self.autobuild._build_info,
+        errors.DEFAULT_ERROR_CODE, mock.ANY)
 
 
 if __name__ == '__main__':
