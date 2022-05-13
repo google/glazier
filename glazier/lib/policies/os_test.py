@@ -22,8 +22,8 @@ import mock
 class OsTest(absltest.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testUnsupportedOs(self, build_info):
-    o = os.UnsupportedOs(build_info)
+  def test_unsupported_os(self, mock_buildinfo):
+    o = os.UnsupportedOs(mock_buildinfo)
     self.assertRaises(os.ImagingPolicyException,
                       o.Verify)
 

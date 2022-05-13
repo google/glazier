@@ -28,8 +28,8 @@ class BIOSVersionTest(parameterized.TestCase):
       ('older_bios', 'S07KT25A'),
   )
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testVerify(self, bios_version, build_info):
-    bv = bios.BIOSVersion(build_info)
+  def test_verify(self, bios_version, mock_build_info):
+    bv = bios.BIOSVersion(mock_build_info)
     bv._build_info.BIOSVersion.return_value = bios_version
     if bios_version < 'S07KT26A':
       self.assertRaises(bios.ImagingPolicyException, bv.Verify)
