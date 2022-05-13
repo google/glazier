@@ -17,48 +17,46 @@
 from unittest import mock
 
 from absl.testing import absltest
+from glazier.lib import constants
+from glazier.lib import execute
 from glazier.lib import power
 
 
 class PowerTest(absltest.TestCase):
 
   @mock.patch.object(power.winpe, 'check_winpe', autospec=True)
-  @mock.patch.object(power.subprocess, 'call', autospec=True)
-  def testRestart(self, call, wpe):
+  @mock.patch.object(execute, 'execute_binary', autospec=True)
+  def testRestart(self, eb, wpe):
     # Use WinPE paths
     wpe.return_value = True
 
     power.Restart(60, 'Reboot fixes everything.')
-    call.assert_called_with('%s\\shutdown.exe -r -t 60 '
-                            '-c "Reboot fixes everything."' %
-                            power.constants.WINPE_SYSTEM32)
+    eb.assert_called_with(f'{constants.WINPE_SYSTEM32}/shutdown.exe',
+                          ['-r', '-t', 60, '-c', 'Reboot fixes everything.'])
 
     # Use hosts paths
     wpe.return_value = False
 
     power.Restart(60, 'Reboot fixes everything.')
-    call.assert_called_with('%s\\shutdown.exe -r -t 60 '
-                            '-c "Reboot fixes everything."' %
-                            power.constants.SYS_SYSTEM32)
+    eb.assert_called_with(f'{constants.SYS_SYSTEM32}/shutdown.exe',
+                          ['-r', '-t', 60, '-c', 'Reboot fixes everything.'])
 
   @mock.patch.object(power.winpe, 'check_winpe', autospec=True)
-  @mock.patch.object(power.subprocess, 'call', autospec=True)
-  def testShutdown(self, call, wpe):
+  @mock.patch.object(execute, 'execute_binary', autospec=True)
+  def testShutdown(self, eb, wpe):
     # Use WinPE paths
     wpe.return_value = True
 
     power.Shutdown(30, 'Because I said so.')
-    call.assert_called_with('%s\\shutdown.exe -s -t 30 '
-                            '-c "Because I said so."' %
-                            power.constants.WINPE_SYSTEM32)
+    eb.assert_called_with(f'{constants.WINPE_SYSTEM32}/shutdown.exe',
+                          ['-s', '-t', 30, '-c', 'Because I said so.'])
 
     # Use hosts paths
     wpe.return_value = False
 
     power.Shutdown(30, 'Because I said so.')
-    call.assert_called_with('%s\\shutdown.exe -s -t 30 '
-                            '-c "Because I said so."' %
-                            power.constants.SYS_SYSTEM32)
+    eb.assert_called_with(f'{constants.SYS_SYSTEM32}/shutdown.exe',
+                          ['-s', '-t', 30, '-c', 'Because I said so.'])
 
 if __name__ == '__main__':
   absltest.main()
