@@ -18,6 +18,8 @@ See https://google.github.io/glazier/error_codes more information.
 
 from typing import Optional
 
+DEFAULT_ERROR_CODE = 7000  # Was previously 4000.
+
 
 class GlazierError(Exception):
   """Base error for all other Glazier errors."""
@@ -25,7 +27,7 @@ class GlazierError(Exception):
   def __init__(
       self, error_code: Optional[int] = None, message: Optional[str] = None):
 
-    error_code = error_code if error_code is not None else 4000
+    error_code = error_code if error_code is not None else DEFAULT_ERROR_CODE
     message = message if message is not None else 'Unknown Exception'
 
     self.error_code = error_code
@@ -47,34 +49,39 @@ class UnsupportedPEError(GlazierError):
     .iso file. Please update before continuing.
 
     """
-    super().__init__(4100, message)
+    super().__init__(7001, message)  # Was previously 4100.
 
 
 class UnsupportedModelError(GlazierError):
 
   def __init__(self, model: str):
     super().__init__(
-        4101, f'System OS/model does not have imaging support: {model}')
+        7002,  # Was previously 4101.
+        f'System OS/model does not have imaging support: {model}')
 
 
 class ExecError(GlazierError):
 
   def __init__(self, command: str):
-    super().__init__(4141, f'Failed to execute [{command}]')
+    super().__init__(
+        7003,  # Was previously 4141.
+        f'Failed to execute [{command}]')
 
 
 class ExecTimeoutError(GlazierError):
 
   def __init__(self, command: str, seconds: int):
     super().__init__(
-        4142, f'Failed to execute [{command}] after [{seconds}] second(s)')
+        7004,  # Was previously 4142.
+        f'Failed to execute [{command}] after [{seconds}] second(s)')
 
 
 class ExecReturnError(GlazierError):
 
   def __init__(self, command: str, exit_code: int):
     super().__init__(
-        4143, f'Executing [{command}] returned invalid exit code [{exit_code}]')
+        7005,  # Was previously 4143.
+        f'Executing [{command}] returned invalid exit code [{exit_code}]')
 
 
 class ExecReturnOutError(GlazierError):
@@ -83,58 +90,78 @@ class ExecReturnOutError(GlazierError):
     message = (
         f'Executing [{command}] returned invalid exit code [{exit_code}]: '
         f'{output}')
-    super().__init__(4144, message)
+    super().__init__(
+        7006,  # Was previously 4144.
+        message)
 
 
 class ConfigBuilderError(GlazierError):
 
   def __init__(self):
-    super().__init__(4300, 'Failed to build the task list')
+    super().__init__(
+        7007,  # Was previously 4300.
+        'Failed to build the task list')
 
 
 class ConfigRunnerError(GlazierError):
 
   def __init__(self):
-    super().__init__(4301, 'Failed to execute the task list')
+    super().__init__(
+        7008,  # Was previously 4301.
+        'Failed to execute the task list')
 
 
 class SysInfoError(GlazierError):
 
   def __init__(self):
-    super().__init__(4311, 'Error gathering system information')
+    super().__init__(
+        7009,  # Was previously 4311.
+        'Error gathering system information')
 
 
 class UnknownActionError(GlazierError):
 
   def __init__(self, action: str):
-    super().__init__(4312, f'Unknown imaging action [{action}]')
+    super().__init__(
+        7010,  # Was previously 4312.
+        f'Unknown imaging action [{action}]')
 
 
 class UnknownPolicyError(GlazierError):
 
   def __init__(self, policy: str):
-    super().__init__(4313, f'Unknown imaging policy [{policy}]')
+    super().__init__(
+        7011,  # Was previously 4313.
+        f'Unknown imaging policy [{policy}]')
 
 
 class CheckUrlError(GlazierError):
 
   def __init__(self, url: str):
-    super().__init__(4314, f'Failed to verify url [{url}]')
+    super().__init__(
+        7012,  # Was previously 4314.
+        f'Failed to verify url [{url}]')
 
 
 class RegistrySetError(GlazierError):
 
   def __init__(self):
-    super().__init__(4340, 'Failed to set registry value')
+    super().__init__(
+        7013,  # Was previously 4340.
+        'Failed to set registry value')
 
 
 class WebServerError(GlazierError):
 
   def __init__(self):
-    super().__init__(5000, 'Failed to reach web server')
+    super().__init__(
+        7014,  # Was previously 5000.
+        'Failed to reach web server')
 
 
 class ServiceError(GlazierError):
 
   def __init__(self):
-    super().__init__(5300, 'Service unavailable')
+    super().__init__(
+        7015,  # Was previously 5300.
+        'Service unavailable')

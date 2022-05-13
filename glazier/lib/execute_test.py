@@ -134,7 +134,7 @@ class ExecuteTest(absltest.TestCase):
         1, self.binary, b'output')
     with self.assertRaises(execute.errors.GlazierError) as cm:
       execute.check_output(self.binary, ['arg1', 'arg2'])
-    self.assertEqual(cm.exception.error_code, 4144)
+    self.assertEqual(cm.exception.error_code, 7006)
     self.assertIsNotNone(cm.exception)
     i.assert_called_with('Executing: %s', 'C:\\foo.exe arg1 arg2')
 
@@ -145,7 +145,7 @@ class ExecuteTest(absltest.TestCase):
         self.binary, 300, b'output')
     with self.assertRaises(execute.errors.GlazierError) as cm:
       execute.check_output(self.binary, ['arg1', 'arg2'])
-    self.assertEqual(cm.exception.error_code, 4142)
+    self.assertEqual(cm.exception.error_code, 7004)
     self.assertIsNotNone(cm.exception)
     i.assert_called_with('Executing: %s', 'C:\\foo.exe arg1 arg2')
 
