@@ -165,3 +165,11 @@ class ServiceError(GlazierError):
     super().__init__(
         7015,  # Was previously 5300.
         'Service unavailable')
+
+
+class CacheError(GlazierError):
+
+  def __init__(self, file_path: str):
+    message = f'Unable to download required file: {file_path}'
+    super().__init__(7016, message)
+

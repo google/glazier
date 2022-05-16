@@ -21,6 +21,8 @@ from absl.testing import absltest
 from glazier.lib import cache
 from pyfakefs import fake_filesystem
 
+from glazier.lib import errors
+
 
 class CacheTest(absltest.TestCase):
 
@@ -65,7 +67,7 @@ class CacheTest(absltest.TestCase):
     # download exception
     transfer_err = cache.download.DownloadError('Error message.')
     download.side_effect = transfer_err
-    self.assertRaises(cache.CacheError, self.cache.CacheFromLine,
+    self.assertRaises(errors.CacheError, self.cache.CacheFromLine,
                       '@%s' % remote2, build_info)
 
   @mock.patch.object(cache.download, 'Transform', autospec=True)

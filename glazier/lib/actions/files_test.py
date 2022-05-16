@@ -22,6 +22,8 @@ from glazier.lib.actions import files
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 
+from glazier.lib import errors
+
 
 class FilesTest(absltest.TestCase):
 
@@ -89,7 +91,7 @@ class FilesTest(absltest.TestCase):
       e.Run()
 
     # Cache error
-    cache.side_effect = files.cache.CacheError
+    cache.side_effect = errors.CacheError('some/file/path')
     with self.assertRaises(files.ActionError):
       e.Run()
 

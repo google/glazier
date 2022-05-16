@@ -20,16 +20,13 @@ import typing
 from typing import Optional
 
 from glazier.lib import download
+from glazier.lib import errors
 
 if typing.TYPE_CHECKING:
   from glazier.lib import buildinfo
 
 
 DNLD_RE = re.compile(r'([@|#][\S]+)')
-
-
-class CacheError(Exception):
-  pass
 
 
 class Cache(object):
@@ -82,17 +79,16 @@ class Cache(object):
     """
     match = self._FindDownload(line)
     while match:
-      dl = download.Transform(match, build_info)
-      if download.IsRemote(dl):
-        destination = self._DestinationPath(build_info.CachePath(), dl)
+      file_path = download.Transform(match, build_info)
+      if download.IsRemote(file_path):
+        destination = self._DestinationPath(build_info.CachePath(), file_path)
         try:
-          self._downloader.DownloadFile(dl, destination)
+          self._downloader.DownloadFile(file_path, destination)
         except download.DownloadError as e:
           self._downloader.PrintDebugInfo()
-          raise CacheError(
-              'Unable to download required file %s: %s' % (dl, e)) from e
+          raise errors.CacheError(file_path) from e
       else:  # bypass download for local files
-        destination = dl
+        destination = file_path
       line = line.replace(match, destination)
       match = self._FindDownload(line)
     return line

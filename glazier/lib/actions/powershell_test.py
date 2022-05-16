@@ -21,6 +21,9 @@ from absl.testing import parameterized
 from glazier.lib import buildinfo
 from glazier.lib.actions import powershell
 
+from glazier.lib import errors
+
+
 SCRIPT = '#Some-Script.ps1'
 SCRIPT_PATH = r'C:\Cache\Some-Script.ps1'
 ARGS = ['-Verbose', '-InformationAction', 'Continue']
@@ -48,7 +51,7 @@ class PowershellTest(parameterized.TestCase):
     self.assertRaises(powershell.ActionError, ps.Run)
     # Cache error
     run.side_effect = None
-    cache.side_effect = powershell.cache.CacheError
+    cache.side_effect = errors.CacheError('some/file/path')
     self.assertRaises(powershell.ActionError, ps.Run)
 
   @mock.patch.object(powershell.powershell, 'PowerShell', autospec=True)
@@ -217,7 +220,7 @@ class PowershellTest(parameterized.TestCase):
   def testPSCommandCacheError(self, cache, run):
     ps = powershell.PSCommand([SCRIPT + ' -confirm:$false'], self.bi)
     run.side_effect = None
-    cache.side_effect = powershell.cache.CacheError
+    cache.side_effect = errors.CacheError('some/file/path')
     with self.assertRaises(powershell.ActionError):
       ps.Run()
 
