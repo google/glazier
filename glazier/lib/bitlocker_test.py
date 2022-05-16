@@ -18,6 +18,7 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import bitlocker
+from glazier.lib import execute
 
 from glazier.lib import constants
 
@@ -33,7 +34,7 @@ class BitlockerTest(absltest.TestCase):
         mock.call(mock.ANY, [
             "$ErrorActionPreference='Stop'", ';', 'Enable-BitLocker', 'C:',
             '-TpmProtector', '-UsedSpaceOnly', '-SkipHardwareTest ', '>>',
-            '%s\\enable-bitlocker.txt' % constants.SYS_LOGS_PATH
+            f'{constants.SYS_LOGS_PATH}/enable-bitlocker.txt'
         ]),
         mock.call(mock.ANY, [
             "$ErrorActionPreference='Stop'", ';', 'Add-BitLockerKeyProtector',
@@ -43,15 +44,18 @@ class BitlockerTest(absltest.TestCase):
     ps.side_effect = bitlocker.powershell.PowerShellError
     self.assertRaises(bitlocker.BitlockerError, bit.Enable)
 
-  @mock.patch.object(bitlocker.subprocess, 'call', autospec=True)
-  def testManageBde(self, call):
+  @mock.patch.object(execute, 'execute_binary', autospec=True)
+  def testManageBde(self, eb):
     bit = bitlocker.Bitlocker(mode='bde_tpm')
-    call.return_value = 0
-    cmdline = ('C:\\Windows\\System32\\cmd.exe /c '
-               'C:\\Windows\\System32\\manage-bde.exe -on c: -rp >NUL')
+    eb.return_value = 0
     bit.Enable()
-    call.assert_called_with(cmdline, shell=True)
-    call.return_value = 1
+    eb.assert_called_with(
+        'C:/Windows/System32/cmd.exe', [
+            '/c', 'C:/Windows/System32/manage-bde.exe', '-on', 'c:', '-rp',
+            '>NUL'
+        ],
+        shell=True)
+    eb.side_effect = execute.Error
     self.assertRaises(bitlocker.BitlockerError, bit.Enable)
 
   def testFailure(self):

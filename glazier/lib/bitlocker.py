@@ -14,9 +14,7 @@
 
 """Bitlocker management functionality."""
 
-import logging
-import subprocess
-
+from glazier.lib import execute
 from glazier.lib import powershell
 
 from glazier.lib import constants
@@ -34,29 +32,15 @@ class Bitlocker(object):
   def __init__(self, mode: str):
     self._mode = mode
 
-  def _LaunchSubproc(self, command: str):
-    """Launch a subprocess.
-
-    Args:
-      command: A command string to pass to subprocess.call()
-
-    Raises:
-      BitlockerError: An unexpected exit code from manage-bde.
-    """
-    logging.info('Running BitLocker command: %s', command)
-    exit_code = subprocess.call(command, shell=True)
-    if exit_code != 0:
-      raise BitlockerError('Unexpected exit code from Bitlocker: %s.' %
-                           str(exit_code))
-
   def _PsTpm(self):
     """Enable TPM mode using Powershell (Win8 +)."""
     ps = powershell.PowerShell()
     try:
-      ps.RunCommand(['$ErrorActionPreference=\'Stop\'', ';', 'Enable-BitLocker',
-                     'C:', '-TpmProtector', '-UsedSpaceOnly',
-                     '-SkipHardwareTest ', '>>',
-                     r'%s\enable-bitlocker.txt' % constants.SYS_LOGS_PATH])
+      ps.RunCommand([
+          '$ErrorActionPreference=\'Stop\'', ';', 'Enable-BitLocker', 'C:',
+          '-TpmProtector', '-UsedSpaceOnly', '-SkipHardwareTest ', '>>',
+          f'{constants.SYS_LOGS_PATH}/enable-bitlocker.txt'
+      ])
       ps.RunCommand(['$ErrorActionPreference=\'Stop\'', ';',
                      'Add-BitLockerKeyProtector', 'C:',
                      '-RecoveryPasswordProtector', '>NUL'])
@@ -69,8 +53,14 @@ class Bitlocker(object):
     if self._mode == 'ps_tpm':
       self._PsTpm()
     elif self._mode == 'bde_tpm':
-      self._LaunchSubproc(r'C:\Windows\System32\cmd.exe /c '
-                          r'C:\Windows\System32\manage-bde.exe -on c: -rp '
-                          '>NUL')
+      try:
+        execute.execute_binary(
+            'C:/Windows/System32/cmd.exe', [
+                '/c', 'C:/Windows/System32/manage-bde.exe', '-on', 'c:', '-rp',
+                '>NUL'
+            ],
+            shell=True)
+      except execute.Error as e:
+        raise BitlockerError(str(e)) from e
     else:
-      raise BitlockerError('Unknown mode: %s.' % self._mode)
+      raise BitlockerError(f'Unknown mode: {self._mode}.')
