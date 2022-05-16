@@ -26,6 +26,8 @@ from glazier.lib import constants
 from glazier.lib import execute
 from glazier.lib import winpe
 
+from glazier.lib import errors
+
 if typing.TYPE_CHECKING:
   from glazier.lib import buildinfo
 
@@ -142,7 +144,7 @@ class GooGetInstall(object):
       try:
         execute.execute_binary(kwargs['path'], cmd)
         return
-      except execute.Error as e:
+      except errors.BinaryExecutionError as e:
         logging.warning(str(e))
         logging.info('Retrying in %d seconds', sleep)
         time.sleep(sleep)

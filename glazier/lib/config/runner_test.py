@@ -23,6 +23,8 @@ from glazier.lib.config import runner
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 
+from glazier.lib import errors
+
 
 class ConfigRunnerTest(absltest.TestCase):
 
@@ -74,7 +76,7 @@ class ConfigRunnerTest(absltest.TestCase):
   def testPopTask(self, dump):
     self.cr._PopTask([1, 2, 3])
     dump.assert_called_with('/tmp/task_list.yaml', [2, 3], mode='w')
-    dump.side_effect = runner.files.Error
+    dump.side_effect = errors.FileWriteError('some/file/path')
     with self.assertRaises(runner.ConfigRunnerError):
       self.cr._PopTask([1, 2])
 
@@ -175,7 +177,7 @@ class ConfigRunnerTest(absltest.TestCase):
 
   @mock.patch.object(runner.files, 'Read', autospec=True)
   def testStartWithMissingFile(self, reader):
-    reader.side_effect = runner.files.Error
+    reader.side_effect = errors.FileReadError('some/file/path')
     self.assertRaises(runner.ConfigRunnerError, self.cr.Start,
                       '/tmp/path/missing.yaml')
 

@@ -18,6 +18,7 @@ from glazier.lib import execute
 from glazier.lib import powershell
 
 from glazier.lib import constants
+from glazier.lib import errors
 
 SUPPORTED_MODES = ['ps_tpm', 'bde_tpm']
 
@@ -60,7 +61,7 @@ class Bitlocker(object):
                 '>NUL'
             ],
             shell=True)
-      except execute.Error as e:
+      except errors.BinaryExecutionError as e:
         raise BitlockerError(str(e)) from e
     else:
       raise BitlockerError(f'Unknown mode: {self._mode}.')

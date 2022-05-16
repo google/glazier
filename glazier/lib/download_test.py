@@ -24,6 +24,8 @@ from glazier.lib import download
 from glazier.lib import file_util
 from pyfakefs import fake_filesystem
 
+from glazier.lib import errors
+
 _TEST_INI = """
 [BUILD]
 release=1.0
@@ -163,13 +165,13 @@ class DownloadTest(absltest.TestCase):
 
     # Invalid URL
     with self.assertRaisesRegex(
-        download.DownloadError, 'Invalid remote server URL*'):
+        errors.DownloadError, 'Invalid remote server URL*'):
       self._dl._OpenStream('not_a_real_url')
 
     # 404
     file_stream.getcode.return_value = 404
     mock_urlopen.side_effect = iter([httperr, file_stream])
-    self.assertRaises(download.DownloadError, self._dl._OpenStream, url)
+    self.assertRaises(errors.DownloadError, self._dl._OpenStream, url)
 
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
@@ -181,7 +183,7 @@ class DownloadTest(absltest.TestCase):
     mock_check_winpe.return_value = False
 
     mock_urlopen.side_effect = self.FailingURLOpen
-    self.assertRaises(download.DownloadError, self._dl._OpenStream, TEST_URL)
+    self.assertRaises(errors.DownloadError, self._dl._OpenStream, TEST_URL)
 
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
@@ -206,7 +208,7 @@ class DownloadTest(absltest.TestCase):
   @mock.patch.object(file_util, 'Copy', autospec=True)
   def testDownloadFileCopyExcept(self, copy):
     copy.side_effect = file_util.Error('copy error')
-    with self.assertRaises(download.DownloadError):
+    with self.assertRaises(errors.DownloadError):
       self._dl.DownloadFile(
           url='c:/glazier/conf/test.ps1', save_location='c:/windows/test.ps1')
 
@@ -272,24 +274,24 @@ class DownloadTest(absltest.TestCase):
       # HTTP Header returned nothing (NoneType)
       http_stream.seek(0)
       report.reset_mock()
-      self.assertRaises(download.DownloadError, self._dl._StreamToDisk, None)
+      self.assertRaises(errors.DownloadError, self._dl._StreamToDisk, None)
     # IOError
     http_stream.seek(0)
     self.filesystem.create_dir(r'C:\Windows')
     self._dl._save_location = r'C:\Windows'
-    self.assertRaises(download.DownloadError, self._dl._StreamToDisk,
+    self.assertRaises(errors.DownloadError, self._dl._StreamToDisk,
                       file_stream)
     # File Size
     http_stream.seek(0)
     file_stream.headers.get = lambda x: {'Content-Length': '100000'}[x]
     self._dl._save_location = r'C:\download.txt'
-    self.assertRaises(download.DownloadError, self._dl._StreamToDisk,
+    self.assertRaises(errors.DownloadError, self._dl._StreamToDisk,
                       file_stream)
     # Socket Error
     http_stream.seek(0)
     file_stream.headers.get = lambda x: {'Content-Length': '25'}[x]
     file_stream.read = mock.Mock(side_effect=download.socket.error('SocketErr'))
-    self.assertRaises(download.DownloadError, self._dl._StreamToDisk,
+    self.assertRaises(errors.DownloadError, self._dl._StreamToDisk,
                       file_stream)
     store_info.assert_called_with(self._dl, file_stream, 'SocketErr')
 
@@ -297,14 +299,14 @@ class DownloadTest(absltest.TestCase):
     http_stream.seek(0)
     file_stream.headers.get = lambda x: {'Content-Length': '100000'}[x]
     self._dl._save_location = r'C:\download.txt'
-    self.assertRaises(download.DownloadError, self._dl._StreamToDisk,
+    self.assertRaises(errors.DownloadError, self._dl._StreamToDisk,
                       file_stream)
 
   @mock.patch.object(download.BaseDownloader, '_StoreDebugInfo', autospec=True)
   def testValidate(self, store_info):
     file_stream = mock.Mock()
     self._dl._save_location = r'C:\missing.txt'
-    self.assertRaises(download.DownloadError, self._dl._Validate, file_stream,
+    self.assertRaises(errors.DownloadError, self._dl._Validate, file_stream,
                       200)
     store_info.assert_called_with(self._dl, file_stream)
 

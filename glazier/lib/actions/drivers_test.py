@@ -20,6 +20,8 @@ from absl.testing import absltest
 from glazier.lib.actions import drivers
 from glazier.lib.buildinfo import BuildInfo
 
+from glazier.lib import errors
+
 
 class DriversTest(absltest.TestCase):
 
@@ -68,15 +70,15 @@ class DriversTest(absltest.TestCase):
     conf['data']['driver'][0][1] = 'C:\\W54x-Win10-Storage.wim'
 
     # Mount Fail
-    exe.side_effect = drivers.execute.Error
+    exe.side_effect = errors.BinaryExecutionError('some message')
     with self.assertRaises(drivers.ActionError):
       dw.Run()
     # Dism Fail
-    exe.side_effect = iter([0, drivers.execute.Error])
+    exe.side_effect = iter([0, errors.BinaryExecutionError('some message')])
     with self.assertRaises(drivers.ActionError):
       dw.Run()
     # Unmount Fail
-    exe.side_effect = iter([0, 0, drivers.execute.Error])
+    exe.side_effect = iter([0, 0, errors.BinaryExecutionError('some message')])
     with self.assertRaises(drivers.ActionError):
       dw.Run()
 

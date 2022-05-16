@@ -30,6 +30,7 @@ from glazier.lib.spec import spec
 import yaml
 
 from glazier.lib import constants
+from glazier.lib import errors
 from gwinpy.wmi import hw_info
 from gwinpy.wmi import net_info
 from gwinpy.wmi import tpm_info
@@ -40,10 +41,6 @@ flags.DEFINE_enum(
     'glazier_spec', 'flag', list(spec.SPEC_OPTS.keys()),
     ('Which host specification module to use for determining host features '
      'like Hostname and OS.'))
-
-
-class Error(Exception):
-  pass
 
 
 class BuildInfo(object):
@@ -150,10 +147,7 @@ class BuildInfo(object):
       The build release as a string.
     """
     rel_id_file = '%s/%s' % (self.ReleasePath().rstrip('/'), 'release-id.yaml')
-    try:
-      data = files.Read(rel_id_file)
-    except files.Error as e:
-      raise Error(e) from e
+    data = files.Read(rel_id_file)
     if data and 'release_id' in data:
       return data['release_id']
     return None
@@ -162,10 +156,7 @@ class BuildInfo(object):
     if not self._release_info:
       rel_info_file = '%s/%s' % (self.ReleasePath().rstrip('/'),
                                  'release-info.yaml')
-      try:
-        self._release_info = files.Read(rel_info_file)
-      except files.Error as e:
-        raise Error(e) from e
+      self._release_info = files.Read(rel_info_file)
     return self._release_info
 
   def ReleasePath(self) -> str:
@@ -208,10 +199,7 @@ class BuildInfo(object):
     if not self._version_info:
       info_file = '%s/%s' % (self.ConfigServer().rstrip('/'),
                              'version-info.yaml')
-      try:
-        self._version_info = files.Read(info_file)
-      except files.Error as e:
-        raise Error(e) from e
+      self._version_info = files.Read(info_file)
     return self._version_info
 
   #
@@ -241,7 +229,7 @@ class BuildInfo(object):
       True for a pin match, else False.
 
     Raises:
-      Error: Reference made to an unsupported pin.
+      BuildInfoError: Reference made to an unsupported pin.
     """
     known_pins = self.GetExportedPins()
     if pin_name.startswith('USER_'):
@@ -251,7 +239,7 @@ class BuildInfo(object):
       else:
         return False
     elif pin_name not in known_pins:
-      raise Error('Referencing illegal pin name: %s' % pin_name)
+      raise errors.BuildInfoError(f'Referencing illegal pin name: {pin_name}')
 
     loose = False
     if pin_name in ['computer_model', 'device_id']:
@@ -316,7 +304,8 @@ class BuildInfo(object):
     """
     result = self._HWInfo().ComputerSystemManufacturer()
     if not result:
-      raise Error('System manufacturer could not be determined.')
+      raise errors.BuildInfoError(
+          'System manufacturer could not be determined.')
     return result
 
   @functools.lru_cache()
@@ -333,7 +322,7 @@ class BuildInfo(object):
     """
     result = self._HWInfo().ComputerSystemModel()
     if not result:
-      raise Error('System model could not be determined.')
+      raise errors.BuildInfoError('System model could not be determined.')
     return result
 
   @functools.lru_cache()
@@ -510,7 +499,7 @@ class BuildInfo(object):
       os_codes = release_info['os_codes']
       if os in os_codes:
         return os_codes[os]['code']
-    raise Error('Unknown OS [%s]' % os)
+    raise errors.BuildInfoError(f'Unknown OS: {os}')
 
   def Serialize(self, to_file):
     """Dumps internal data to a file for later reference."""
@@ -718,7 +707,8 @@ class BuildInfo(object):
     versions = self.KnownBranches()
     comp_os = self.ComputerOs()
     if not comp_os:
-      raise Error('Unable to determine host OS.')
+      raise errors.BuildInfoError('Unable to determine host OS.')
     if comp_os in versions:
       return versions[comp_os]
-    raise Error('Unable to find a release that supports %s.' % comp_os)
+    raise errors.BuildInfoError(
+        f'Unable to find a release that supports {comp_os}.')

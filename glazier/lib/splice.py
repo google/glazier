@@ -21,6 +21,7 @@ from glazier.lib import execute
 from glazier.lib import identity
 
 from glazier.lib import constants
+from glazier.lib import errors
 
 
 class Error(Exception):
@@ -131,7 +132,7 @@ class Splice(object):
           self._splice_unattended()
         else:
           self._splice_user()
-      except execute.Error as e:
+      except errors.BinaryExecutionError as e:
         if max_retries < 0 or attempt < max_retries:  # pytype: disable=unsupported-operands
           logging.warning(
               'Domain join attempt %d of %d failed. Retrying in %d second(s).',
@@ -157,7 +158,7 @@ class Splice(object):
       attempt += 1
       try:
         self._splice_user()
-      except execute.Error as e:
+      except errors.BinaryExecutionError as e:
         if max_retries < 0 or attempt < max_retries:  # pytype: disable=unsupported-operands
           logging.warning(
               'Domain join attempt %d of %d failed. Retrying in %d second(s).',

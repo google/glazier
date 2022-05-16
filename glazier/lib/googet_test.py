@@ -25,6 +25,8 @@ from glazier.lib import googet
 
 from pyfakefs import fake_filesystem
 
+from glazier.lib import errors
+
 
 class GooGetTest(absltest.TestCase):
 
@@ -124,7 +126,7 @@ class GooGetTest(absltest.TestCase):
           '', retries, sleep_dur, self.buildinfo, path=path, flags=self.flags)
 
     # Non zero return value
-    eb.side_effect = googet.execute.Error
+    eb.side_effect = errors.BinaryExecutionError('some message')
     with self.assertRaisesRegex(
         googet.Error,
         'GooGet command failed after ' + str(retries) + ' attempts'):

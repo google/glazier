@@ -20,6 +20,8 @@ from absl.testing import absltest
 from glazier.lib.actions import updates
 from glazier.lib.buildinfo import BuildInfo
 
+from glazier.lib import errors
+
 
 class UpdatesTest(absltest.TestCase):
 
@@ -66,7 +68,7 @@ class UpdatesTest(absltest.TestCase):
     conf['data']['update'][0][1] = 'C:\\Windows6.1-KB2990941-v3-x64.msu'
 
     # Dism Fail
-    exe.side_effect = updates.execute.Error
+    exe.side_effect = errors.BinaryExecutionError('some message')
     with self.assertRaises(updates.ActionError):
       um.Run()
 

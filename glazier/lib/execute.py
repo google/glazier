@@ -20,10 +20,6 @@ from typing import List, Optional
 from glazier.lib import errors
 
 
-class Error(Exception):
-  pass
-
-
 def format_command(binary: str, args: Optional[List[str]] = None):
   """Format the command to execute.
 
@@ -78,7 +74,7 @@ def execute_binary(binary: str, args: Optional[List[str]] = None,
     process = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, shell=shell,
                                universal_newlines=True)
   except WindowsError as e:  # pylint: disable=undefined-variable
-    raise Error(f'Failed to execute [{string}]: {str(e)}') from e
+    raise errors.BinaryExecutionError(f'Failed to execute [{string}]') from e
 
   # Optionally log output to standard logger
   if not shell and log:
@@ -92,7 +88,7 @@ def execute_binary(binary: str, args: Optional[List[str]] = None,
   process.wait()
 
   if process.returncode not in return_codes:
-    raise Error(
+    raise errors.BinaryExecutionError(
         f'Executing [{string}] returned invalid exit code [{process.returncode}]'
     )
 

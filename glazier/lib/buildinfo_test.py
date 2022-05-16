@@ -26,6 +26,8 @@ from glazier.lib import buildinfo
 from pyfakefs import fake_filesystem
 import yaml
 
+from glazier.lib import errors
+
 from gwinpy.wmi.hw_info import DeviceId
 
 FLAGS = flags.FLAGS
@@ -241,7 +243,7 @@ class BuildInfoTest(absltest.TestCase):
       self.assertFalse(self.buildinfo.BuildPinMatch('os_code', ['']))
 
     # Invalid pin
-    self.assertRaises(buildinfo.Error, self.buildinfo.BuildPinMatch,
+    self.assertRaises(errors.BuildInfoError, self.buildinfo.BuildPinMatch,
                       'no_existo', ['invalid pin value'])
 
   def testBuildUserPinMatch(self):
@@ -300,7 +302,7 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(result, 'Google Inc.')
     self.buildinfo.ComputerManufacturer.cache_clear()
     mock_man.return_value = None
-    self.assertRaises(buildinfo.Error,
+    self.assertRaises(errors.BuildInfoError,
                       self.buildinfo.ComputerManufacturer)
 
   @mock.patch.object(
@@ -316,7 +318,7 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(result, '2537CE2')
     self.buildinfo.ComputerModel.cache_clear()
     sys_model.return_value = None
-    self.assertRaises(buildinfo.Error, self.buildinfo.ComputerModel)
+    self.assertRaises(errors.BuildInfoError, self.buildinfo.ComputerModel)
 
   @flagsaver.flagsaver
   def testHostSpecFlags(self):
@@ -440,7 +442,7 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(self.buildinfo.OsCode(), 'win2012r2-x64-se')
     comp_os.return_value = 'win2000-x64-se'
     self.buildinfo.OsCode.cache_clear()
-    self.assertRaises(buildinfo.Error, self.buildinfo.OsCode)
+    self.assertRaises(errors.BuildInfoError, self.buildinfo.OsCode)
 
   @mock.patch.object(buildinfo.net_info, 'NetInfo', autospec=True)
   def testNetInterfaces(self, netinfo):
@@ -471,8 +473,8 @@ class BuildInfoTest(absltest.TestCase):
     self.assertIsNone(self.buildinfo.Release())
     self.buildinfo.Release.cache_clear()
     # read error
-    fread.side_effect = buildinfo.files.Error
-    self.assertRaises(buildinfo.Error, self.buildinfo.Release)
+    fread.side_effect = errors.FileReadError('some/file/path')
+    self.assertRaises(errors.FileReadError, self.buildinfo.Release)
 
   @mock.patch.object(buildinfo.files, 'Read', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
@@ -483,8 +485,8 @@ class BuildInfoTest(absltest.TestCase):
     fread.assert_called_with(
         'https://glazier-server.example.com/testing/release-info.yaml')
     # read error
-    fread.side_effect = buildinfo.files.Error
-    self.assertRaises(buildinfo.Error, self.buildinfo._ReleaseInfo)
+    fread.side_effect = errors.FileReadError('some/file/path')
+    self.assertRaises(errors.FileReadError, self.buildinfo._ReleaseInfo)
 
   @mock.patch.object(buildinfo.files, 'Read', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'ComputerOs', autospec=True)
@@ -500,11 +502,11 @@ class BuildInfoTest(absltest.TestCase):
     self.buildinfo.ComputerOs.cache_clear()
     # no os
     comp_os.return_value = None
-    self.assertRaises(buildinfo.Error, self.buildinfo.ReleasePath)
+    self.assertRaises(errors.BuildInfoError, self.buildinfo.ReleasePath)
     self.buildinfo.ComputerOs.cache_clear()
     # invalid os
     comp_os.return_value = 'invalid-os-string'
-    self.assertRaises(buildinfo.Error, self.buildinfo.ReleasePath)
+    self.assertRaises(errors.BuildInfoError, self.buildinfo.ReleasePath)
 
   def testActiveConfigPath(self):
     self.buildinfo.ActiveConfigPath(append='/foo')

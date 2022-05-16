@@ -36,7 +36,7 @@ class ConfigRunner(base.ConfigBase):
     self._task_list_path = task_list
     try:
       data = files.Read(self._task_list_path)
-    except files.Error as e:
+    except errors.FileError as e:
       raise ConfigRunnerError() from e
     self._ProcessTasks(data)
 
@@ -47,7 +47,7 @@ class ConfigRunner(base.ConfigBase):
       files.Dump(self._task_list_path, tasks, mode='w')
       if not tasks:
         files.Remove(self._task_list_path)
-    except files.Error as e:
+    except errors.FileError as e:
       raise ConfigRunnerError() from e
 
   def _ProcessTasks(self, tasks):

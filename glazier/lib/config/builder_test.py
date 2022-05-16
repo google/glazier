@@ -21,6 +21,7 @@ from glazier.lib.config import builder
 from glazier.lib.config import files
 
 from glazier.lib import actions
+from glazier.lib import errors
 
 
 class ConfigBuilderTest(absltest.TestCase):
@@ -65,7 +66,7 @@ class ConfigBuilderTest(absltest.TestCase):
     pins = {'computer_model': ['VMWare Virtual Platform'], 'os_code': ['win8']}
     self.assertFalse(self.cb._MatchPin(pins))
     # Error
-    bpm.side_effect = buildinfo.Error
+    bpm.side_effect = errors.BuildInfoError('some message')
     self.assertRaises(builder.errors.SysInfoError, self.cb._MatchPin, pins)
 
   @mock.patch.object(builder.ConfigBuilder, '_ProcessAction', autospec=True)

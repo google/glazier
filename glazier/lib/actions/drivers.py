@@ -25,6 +25,7 @@ from glazier.lib.actions.base import ValidationError
 from glazier.lib.actions.files import Get
 
 from glazier.lib import constants
+from glazier.lib import errors
 
 
 class DriverWIM(BaseAction):
@@ -92,7 +93,7 @@ class DriverWIM(BaseAction):
           constants.SYS_PNPUTIL,
           ['/add-driver', f'{mount_dir}*.inf', '/subdirs'],
           shell=True)
-    except execute.Error as e:
+    except errors.BinaryExecutionError as e:
       raise ActionError('Error adding drivers to DriverStore from %s. (%s)' %
                         (mount_dir, e)) from e
 
@@ -118,7 +119,7 @@ class DriverWIM(BaseAction):
           constants.WINPE_DISM,
           ['/Image:c:', '/Add-Driver', f'/Driver:{mount_dir}', '/Recurse'],
           shell=True)
-    except execute.Error as e:
+    except errors.BinaryExecutionError as e:
       raise ActionError('Error applying drivers to image from %s. (%s)' %
                         (mount_dir, e)) from e
 
@@ -152,7 +153,7 @@ class DriverWIM(BaseAction):
               f'/MountDir:{mount_dir}', '/ReadOnly', '/Index:1'
           ],
           shell=True)
-    except execute.Error as e:
+    except errors.BinaryExecutionError as e:
       raise ActionError('Unable to mount image %s. (%s)' % (wim_file, e)) from e
 
     logging.info('Applying %s image to main disk.', wim_file)
@@ -167,6 +168,6 @@ class DriverWIM(BaseAction):
           dism_path,
           ['/Unmount-Image', f'/MountDir:{mount_dir}', '/Discard'],
           shell=True)
-    except execute.Error as e:
+    except errors.BinaryExecutionError as e:
       raise ActionError(
           'Error unmounting image. Unable to continue. (%s)' % e) from e

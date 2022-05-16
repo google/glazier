@@ -24,6 +24,7 @@ from glazier.lib.actions.base import ValidationError
 from glazier.lib.actions.files import Get
 
 from glazier.lib import constants
+from glazier.lib import errors
 
 
 class UpdateMSU(BaseAction):
@@ -99,6 +100,6 @@ class UpdateMSU(BaseAction):
               f'/ScratchDir:{scratch_dir}'
           ],
           shell=True)
-    except execute.Error as e:
+    except errors.BinaryExecutionError as e:
       raise ActionError(
           'Failed to process update %s: %s' % (msu_file, e)) from e

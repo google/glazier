@@ -65,7 +65,7 @@ class CacheTest(absltest.TestCase):
                       'https://test.example.com/release/%s' % remote2, local2)
     download.assert_has_calls([call1, call2])
     # download exception
-    transfer_err = cache.download.DownloadError('Error message.')
+    transfer_err = errors.DownloadError('Error message.')
     download.side_effect = transfer_err
     self.assertRaises(errors.CacheError, self.cache.CacheFromLine,
                       '@%s' % remote2, build_info)

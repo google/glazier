@@ -48,7 +48,7 @@ class Execute(BaseAction):
           command_list[1:],
           success_codes + reboot_codes,
           shell=shell)
-    except (execute.Error, ValueError) as e:
+    except (errors.BinaryExecutionError, ValueError) as e:
       raise ActionError(e) from e
     except KeyboardInterrupt as e:
       raise ActionError('KeyboardInterrupt detected, exiting.') from e
@@ -110,7 +110,7 @@ class Get(BaseAction):
                           (dst, e)) from e
       try:
         downloader.DownloadFile(full_url, dst, show_progress=True)
-      except download.DownloadError as e:
+      except errors.DownloadError as e:
         downloader.PrintDebugInfo()
         raise ActionError('Transfer error while downloading %s: %s' %
                           (full_url, str(e))) from e

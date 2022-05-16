@@ -81,7 +81,7 @@ class FilesTest(absltest.TestCase):
       e.Run()
 
     # Execute Error
-    eb.side_effect = files.execute.Error
+    eb.side_effect = errors.BinaryExecutionError('some message')
     with self.assertRaises(files.ActionError):
       e.Run()
 
@@ -188,7 +188,7 @@ class FilesTest(absltest.TestCase):
     r_path.return_value = 'https://glazier-server.example.com/'
     remote = '@glazier/1.0/autobuild.par'
     local = r'/tmp/autobuild.par'
-    down_file.side_effect = files.download.DownloadError('Error')
+    down_file.side_effect = errors.DownloadError('Error')
     with self.assertRaises(files.ActionError):
       files.Get([[remote, local]], buildinfo.BuildInfo()).Run()
 
@@ -198,7 +198,7 @@ class FilesTest(absltest.TestCase):
     r_path.return_value = 'https://glazier-server.example.com/'
     remote = '@glazier/1.0/autobuild.par'
     self.filesystem.create_file('/directory')
-    down_file.side_effect = files.download.DownloadError('Error')
+    down_file.side_effect = errors.DownloadError('Error')
     with self.assertRaises(files.ActionError):
       files.Get([[remote, '/directory/file.txt']], buildinfo.BuildInfo()).Run()
 

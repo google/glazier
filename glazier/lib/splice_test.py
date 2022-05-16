@@ -19,6 +19,8 @@ from absl.testing import absltest
 from glazier.lib import splice
 from pyfakefs import fake_filesystem
 
+from glazier.lib import errors
+
 _USERNAME = 'bert'
 _HOSTNAME = 'earnie-pc'
 
@@ -32,7 +34,7 @@ class SpliceTest(absltest.TestCase):
     splice.open = fake_filesystem.FakeFileOpen(self.fs)
     splice.os.environ['ProgramFiles'] = r'C:\Program Files'
     self.splice = splice.Splice()
-    self.error = splice.execute.Error
+    self.error = errors.BinaryExecutionError('some message')
 
   @mock.patch.object(splice.identity, 'get_hostname', autospec=True)
   def testGetHostnameExists(self, get_host):
