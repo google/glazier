@@ -23,12 +23,12 @@ from glazier.lib import errors
 
 class GlazierErrorTest(absltest.TestCase):
 
-  def testStr(self):
+  def test_str(self):
     err = errors.GlazierError(9999, 'some error message')
     expected_str = 'some error message (Error Code: 9999)'
     self.assertEqual(expected_str, str(err))
 
-  def testSubclasses(self):
+  def test_subclasses(self):
 
     # Collect all subclasses of GlazierError in the "errors" module.
     tuples = inspect.getmembers(

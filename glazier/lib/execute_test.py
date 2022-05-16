@@ -33,104 +33,93 @@ class ExecuteTest(absltest.TestCase):
 
   @mock.patch.object(execute.logging, 'info', autospec=True)
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
-  def test_execute_binary(self, popen, i):
-    popen_instance = popen.return_value
+  def test_execute_binary(self, mock_popen, mock_info):
+    popen_instance = mock_popen.return_value
     popen_instance.returncode = 0
     popen_instance.stdout = io.BytesIO(b'foo\n\n\n')
     execute.execute_binary(self.binary, ['arg1', 'arg2'])
-    i.assert_has_calls([
+    mock_info.assert_has_calls([
         mock.call('Executing: %s', 'C:\\foo.exe arg1 arg2'),
         mock.call(b'foo')
     ],)
-    popen.assert_called_with([self.binary, 'arg1', 'arg2'],
-                             shell=False,
-                             stdout=execute.subprocess.PIPE,
-                             stderr=execute.subprocess.STDOUT,
-                             universal_newlines=True)
+    mock_popen.assert_called_with(
+        [self.binary, 'arg1', 'arg2'], shell=False,
+        stdout=execute.subprocess.PIPE, stderr=execute.subprocess.STDOUT,
+        universal_newlines=True)
 
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
-  def test_execute_binary_no_args(self, popen):
-    popen_instance = popen.return_value
+  def test_execute_binary_no_args(self, mock_popen):
+    popen_instance = mock_popen.return_value
     popen_instance.returncode = 0
     popen_instance.stdout = io.BytesIO(b'foo\nbar')
     execute.execute_binary(self.binary)
-    popen.assert_called_with([self.binary],
-                             shell=False,
-                             stdout=execute.subprocess.PIPE,
-                             stderr=execute.subprocess.STDOUT,
-                             universal_newlines=True)
+    mock_popen.assert_called_with(
+        [self.binary], shell=False, stdout=execute.subprocess.PIPE,
+        stderr=execute.subprocess.STDOUT, universal_newlines=True)
 
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
-  def test_execute_binary_return_codes(self, popen):
-    popen_instance = popen.return_value
+  def test_execute_binary_return_codes(self, mock_popen):
+    popen_instance = mock_popen.return_value
     popen_instance.returncode = 1337
     popen_instance.stdout = io.BytesIO(b'foo\nbar')
     execute.execute_binary(self.binary, return_codes=[1337, 1338])
-    popen.assert_called_with([self.binary],
-                             shell=False,
-                             stdout=execute.subprocess.PIPE,
-                             stderr=execute.subprocess.STDOUT,
-                             universal_newlines=True)
+    mock_popen.assert_called_with(
+        [self.binary], shell=False, stdout=execute.subprocess.PIPE,
+        stderr=execute.subprocess.STDOUT, universal_newlines=True)
 
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
-  def test_execute_binary_invalid_return(self, popen):
-    popen_instance = popen.return_value
+  def test_execute_binary_invalid_return(self, mock_popen):
+    popen_instance = mock_popen.return_value
     popen_instance.returncode = 1337
     popen_instance.stdout = io.BytesIO(b'foo\nbar')
     self.assertRaises(execute.Error, execute.execute_binary, self.binary,
                       return_codes=[1338])
 
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
-  def test_execute_binary_windows_error(self, popen):
+  def test_execute_binary_windows_error(self, mock_popen):
     execute.WindowsError = Exception
-    popen.side_effect = execute.WindowsError
+    mock_popen.side_effect = execute.WindowsError
     self.assertRaises(execute.Error, execute.execute_binary, self.binary)
 
   @mock.patch.object(execute.logging, 'info', autospec=True)
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
-  def test_execute_binary_silent(self, popen, i):
-    popen_instance = popen.return_value
+  def test_execute_binary_silent(self, mock_popen, mock_info):
+    popen_instance = mock_popen.return_value
     popen_instance.returncode = 0
     popen_instance.stdout = io.BytesIO(b'foo\nbar')
     execute.execute_binary(self.binary, log=False)
-    i.assert_not_called()
-    popen.assert_called_with([self.binary],
-                             shell=False,
-                             stdout=execute.subprocess.PIPE,
-                             stderr=execute.subprocess.STDOUT,
-                             universal_newlines=True)
+    mock_info.assert_not_called()
+    mock_popen.assert_called_with(
+        [self.binary], shell=False, stdout=execute.subprocess.PIPE,
+        stderr=execute.subprocess.STDOUT, universal_newlines=True)
     self.assertTrue(popen_instance.wait.called)
 
   @mock.patch.object(execute.logging, 'info', autospec=True)
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
-  def test_execute_binary_shell(self, popen, i):
-    popen_instance = popen.return_value
+  def test_execute_binary_shell(self, mock_popen, mock_info):
+    popen_instance = mock_popen.return_value
     popen_instance.returncode = 0
     popen_instance.stdout = io.BytesIO(b'foo\nbar')
     execute.execute_binary(self.binary, shell=True)
-    i.assert_called_with('Executing: %s', self.binary)
-    popen.assert_called_with([self.binary],
-                             shell=True,
-                             stdout=None,
-                             stderr=None,
-                             universal_newlines=True)
+    mock_info.assert_called_with('Executing: %s', self.binary)
+    mock_popen.assert_called_with(
+        [self.binary], shell=True, stdout=None, stderr=None,
+        universal_newlines=True)
     self.assertTrue(popen_instance.wait.called)
 
   @mock.patch.object(execute.logging, 'info', autospec=True)
   @mock.patch.object(execute.subprocess, 'check_output', autospec=True)
-  def test_check_output(self, check, i):
+  def test_check_output(self, mock_check_output, mock_info):
     execute.check_output(self.binary, ['arg1', 'arg2'])
-    i.assert_called_with('Executing: %s', 'C:\\foo.exe arg1 arg2')
-    check.assert_called_with([self.binary, 'arg1', 'arg2'],
-                             stderr=-2,
-                             stdin=-1,
-                             timeout=300,
-                             universal_newlines=True)
+    mock_info.assert_called_with('Executing: %s', 'C:\\foo.exe arg1 arg2')
+    mock_check_output.assert_called_with(
+        [self.binary, 'arg1', 'arg2'], stderr=-2, stdin=-1, timeout=300,
+        universal_newlines=True)
 
   @mock.patch.object(execute.logging, 'info', autospec=True)
   @mock.patch.object(execute.subprocess, 'check_output', autospec=True)
-  def test_check_output_error(self, check, i):
-    check.side_effect = execute.subprocess.CalledProcessError(
+  def test_check_output_error(self, mock_check_output, i):
+    mock_check_output.side_effect = execute.subprocess.CalledProcessError(
         1, self.binary, b'output')
     with self.assertRaises(execute.errors.GlazierError) as cm:
       execute.check_output(self.binary, ['arg1', 'arg2'])
@@ -140,8 +129,8 @@ class ExecuteTest(absltest.TestCase):
 
   @mock.patch.object(execute.logging, 'info', autospec=True)
   @mock.patch.object(execute.subprocess, 'check_output', autospec=True)
-  def test_check_output_timeout(self, check, i):
-    check.side_effect = execute.subprocess.TimeoutExpired(
+  def test_check_output_timeout(self, mock_check_output, i):
+    mock_check_output.side_effect = execute.subprocess.TimeoutExpired(
         self.binary, 300, b'output')
     with self.assertRaises(execute.errors.GlazierError) as cm:
       execute.check_output(self.binary, ['arg1', 'arg2'])

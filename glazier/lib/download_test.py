@@ -37,14 +37,14 @@ TEST_URL = 'https://www.example.com/build.yaml'
 
 class HelperTests(absltest.TestCase):
 
-  def testIsRemote(self):
+  def test_is_remote(self):
     self.assertTrue(download.IsRemote('http://glazier.example.com'))
     self.assertTrue(download.IsRemote('https://glazier.example.com'))
     self.assertTrue(download.IsRemote('HTTPS://glazier.example.com'))
     self.assertFalse(download.IsRemote('String with HTTP in it.'))
     self.assertFalse(download.IsRemote('C:/glazier'))
 
-  def testIsLocal(self):
+  def test_is_local(self):
     self.assertTrue(download.IsLocal('C:/glazier'))
     self.assertTrue(download.IsLocal(r'C:\glazier'))
     self.assertFalse(download.IsLocal('http://glazier.example.com'))
@@ -59,10 +59,10 @@ class PathsTest(absltest.TestCase):
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
-  def testTransform(self, binpath, relpath):
+  def test_transform(self, mock_binary_path, mock_release_path):
     # pylint: disable=line-too-long
-    relpath.return_value = 'https://glazier'
-    binpath.return_value = 'https://glazier/bin/'
+    mock_release_path.return_value = 'https://glazier'
+    mock_binary_path.return_value = 'https://glazier/bin/'
 
     result = download.Transform(r'sccm.x86_64.1.00.1337\#13371337.exe',
                                 self.buildinfo)
@@ -95,7 +95,7 @@ class PathsTest(absltest.TestCase):
     result = download.Transform('nothing _ here', self.buildinfo)
     self.assertEqual(result, 'nothing _ here')
 
-  def testPathCompile(self):
+  def test_path_compile(self):
     result = download.PathCompile(
         self.buildinfo, file_name='file.txt', base='/tmp/base')
     self.assertEqual(result, '/tmp/base/file.txt')
@@ -114,12 +114,12 @@ class PathsTest(absltest.TestCase):
 
 class DownloadTest(absltest.TestCase):
 
-  def PatchConstant(self, module, constant_name, new_value):
+  def patch_constant(self, module, constant_name, new_value):
     patcher = mock.patch.object(module, constant_name, new_value)
     self.addCleanup(patcher.stop)
     return patcher.start()
 
-  def FailingURLOpen(self, *unused_args, **unused_kwargs):
+  def failing_url_open(self, *unused_args, **unused_kwargs):
     raise download.urllib.error.HTTPError('Error', None, None, None, None)
 
   def setUp(self):
@@ -135,9 +135,9 @@ class DownloadTest(absltest.TestCase):
 
     # Very important, unless you want tests that fail indefinitely to backoff
     # for 10 minutes.
-    self.PatchConstant(download, 'BACKOFF_MAX_TIME', 20)  # in seconds
+    self.patch_constant(download, 'BACKOFF_MAX_TIME', 20)  # in seconds
 
-  def testConvertBytes(self):
+  def test_convert_bytes(self):
     self.assertEqual(self._dl._ConvertBytes(123), '123.00B')
     self.assertEqual(self._dl._ConvertBytes(23455), '22.91KB')
     self.assertEqual(self._dl._ConvertBytes(3455555), '3.30MB')
@@ -147,7 +147,7 @@ class DownloadTest(absltest.TestCase):
 
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
-  def testOpenStreamInternal(self, mock_urlopen, mock_check_winpe):
+  def test_open_stream_internal(self, mock_urlopen, mock_check_winpe):
 
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
@@ -173,39 +173,40 @@ class DownloadTest(absltest.TestCase):
 
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
-  def testOpenFileStream_GivesUp(
+  def test_open_file_stream_gives_up(
       self, mock_urlopen, mock_check_winpe):
 
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
     mock_check_winpe.return_value = False
 
-    mock_urlopen.side_effect = self.FailingURLOpen
+    mock_urlopen.side_effect = self.failing_url_open
     self.assertRaises(download.DownloadError, self._dl._OpenStream, TEST_URL)
 
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
-  def testCheckUrl(self, urlopen, wpe):
+  def test_check_url(self, mock_urlopen, mock_check_winpe):
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
-    wpe.return_value = False
+    mock_check_winpe.return_value = False
 
     # match
-    urlopen.side_effect = iter([file_stream])
+    mock_urlopen.side_effect = iter([file_stream])
     self.assertTrue(self._dl.CheckUrl(TEST_URL, status_codes=[200]))
     # miss
-    urlopen.side_effect = iter([file_stream])
+    mock_urlopen.side_effect = iter([file_stream])
     self.assertFalse(self._dl.CheckUrl(TEST_URL, status_codes=[201]))
 
   @mock.patch.object(file_util, 'Copy', autospec=True)
-  def testDownloadFileLocal(self, copy):
+  def test_download_file_local(self, mock_copy):
     self._dl.DownloadFile(
         url='c:/glazier/conf/test.ps1', save_location='c:/windows/test.ps1')
-    copy.assert_called_with('c:/glazier/conf/test.ps1', 'c:/windows/test.ps1')
+    mock_copy.assert_called_with(
+        'c:/glazier/conf/test.ps1', 'c:/windows/test.ps1')
 
   @mock.patch.object(file_util, 'Copy', autospec=True)
-  def testDownloadFileCopyExcept(self, copy):
-    copy.side_effect = file_util.Error('copy error')
+  def test_download_file_copy_except(self, mock_copy):
+    mock_copy.side_effect = file_util.Error('copy error')
     with self.assertRaises(download.DownloadError):
       self._dl.DownloadFile(
           url='c:/glazier/conf/test.ps1', save_location='c:/windows/test.ps1')
@@ -214,24 +215,30 @@ class DownloadTest(absltest.TestCase):
   @mock.patch.object(download.BaseDownloader, '_OpenStream', autospec=True)
   @mock.patch.object(download.tempfile, 'NamedTemporaryFile', autospec=True)
   @mock.patch.object(beyondcorp.BeyondCorp, 'CheckBeyondCorp', autospec=True)
-  def testDownloadFileTemp(self, cbc, tempf, downf, todisk):
-    cbc.return_value = False
+  def test_download_file_temp(
+      self, mock_check_beyond_corp, mock_named_temp_file, mock_open_stream,
+      mock_stream_to_disk):
+
+    mock_check_beyond_corp.return_value = False
     url = TEST_URL
     path = r'C:\Windows\Temp\tmpblahblah'
-    tempf.return_value.name = path
+    mock_named_temp_file.return_value.name = path
     self._dl.DownloadFileTemp(url)
-    downf.assert_called_with(self._dl, url)
-    todisk.assert_called_with(self._dl, downf.return_value, False)
+    mock_open_stream.assert_called_with(self._dl, url)
+    mock_stream_to_disk.assert_called_with(
+        self._dl, mock_open_stream.return_value, False)
     self.assertEqual(self._dl._save_location, path)
     self._dl.DownloadFileTemp(url, show_progress=True)
-    downf.assert_called_with(self._dl, url)
-    todisk.assert_called_with(self._dl, downf.return_value, True)
+    mock_open_stream.assert_called_with(self._dl, url)
+    mock_stream_to_disk.assert_called_with(
+        self._dl, mock_open_stream.return_value, True)
     self._dl.DownloadFileTemp(url, show_progress=False)
-    downf.assert_called_with(self._dl, url)
-    todisk.assert_called_with(self._dl, downf.return_value, False)
+    mock_open_stream.assert_called_with(self._dl, url)
+    mock_stream_to_disk.assert_called_with(
+        self._dl, mock_open_stream.return_value, False)
 
   @mock.patch.object(download.BaseDownloader, '_StoreDebugInfo', autospec=True)
-  def testStreamToDisk(self, store_info):
+  def test_stream_to_disk(self, mock_store_debug_info):
     # setup
     http_stream = io.BytesIO()
     http_stream.write(b'First line.\nSecond line.\n')
@@ -291,7 +298,7 @@ class DownloadTest(absltest.TestCase):
     file_stream.read = mock.Mock(side_effect=download.socket.error('SocketErr'))
     self.assertRaises(download.DownloadError, self._dl._StreamToDisk,
                       file_stream)
-    store_info.assert_called_with(self._dl, file_stream, 'SocketErr')
+    mock_store_debug_info.assert_called_with(self._dl, file_stream, 'SocketErr')
 
     # Retries
     http_stream.seek(0)
@@ -301,14 +308,14 @@ class DownloadTest(absltest.TestCase):
                       file_stream)
 
   @mock.patch.object(download.BaseDownloader, '_StoreDebugInfo', autospec=True)
-  def testValidate(self, store_info):
+  def test_validate(self, mock_store_debug_info):
     file_stream = mock.Mock()
     self._dl._save_location = r'C:\missing.txt'
     self.assertRaises(download.DownloadError, self._dl._Validate, file_stream,
                       200)
-    store_info.assert_called_with(self._dl, file_stream)
+    mock_store_debug_info.assert_called_with(self._dl, file_stream)
 
-  def testVerifyShaHash(self):
+  def test_verify_sha_hash(self):
     test_sha256 = (
         '58157BF41CE54731C0577F801035D47EC20ED16A954F10C29359B8ADEDCAE800')
     # sha256
