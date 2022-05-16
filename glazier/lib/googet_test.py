@@ -39,22 +39,24 @@ class GooGetTest(absltest.TestCase):
   @mock.patch.object(googet.execute, 'execute_binary', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   @mock.patch.object(time, 'sleep', return_value=None)
-  def testLaunchGooGet(self, unused_sleep, branch, eb, wpe):
+  def test_launch_goo_get(
+      self, unused_sleep, mock_branch, mock_execute_binary, mock_check_winpe):
+
     path = googet.os.path.join(constants.SYS_GOOGETROOT, 'googet.exe')
     pkg = 'test_package_v1'
     retries = 5
     sleep_dur = 30
-    branch.return_value = 'example'
+    mock_branch.return_value = 'example'
 
     # Use hosts paths
-    wpe.return_value = False
+    mock_check_winpe.return_value = False
 
     # Filesystem
     self.filesystem = fake_filesystem.FakeFilesystem()
     googet.os = fake_filesystem.FakeOsModule(self.filesystem)
     self.filesystem.create_file(path)
 
-    eb.return_value = 0
+    mock_execute_binary.return_value = 0
 
     # Command called successfully
     self.install.LaunchGooGet(
@@ -70,7 +72,7 @@ class GooGetTest(absltest.TestCase):
         '-reinstall', 'whatever'
     ]
     cmd.extend([pkg])
-    eb.assert_called_with(path, cmd)
+    mock_execute_binary.assert_called_with(path, cmd)
 
     # String replacement of sources flag was successful
     self.install.LaunchGooGet(
@@ -82,14 +84,14 @@ class GooGetTest(absltest.TestCase):
         'whatever', '-reinstall'
     ]
     cmd.extend([pkg])
-    eb.assert_called_with(path, cmd)
+    mock_execute_binary.assert_called_with(path, cmd)
 
     # Only pkg
     self.install.LaunchGooGet(
         pkg, retries, sleep_dur, self.buildinfo, path=None, flags=None)
     cmd = ['-noconfirm', f'--root={constants.SYS_GOOGETROOT}', 'install']
     cmd.extend([pkg])
-    eb.assert_called_with(path, cmd)
+    mock_execute_binary.assert_called_with(path, cmd)
 
     # No Path
     self.install.LaunchGooGet(
@@ -101,14 +103,14 @@ class GooGetTest(absltest.TestCase):
         'whatever', '-reinstall'
     ]
     cmd.extend([pkg])
-    eb.assert_called_with(path, cmd)
+    mock_execute_binary.assert_called_with(path, cmd)
 
     # No flags
     self.install.LaunchGooGet(
         pkg, retries, sleep_dur, self.buildinfo, path=path, flags=None)
     cmd = ['-noconfirm', f'--root={constants.SYS_GOOGETROOT}', 'install']
     cmd.extend([pkg])
-    eb.assert_called_with(path, cmd)
+    mock_execute_binary.assert_called_with(path, cmd)
 
     # Path does not exist
     with self.assertRaisesRegex(googet.Error,
@@ -124,14 +126,14 @@ class GooGetTest(absltest.TestCase):
           '', retries, sleep_dur, self.buildinfo, path=path, flags=self.flags)
 
     # Non zero return value
-    eb.side_effect = googet.execute.Error
+    mock_execute_binary.side_effect = googet.execute.Error
     with self.assertRaisesRegex(
         googet.Error,
         'GooGet command failed after ' + str(retries) + ' attempts'):
       self.install.LaunchGooGet(
           pkg, retries, sleep_dur, self.buildinfo, path=path, flags=self.flags)
 
-  def testAddFlags(self):
+  def test_add_flags(self):
     branch = 'example'
 
     # Character replacement

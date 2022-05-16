@@ -47,25 +47,27 @@ class IdentifierTest(absltest.TestCase):
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
   @mock.patch.object(identifier, '_generate_id', autospec=True)
-  def test_set_id(self, genid, sv):
-    genid.return_value = TEST_ID
+  def test_set_id(self, mock_generate_id, mock_set_value):
+    mock_generate_id.return_value = TEST_ID
     identifier._set_id()
-    sv.assert_called_with('image_id', TEST_ID, path=constants.REG_ROOT)
+    mock_set_value.assert_called_with(
+        'image_id', TEST_ID, path=constants.REG_ROOT)
     self.assertEqual(identifier._set_id(), TEST_ID)
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
-  def test_set_reg_error(self, sv):
-    sv.side_effect = identifier.registry.Error
+  def test_set_reg_error(self, mock_set_value):
+    mock_set_value.side_effect = identifier.registry.Error
     self.assertRaises(identifier.Error, identifier._set_id)
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
-  def test_check_file(self, sv):
+  def test_check_file(self, mock_set_value):
     self.fs.create_file(
         '/%s/build_info.yaml' % identifier.constants.SYS_CACHE,
         contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, image_id: 12345}}\n'
     )
     identifier._check_file()
-    sv.assert_called_with('image_id', 12345, path=constants.REG_ROOT)
+    mock_set_value.assert_called_with(
+        'image_id', 12345, path=constants.REG_ROOT)
     self.assertEqual(identifier._check_file(), 12345)
 
   def test_check_file_no_id(self):
@@ -76,44 +78,44 @@ class IdentifierTest(absltest.TestCase):
     self.assertRaises(identifier.Error, identifier._check_file)
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
-  def test_check_file_reg_error(self, sv):
+  def test_check_file_reg_error(self, mock_set_value):
     self.fs.create_file(
         '/%s/build_info.yaml' % identifier.constants.SYS_CACHE,
         contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, image_id: 12345}}\n'
     )
-    sv.side_effect = identifier.registry.Error
+    mock_set_value.side_effect = identifier.registry.Error
     self.assertRaises(identifier.Error, identifier._check_file)
 
   def test_check_file_no_file(self):
     self.assertRaises(identifier.Error, identifier._check_file)
 
   @mock.patch.object(identifier.registry, 'get_value', autospec=True)
-  def test_check_id_get(self, gv):
-    gv.return_value = TEST_ID
+  def test_check_id_get(self, mock_get_value):
+    mock_get_value.return_value = TEST_ID
     self.assertEqual(identifier.check_id(), TEST_ID)
 
   @mock.patch.object(identifier.registry, 'get_value', autospec=True)
   @mock.patch.object(identifier.winpe, 'check_winpe', autospec=True)
-  def test_check_id_get_error(self, wpe, gv):
-    wpe.return_value = False
-    gv.side_effect = identifier.registry.Error
+  def test_check_id_get_error(self, mock_check_winpe, mock_get_value):
+    mock_check_winpe.return_value = False
+    mock_get_value.side_effect = identifier.registry.Error
     self.assertRaises(identifier.Error, identifier.check_id)
 
   @mock.patch.object(identifier, '_set_id', autospec=True)
   @mock.patch.object(identifier.registry, 'get_value', autospec=True)
   @mock.patch.object(identifier.winpe, 'check_winpe', autospec=True)
-  def test_check_id_set(self, wpe, gv, setid):
-    gv.return_value = None
-    wpe.return_value = True
+  def test_check_id_set(self, mock_check_winpe, mock_get_value, mock_set_id):
+    mock_get_value.return_value = None
+    mock_check_winpe.return_value = True
     identifier.check_id()
-    self.assertTrue(setid.called)
+    self.assertTrue(mock_set_id.called)
 
   @mock.patch.object(identifier, '_check_file', autospec=True)
   @mock.patch.object(identifier.registry, 'get_value', autospec=True)
   @mock.patch.object(identifier.winpe, 'check_winpe', autospec=True)
-  def test_check_id_file(self, wpe, gv, checkfile):
-    gv.return_value = None
-    wpe.return_value = False
+  def test_check_id_file(self, mock_check_winpe, mock_get_value, checkfile):
+    mock_get_value.return_value = None
+    mock_check_winpe.return_value = False
     checkfile.return_value = TEST_ID
     self.assertEqual(identifier.check_id(), TEST_ID)
 

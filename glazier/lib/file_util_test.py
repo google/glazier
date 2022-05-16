@@ -23,7 +23,7 @@ from pyfakefs.fake_filesystem_unittest import Patcher
 
 class FileUtilTest(absltest.TestCase):
 
-  def testCopy(self):
+  def test_copy(self):
     with Patcher() as patcher:
       patcher.fs.create_dir(r'/stage')
       patcher.fs.create_file(r'/stage/file1.txt', contents='file1')
@@ -33,14 +33,14 @@ class FileUtilTest(absltest.TestCase):
       file_util.Copy(src1, dst1)
       self.assertTrue(patcher.fs.exists(r'/windows/glazier/glazier.log'))
 
-  def testCopyBadPath(self):
+  def test_copy_bad_path(self):
     with Patcher():
       src1 = r'/missing.txt'
       dst1 = r'/windows/glazier/glazier.log'
       with self.assertRaises(file_util.Error):
         file_util.Copy(src1, dst1)
 
-  def testCreateDirectories(self):
+  def test_create_directories(self):
     with Patcher() as patcher:
       patcher.fs.create_file('/test')
       self.assertRaises(file_util.Error, file_util.CreateDirectories,
@@ -48,7 +48,7 @@ class FileUtilTest(absltest.TestCase):
       file_util.CreateDirectories('/tmp/test/path/file.log')
       self.assertTrue(patcher.fs.exists('/tmp/test/path'))
 
-  def testRemove(self):
+  def test_remove(self):
     with Patcher() as patcher:
       patcher.fs.create_file('/test/file.txt')
       file_util.Remove('/test/file.txt')

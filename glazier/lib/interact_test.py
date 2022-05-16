@@ -24,49 +24,49 @@ from glazier.lib import interact
 class InteractTest(absltest.TestCase):
 
   @mock.patch('builtins.input', autospec=True)
-  def testGetUsername(self, raw):
-    raw.side_effect = iter(['invalid-name', '', '  ', 'username1'])
+  def test_get_username(self, mock_input):
+    mock_input.side_effect = iter(['invalid-name', '', '  ', 'username1'])
     self.assertEqual(interact.GetUsername(), 'username1')
 
   @mock.patch.object(interact, 'Prompt', autospec=True)
-  def testGetUsernamePurpose(self, prompt):
-    prompt.return_value = 'username1'
+  def test_get_username_purpose(self, mock_prompt):
+    mock_prompt.return_value = 'username1'
     self.assertEqual(interact.GetUsername('domain join'), 'username1')
-    prompt.assert_called_with(
+    mock_prompt.assert_called_with(
         'Please enter your username for domain join: ',
         validator='^[a-zA-Z0-9]+$')
 
   @mock.patch.object(interact.time, 'sleep', autospec=True)
-  def testKeystroke(self, sleep):
+  def test_keystroke(self, mock_sleep):
     msvcrt = mock.Mock()
     msvcrt.kbhit.return_value = False
     sys.modules['msvcrt'] = msvcrt
     # no reply
     result = interact.Keystroke('mesg', timeout=1)
-    self.assertEqual(result, None)
-    self.assertEqual(sleep.call_count, 1)
+    self.assertIsNone(result)
+    self.assertEqual(mock_sleep.call_count, 1)
     # special character reply
     msvcrt.kbhit.side_effect = iter([False, False, False, False, True])
     msvcrt.getch.return_value = b'0xe0'
     result = interact.Keystroke('mesg', timeout=100)
     self.assertEqual(result, '0xe0')
-    self.assertEqual(sleep.call_count, 6)
+    self.assertEqual(mock_sleep.call_count, 6)
     # reply
     msvcrt.kbhit.side_effect = iter([False, False, False, False, True])
     msvcrt.getch.return_value = b'v'
     result = interact.Keystroke('mesg', timeout=100)
     self.assertEqual(result, 'v')
-    self.assertEqual(sleep.call_count, 11)
+    self.assertEqual(mock_sleep.call_count, 11)
     # validation miss
     msvcrt.kbhit.side_effect = iter([True])
     result = interact.Keystroke('mesg', validator='[0-9]')
-    self.assertEqual(result, None)
+    self.assertIsNone(result)
 
   @mock.patch('builtins.input', autospec=True)
-  def testPrompt(self, raw):
-    raw.return_value = 'user*name'
+  def test_prompt(self, mock_input):
+    mock_input.return_value = 'user*name'
     result = interact.Prompt('mesg', '^\\w+$')
-    self.assertEqual(None, result)
+    self.assertIsNone(result)
     result = interact.Prompt('mesg')
     self.assertEqual('user*name', result)
 
