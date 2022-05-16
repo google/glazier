@@ -34,7 +34,7 @@ _TEST_WIM_HASH = b'xxaroj1bgT5sObhJ0HwOtqpn+Nx0gO/Wz5wATtYK7Tk='
 DECODED_HASH = _TEST_WIM_HASH.decode('utf-8')
 
 
-def _CreateSignResponse(code, status, wim_hash):
+def _create_sign_response(code, status, wim_hash):
   sign_resp = Response()
   sign_resp.encoding = 'utf-8'
   sign_resp._content = ('{"Status": "%s", "ErrorCode": 0, "SignedURL": '
@@ -45,7 +45,7 @@ def _CreateSignResponse(code, status, wim_hash):
 
 class BeyondcorpTest(absltest.TestCase):
 
-  def PatchConstant(self, module, constant_name, new_value):
+  def patch_constant(self, module, constant_name, new_value):
     patcher = mock.patch.object(module, constant_name, new_value)
     self.addCleanup(patcher.stop)
     return patcher.start()
@@ -66,17 +66,17 @@ class BeyondcorpTest(absltest.TestCase):
 
     # Very important, unless you want tests that fail indefinitely to backoff
     # for 10 minutes.
-    self.PatchConstant(beyondcorp, 'BACKOFF_MAX_TIME', 20)  # in seconds
+    self.patch_constant(beyondcorp, 'BACKOFF_MAX_TIME', 20)  # in seconds
 
   def tearDown(self):
     super(BeyondcorpTest, self).tearDown()
     flagsaver.restore_flag_values(self.__saved_flags)
 
-  def testSignedUrlDisabled(self):
+  def test_signed_url_disabled(self):
     with self.assertRaises(beyondcorp.BCError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
-  def testPathAndEndpointNone(self):
+  def test_path_and_endpoint_none(self):
     beyondcorp.FLAGS.use_signed_url = True
     beyondcorp.FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
     with self.assertRaises(beyondcorp.BCError):
@@ -90,16 +90,16 @@ class BeyondcorpTest(absltest.TestCase):
   @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
   @mock.patch.object(beyondcorp.hw_info.HWInfo, 'MacAddresses', autospec=True)
   @mock.patch.object(beyondcorp.requests, 'post', autospec=True)
-  def testSignedUrl(self, req, mac, drive):
-    drive.return_value = 'D'
-    mac.return_value = ['00:00:00:00:00:00']
-    req.return_value = _CreateSignResponse(200, 'Success', DECODED_HASH)
+  def test_signed_url(self, mock_post, mock_mac_addresses, mock_get_disk):
+    mock_get_disk.return_value = 'D'
+    mock_mac_addresses.return_value = ['00:00:00:00:00:00']
+    mock_post.return_value = _create_sign_response(200, 'Success', DECODED_HASH)
     beyondcorp.FLAGS.use_signed_url = True
     beyondcorp.FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
     beyondcorp.FLAGS.seed_path = r'C:\seed.json'
 
     sign = self.beyondcorp.GetSignedUrl('unstable/test.yaml')
-    req.assert_called_once_with(
+    mock_post.assert_called_once_with(
         'https://sign-endpoint/sign',
         data='{"Hash": "%s",'
         '"Mac": ["00:00:00:00:00:00"],'
@@ -112,46 +112,50 @@ class BeyondcorpTest(absltest.TestCase):
   @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
   @mock.patch.object(beyondcorp.hw_info.HWInfo, 'MacAddresses', autospec=True)
   @mock.patch.object(beyondcorp.requests, 'post', autospec=True)
-  def testSignedUrlFail(self, req, mac, drive):
-    drive.return_value = 'D'
-    mac.return_value = ['00:00:00:00:00:00']
-    req.return_value = _CreateSignResponse(200, 'Success', DECODED_HASH)
+  def test_signed_url_fail(self, mock_post, mock_mac_addresses, mock_get_disk):
+
+    mock_get_disk.return_value = 'D'
+    mock_mac_addresses.return_value = ['00:00:00:00:00:00']
+    mock_post.return_value = _create_sign_response(200, 'Success', DECODED_HASH)
     beyondcorp.FLAGS.use_signed_url = True
     beyondcorp.FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
     beyondcorp.FLAGS.seed_path = r'C:\seed.json'
 
-    req.return_value = _CreateSignResponse(400, 'Success', DECODED_HASH)
+    mock_post.return_value = _create_sign_response(400, 'Success', DECODED_HASH)
     with self.assertRaises(beyondcorp.BCError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
-    req.return_value = _CreateSignResponse(200, 'Failed', DECODED_HASH)
+    mock_post.return_value = _create_sign_response(200, 'Failed', DECODED_HASH)
     with self.assertRaises(beyondcorp.BCError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
-    req.return_value = _CreateSignResponse(400, 'Failed', DECODED_HASH)
+    mock_post.return_value = _create_sign_response(400, 'Failed', DECODED_HASH)
     with self.assertRaises(beyondcorp.BCError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
-    req.return_value = _CreateSignResponse(200, 'Failed', 'invalid_hash')
+    mock_post.return_value = _create_sign_response(
+        200, 'Failed', 'invalid_hash')
     with self.assertRaises(beyondcorp.BCError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
   @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
   @mock.patch.object(beyondcorp.hw_info.HWInfo, 'MacAddresses', autospec=True)
   @mock.patch.object(beyondcorp.requests, 'post', autospec=True)
-  def testSignedUrlConnectionError(self, req, mac, drive):
-    drive.return_value = 'D'
-    mac.return_value = ['00:00:00:00:00:00']
-    req.return_value = _CreateSignResponse(200, 'Success', DECODED_HASH)
+  def test_signed_url_connection_error(
+      self, mock_post, mock_mac_addresses, mock_get_disk):
+
+    mock_get_disk.return_value = 'D'
+    mock_mac_addresses.return_value = ['00:00:00:00:00:00']
+    mock_post.return_value = _create_sign_response(200, 'Success', DECODED_HASH)
     beyondcorp.FLAGS.use_signed_url = True
     beyondcorp.FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
     beyondcorp.FLAGS.seed_path = r'C:\seed.json'
 
-    req.side_effect = beyondcorp.requests.exceptions.ConnectionError
+    mock_post.side_effect = beyondcorp.requests.exceptions.ConnectionError
     with self.assertRaises(beyondcorp.BCError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
-  def testReadFile(self):
+  def test_read_file(self):
     beyondcorp.FLAGS.seed_path = r'C:\seed.json'
     seed = self.beyondcorp._ReadFile()
     self.assertEqual(
@@ -164,50 +168,50 @@ class BeyondcorpTest(absltest.TestCase):
       self.beyondcorp._ReadFile()
 
   @mock.patch.object(registry, 'set_value', autospec=True)
-  def testCheckBeyondCorpTrue(self, sv):
+  def test_check_beyond_corp_true(self, mock_set_value):
     beyondcorp.FLAGS.use_signed_url = True
-    sv.assert_called_with = ('beyond_corp', 'True')
+    mock_set_value.assert_called_with = ('beyond_corp', 'True')
     self.assertEqual(self.beyondcorp.CheckBeyondCorp(), True)
 
   @mock.patch.object(registry, 'set_value', autospec=True)
-  def testCheckBeyondCorpTrueError(self, sv):
+  def test_check_beyond_corp_true_error(self, mock_set_value):
     beyondcorp.FLAGS.use_signed_url = True
-    sv.side_effect = registry.Error
+    mock_set_value.side_effect = registry.Error
     self.assertRaises(beyondcorp.BCError, self.beyondcorp.CheckBeyondCorp)
 
   @mock.patch.object(registry, 'get_value', autospec=True)
-  def testCheckBeyondCorpGet(self, gv):
-    gv.return_value = 'True'
+  def test_check_beyond_corp_get(self, mock_get_value):
+    mock_get_value.return_value = 'True'
     self.assertEqual(self.beyondcorp.CheckBeyondCorp(), True)
 
   @mock.patch.object(registry, 'get_value', autospec=True)
-  def testCheckBeyondCorpGetError(self, gv):
-    gv.side_effect = registry.Error
+  def test_check_beyond_corp_get_error(self, mock_get_value):
+    mock_get_value.side_effect = registry.Error
     self.assertRaises(beyondcorp.BCError, self.beyondcorp.CheckBeyondCorp)
 
   @mock.patch.object(registry, 'set_value', autospec=True)
-  def testCheckBeyondCorpFalse(self, sv):
+  def test_check_beyond_corp_false(self, mock_set_value):
     beyondcorp.FLAGS.use_signed_url = False
-    sv.assert_called_with = ('beyond_corp', 'False')
+    mock_set_value.assert_called_with = ('beyond_corp', 'False')
     self.assertEqual(self.beyondcorp.CheckBeyondCorp(), False)
 
   @mock.patch.object(registry, 'set_value', autospec=True)
-  def testCheckBeyondCorpFalseError(self, sv):
+  def test_check_beyond_corp_false_error(self, mock_set_value):
     beyondcorp.FLAGS.use_signed_url = False
-    sv.side_effect = registry.Error
+    mock_set_value.side_effect = registry.Error
     self.assertRaises(beyondcorp.BCError, self.beyondcorp.CheckBeyondCorp)
 
-  def testGetDisk(self):
+  def test_get_disk(self):
     self.mock_wmi.return_value.Query.return_value = [mock.Mock(Name='D')]
     self.assertEqual(
         self.beyondcorp._GetDisk(beyondcorp.constants.USB_VOLUME_LABEL), 'D')
 
-  def testGetDiskNone(self):
+  def test_get_disk_none(self):
     self.mock_wmi.return_value.Query.return_value = [mock.Mock(Name=None)]
     with self.assertRaises(beyondcorp.BCError):
       self.beyondcorp._GetDisk(beyondcorp.constants.USB_VOLUME_LABEL)
 
-  def testGetDiskError(self):
+  def test_get_disk_error(self):
     self.mock_wmi.return_value.Query.side_effect = beyondcorp.wmi_query.WmiError
     with self.assertRaises(beyondcorp.BCError):
       self.beyondcorp._GetDisk(beyondcorp.constants.USB_VOLUME_LABEL)
