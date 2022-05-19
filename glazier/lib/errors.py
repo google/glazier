@@ -173,3 +173,44 @@ class CacheError(GlazierError):
     message = f'Unable to download required file: {file_path}'
     super().__init__(7016, message)
 
+
+class BeyondCorpError(GlazierError):
+  pass
+
+
+class BeyondCorpGiveUpError(BeyondCorpError):
+
+  def __init__(self, tries: int, elapsed: float):
+    message = (
+        f'Failed after {tries} attempt(s) over {elapsed:0.1f} seconds.\n\n'
+        'Do you have a valid network configuration?'
+    )
+    super().__init__(7017, message)
+
+
+class BeyondCorpSeedFileError(BeyondCorpError):
+
+  def __init__(self):
+    super().__init__(7018, 'BeyondCorp seed file not found')
+
+
+class BeyondCorpDriveLetterError(BeyondCorpError):
+
+  def __init__(self, message: str):
+    super().__init__(7019, message)
+
+
+class BeyondCorpSignedUrlRequestError(BeyondCorpError):
+
+  def __init__(self, message: str):
+    super().__init__(7020, message)
+
+
+class BeyondCorpSignedUrlResponseError(BeyondCorpError):
+
+  def __init__(self, status_code: str, status: str):
+    message = (
+        f'Invalid response from signed url. '
+        f'Status Code: {status_code}, Status: {status}'
+    )
+    super().__init__(7021, message)

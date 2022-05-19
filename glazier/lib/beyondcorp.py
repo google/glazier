@@ -30,6 +30,7 @@ from glazier.lib import registry
 import requests
 
 from glazier.lib import constants
+from glazier.lib import errors
 from gwinpy.wmi import hw_info
 from gwinpy.wmi import wmi_query
 
@@ -54,17 +55,11 @@ def GetBackoffMaxTime():
 
 
 def BackoffGiveupHandler(details):
-  raise BCError(
-      'Failed after {tries} attempt(s) over {elapsed:0.1f} seconds'.format(
-          **details) + '\n\nDo you have a valid network configuration?')
-
-
-class BCError(Exception):
-  pass
+  raise errors.BeyondCorpGiveUpError(details['tries'], details['elapsed'])
 
 
 class BeyondCorp(object):
-  """Defines funtions needed to retrieve a signed URL."""
+  """Defines functions needed to retrieve a signed URL."""
 
   def _ReadFile(self):
     """Reads the seed file and returns a json blob.
@@ -76,7 +71,7 @@ class BeyondCorp(object):
       with open(FLAGS.seed_path) as p:
         return json.load(p)
     except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
-      raise BCError(e) from e
+      raise errors.BeyondCorpSeedFileError() from e
 
   @functools.lru_cache()
   def CheckBeyondCorp(self) -> bool:
@@ -88,26 +83,17 @@ class BeyondCorp(object):
     """
 
     if FLAGS.use_signed_url:
-      try:
-        registry.set_value('beyond_corp', 'True', path=constants.REG_ROOT)
-        return True
-      except registry.Error as e:
-        raise BCError(e) from e
+      registry.set_value('beyond_corp', 'True', path=constants.REG_ROOT)
+      return True
     else:
-      try:
-        bc = registry.get_value('beyond_corp', path=constants.REG_ROOT)
-        if bc:
-          if bc.lower() == 'true':
-            return True
-          elif bc.lower() == 'false':
-            return False
-      except registry.Error as e:
-        logging.warning(str(e))
+      bc = registry.get_value('beyond_corp', path=constants.REG_ROOT)
+      if bc:
+        if bc.lower() == 'true':
+          return True
+        elif bc.lower() == 'false':
+          return False
 
-    try:
-      registry.set_value('beyond_corp', 'False', path=constants.REG_ROOT)
-    except registry.Error as e:
-      raise BCError(e) from e
+    registry.set_value('beyond_corp', 'False', path=constants.REG_ROOT)
     return False
 
   @functools.lru_cache()
@@ -149,11 +135,12 @@ class BeyondCorp(object):
     try:
       drive_letter = wmi_query.WMIQuery().Query(query)[0].Name
     except wmi_query.WmiError as e:
-      raise BCError(
-          f'Failed to query WMI for BeyondCorp drive letter: {e}') from e
+      raise errors.BeyondCorpDriveLetterError(
+          'Failed to query WMI for BeyondCorp drive letter.') from e
 
     if not drive_letter:
-      raise BCError('BeyondCorp drive letter was empty.')
+      raise errors.BeyondCorpDriveLetterError(
+          'BeyondCorp drive letter was empty.')
 
     logging.debug('BeyondCorp Drive letter = %s', drive_letter)
 
@@ -177,11 +164,12 @@ class BeyondCorp(object):
       A signed_url string
     """
     if not FLAGS.use_signed_url:
-      raise BCError('use_signed_url flag not configured.')
+      raise errors.BeyondCorpSignedUrlRequestError(
+          'use_signed_url flag not configured.')
 
     if FLAGS.sign_endpoint is None or FLAGS.seed_path is None:
-      raise BCError('sign_endpoint and seed_path cannot be None when using'
-                    'Signed URL.')
+      raise errors.BeyondCorpSignedUrlRequestError(
+          'sign_endpoint and seed_path cannot be None when using Signed URL.')
 
     hwinfo = hw_info.HWInfo()
     drive_letter = self._GetDisk(constants.USB_VOLUME_LABEL).strip(':')
@@ -209,8 +197,9 @@ class BeyondCorp(object):
 
     res = requests.post(FLAGS.sign_endpoint, data=req)
 
-    if res.status_code != 200 or res.json(
-    )['Status'] != 'Success' or not res.json()['SignedURL']:
-      raise BCError('Invalid response from signed url. Code: %s, Status: %s' %
-                    (res.status_code, res.json()['Status']))
+    if (
+        res.status_code != 200 or res.json()['Status'] != 'Success' or
+        not res.json()['SignedURL']):
+      raise errors.BeyondCorpSignedUrlResponseError(
+          res.status_code, res.json()['Status'])
     return res.json()['SignedURL']
