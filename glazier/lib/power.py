@@ -26,7 +26,7 @@ def _System32() -> str:
     return constants.SYS_SYSTEM32
 
 
-def Shutdown(timeout: str, reason: str):
+def Shutdown(timeout: int, reason: str):
   """Shuts down a Windows machine, given a timeout period and a reason.
 
   Args:
@@ -34,11 +34,12 @@ def Shutdown(timeout: str, reason: str):
     reason: Reason why the machine is being shut down.  This will be displayed
       to the user and written to the Windows event log.
   """
-  execute.execute_binary(f'{_System32()}/shutdown.exe',
-                         ['-s', '-t', timeout, '-c', f'"{reason}"'])
+  execute.execute_binary(
+      f'{_System32()}/shutdown.exe',
+      ['-s', '-t', str(timeout), '-c', f'"{reason}"'])
 
 
-def Restart(timeout: str, reason: str):
+def Restart(timeout: int, reason: str):
   """Restarts a Windows machine, given a timeout period and a reason.
 
   Args:
@@ -46,5 +47,6 @@ def Restart(timeout: str, reason: str):
     reason: Reason why the machine is being restarted. This will be displayed to
       the user and written to the Windows event log.
   """
-  execute.execute_binary(f'{_System32()}/shutdown.exe',
-                         ['-r', '-t', timeout, '-c', f'"{reason}"'])
+  execute.execute_binary(
+      f'{_System32()}/shutdown.exe',
+      ['-r', '-t', str(timeout), '-c', f'"{reason}"'])

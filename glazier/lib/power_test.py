@@ -31,15 +31,17 @@ class PowerTest(absltest.TestCase):
     wpe.return_value = True
 
     power.Restart(60, 'Reboot fixes everything.')
-    eb.assert_called_with(f'{constants.WINPE_SYSTEM32}/shutdown.exe',
-                          ['-r', '-t', 60, '-c', '"Reboot fixes everything."'])
+    eb.assert_called_with(
+        f'{constants.WINPE_SYSTEM32}/shutdown.exe',
+        ['-r', '-t', '60', '-c', '"Reboot fixes everything."'])
 
     # Use hosts paths
     wpe.return_value = False
 
     power.Restart(60, 'Reboot fixes everything.')
-    eb.assert_called_with(f'{constants.SYS_SYSTEM32}/shutdown.exe',
-                          ['-r', '-t', 60, '-c', '"Reboot fixes everything."'])
+    eb.assert_called_with(
+        f'{constants.SYS_SYSTEM32}/shutdown.exe',
+        ['-r', '-t', '60', '-c', '"Reboot fixes everything."'])
 
   @mock.patch.object(power.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(execute, 'execute_binary', autospec=True)
@@ -49,14 +51,14 @@ class PowerTest(absltest.TestCase):
 
     power.Shutdown(30, 'Because I said so.')
     eb.assert_called_with(f'{constants.WINPE_SYSTEM32}/shutdown.exe',
-                          ['-s', '-t', 30, '-c', '"Because I said so."'])
+                          ['-s', '-t', '30', '-c', '"Because I said so."'])
 
     # Use hosts paths
     wpe.return_value = False
 
     power.Shutdown(30, 'Because I said so.')
     eb.assert_called_with(f'{constants.SYS_SYSTEM32}/shutdown.exe',
-                          ['-s', '-t', 30, '-c', '"Because I said so."'])
+                          ['-s', '-t', '30', '-c', '"Because I said so."'])
 
 if __name__ == '__main__':
   absltest.main()
