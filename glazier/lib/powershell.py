@@ -61,12 +61,9 @@ class PowerShell(object):
     if op not in ['-Command', '-File']:
       raise PowerShellError('Unsupported PowerShell parameter: %s' % op)
 
-    try:
-      return execute.execute_binary(_Powershell(),
-                                    ['-NoProfile', '-NoLogo', op] + args,
-                                    ok_result, self.shell, self.log)
-    except execute.Error as e:
-      raise PowerShellError(e) from e
+    return execute.execute_binary(
+        _Powershell(), ['-NoProfile', '-NoLogo', op] + args, ok_result,
+        self.shell, self.log)
 
   def RunCommand(self,
                  command: List[str],
@@ -160,8 +157,6 @@ class PowerShell(object):
 
   def StartShell(self):
     """Start the PowerShell interpreter."""
-    try:
-      execute.execute_binary(_Powershell(), ['-NoProfile', '-NoLogo'],
-                             shell=self.shell, log=self.log)
-    except execute.Error as e:
-      raise PowerShellError(e) from e
+    execute.execute_binary(
+        _Powershell(), ['-NoProfile', '-NoLogo'], shell=self.shell,
+        log=self.log)

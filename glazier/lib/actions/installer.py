@@ -22,14 +22,13 @@ from glazier.lib import log_copy
 from glazier.lib import registry
 from glazier.lib import stage
 from glazier.lib.actions import file_system
-from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import RestartEvent
 from glazier.lib.actions.base import ServerChangeEvent
-from glazier.lib.actions.base import ValidationError
 import yaml
 
 from glazier.lib import constants
+from glazier.lib import errors
 
 
 class AddChoice(BaseAction):
@@ -47,7 +46,8 @@ class AddChoice(BaseAction):
 
     for f in ['name', 'type', 'prompt', 'options']:
       if f not in choice:
-        raise ValidationError('Missing required field %s: %s' % (f, choice))
+        raise errors.ValidationError(
+            'Missing required field %s: %s' % (f, choice))
 
     for f in ['name', 'type', 'prompt']:
       self._TypeValidator(choice[f], str)
@@ -57,11 +57,13 @@ class AddChoice(BaseAction):
       self._TypeValidator(opt, dict)
 
       if 'label' not in opt:
-        raise ValidationError('Missing required field %s: %s' % ('label', opt))
+        raise errors.ValidationError(
+            'Missing required field %s: %s' % ('label', opt))
       self._TypeValidator(opt['label'], str)
 
       if 'value' not in opt:
-        raise ValidationError('Missing required field %s: %s' % ('value', opt))
+        raise errors.ValidationError(
+            'Missing required field %s: %s' % ('value', opt))
       self._TypeValidator(opt['value'], (bool, str))
 
       if 'tip' in opt:
@@ -95,8 +97,8 @@ class BuildInfoSave(BaseAction):
         key_path = r'{0}\{1}'.format(constants.REG_ROOT, 'Timers')
       try:
         registry.set_value(value_name, value_data, 'HKLM', key_path)
-      except registry.Error as e:
-        raise ActionError(e) from e
+      except errors.RegistrySetError as e:
+        raise errors.ActionError() from e
 
   def Run(self):
     path = os.path.join(constants.SYS_CACHE, 'build_info.yaml')
@@ -152,13 +154,13 @@ class LogCopy(BaseAction):
     # EventLog
     try:
       copier.EventLogCopy(file_name)
-    except log_copy.LogCopyError as e:
+    except errors.LogCopyError as e:
       logging.warning('Unable to complete log copy to EventLog. %s', e)
     # CIFS
     if share:
       try:
         copier.ShareCopy(file_name, share)
-      except log_copy.LogCopyError as e:
+      except errors.LogCopyError as e:
         logging.warning('Unable to complete log copy via CIFS. %s', e)
 
   def Validate(self):
@@ -195,7 +197,7 @@ class Sleep(BaseAction):
   def Validate(self):
     self._TypeValidator(self._args, list)
     if len(self._args) > 2:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise errors.ValidationError('Invalid args length: %s' % self._args)
     self._TypeValidator(self._args[0], int)
     if len(self._args) > 1:
       self._TypeValidator(self._args[1], str)
@@ -210,13 +212,13 @@ class StartStage(BaseAction):
       # Terminal stages exit immediately; the build should be complete.
       if len(self._args) > 1 and self._args[1]:
         stage.exit_stage(int(self._args[0]))
-    except stage.Error as e:
-      raise ActionError(e) from e
+    except Exception as e:
+      raise errors.ActionError() from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)
     if len(self._args) > 2:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise errors.ValidationError('Invalid args length: %s' % self._args)
     self._TypeValidator(self._args[0], int)
     if len(self._args) > 1:
       self._TypeValidator(self._args[1], bool)

@@ -17,9 +17,10 @@
 from unittest import mock
 
 from absl.testing import absltest
-from glazier.lib import file_util
 from glazier.lib.config import files
 from pyfakefs import fake_filesystem
+
+from glazier.lib import errors
 
 
 class FilesTest(absltest.TestCase):
@@ -36,7 +37,8 @@ class FilesTest(absltest.TestCase):
     result = files._YamlReader('/tmp/foo/dump.txt')
     self.assertEqual(result[1], ['op2a', 'op2b'])
     self.assertEqual(result[3], {'op4a': 'op4b'})
-    self.assertRaises(files.Error, files.Dump, '/tmp', [])
+    with self.assertRaises(errors.FileRemoveError):
+      files.Dump('/tmp', [])
 
   @mock.patch.object(files.download.Download, 'DownloadFileTemp', autospec=True)
   def testRead(self, download):
@@ -50,10 +52,10 @@ class FilesTest(absltest.TestCase):
         'https://glazier-server.example.com/unstable/dir/test-build.yaml')
     self.assertEqual(result['data'], 'set1')
     # download error
-    download.side_effect = files.download.DownloadError
-    self.assertRaises(
-        files.Error, files.Read,
-        'https://glazier-server.example.com/unstable/dir/test-build.yaml')
+    download.side_effect = errors.DownloadError
+    with self.assertRaises(errors.DownloadError):
+      files.Read(
+          'https://glazier-server.example.com/unstable/dir/test-build.yaml')
     # local
     result = files.Read('/tmp/downloaded2.yaml')
     self.assertEqual(result['data'], 'set2')
@@ -63,18 +65,18 @@ class FilesTest(absltest.TestCase):
     files.Remove('/test/file/name.yaml', backup=False)
     remove.assert_called_with('/test/file/name.yaml')
     # error handling
-    remove.side_effect = file_util.Error('test error')
-    self.assertRaises(
-        files.Error, files.Remove, '/test/file/name.yaml', backup=False)
+    remove.side_effect = errors.FileRemoveError('some/path')
+    with self.assertRaises(errors.FileRemoveError):
+      files.Remove('/test/file/name.yaml', backup=False)
 
   @mock.patch.object(files.file_util, 'Move', autospec=True)
   def testRemoveWithBackup(self, move):
     files.Remove('/test/file/name.yaml', backup=True)
     move.assert_called_with('/test/file/name.yaml', '/test/file/name.yaml.bak')
     # error handling
-    move.side_effect = file_util.Error('test error')
-    self.assertRaises(
-        files.Error, files.Remove, '/test/file/name.yaml', backup=True)
+    move.side_effect = errors.FileMoveError('some/src', 'some/dst')
+    with self.assertRaises(errors.FileMoveError):
+      files.Remove('/test/file/name.yaml', backup=True)
 
   def testYamlReader(self):
     self.filesystem.create_file(

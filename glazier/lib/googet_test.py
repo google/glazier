@@ -25,6 +25,8 @@ from glazier.lib import googet
 
 from pyfakefs import fake_filesystem
 
+from glazier.lib import errors
+
 
 class GooGetTest(absltest.TestCase):
 
@@ -111,22 +113,22 @@ class GooGetTest(absltest.TestCase):
     eb.assert_called_with(path, cmd)
 
     # Path does not exist
-    with self.assertRaisesRegex(googet.Error,
+    with self.assertRaisesRegex(errors.MissingGooGetBinaryError,
                                 'Cannot find path of GooGet binary*'):
       self.install.LaunchGooGet(
           pkg, retries, sleep_dur, self.buildinfo, path='C:\\abc\\def\\ghi',
           flags=self.flags)
 
     # Empty Package Name
-    with self.assertRaisesRegex(googet.Error,
+    with self.assertRaisesRegex(errors.MissingGooGetPackageError,
                                 'Missing package name for GooGet install.'):
       self.install.LaunchGooGet(
           '', retries, sleep_dur, self.buildinfo, path=path, flags=self.flags)
 
     # Non zero return value
-    eb.side_effect = googet.execute.Error
+    eb.side_effect = errors.BinaryExecutionError('some message')
     with self.assertRaisesRegex(
-        googet.Error,
+        errors.GooGetCommandFailureError,
         'GooGet command failed after ' + str(retries) + ' attempts'):
       self.install.LaunchGooGet(
           pkg, retries, sleep_dur, self.buildinfo, path=path, flags=self.flags)
@@ -143,17 +145,17 @@ class GooGetTest(absltest.TestCase):
     ])
 
     # Sources were passed as a string
-    with self.assertRaisesRegex(googet.Error,
+    with self.assertRaisesRegex(errors.GooGetFlagError,
                                 'GooGet flags were not passed as a list'):
       self.install._AddFlags('', branch)
 
     # Root flag passed
-    with self.assertRaisesRegex(googet.Error,
+    with self.assertRaisesRegex(errors.GooGetFlagError,
                                 'Root flag detected, remove flag to continue.'):
       self.install._AddFlags(self.flags + ['--root'], branch)
 
     # Sources keyword detected
-    with self.assertRaisesRegex(googet.Error,
+    with self.assertRaisesRegex(errors.GooGetFlagError,
                                 'Sources keyword detected*'):
       self.install._AddFlags(self.flags + ['-sources'], branch)
 

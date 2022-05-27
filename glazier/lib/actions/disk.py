@@ -15,7 +15,6 @@
 """Actions to manipulate the disk."""
 
 from glazier.lib import disk
-from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 
 
@@ -23,7 +22,4 @@ class WriteDiskSpace(BaseAction):
   """Writes the current total, used, and free disk space to registry."""
 
   def Run(self):
-    try:
-      disk.set_disk_space()
-    except disk.Error as e:
-      raise ActionError(e) from e
+    disk.set_disk_space()

@@ -13,7 +13,6 @@
 # limitations under the License.
 """Encapsulates information pertaining to WinPE during the image."""
 
-import logging
 import os
 import uuid
 
@@ -22,11 +21,8 @@ from glazier.lib import winpe
 import yaml
 
 from glazier.lib import constants
+from glazier.lib import errors
 from gwinpy.wmi import hw_info
-
-
-class Error(Exception):
-  pass
 
 
 def _generate_id() -> str:
@@ -36,17 +32,13 @@ def _generate_id() -> str:
     The image identifier as a string.
   """
   hw = hw_info.HWInfo()
-  return ('%s-%s' %
-          (str(hw.BiosSerial()), str(uuid.uuid4())[:7])).upper()
+  return ('%s-%s' % (str(hw.BiosSerial()), str(uuid.uuid4())[:7])).upper()
 
 
 def _set_id() -> str:
   """Set the image id registry key."""
   image_id = _generate_id()
-  try:
-    registry.set_value('image_id', image_id, path=constants.REG_ROOT)
-  except registry.Error as e:
-    raise Error(e) from e
+  registry.set_value('image_id', image_id, path=constants.REG_ROOT)
   return image_id
 
 
@@ -57,8 +49,8 @@ def _check_file() -> str:
     Image identifier as a string if already set.
 
   Raises:
-    Error: Could not locate build info file.
-    Error: Could not determine image identifier from file.
+    MissingBuildInfoFileError: Could not locate build info file.
+    UndeterminedImageIdError: Could not determine image identifier from file.
   """
   # First boot into host needs to grab image_id from buildinfo file.
   # It has not been written to registry yet.
@@ -70,12 +62,10 @@ def _check_file() -> str:
         image_id = input_config['BUILD']['image_id']
         registry.set_value('image_id', image_id, path=constants.REG_ROOT)
         return image_id
-      except registry.Error as e:
-        raise Error(e) from e
       except KeyError as e:
-        raise Error('Could not determine %s from file: %s.' % (e, path)) from e
+        raise errors.UndeterminedImageIdError(path) from e
   else:
-    raise Error('Could not locate build info file.')
+    raise errors.MissingBuildInfoFileError()
 
 
 def check_id() -> str:
@@ -87,11 +77,7 @@ def check_id() -> str:
   Returns:
     Image identifier as a string if already set.
   """
-  image_id = None
-  try:
-    image_id = registry.get_value('image_id', path=constants.REG_ROOT)
-  except registry.Error as e:
-    logging.error(str(e))
+  image_id = registry.get_value('image_id', path=constants.REG_ROOT)
 
   if image_id:
     return image_id

@@ -17,12 +17,12 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import buildinfo
-from glazier.lib import stage
 from glazier.lib.actions import installer
 
 from pyfakefs import fake_filesystem
 
 from glazier.lib import constants
+from glazier.lib import errors
 
 
 class InstallerTest(absltest.TestCase):
@@ -74,33 +74,33 @@ class InstallerTest(absltest.TestCase):
     a.Validate()
     # prompt (name, type)
     choice['name'] = True
-    self.assertRaises(installer.ValidationError, a.Validate)
+    self.assertRaises(errors.ValidationError, a.Validate)
     # tip
     choice['name'] = 'core_ps_shell'
     choice['options'][0]['tip'] = True
-    self.assertRaises(installer.ValidationError, a.Validate)
+    self.assertRaises(errors.ValidationError, a.Validate)
     # default
     choice['options'][0]['tip'] = ''
     choice['options'][0]['default'] = 3
-    self.assertRaises(installer.ValidationError, a.Validate)
+    self.assertRaises(errors.ValidationError, a.Validate)
     # label
     choice['options'][0]['default'] = True
     choice['options'][0]['label'] = False
-    self.assertRaises(installer.ValidationError, a.Validate)
+    self.assertRaises(errors.ValidationError, a.Validate)
     # value
     choice['options'][0]['label'] = 'False'
     choice['options'][0]['value'] = []
-    self.assertRaises(installer.ValidationError, a.Validate)
+    self.assertRaises(errors.ValidationError, a.Validate)
     # options dict
     choice['options'][0] = False
-    self.assertRaises(installer.ValidationError, a.Validate)
+    self.assertRaises(errors.ValidationError, a.Validate)
     # options list
     choice['options'] = False
-    self.assertRaises(installer.ValidationError, a.Validate)
+    self.assertRaises(errors.ValidationError, a.Validate)
     del choice['name']
-    self.assertRaises(installer.ValidationError, a.Validate)
+    self.assertRaises(errors.ValidationError, a.Validate)
     a = installer.AddChoice(False, None)
-    self.assertRaises(installer.ValidationError, a.Validate)
+    self.assertRaises(errors.ValidationError, a.Validate)
 
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
   def testBuildInfoDump(self, build_info):
@@ -174,8 +174,8 @@ class InstallerTest(absltest.TestCase):
     copy.return_value.ShareCopy.assert_called_with(log_file, log_host)
     copy.reset_mock()
     # copy errors
-    copy.return_value.EventLogCopy.side_effect = installer.log_copy.LogCopyError
-    copy.return_value.ShareCopy.side_effect = installer.log_copy.LogCopyError
+    copy.return_value.EventLogCopy.side_effect = errors.LogCopyError
+    copy.return_value.ShareCopy.side_effect = errors.LogCopyError
     lc.Run()
     copy.return_value.EventLogCopy.assert_called_with(log_file)
     copy.return_value.ShareCopy.assert_called_with(log_file, log_host)
@@ -183,11 +183,11 @@ class InstallerTest(absltest.TestCase):
   def testLogCopyValidate(self):
     log_host = 'log-server.example.com'
     lc = installer.LogCopy(r'X:\glazier.log', None)
-    self.assertRaises(installer.ValidationError, lc.Validate)
+    self.assertRaises(errors.ValidationError, lc.Validate)
     lc = installer.LogCopy([1, 2, 3], None)
-    self.assertRaises(installer.ValidationError, lc.Validate)
+    self.assertRaises(errors.ValidationError, lc.Validate)
     lc = installer.LogCopy([1], None)
-    self.assertRaises(installer.ValidationError, lc.Validate)
+    self.assertRaises(errors.ValidationError, lc.Validate)
     lc = installer.LogCopy([r'X:\glazier.log'], None)
     lc.Validate()
     lc = installer.LogCopy([r'X:\glazier.log', log_host], None)
@@ -207,11 +207,11 @@ class InstallerTest(absltest.TestCase):
 
   def testSleepValidate(self):
     s = installer.Sleep('30', None)
-    self.assertRaises(installer.ValidationError, s.Validate)
+    self.assertRaises(errors.ValidationError, s.Validate)
     s = installer.Sleep([1, 2, 3], None)
-    self.assertRaises(installer.ValidationError, s.Validate)
+    self.assertRaises(errors.ValidationError, s.Validate)
     s = installer.Sleep(['30'], None)
-    self.assertRaises(installer.ValidationError, s.Validate)
+    self.assertRaises(errors.ValidationError, s.Validate)
     s = installer.Sleep([30], None)
     s.Validate()
     s = installer.Sleep([30, 'Some reason.'], None)
@@ -250,19 +250,19 @@ class InstallerTest(absltest.TestCase):
 
   @mock.patch.object(installer.stage, 'set_stage', autospec=True)
   def testStartStageException(self, set_stage):
-    set_stage.side_effect = stage.Error('Test')
+    set_stage.side_effect = errors.InvalidStageIdError
     ss = installer.StartStage([2], None)
-    self.assertRaises(installer.ActionError, ss.Run)
+    self.assertRaises(errors.ActionError, ss.Run)
 
   def testStartStageValidate(self):
     s = installer.StartStage('30', None)
-    self.assertRaises(installer.ValidationError, s.Validate)
+    self.assertRaises(errors.ValidationError, s.Validate)
     s = installer.StartStage([1, 2, 3], None)
-    self.assertRaises(installer.ValidationError, s.Validate)
+    self.assertRaises(errors.ValidationError, s.Validate)
     s = installer.StartStage(['30'], None)
-    self.assertRaises(installer.ValidationError, s.Validate)
+    self.assertRaises(errors.ValidationError, s.Validate)
     s = installer.StartStage([30, 'Hello'], None)
-    self.assertRaises(installer.ValidationError, s.Validate)
+    self.assertRaises(errors.ValidationError, s.Validate)
     s = installer.StartStage([30], None)
     s.Validate()
 

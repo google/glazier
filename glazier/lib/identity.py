@@ -14,7 +14,6 @@
 """Manipulate identity data during the image."""
 
 import functools
-import logging
 import socket
 from typing import Optional
 
@@ -24,10 +23,6 @@ from glazier.lib import registry
 from glazier.lib import constants
 
 
-class Error(Exception):
-  pass
-
-
 @functools.lru_cache()
 def get_username() -> Optional[str]:
   """Gets the username from registry.
@@ -35,10 +30,7 @@ def get_username() -> Optional[str]:
   Returns:
     username as a string.
   """
-  try:
-    return registry.get_value('Username', path=constants.REG_ROOT)
-  except registry.Error as e:
-    logging.error(str(e))
+  return registry.get_value('Username', path=constants.REG_ROOT)
 
 
 def set_username(username: Optional[str] = None,
@@ -55,14 +47,11 @@ def set_username(username: Optional[str] = None,
     username: The determined username.
 
   Raises:
-    Error: Failed to set username in registry.
+    RegistrySetError: Failed to set username in registry.
   """
   if not username:
     username = interact.GetUsername(prompt)
-  try:
-    registry.set_value('Username', username, path=constants.REG_ROOT)
-  except registry.Error as e:
-    raise Error(e) from e
+  registry.set_value('Username', username, path=constants.REG_ROOT)
 
   return username
 
@@ -74,12 +63,8 @@ def get_hostname() -> Optional[str]:
   Returns:
     The hostname as a string, obtained from the registry value 'name'.
   """
-  try:
-    hostname = registry.get_value('Name', path=constants.REG_ROOT)
-  except registry.Error as e:
-    logging.error(str(e))
-  else:
-    return hostname.strip() if hostname else hostname
+  hostname = registry.get_value('Name', path=constants.REG_ROOT)
+  return hostname.strip() if hostname else hostname
 
 
 def set_hostname(hostname: Optional[str] = None) -> str:
@@ -94,16 +79,12 @@ def set_hostname(hostname: Optional[str] = None) -> str:
     hostname: The determined hostname.
 
   Raise:
-    Error: Failed to set hostname in registry.
+    RegistrySetError: Failed to set hostname in registry.
   """
   if not hostname:
     hostname = socket.gethostname()
 
   hostname = hostname.strip()
-
-  try:
-    registry.set_value('Name', hostname, path=constants.REG_ROOT)
-  except registry.Error as e:
-    raise Error(e) from e
+  registry.set_value('Name', hostname, path=constants.REG_ROOT)
 
   return hostname

@@ -19,21 +19,23 @@ from unittest import mock
 from absl.testing import absltest
 from glazier.lib.actions import abort
 
+from glazier.lib import errors
+
 
 class AbortTest(absltest.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testAbort(self, build_info):
     ab = abort.Abort(['abort message'], build_info)
-    self.assertRaises(abort.ActionError, ab.Run)
+    self.assertRaises(errors.ActionError, ab.Run)
 
   def testAbortValidate(self):
     ab = abort.Abort('abort message', None)
-    self.assertRaises(abort.ValidationError, ab.Validate)
+    self.assertRaises(errors.ValidationError, ab.Validate)
     ab = abort.Abort([1, 2, 3], None)
-    self.assertRaises(abort.ValidationError, ab.Validate)
+    self.assertRaises(errors.ValidationError, ab.Validate)
     ab = abort.Abort([1], None)
-    self.assertRaises(abort.ValidationError, ab.Validate)
+    self.assertRaises(errors.ValidationError, ab.Validate)
     ab = abort.Abort(['Error Message'], None)
     ab.Validate()
 
@@ -42,19 +44,19 @@ class AbortTest(absltest.TestCase):
   def testWarn(self, prompt, build_info):
     warn = abort.Warn(['warning message'], build_info)
     prompt.return_value = None
-    self.assertRaises(abort.ActionError, warn.Run)
+    self.assertRaises(errors.ActionError, warn.Run)
     prompt.return_value = 'no thanks'
-    self.assertRaises(abort.ActionError, warn.Run)
+    self.assertRaises(errors.ActionError, warn.Run)
     prompt.return_value = 'Y'
     warn.Run()
 
   def testWarnValidate(self):
     warn = abort.Warn('abort message', None)
-    self.assertRaises(abort.ValidationError, warn.Validate)
+    self.assertRaises(errors.ValidationError, warn.Validate)
     warn = abort.Warn([1, 2, 3], None)
-    self.assertRaises(abort.ValidationError, warn.Validate)
+    self.assertRaises(errors.ValidationError, warn.Validate)
     warn = abort.Warn([1], None)
-    self.assertRaises(abort.ValidationError, warn.Validate)
+    self.assertRaises(errors.ValidationError, warn.Validate)
     warn = abort.Warn(['Error Message'], None)
     warn.Validate()
 

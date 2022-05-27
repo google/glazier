@@ -17,9 +17,9 @@
 import logging
 import re
 from glazier.lib import interact
-from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
-from glazier.lib.actions.base import ValidationError
+
+from glazier.lib import errors
 
 
 class Abort(BaseAction):
@@ -27,16 +27,16 @@ class Abort(BaseAction):
 
   def Run(self):
     message = self._args[0]
-    raise ActionError(str(message))
+    raise errors.ActionError(str(message))
 
   def Validate(self):
     if not isinstance(self._args, list):
-      raise ValidationError('Invalid args type (%s): %s' %
-                            (type(self._args), self._args))
+      raise errors.ValidationError(
+          'Invalid args type (%s): %s' % (type(self._args), self._args))
     if len(self._args) != 1:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise errors.ValidationError('Invalid args length: %s' % self._args)
     if not isinstance(self._args[0], str):
-      raise ValidationError('Invalid argument type: %s' % self._args[0])
+      raise errors.ValidationError('Invalid argument type: %s' % self._args[0])
 
 
 class Warn(BaseAction):
@@ -46,14 +46,14 @@ class Warn(BaseAction):
     print('\n\n%s\n\n' % str(self._args[0]))
     response = interact.Prompt('Do you still want to proceed (y/n)? ')
     if not response or not re.match(r'^[Yy](es)?$', response):
-      raise ActionError('User chose not to continue installation.')
+      raise errors.ActionError('User chose not to continue installation.')
     logging.info('User chose to continue installation despite warning.')
 
   def Validate(self):
     if not isinstance(self._args, list):
-      raise ValidationError('Invalid args type (%s): %s' %
-                            (type(self._args), self._args))
+      raise errors.ValidationError(
+          'Invalid args type (%s): %s' % (type(self._args), self._args))
     if len(self._args) != 1:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise errors.ValidationError('Invalid args length: %s' % self._args)
     if not isinstance(self._args[0], str):
-      raise ValidationError('Invalid argument type: %s' % self._args[0])
+      raise errors.ValidationError('Invalid argument type: %s' % self._args[0])

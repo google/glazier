@@ -51,7 +51,7 @@ class FilesTest(absltest.TestCase):
     cache.side_effect = None
     cache.return_value = 'cmd.exe /c script.bat'
     e = files.Execute([['cmd.exe /c script.bat', [2, 4]]], bi)
-    with self.assertRaises(files.ActionError):
+    with self.assertRaises(errors.ActionError):
       e.Run()
     eb.return_value = 4
     e.Run()
@@ -77,22 +77,22 @@ class FilesTest(absltest.TestCase):
 
     # KeyboardInterrupt
     eb.side_effect = KeyboardInterrupt
-    with self.assertRaises(files.ActionError):
+    with self.assertRaises(errors.ActionError):
       e.Run()
 
     # Execute Error
-    eb.side_effect = files.execute.Error
-    with self.assertRaises(files.ActionError):
+    eb.side_effect = errors.BinaryExecutionError('some message')
+    with self.assertRaises(errors.ActionError):
       e.Run()
 
     # ValueError
     split.side_effect = ValueError
-    with self.assertRaises(files.ActionError):
+    with self.assertRaises(errors.ActionError):
       e.Run()
 
     # Cache error
     cache.side_effect = errors.CacheError('some/file/path')
-    with self.assertRaises(files.ActionError):
+    with self.assertRaises(errors.ActionError):
       e.Run()
 
   # TODO(b/152894756): Paramaterize and add cm for these tests
@@ -101,20 +101,20 @@ class FilesTest(absltest.TestCase):
     e = files.Execute([['cmd.exe', [0], [2], False], ['explorer.exe']], None)
     e.Validate()
     e = files.Execute([[]], None)
-    self.assertRaises(files.ValidationError, e.Validate)
+    self.assertRaises(errors.ValidationError, e.Validate)
     e = files.Execute(['explorer.exe'], None)
-    self.assertRaises(files.ValidationError, e.Validate)
+    self.assertRaises(errors.ValidationError, e.Validate)
     e = files.Execute('explorer.exe', None)
-    self.assertRaises(files.ValidationError, e.Validate)
+    self.assertRaises(errors.ValidationError, e.Validate)
     e = files.Execute([['cmd.exe', [0]], ['explorer.exe', '0']], None)
-    self.assertRaises(files.ValidationError, e.Validate)
+    self.assertRaises(errors.ValidationError, e.Validate)
     e = files.Execute([['cmd.exe', [0]], ['explorer.exe', ['0']]], None)
-    self.assertRaises(files.ValidationError, e.Validate)
+    self.assertRaises(errors.ValidationError, e.Validate)
     e = files.Execute([['cmd.exe', [0], ['2']], ['explorer.exe']], None)
-    self.assertRaises(files.ValidationError, e.Validate)
+    self.assertRaises(errors.ValidationError, e.Validate)
     e = files.Execute([['cmd.exe', [0], [2], 'True'], ['explorer.exe']], None)
-    self.assertRaises(files.ValidationError, e.Validate)
-    with self.assertRaises(files.ValidationError):
+    self.assertRaises(errors.ValidationError, e.Validate)
+    with self.assertRaises(errors.ValidationError):
       files.Execute([['cmd.exe', [0], [2], False, 'True'], ['explorer.exe']],
                     None).Validate()
 
@@ -188,8 +188,8 @@ class FilesTest(absltest.TestCase):
     r_path.return_value = 'https://glazier-server.example.com/'
     remote = '@glazier/1.0/autobuild.par'
     local = r'/tmp/autobuild.par'
-    down_file.side_effect = files.download.DownloadError('Error')
-    with self.assertRaises(files.ActionError):
+    down_file.side_effect = errors.DownloadError('Error')
+    with self.assertRaises(errors.ActionError):
       files.Get([[remote, local]], buildinfo.BuildInfo()).Run()
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
@@ -198,8 +198,8 @@ class FilesTest(absltest.TestCase):
     r_path.return_value = 'https://glazier-server.example.com/'
     remote = '@glazier/1.0/autobuild.par'
     self.filesystem.create_file('/directory')
-    down_file.side_effect = files.download.DownloadError('Error')
-    with self.assertRaises(files.ActionError):
+    down_file.side_effect = errors.DownloadError('Error')
+    with self.assertRaises(errors.ActionError):
       files.Get([[remote, '/directory/file.txt']], buildinfo.BuildInfo()).Run()
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
@@ -246,7 +246,7 @@ class FilesTest(absltest.TestCase):
         r'/tmp/autobuild.par.sha256', contents=test_sha256)
     down_file.return_value = True
     verify.return_value = False
-    with self.assertRaises(files.ActionError):
+    with self.assertRaises(errors.ActionError):
       files.Get(
           [['@glazier/1.0/autobuild.par', r'/tmp/autobuild.par', test_sha256]],
           buildinfo.BuildInfo()).Run()
@@ -266,19 +266,19 @@ class FilesTest(absltest.TestCase):
     self.assertFalse(verify.called)
 
   def testGetValidate(self):
-    with self.assertRaises(files.ValidationError):
+    with self.assertRaises(errors.ValidationError):
       files.Get('String', None).Validate()
-    with self.assertRaises(files.ValidationError):
+    with self.assertRaises(errors.ValidationError):
       files.Get([[1, 2, 3]], None).Validate()
-    with self.assertRaises(files.ValidationError):
+    with self.assertRaises(errors.ValidationError):
       files.Get([[1, '/tmp/out/path']], None).Validate()
-    with self.assertRaises(files.ValidationError):
+    with self.assertRaises(errors.ValidationError):
       files.Get([['/tmp/src.zip', 2]], None).Validate()
     files.Get([['https://glazier/bin/src.zip', '/tmp/out/src.zip']],
               None).Validate()
     files.Get([['https://glazier/bin/src.zip', '/tmp/out/src.zip', '12345']],
               None).Validate()
-    with self.assertRaises(files.ValidationError):
+    with self.assertRaises(errors.ValidationError):
       files.Get([[
           'https://glazier/bin/src.zip', '/tmp/out/src.zip', '12345', '67890'
       ]], None).Validate()
@@ -290,15 +290,15 @@ class FilesTest(absltest.TestCase):
     dst = '/out/dir/path'
     # bad args
     un = files.Unzip([], build_info)
-    self.assertRaises(files.ActionError, un.Run)
+    self.assertRaises(errors.ActionError, un.Run)
     un = files.Unzip([src], build_info)
-    self.assertRaises(files.ActionError, un.Run)
+    self.assertRaises(errors.ActionError, un.Run)
     # bad path
     un = files.Unzip([src, dst], build_info)
-    self.assertRaises(files.ActionError, un.Run)
+    self.assertRaises(errors.ActionError, un.Run)
     # create error
-    create_dir.side_effect = files.file_util.Error
-    self.assertRaises(files.ActionError, un.Run)
+    create_dir.side_effect = errors.DirectoryCreationError('/some/dir/name')
+    self.assertRaises(errors.ActionError, un.Run)
     # good
     create_dir.side_effect = None
     with mock.patch.object(files.zipfile, 'ZipFile', autospec=True) as z:
@@ -310,13 +310,13 @@ class FilesTest(absltest.TestCase):
 
   def testUnzipValidate(self):
     un = files.Unzip('String', None)
-    self.assertRaises(files.ValidationError, un.Validate)
+    self.assertRaises(errors.ValidationError, un.Validate)
     un = files.Unzip([1, 2, 3], None)
-    self.assertRaises(files.ValidationError, un.Validate)
+    self.assertRaises(errors.ValidationError, un.Validate)
     un = files.Unzip([1, '/tmp/out/path'], None)
-    self.assertRaises(files.ValidationError, un.Validate)
+    self.assertRaises(errors.ValidationError, un.Validate)
     un = files.Unzip(['/tmp/src.zip', 2], None)
-    self.assertRaises(files.ValidationError, un.Validate)
+    self.assertRaises(errors.ValidationError, un.Validate)
     un = files.Unzip(['/tmp/src.zip', '/tmp/out/path'], None)
     un.Validate()
 

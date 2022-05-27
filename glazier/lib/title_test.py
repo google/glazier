@@ -18,6 +18,9 @@ from unittest import mock
 from absl.testing import absltest
 from glazier.lib import title
 
+from glazier.lib import errors
+
+
 _PREFIX = 'Glazier'
 _STRING = 'Test string with spaces'
 _TEST_ID = '1A19SEL90000R90DZN7A-1234567'
@@ -157,7 +160,7 @@ class TitleTest(absltest.TestCase):
   def test_set_title_error(self, bt, sys):
     bt.return_value = _PREFIX
     sys.side_effect = OSError
-    self.assertRaises(title.Error, title.set_title)
+    self.assertRaises(errors.SetTitleError, title.set_title)
 
 if __name__ == '__main__':
   absltest.main()

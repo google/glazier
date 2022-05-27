@@ -21,10 +21,7 @@ from glazier.lib import execute
 from glazier.lib import identity
 
 from glazier.lib import constants
-
-
-class Error(Exception):
-  pass
+from glazier.lib import errors
 
 
 class Splice(object):
@@ -45,10 +42,7 @@ class Splice(object):
     hostname = identity.get_hostname()
 
     if not hostname:
-      try:
-        hostname = identity.set_hostname()
-      except identity.Error as e:
-        raise Error(e) from e
+      hostname = identity.set_hostname()
 
     return hostname
 
@@ -63,10 +57,7 @@ class Splice(object):
     if not username:
       # Clear lru_cache otherwise the next check will return no username.
       identity.get_username.cache_clear()
-      try:
-        username = identity.set_username(prompt='domain join')
-      except identity.Error as e:
-        raise Error(e) from e
+      username = identity.set_username(prompt='domain join')
 
     return fr'{constants.DOMAIN_NAME}\{username}'
 
@@ -116,7 +107,7 @@ class Splice(object):
         generator rather than using the current device identity.
 
     Raises:
-      Error: Domain join failed.
+      FailedDomainJoinError: Domain join failed.
     """
 
     attempt = 0
@@ -131,7 +122,7 @@ class Splice(object):
           self._splice_unattended()
         else:
           self._splice_user()
-      except execute.Error as e:
+      except errors.BinaryExecutionError as e:
         if max_retries < 0 or attempt < max_retries:  # pytype: disable=unsupported-operands
           logging.warning(
               'Domain join attempt %d of %d failed. Retrying in %d second(s).',
@@ -146,8 +137,7 @@ class Splice(object):
                 max_retries)
             break
           else:
-            raise Error(
-                f'Failed to join domain after {attempt} attempt(s).') from e
+            raise errors.FailedDomainJoinError(attempt) from e
       else:
         logging.info('Domain join succeeded after %d attempt(s).', attempt)
         return
@@ -157,15 +147,14 @@ class Splice(object):
       attempt += 1
       try:
         self._splice_user()
-      except execute.Error as e:
+      except errors.BinaryExecutionError as e:
         if max_retries < 0 or attempt < max_retries:  # pytype: disable=unsupported-operands
           logging.warning(
               'Domain join attempt %d of %d failed. Retrying in %d second(s).',
               attempt, max_retries, sleep)
           time.sleep(sleep)
         else:
-          raise Error(
-              f'Failed to join domain after {attempt} attempt(s).') from e
+          raise errors.FailedDomainJoinError(attempt) from e
       else:
         logging.info('Fallback domain join succeeded after %d attempt(s).',
                      attempt)

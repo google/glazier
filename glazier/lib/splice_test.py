@@ -19,6 +19,8 @@ from absl.testing import absltest
 from glazier.lib import splice
 from pyfakefs import fake_filesystem
 
+from glazier.lib import errors
+
 _USERNAME = 'bert'
 _HOSTNAME = 'earnie-pc'
 
@@ -32,19 +34,13 @@ class SpliceTest(absltest.TestCase):
     splice.open = fake_filesystem.FakeFileOpen(self.fs)
     splice.os.environ['ProgramFiles'] = r'C:\Program Files'
     self.splice = splice.Splice()
-    self.error = splice.execute.Error
+    self.error = errors.BinaryExecutionError('some message')
 
   @mock.patch.object(splice.identity, 'get_hostname', autospec=True)
   def testGetHostnameExists(self, get_host):
     get_host.return_value = _HOSTNAME
     self.assertEqual(self.splice._get_hostname(),
                      splice.identity.get_hostname())
-
-  @mock.patch.object(splice.identity, 'set_hostname', autospec=True)
-  def testGetHostnameError(self, set_host):
-    set_host.side_effect = splice.identity.Error
-    with self.assertRaises(splice.Error):
-      self.splice._get_hostname()
 
   @mock.patch.object(splice.identity, 'set_username', autospec=True)
   @mock.patch.object(splice.identity, 'get_username', autospec=True)
@@ -63,12 +59,6 @@ class SpliceTest(absltest.TestCase):
     self.assertEqual(
         self.splice._get_username(),
         fr'{splice.constants.DOMAIN_NAME}\{splice.identity.get_username()}')
-
-  @mock.patch.object(splice.identity, 'set_username', autospec=True)
-  def testGetUsernameError(self, set_user):
-    set_user.side_effect = splice.identity.Error
-    with self.assertRaises(splice.Error):
-      self.splice._get_username()
 
   @mock.patch.object(splice.execute, 'execute_binary', autospec=True)
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
@@ -109,7 +99,8 @@ class SpliceTest(absltest.TestCase):
     user.return_value = 'bar'
     eb.side_effect = self.error
     self.assertRaises(
-        splice.Error, self.splice.domain_join, unattended=False, fallback=False)
+        errors.FailedDomainJoinError, self.splice.domain_join, unattended=False,
+        fallback=False)
 
   @mock.patch.object(splice.execute, 'execute_binary', autospec=True)
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
@@ -120,7 +111,8 @@ class SpliceTest(absltest.TestCase):
     user.return_value = 'bar'
     eb.side_effect = self.error
     self.assertRaises(
-        splice.Error, self.splice.domain_join, unattended=True, fallback=False)
+        errors.FailedDomainJoinError, self.splice.domain_join, unattended=True,
+        fallback=False)
 
   @mock.patch.object(splice.execute, 'execute_binary', autospec=True)
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)

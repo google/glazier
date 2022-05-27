@@ -19,6 +19,8 @@ from unittest import mock
 from absl.testing import absltest
 from glazier.lib.actions import domain
 
+from glazier.lib import errors
+
 
 class DomainTest(absltest.TestCase):
 
@@ -38,17 +40,17 @@ class DomainTest(absltest.TestCase):
     # error
     join.return_value.JoinDomain.side_effect = (
         domain.domain_join.DomainJoinError)
-    self.assertRaises(domain.ActionError, dj.Run)
+    self.assertRaises(errors.ActionError, dj.Run)
 
   def testDomainJoinValidate(self):
     dj = domain.DomainJoin('interactive', None)
-    self.assertRaises(domain.ValidationError, dj.Validate)
+    self.assertRaises(errors.ValidationError, dj.Validate)
     dj = domain.DomainJoin([1, 2, 3], None)
-    self.assertRaises(domain.ValidationError, dj.Validate)
+    self.assertRaises(errors.ValidationError, dj.Validate)
     dj = domain.DomainJoin([1], None)
-    self.assertRaises(domain.ValidationError, dj.Validate)
+    self.assertRaises(errors.ValidationError, dj.Validate)
     dj = domain.DomainJoin(['unknown'], None)
-    self.assertRaises(domain.ValidationError, dj.Validate)
+    self.assertRaises(errors.ValidationError, dj.Validate)
     dj = domain.DomainJoin(['interactive', 'domain.test.com'], None)
     dj.Validate()
 

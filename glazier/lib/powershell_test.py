@@ -24,6 +24,8 @@ from glazier.lib import powershell
 
 from pyfakefs import fake_filesystem
 
+from glazier.lib import errors
+
 FLAGS = flags.FLAGS
 
 
@@ -58,8 +60,8 @@ class PowershellTest(absltest.TestCase):
   @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
   def testLaunchPsError(self, eb, path):
     path.return_value = powershell.constants.WINPE_POWERSHELL
-    eb.side_effect = powershell.execute.Error
-    self.assertRaises(powershell.PowerShellError,
+    eb.side_effect = errors.BinaryExecutionError('message')
+    self.assertRaises(errors.BinaryExecutionError,
                       self.ps._LaunchPs, '-Command', ['Get-ChildItem'])
 
   @mock.patch.object(powershell, '_Powershell', autospec=True)
@@ -188,8 +190,8 @@ class PowershellTest(absltest.TestCase):
   @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
   def testStartShellError(self, eb, path):
     path.return_value = powershell.constants.WINPE_POWERSHELL
-    eb.side_effect = powershell.execute.Error
-    self.assertRaises(powershell.PowerShellError, self.ps.StartShell)
+    eb.side_effect = errors.BinaryExecutionError('message')
+    self.assertRaises(errors.BinaryExecutionError, self.ps.StartShell)
 
 if __name__ == '__main__':
   absltest.main()

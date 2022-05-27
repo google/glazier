@@ -20,6 +20,8 @@ from absl.testing import absltest
 from glazier.lib import execute
 from pyfakefs import fake_filesystem
 
+from glazier.lib import errors
+
 
 class ExecuteTest(absltest.TestCase):
 
@@ -77,14 +79,16 @@ class ExecuteTest(absltest.TestCase):
     popen_instance = popen.return_value
     popen_instance.returncode = 1337
     popen_instance.stdout = io.BytesIO(b'foo\nbar')
-    self.assertRaises(execute.Error, execute.execute_binary, self.binary,
-                      return_codes=[1338])
+    self.assertRaises(
+        errors.BinaryExecutionError, execute.execute_binary, self.binary,
+        return_codes=[1338])
 
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
   def test_execute_binary_windows_error(self, popen):
     execute.WindowsError = Exception
     popen.side_effect = execute.WindowsError
-    self.assertRaises(execute.Error, execute.execute_binary, self.binary)
+    self.assertRaises(
+        errors.BinaryExecutionError, execute.execute_binary, self.binary)
 
   @mock.patch.object(execute.logging, 'info', autospec=True)
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)

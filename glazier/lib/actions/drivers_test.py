@@ -20,6 +20,8 @@ from absl.testing import absltest
 from glazier.lib.actions import drivers
 from glazier.lib.buildinfo import BuildInfo
 
+from glazier.lib import errors
+
 
 class DriversTest(absltest.TestCase):
 
@@ -64,34 +66,34 @@ class DriversTest(absltest.TestCase):
     # Invalid format
     conf['data']['driver'][0][1] = 'C:\\W54x-Win10-Storage.zip'
     dw = drivers.DriverWIM(conf['data']['driver'], bi)
-    self.assertRaises(drivers.ActionError, dw.Run)
+    self.assertRaises(errors.ActionError, dw.Run)
     conf['data']['driver'][0][1] = 'C:\\W54x-Win10-Storage.wim'
 
     # Mount Fail
-    exe.side_effect = drivers.execute.Error
-    with self.assertRaises(drivers.ActionError):
+    exe.side_effect = errors.BinaryExecutionError('some message')
+    with self.assertRaises(errors.ActionError):
       dw.Run()
     # Dism Fail
-    exe.side_effect = iter([0, drivers.execute.Error])
-    with self.assertRaises(drivers.ActionError):
+    exe.side_effect = iter([0, errors.BinaryExecutionError('some message')])
+    with self.assertRaises(errors.ActionError):
       dw.Run()
     # Unmount Fail
-    exe.side_effect = iter([0, 0, drivers.execute.Error])
-    with self.assertRaises(drivers.ActionError):
+    exe.side_effect = iter([0, 0, errors.BinaryExecutionError('some message')])
+    with self.assertRaises(errors.ActionError):
       dw.Run()
 
   def testDriverWIMValidate(self):
     g = drivers.DriverWIM('String', None)
-    self.assertRaises(drivers.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
     g = drivers.DriverWIM([[1, 2, 3]], None)
-    self.assertRaises(drivers.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
     g = drivers.DriverWIM([[1, '/tmp/out/path']], None)
-    self.assertRaises(drivers.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
     g = drivers.DriverWIM([['/tmp/src.zip', 2]], None)
-    self.assertRaises(drivers.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
     g = drivers.DriverWIM([['https://glazier/bin/src.wim', '/tmp/out/src.zip']],
                           None)
-    self.assertRaises(drivers.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
     g = drivers.DriverWIM([['https://glazier/bin/src.wim', '/tmp/out/src.wim']],
                           None)
     g.Validate()
@@ -101,7 +103,7 @@ class DriversTest(absltest.TestCase):
     g = drivers.DriverWIM(
         [['https://glazier/bin/src.zip', '/tmp/out/src.zip', '12345', '67890']],
         None)
-    self.assertRaises(drivers.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
 
 
 if __name__ == '__main__':

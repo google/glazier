@@ -15,9 +15,9 @@
 """Action for running GooGet commands with arguments."""
 
 from glazier.lib import googet
-from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
-from glazier.lib.actions.base import ValidationError
+
+from glazier.lib import errors
 
 
 class GooGetInstall(BaseAction):
@@ -55,18 +55,21 @@ class GooGetInstall(BaseAction):
                              build_info=self._build_info,
                              path=path,
                              flags=flags)
-      except googet.Error as e:
-        raise ActionError("Failure executing GooGet command: '%s'" % e) from e
+      except errors.GooGetError as e:
+        raise errors.ActionError(
+            "Failure executing GooGet command: '%s'" % e) from e
       except IndexError as e:
-        raise ActionError("Unable to access all required arguments in command "
-                          "'%s'" % str(args)) from e
+        message = (
+            "Unable to access all required arguments in command '%s'"
+        ) % str(args)
+        raise errors.ActionError(message) from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)
     for args in self._args:
       if not 1 <= len(args) <= 5:
-        raise ValidationError("Invalid GooGet args '%s' with length of "
-                              "'%d'" % (args, len(args)))
+        raise errors.ValidationError(
+            "Invalid GooGet args '%s' with length of '%d'" % (args, len(args)))
       self._TypeValidator(args[0], str)  # Package
       if len(args) > 1:
         self._TypeValidator(args[1], list)  # Flags

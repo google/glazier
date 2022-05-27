@@ -84,7 +84,7 @@ class Cache(object):
         destination = self._DestinationPath(build_info.CachePath(), file_path)
         try:
           self._downloader.DownloadFile(file_path, destination)
-        except download.DownloadError as e:
+        except errors.DownloadError as e:
           self._downloader.PrintDebugInfo()
           raise errors.CacheError(file_path) from e
       else:  # bypass download for local files

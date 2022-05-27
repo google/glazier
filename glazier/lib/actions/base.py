@@ -16,17 +16,8 @@
 
 import logging
 
-#
-# Error Types
-#
+from glazier.lib import errors
 
-
-class ActionError(Exception):
-  """Failure completing requested action."""
-
-
-class ValidationError(Exception):
-  """Failure validating a command type."""
 
 #
 # Event Types
@@ -93,11 +84,12 @@ class BaseAction(object):
       max_length = length
     self._TypeValidator(args, list)
     if not length <= len(args) <= max_length:
-      raise ValidationError('Invalid args length: %s' % args)
+      raise errors.ValidationError('Invalid args length: %s' % args)
     for arg in args:
       self._TypeValidator(arg, str)
 
   def _TypeValidator(self, args, expect_types):
     if not isinstance(args, expect_types):
-      raise ValidationError('Invalid type for arg %s. Found: %s, Expected: %s' %
-                            (args, type(args), str(expect_types)))
+      raise errors.ValidationError(
+          'Invalid type for arg %s. Found: %s, Expected: %s' % (
+              args, type(args), str(expect_types)))

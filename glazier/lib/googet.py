@@ -26,12 +26,10 @@ from glazier.lib import constants
 from glazier.lib import execute
 from glazier.lib import winpe
 
+from glazier.lib import errors
+
 if typing.TYPE_CHECKING:
   from glazier.lib import buildinfo
-
-
-class Error(Exception):
-  pass
 
 
 class GooGetInstall(object):
@@ -59,16 +57,18 @@ class GooGetInstall(object):
       Adjusted strings that are part of the sources array.
     """
     if not isinstance(flags, list):
-      raise Error('GooGet flags were not passed as a list')
+      raise errors.GooGetFlagError('GooGet flags were not passed as a list')
 
     # URL should be kept separate from other optional flags
     url, options = [], []
 
     if re.search(r'(-root)', str(flags)):
-      raise Error('Root flag detected, remove flag to continue.')
+      raise errors.GooGetFlagError(
+          'Root flag detected, remove flag to continue.')
 
     if re.search(r'(-sources)', str(flags)):
-      raise Error('Sources keyword detected, Enter URL without \'-sources\'')
+      raise errors.GooGetFlagError(
+          'Sources keyword detected, Enter URL without \'-sources\'')
 
     for flag in flags:
       # Find all URLs
@@ -119,9 +119,9 @@ class GooGetInstall(object):
     if not kwargs['path']:
       kwargs['path'] = os.path.join(self._GooGet(), 'googet.exe')
     if not os.path.exists(kwargs['path']):
-      raise Error('Cannot find path of GooGet binary [%s]' % kwargs['path'])
+      raise errors.MissingGooGetBinaryError(kwargs['path'])
     if not pkg:
-      raise Error('Missing package name for GooGet install.')
+      raise errors.MissingGooGetPackageError()
 
     # Pass --root as GOOGETROOT environmental variable may not exist
     root = '--root=' + self._GooGet()
@@ -142,9 +142,9 @@ class GooGetInstall(object):
       try:
         execute.execute_binary(kwargs['path'], cmd)
         return
-      except execute.Error as e:
+      except errors.BinaryExecutionError as e:
         logging.warning(str(e))
         logging.info('Retrying in %d seconds', sleep)
         time.sleep(sleep)
 
-    raise Error('GooGet command failed after %d attempts' % retries)
+    raise errors.GooGetCommandFailureError(retries)

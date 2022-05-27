@@ -48,11 +48,11 @@ class PowershellTest(parameterized.TestCase):
     ps.Run()
     run.assert_called_with(mock.ANY, SCRIPT_PATH, ARGS, [0])
     run.side_effect = powershell.powershell.PowerShellError
-    self.assertRaises(powershell.ActionError, ps.Run)
+    self.assertRaises(errors.ActionError, ps.Run)
     # Cache error
     run.side_effect = None
     cache.side_effect = errors.CacheError('some/file/path')
-    self.assertRaises(powershell.ActionError, ps.Run)
+    self.assertRaises(errors.ActionError, ps.Run)
 
   @mock.patch.object(powershell.powershell, 'PowerShell', autospec=True)
   @mock.patch.object(powershell.cache.Cache, 'CacheFromLine', autospec=True)
@@ -70,7 +70,7 @@ class PowershellTest(parameterized.TestCase):
     cache.return_value = SCRIPT_PATH
     ps = powershell.PSScript([SCRIPT, ARGS, [1337, 1338]], self.bi)
     run.return_value = 0
-    self.assertRaises(powershell.ActionError, ps.Run)
+    self.assertRaises(errors.ActionError, ps.Run)
     run.return_value = 1337
     ps.Run()
 
@@ -129,14 +129,14 @@ class PowershellTest(parameterized.TestCase):
                                reboot_codes, retry_on_restart, shell, log):
     ps = powershell.PSScript([script, ps_args, success_codes, reboot_codes,
                               retry_on_restart, shell, log], None)
-    self.assertRaises(powershell.ValidationError, ps.Validate)
+    self.assertRaises(errors.ValidationError, ps.Validate)
 
   def testPSScriptValidateLen(self):
     ps = powershell.PSScript([], None)
-    self.assertRaises(powershell.ValidationError, ps.Validate)
+    self.assertRaises(errors.ValidationError, ps.Validate)
 
     ps = powershell.PSScript([1, 2, 3, 4, 5, 6], None)
-    self.assertRaises(powershell.ValidationError, ps.Validate)
+    self.assertRaises(errors.ValidationError, ps.Validate)
 
   # TODO (b/140891452): Use fail() to make an explicit assertion.
   # (go/python-tips/006)
@@ -156,7 +156,7 @@ class PowershellTest(parameterized.TestCase):
 
   def testMultiPSScriptIndexError(self):
     """Missing input fields should raise IndexError."""
-    with self.assertRaises(powershell.ActionError):
+    with self.assertRaises(errors.ActionError):
       powershell.MultiPSScript([[]], self.bi).Run()
 
   def testMultiPSScriptValidate(self):
@@ -164,13 +164,13 @@ class PowershellTest(parameterized.TestCase):
     powershell.MultiPSScript([[SCRIPT]], self.bi).Validate()
 
   def testMultiPSScriptValidateError(self):
-    """String input should raise ValidationError."""
-    with self.assertRaises(powershell.ActionError):
+    """String input should raise errors.ValidationError."""
+    with self.assertRaises(errors.ActionError):
       powershell.MultiPSScript(SCRIPT, self.bi).Validate()
 
   def testMultiPSScriptValidateArgsType(self):
-    """Non-list args should raise ValidationError."""
-    with self.assertRaises(powershell.ValidationError):
+    """Non-list args should raise errors.ValidationError."""
+    with self.assertRaises(errors.ValidationError):
       powershell.MultiPSScript([[SCRIPT], SCRIPT], self.bi).Validate()
 
   @mock.patch.object(
@@ -193,14 +193,14 @@ class PowershellTest(parameterized.TestCase):
   def testPSCommandError(self, run):
     ps = powershell.PSCommand([COMMAND, [1337]], None)
     run.side_effect = powershell.powershell.PowerShellError
-    self.assertRaises(powershell.ActionError, ps.Run)
+    self.assertRaises(errors.ActionError, ps.Run)
 
   @mock.patch.object(
       powershell.powershell.PowerShell, 'RunCommand', autospec=True)
   def testPSCommandSuccessError(self, run):
     ps = powershell.PSCommand([COMMAND, [0]], self.bi)
     run.return_value = 1337
-    self.assertRaises(powershell.ActionError, ps.Run)
+    self.assertRaises(errors.ActionError, ps.Run)
 
   @mock.patch.object(
       powershell.powershell.PowerShell, 'RunCommand', autospec=True)
@@ -221,7 +221,7 @@ class PowershellTest(parameterized.TestCase):
     ps = powershell.PSCommand([SCRIPT + ' -confirm:$false'], self.bi)
     run.side_effect = None
     cache.side_effect = errors.CacheError('some/file/path')
-    with self.assertRaises(powershell.ActionError):
+    with self.assertRaises(errors.ActionError):
       ps.Run()
 
   @mock.patch.object(
@@ -270,16 +270,16 @@ class PowershellTest(parameterized.TestCase):
                                 retry_on_restart, shell, log):
     ps = powershell.PSCommand([command, success_codes, reboot_codes,
                                retry_on_restart, shell, log], None)
-    self.assertRaises(powershell.ValidationError, ps.Validate)
+    self.assertRaises(errors.ValidationError, ps.Validate)
 
   def testPSCommandValidateNotEnough(self):
     ps = powershell.PSCommand([], None)
-    self.assertRaises(powershell.ValidationError, ps.Validate)
+    self.assertRaises(errors.ValidationError, ps.Validate)
 
   def testPSCommandValidateTooMany(self):
     ps = powershell.PSCommand([COMMAND, [0], [1337, 1338], True, True, True,
                                True], None)
-    self.assertRaises(powershell.ValidationError, ps.Validate)
+    self.assertRaises(errors.ValidationError, ps.Validate)
 
   # TODO (b/140891452): Use fail() to make an explicit assertion.
   # (go/python-tips/006)
@@ -299,7 +299,7 @@ class PowershellTest(parameterized.TestCase):
 
   def testMultiPSCommandIndexError(self):
     """Missing input fields should raise IndexError."""
-    with self.assertRaises(powershell.ActionError):
+    with self.assertRaises(errors.ActionError):
       powershell.MultiPSCommand([[]], self.bi).Run()
 
   def testMultiPSCommandValidate(self):
@@ -307,13 +307,13 @@ class PowershellTest(parameterized.TestCase):
     powershell.MultiPSCommand([[COMMAND]], self.bi).Validate()
 
   def testMultiPSCommandValidateType(self):
-    """String input should raise ValidationError."""
-    with self.assertRaises(powershell.ActionError):
+    """String input should raise errors.ValidationError."""
+    with self.assertRaises(errors.ActionError):
       powershell.MultiPSCommand(COMMAND, self.bi).Validate()
 
   def testMultiPSCommandValidateArgsType(self):
-    """Non-list args should raise ValidationError."""
-    with self.assertRaises(powershell.ValidationError):
+    """Non-list args should raise errors.ValidationError."""
+    with self.assertRaises(errors.ValidationError):
       powershell.MultiPSCommand([[COMMAND], COMMAND], self.bi).Validate()
 
 

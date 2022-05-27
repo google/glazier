@@ -20,6 +20,8 @@ from glazier.lib import file_util
 
 from pyfakefs.fake_filesystem_unittest import Patcher
 
+from glazier.lib import errors
+
 
 class FileUtilTest(absltest.TestCase):
 
@@ -37,14 +39,15 @@ class FileUtilTest(absltest.TestCase):
     with Patcher():
       src1 = r'/missing.txt'
       dst1 = r'/windows/glazier/glazier.log'
-      with self.assertRaises(file_util.Error):
+      with self.assertRaises(errors.FileCopyError):
         file_util.Copy(src1, dst1)
 
   def testCreateDirectories(self):
     with Patcher() as patcher:
       patcher.fs.create_file('/test')
-      self.assertRaises(file_util.Error, file_util.CreateDirectories,
-                        '/test/file.txt')
+      self.assertRaises(
+          errors.DirectoryCreationError, file_util.CreateDirectories,
+          '/test/file.txt')
       file_util.CreateDirectories('/tmp/test/path/file.log')
       self.assertTrue(patcher.fs.exists('/tmp/test/path'))
 

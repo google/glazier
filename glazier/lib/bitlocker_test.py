@@ -21,6 +21,7 @@ from glazier.lib import bitlocker
 from glazier.lib import execute
 
 from glazier.lib import constants
+from glazier.lib import errors
 
 
 class BitlockerTest(absltest.TestCase):
@@ -55,7 +56,7 @@ class BitlockerTest(absltest.TestCase):
             '>NUL'
         ],
         shell=True)
-    eb.side_effect = execute.Error
+    eb.side_effect = errors.BinaryExecutionError('some message')
     self.assertRaises(bitlocker.BitlockerError, bit.Enable)
 
   def testFailure(self):

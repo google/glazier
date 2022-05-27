@@ -18,10 +18,8 @@ import logging
 from typing import List
 from glazier.lib import cache
 from glazier.lib import powershell
-from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import RestartEvent
-from glazier.lib.actions.base import ValidationError
 
 from glazier.lib import errors
 
@@ -54,24 +52,24 @@ class PSScript(BaseAction):
     try:
       script = cache.Cache().CacheFromLine(script, self._build_info)  # pytype: disable=annotation-type-mismatch
     except errors.CacheError as e:
-      raise ActionError(e) from e
+      raise errors.ActionError() from e
 
     try:
       result = powershell.PowerShell(shell, log).RunLocal(
           script, ps_args, success_codes + reboot_codes)
     except powershell.PowerShellError as e:
-      raise ActionError(e) from e
+      raise errors.ActionError() from e
 
     if result in reboot_codes:
       raise RestartEvent('Restart triggered by exit code %d' % result, 5,
                          retry_on_restart=restart_retry)
     elif result not in success_codes:
-      raise ActionError('Script returned invalid exit code %d' % result)
+      raise errors.ActionError('Script returned invalid exit code %d' % result)
 
   def Validate(self):
     self._TypeValidator(self._args, list)
     if not 1 <= len(self._args) <= 7:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise errors.ValidationError('Invalid args length: %s' % self._args)
     self._TypeValidator(self._args[0], str)
     if len(self._args) > 1:  # ps_args
       self._TypeValidator(self._args[1], list)
@@ -99,14 +97,14 @@ class MultiPSScript(BaseAction):
       try:
         PSScript(arg, self._build_info).Run()
       except IndexError as e:
-        raise ActionError(
+        raise errors.ActionError(
             f'Unable to determine PowerShell scripts from {arg}') from e
 
   def Validate(self):
     try:
       self._TypeValidator(self._args, list)
-    except ValidationError as e:
-      raise ActionError(e) from e
+    except errors.ValidationError as e:
+      raise errors.ActionError() from e
     for arg in self._args:
       PSScript(arg, self._build_info).Validate()
 
@@ -143,7 +141,7 @@ class PSCommand(BaseAction):
       try:
         command[0] = cache.Cache().CacheFromLine(command[0], self._build_info)  # pytype: disable=container-type-mismatch
       except errors.CacheError as e:
-        raise ActionError(e) from e
+        raise errors.ActionError() from e
 
     try:
       # Exit $LASTEXITCODE is necessary because PowerShell.exe -Command only
@@ -151,7 +149,7 @@ class PSCommand(BaseAction):
       result = powershell.PowerShell(shell, log).RunCommand(
           command + ['; exit $LASTEXITCODE'], success_codes + reboot_codes)
     except powershell.PowerShellError as e:
-      raise ActionError(e) from e
+      raise errors.ActionError() from e
 
     if result in reboot_codes:
       raise RestartEvent(
@@ -159,12 +157,12 @@ class PSCommand(BaseAction):
           5,
           retry_on_restart=restart_retry)
     elif result not in success_codes:
-      raise ActionError('Command returned invalid exit code %d' % result)
+      raise errors.ActionError('Command returned invalid exit code %d' % result)
 
   def Validate(self):
     self._TypeValidator(self._args, list)
     if not 1 <= len(self._args) <= 6:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise errors.ValidationError('Invalid args length: %s' % self._args)
     self._TypeValidator(self._args[0], str)
     if len(self._args) > 1:
       self._TypeValidator(self._args[1], list)
@@ -190,13 +188,13 @@ class MultiPSCommand(BaseAction):
       try:
         PSCommand(arg, self._build_info).Run()
       except IndexError as e:
-        raise ActionError(
+        raise errors.ActionError(
             f'Unable to determine PowerShell commands from {arg}') from e
 
   def Validate(self):
     try:
       self._TypeValidator(self._args, list)
-    except ValidationError as e:
-      raise ActionError(e) from e
+    except errors.ValidationError as e:
+      raise errors.ActionError() from e
     for arg in self._args:
       PSCommand(arg, self._build_info).Validate()

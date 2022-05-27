@@ -20,6 +20,9 @@ from absl.testing import absltest
 from glazier.lib import constants
 from glazier.lib.actions import registry
 
+from glazier.lib import errors
+
+
 ROOT = 'HKLM'
 PATH = constants.REG_ROOT
 NAME = 'some_name'
@@ -40,8 +43,8 @@ class RegistryTest(absltest.TestCase):
     sv.assert_called_with(NAME, VALUE, ROOT, PATH, TYPE, USE_64)
 
     # Registry error
-    sv.side_effect = registry.registry.Error
-    self.assertRaises(registry.ActionError, ra.Run)
+    sv.side_effect = errors.RegistrySetError
+    self.assertRaises(errors.ActionError, ra.Run)
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -54,12 +57,12 @@ class RegistryTest(absltest.TestCase):
     # Missing arguments
     args = [ROOT, PATH, NAME, VALUE]
     ra = registry.RegAdd(args, build_info)
-    self.assertRaises(registry.ActionError, ra.Run)
+    self.assertRaises(errors.ActionError, ra.Run)
 
     # Multiple missing arguments
     args = [ARGS, [ROOT, PATH, NAME, VALUE]]
     ra = registry.MultiRegAdd(args, build_info)
-    self.assertRaises(registry.ActionError, ra.Run)
+    self.assertRaises(errors.ActionError, ra.Run)
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -74,8 +77,8 @@ class RegistryTest(absltest.TestCase):
     rv.assert_called_with(NAME, ROOT, PATH, USE_64)
 
     # Registry error
-    rv.side_effect = registry.registry.Error
-    self.assertRaises(registry.ActionError, rd.Run)
+    rv.side_effect = errors.RegistryRemoveError
+    self.assertRaises(errors.ActionError, rd.Run)
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -90,35 +93,35 @@ class RegistryTest(absltest.TestCase):
     # Missing arguments
     args = [ROOT, PATH]
     rd = registry.RegDel(args, build_info)
-    self.assertRaises(registry.ActionError, rd.Run)
+    self.assertRaises(errors.ActionError, rd.Run)
 
     # Multiple missing arguments
     args = [[ROOT, PATH], [ROOT]]
     rd = registry.MultiRegDel(args, build_info)
-    self.assertRaises(registry.ActionError, rd.Run)
+    self.assertRaises(errors.ActionError, rd.Run)
 
   def testAddValidation(self):
     # List not passed
     r = registry.RegAdd(NAME, None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    self.assertRaises(errors.ValidationError, r.Validate)
 
     # Too many args
     r = registry.RegAdd([ROOT, PATH, NAME, NAME, TYPE, True, NAME], None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    self.assertRaises(errors.ValidationError, r.Validate)
 
     # Not enough args
     r = registry.RegAdd([PATH, NAME, NAME, TYPE], None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    self.assertRaises(errors.ValidationError, r.Validate)
 
     # Type error
     r = registry.RegAdd([ROOT, PATH, NAME, '1', 'REG_DWORD'], None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    self.assertRaises(errors.ValidationError, r.Validate)
 
     # Too many keys
     r = registry.RegAdd([
         [ROOT, PATH, NAME, 1, TYPE],
         [ROOT, PATH, NAME, 100, TYPE]], None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    self.assertRaises(errors.ValidationError, r.Validate)
 
     # Valid calls
     r = registry.RegAdd([ROOT, PATH, NAME, VALUE, TYPE], None)
@@ -132,19 +135,19 @@ class RegistryTest(absltest.TestCase):
   def testDelValidation(self):
     # List not passed
     r = registry.RegDel(NAME, None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    self.assertRaises(errors.ValidationError, r.Validate)
 
     # Too many args
     r = registry.RegDel([ROOT, PATH, NAME, VALUE], None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    self.assertRaises(errors.ValidationError, r.Validate)
 
     # Not enough args
     r = registry.RegDel([PATH, NAME], None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    self.assertRaises(errors.ValidationError, r.Validate)
 
     # Too many keys
     r = registry.RegDel([[ROOT, PATH, NAME], [ROOT, PATH, NAME]], None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    self.assertRaises(errors.ValidationError, r.Validate)
 
     # Valid calls
     r = registry.RegDel([ROOT, PATH, NAME], None)

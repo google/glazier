@@ -20,6 +20,8 @@ from absl.testing import absltest
 from glazier.lib.actions import updates
 from glazier.lib.buildinfo import BuildInfo
 
+from glazier.lib import errors
+
 
 class UpdatesTest(absltest.TestCase):
 
@@ -62,26 +64,26 @@ class UpdatesTest(absltest.TestCase):
     # Invalid format
     conf['data']['update'][0][1] = 'C:\\Windows6.1-KB2990941-v3-x64.cab'
     um = updates.UpdateMSU(conf['data']['update'], bi)
-    self.assertRaises(updates.ActionError, um.Run)
+    self.assertRaises(errors.ActionError, um.Run)
     conf['data']['update'][0][1] = 'C:\\Windows6.1-KB2990941-v3-x64.msu'
 
     # Dism Fail
-    exe.side_effect = updates.execute.Error
-    with self.assertRaises(updates.ActionError):
+    exe.side_effect = errors.BinaryExecutionError('some message')
+    with self.assertRaises(errors.ActionError):
       um.Run()
 
   def testUpdateMSUValidate(self):
     g = updates.UpdateMSU('String', None)
-    self.assertRaises(updates.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
     g = updates.UpdateMSU([[1, 2, 3]], None)
-    self.assertRaises(updates.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
     g = updates.UpdateMSU([[1, '/tmp/out/path']], None)
-    self.assertRaises(updates.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
     g = updates.UpdateMSU([['/tmp/src.zip', 2]], None)
-    self.assertRaises(updates.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
     g = updates.UpdateMSU(
         [['https://glazier/bin/src.msu', '/tmp/out/src.zip']], None)
-    self.assertRaises(updates.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
     g = updates.UpdateMSU(
         [['https://glazier/bin/src.msu', '/tmp/out/src.msu']], None)
     g.Validate()
@@ -90,7 +92,7 @@ class UpdatesTest(absltest.TestCase):
     g.Validate()
     g = updates.UpdateMSU([['https://glazier/bin/src.zip', '/tmp/out/src.zip',
                             '12345', '67890']], None)
-    self.assertRaises(updates.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
 
 
 if __name__ == '__main__':

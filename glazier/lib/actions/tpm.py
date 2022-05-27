@@ -15,9 +15,9 @@
 """Actions to manage the system TPM."""
 
 from glazier.lib import bitlocker
-from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
-from glazier.lib.actions.base import ValidationError
+
+from glazier.lib import errors
 
 
 class BitlockerEnable(BaseAction):
@@ -28,11 +28,11 @@ class BitlockerEnable(BaseAction):
       bl = bitlocker.Bitlocker(mode)
       bl.Enable()
     except bitlocker.BitlockerError as e:
-      raise ActionError('Failure enabling Bitlocker. (%s)' % str(e)) from e
+      raise errors.ActionError(
+          'Failure enabling Bitlocker. (%s)' % str(e)) from e
 
   def Validate(self):
     self._ListOfStringsValidator(self._args, 1)
     if self._args[0] not in bitlocker.SUPPORTED_MODES:
-      raise ValidationError('Unknown mode for BitlockerEnable: %s' %
-                            self._args[0])
-
+      raise errors.ValidationError(
+          'Unknown mode for BitlockerEnable: %s' % self._args[0])

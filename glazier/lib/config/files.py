@@ -20,10 +20,7 @@ from glazier.lib import file_util
 import yaml
 
 from glazier.lib import download
-
-
-class Error(Exception):
-  pass
+from glazier.lib import errors
 
 
 def Remove(path: str, backup: bool = True):
@@ -37,15 +34,11 @@ def Remove(path: str, backup: bool = True):
     Error: Failure performing the filesystem operation.
   """
   if backup:
-    try:
-      file_util.Move(path, path + '.bak')
-    except file_util.Error as e:
-      raise Error('Failed to create backup file (%s)' % str(e)) from e
+    src = path
+    dest = path + '.bak'
+    file_util.Move(src, dest)
   else:
-    try:
-      file_util.Remove(path)
-    except file_util.Error as e:
-      raise Error('Failed to remove file (%s)' % str(e)) from e
+    file_util.Remove(path)
 
 
 def Dump(path: str, data: Any, mode: str = 'w'):
@@ -58,18 +51,16 @@ def Dump(path: str, data: Any, mode: str = 'w'):
   """
   file_util.CreateDirectories(path)
   tmp_f = path + '.tmp'
+
   # Write to a .tmp file to avoid corrupting the original if aborted mid-way.
   try:
     with open(tmp_f, mode) as handle:
       handle.write(yaml.dump(data))
   except IOError as e:
-    raise Error(
-        'Could not save data to yaml file %s: %s' % (path, str(e))) from e
+    raise errors.FileWriteError(path) from e
+
   # Replace the original with the tmp.
-  try:
-    file_util.Move(tmp_f, path)
-  except file_util.Error as e:
-    raise Error('Could not replace config file. (%s)' % str(e)) from e
+  file_util.Move(tmp_f, path)
 
 
 def Read(path: str):
@@ -84,14 +75,12 @@ def Read(path: str):
     The parsed YAML content from the file.
 
   Raises:
-    Error: Failure retrieving a remote file or parsing file content.
+    DownloadError: Failure retrieving a remote file or
+    FileReadError: Failure parsing file content.
   """
   if re.match('^http(s)?://', path):
     downloader = download.Download()
-    try:
-      path = downloader.DownloadFileTemp(path)
-    except download.DownloadError as e:
-      raise Error('Could not download yaml file %s: %s' % (path, str(e))) from e
+    path = downloader.DownloadFileTemp(path)
   return _YamlReader(path)
 
 
@@ -105,10 +94,13 @@ def _YamlReader(path: str) -> str:
 
   Returns:
     The parsed content of the yaml file.
+
+  Raises:
+    FileReadError: Failure parsing the file content.
   """
   try:
     with open(path, 'r') as yaml_file:
       yaml_config = yaml.safe_load(yaml_file)
   except IOError as e:
-    raise Error('Could not read yaml file %s: %s' % (path, str(e))) from e
+    raise errors.FileReadError(path) from e
   return yaml_config

@@ -22,10 +22,6 @@ from glazier.lib import actions
 from glazier.lib import errors
 
 
-class ConfigError(errors.GlazierError):
-  pass
-
-
 class ConfigBase(object):
   """Core functionality for the configuration handling module."""
 
@@ -38,7 +34,7 @@ class ConfigBase(object):
       return act_obj(args=params, build_info=self._build_info)
     except AttributeError as e:
       msg = 'Unknown imaging action: %s' % str(action)
-      raise ConfigError(msg) from e  # pytype: disable=wrong-arg-types
+      raise errors.ConfigError(msg) from e  # pytype: disable=wrong-arg-types
 
   def _IsRealtimeAction(self, action, params):
     """Determine whether $action should happen in realtime."""
@@ -60,5 +56,5 @@ class ConfigBase(object):
     try:
       a = self._GetAction(action, params)
       a.Run()
-    except actions.ActionError as e:
-      raise ConfigError() from e
+    except errors.ActionError as e:
+      raise errors.ConfigError() from e

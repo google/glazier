@@ -19,6 +19,8 @@ from unittest import mock
 from absl.testing import absltest
 from glazier.lib.actions import system
 
+from glazier.lib import errors
+
 
 class SystemTest(absltest.TestCase):
 
@@ -54,13 +56,13 @@ class SystemTest(absltest.TestCase):
 
   def testRebootValidate(self):
     r = system.Reboot(True, None)
-    self.assertRaises(system.ValidationError, r.Validate)
+    self.assertRaises(errors.ValidationError, r.Validate)
     r = system.Reboot([30, 40], None)
-    self.assertRaises(system.ValidationError, r.Validate)
+    self.assertRaises(errors.ValidationError, r.Validate)
     r = system.Reboot([30, 'reasons', 'True'], None)
-    self.assertRaises(system.ValidationError, r.Validate)
+    self.assertRaises(errors.ValidationError, r.Validate)
     r = system.Reboot([1, 2, 3, 4], None)
-    self.assertRaises(system.ValidationError, r.Validate)
+    self.assertRaises(errors.ValidationError, r.Validate)
     r = system.Reboot([30, 'reasons', True], None)
     r.Validate()
     r = system.Reboot([30, 'reasons'], None)
@@ -100,13 +102,13 @@ class SystemTest(absltest.TestCase):
 
   def testShutdownValidate(self):
     s = system.Shutdown(True, None)
-    self.assertRaises(system.ValidationError, s.Validate)
+    self.assertRaises(errors.ValidationError, s.Validate)
     s = system.Shutdown([30, 40], None)
-    self.assertRaises(system.ValidationError, s.Validate)
+    self.assertRaises(errors.ValidationError, s.Validate)
     s = system.Shutdown([30, 'reasons', 'True'], None)
-    self.assertRaises(system.ValidationError, s.Validate)
+    self.assertRaises(errors.ValidationError, s.Validate)
     s = system.Shutdown([1, 2, 3, 4], None)
-    self.assertRaises(system.ValidationError, s.Validate)
+    self.assertRaises(errors.ValidationError, s.Validate)
     s = system.Shutdown([30, 'reasons', True], None)
     s.Validate()
     s = system.Shutdown([30, 'reasons'], None)

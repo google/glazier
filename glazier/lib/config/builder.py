@@ -45,7 +45,6 @@ location of the active config.
 
 import copy
 # do not remove: internal placeholder 1
-from glazier.lib import buildinfo
 from glazier.lib.config import base
 from glazier.lib.config import files
 
@@ -60,10 +59,6 @@ _ALLOW_IN_TEMPLATE = [
     'policy',
 ] + dir(actions)
 _ALLOW_IN_CONTROL = _ALLOW_IN_TEMPLATE + ['pin']
-
-
-class ConfigBuilderError(base.ConfigError):
-  pass
 
 
 class ConfigBuilder(base.ConfigBase):
@@ -86,8 +81,8 @@ class ConfigBuilder(base.ConfigBase):
         in_path = ''  # restart with a fresh path
     try:
       files.Dump(out_file, self._task_list, mode='a')
-    except files.Error as e:
-      raise ConfigBuilderError() from e
+    except errors.FileError as e:
+      raise errors.ConfigBuilderError() from e
 
   def _Start(self, conf_path, conf_file):
     """Pull and process a config file.
@@ -100,8 +95,8 @@ class ConfigBuilder(base.ConfigBase):
     try:
       path = download.PathCompile(self._build_info, file_name=conf_file)
       yaml_config = files.Read(path)
-    except (files.Error, buildinfo.Error) as e:
-      raise ConfigBuilderError() from e
+    except (errors.FileError, errors.BuildInfoError) as e:
+      raise errors.ConfigBuilderError() from e
     timer_start = 'start_{}_{}'.format(conf_path.rstrip('/'), conf_file)
     active_path = copy.deepcopy(self._build_info.ActiveConfigPath())
     config_server = copy.deepcopy(self._build_info.ConfigServer())
@@ -161,7 +156,7 @@ class ConfigBuilder(base.ConfigBase):
       try:
         if not self._build_info.BuildPinMatch(pin, pins[pin]):
           return False
-      except buildinfo.Error as e:
+      except errors.BuildInfoError as e:
         raise errors.SysInfoError() from e
     return True
 

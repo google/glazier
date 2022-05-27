@@ -14,10 +14,10 @@
 
 """Actions for interacting with the company domain."""
 
-from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
-from glazier.lib.actions.base import ValidationError
 from glazier.lib import domain_join
+
+from glazier.lib import errors
 
 
 class DomainJoin(BaseAction):
@@ -33,9 +33,10 @@ class DomainJoin(BaseAction):
     try:
       joiner.JoinDomain()
     except domain_join.DomainJoinError as e:
-      raise ActionError('Unable to complete domain join.  %s' % str(e)) from e
+      raise errors.ActionError(
+          'Unable to complete domain join.  %s' % str(e)) from e
 
   def Validate(self):
     self._ListOfStringsValidator(self._args, length=2, max_length=3)
     if self._args[0] not in domain_join.AUTH_OPTS:
-      raise ValidationError('Invalid join method: %s' % self._args[0])
+      raise errors.ValidationError('Invalid join method: %s' % self._args[0])

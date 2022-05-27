@@ -18,9 +18,10 @@ import logging
 import re
 # do not remove: internal placeholder 1
 from glazier.lib import timezone
-from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 from gwinpy.net import dhcp
+
+from glazier.lib import errors
 
 
 class SetUnattendTimeZone(BaseAction):
@@ -46,7 +47,7 @@ class SetUnattendTimeZone(BaseAction):
       with open(unattend_path, 'w') as unattend:
         unattend.write(''.join(lines))
     except IOError as e:
-      raise ActionError(
+      raise errors.ActionError(
           'Unable to set time zone in unattend.xml (%s)' % str(e)) from e
 
   def Run(self):

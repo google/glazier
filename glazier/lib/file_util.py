@@ -18,9 +18,7 @@ import logging
 import os
 import shutil
 
-
-class Error(Exception):
-  pass
+from glazier.lib import errors
 
 
 def Copy(src: str, dst: str):
@@ -37,8 +35,8 @@ def Copy(src: str, dst: str):
     CreateDirectories(dst)
     shutil.copy2(src, dst)
     logging.info('Copying: %s to %s', src, dst)
-  except (shutil.Error, IOError) as e:
-    raise Error('Unable to copy %s to %s: %s' % (src, dst, str(e))) from e
+  except (shutil.Error, IOError, errors.DirectoryCreationError) as e:
+    raise errors.FileCopyError(src, dst) from e
 
 
 def CreateDirectories(path: str):
@@ -56,7 +54,7 @@ def CreateDirectories(path: str):
     try:
       os.makedirs(dirname)
     except (shutil.Error, OSError) as e:
-      raise Error('Unable to make directory: %s' % dirname) from e
+      raise errors.DirectoryCreationError(dirname) from e
 
 
 def Move(src: str, dst: str):
@@ -75,8 +73,7 @@ def Move(src: str, dst: str):
     Remove(dst)
     os.rename(src, dst)
   except OSError as e:
-    raise Error(
-        'Failure moving file from %s to %s. (%s)' % (src, dst, str(e))) from e
+    raise errors.FileMoveError(src, dst) from e
 
 
 def Remove(path: str):
@@ -92,4 +89,4 @@ def Remove(path: str):
     if os.path.exists(path):
       os.remove(path)
   except OSError as e:
-    raise Error('Failure removing file %s. (%s)' % (path, str(e))) from e
+    raise errors.FileRemoveError(path) from e

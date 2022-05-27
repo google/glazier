@@ -18,9 +18,9 @@ import logging
 import os
 import shutil
 from glazier.lib import file_util
-from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
-from glazier.lib.actions.base import ValidationError  # pylint:disable=unused-import
+
+from glazier.lib import errors
 
 
 class FileSystem(BaseAction):
@@ -38,26 +38,28 @@ class CopyDir(FileSystem):
       if len(self._args) > 2:
         remove_existing = self._args[2]
     except IndexError as e:
-      raise ActionError('Unable to determine source and destination from %s.' %
-                        str(self._args)) from e
+      message = 'Unable to determine source and destination from %s.' % str(
+          self._args)
+      raise errors.ActionError(message) from e
     try:
       if os.path.exists(dst) and remove_existing:
         logging.info('Deleting existing destination: %s', dst)
         shutil.rmtree(dst)
     except (shutil.Error, OSError) as e:
-      raise ActionError('Unable to delete existing destination folder %s: %s' %
-                        (dst, str(e))) from e
+      message = 'Unable to delete existing destination folder %s: %s' % (
+          dst, str(e))
+      raise errors.ActionError(message) from e
     try:
       logging.info('Copying directory: %s to %s', src, dst)
       shutil.copytree(src, dst)
     except (shutil.Error, OSError) as e:
-      raise ActionError('Unable to copy %s to %s: %s' %
-                        (src, dst, str(e))) from e
+      raise errors.ActionError(
+          'Unable to copy %s to %s: %s' % (src, dst, str(e))) from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)
     if not 2 <= len(self._args) <= 3:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise errors.ValidationError('Invalid args length: %s' % self._args)
     self._TypeValidator(self._args[0], str)  # src
     self._TypeValidator(self._args[1], str)  # dst
     if len(self._args) > 2:  # Remove existing folder
@@ -85,12 +87,13 @@ class CopyFile(FileSystem):
       src = self._args[0]
       dst = self._args[1]
     except IndexError as e:
-      raise ActionError('Unable to determine source and destination from %s.' %
-                        str(self._args)) from e
+      message = 'Unable to determine source and destination from %s.' % str(
+          self._args)
+      raise errors.ActionError(message) from e
     try:
       file_util.Copy(src, dst)
-    except (file_util.Error) as e:
-      raise ActionError(e) from e
+    except errors.FileCopyError as e:
+      raise errors.ActionError() from e
 
   def Validate(self):
     self._ListOfStringsValidator(self._args, length=2)
@@ -105,8 +108,8 @@ class MultiCopyFile(BaseAction):
         cf = CopyFile([arg[0], arg[1]], self._build_info)
         cf.Run()
     except IndexError as e:
-      raise ActionError('Unable to determine copy sets from %s.' %
-                        str(self._args)) from e
+      raise errors.ActionError(
+          'Unable to determine copy sets from %s.' % str(self._args)) from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)
@@ -122,12 +125,12 @@ class MkDir(FileSystem):
     try:
       path = self._args[0]
     except IndexError as e:
-      raise ActionError('Unable to determine desired path from %s.' %
-                        str(self._args)) from e
+      raise errors.ActionError(
+          'Unable to determine desired path from %s.' % str(self._args)) from e
     try:
       file_util.CreateDirectories(path)
-    except file_util.Error as e:
-      raise ActionError(e) from e
+    except errors.DirectoryCreationError as e:
+      raise errors.ActionError() from e
 
   def Validate(self):
     self._ListOfStringsValidator(self._args)
@@ -142,8 +145,8 @@ class RmDir(FileSystem):
       try:
         shutil.rmtree(path)
       except (shutil.Error, OSError) as e:
-        raise ActionError('Unable to remove directory %s: %s' %
-                          (path, str(e))) from e
+        raise errors.ActionError(
+            'Unable to remove directory %s: %s' % (path, str(e))) from e
 
   def Validate(self):
     self._ListOfStringsValidator(self._args, max_length=100)
@@ -156,8 +159,8 @@ class SetupCache(FileSystem):
     path = self._build_info.CachePath()
     try:
       file_util.CreateDirectories(path)
-    except file_util.Error as e:
-      raise ActionError(e) from e
+    except errors.DirectoryCreationError as e:
+      raise errors.ActionError() from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)

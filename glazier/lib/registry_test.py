@@ -20,6 +20,7 @@ from unittest import mock
 from absl.testing import absltest
 from glazier.lib import registry
 from glazier.lib import constants
+from glazier.lib import errors
 
 
 class RegistryTest(absltest.TestCase):
@@ -87,7 +88,8 @@ class RegistryTest(absltest.TestCase):
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   def test_set_value_error(self, reg):
     reg.return_value.SetKeyValue.side_effect = registry.registry.RegistryError
-    self.assertRaises(registry.Error, registry.set_value, self.name, self.value)
+    self.assertRaises(
+        errors.RegistrySetError, registry.set_value, self.name, self.value)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   @mock.patch.object(logging, 'debug', autospec=True)
@@ -119,7 +121,8 @@ class RegistryTest(absltest.TestCase):
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   def test_remove_value_error(self, reg):
     reg.return_value.RemoveKeyValue.side_effect = registry.registry.RegistryError
-    self.assertRaises(registry.Error, registry.remove_value, self.name)
+    self.assertRaises(
+        errors.RegistryRemoveError, registry.remove_value, self.name)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   @mock.patch.object(logging, 'debug', autospec=True)

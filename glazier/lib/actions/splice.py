@@ -14,9 +14,8 @@
 
 """Actions to run Splice domain join during the image."""
 
-from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
-from glazier.lib.actions.base import ValidationError
+from glazier.lib import errors
 from glazier.lib import splice
 
 
@@ -49,13 +48,13 @@ class SpliceDomainJoin(BaseAction):
       generator = ''
     try:
       self._splice.domain_join(max_retries, unattended, fallback, generator)
-    except splice.Error as e:
-      raise ActionError(e) from e
+    except errors.FailedDomainJoinError as e:
+      raise errors.ActionError('Domain join via Splice failed') from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)
     if not 0 <= len(self._args) <= 4:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise errors.ValidationError('Invalid args length: %s' % self._args)
     expected_types = (int, bool, bool, str)
     for arg, expected in zip(self._args, expected_types):
       self._TypeValidator(arg, expected)

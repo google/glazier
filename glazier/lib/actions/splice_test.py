@@ -19,7 +19,7 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib.actions import splice
-from glazier.lib.actions.splice import ValidationError
+from glazier.lib import errors
 
 
 class SpliceDomainJoinTest(absltest.TestCase):
@@ -47,29 +47,29 @@ class SpliceDomainJoinTest(absltest.TestCase):
   @mock.patch.object(splice.splice.Splice, 'domain_join', autospec=True)
   def test_default_error(self, dj, bi):
     self._splice = splice.SpliceDomainJoin([], bi)
-    dj.side_effect = splice.splice.Error
-    self.assertRaises(splice.ActionError, self._splice.Run)
+    dj.side_effect = errors.FailedDomainJoinError(1)
+    self.assertRaises(errors.ActionError, self._splice.Run)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_validate_retry(self, bi):
     self._splice = splice.SpliceDomainJoin(['a', False, False], bi)
-    self.assertRaises(ValidationError, self._splice.Validate)
+    self.assertRaises(errors.ValidationError, self._splice.Validate)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_validate_unattended(self, bi):
     self._splice = splice.SpliceDomainJoin([5, 'paradox', False], bi)
-    self.assertRaises(ValidationError, self._splice.Validate)
+    self.assertRaises(errors.ValidationError, self._splice.Validate)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_validate_fallback(self, bi):
     self._splice = splice.SpliceDomainJoin([5, False, 'glazier'], bi)
-    self.assertRaises(ValidationError, self._splice.Validate)
+    self.assertRaises(errors.ValidationError, self._splice.Validate)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_validate_num_args(self, bi):
     self._splice = splice.SpliceDomainJoin([5, False, False, 'baz', 'too many'],
                                            bi)
-    self.assertRaises(ValidationError, self._splice.Validate)
+    self.assertRaises(errors.ValidationError, self._splice.Validate)
 
 if __name__ == '__main__':
   absltest.main()

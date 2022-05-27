@@ -24,6 +24,7 @@ from glazier.lib import log_copy
 from glazier.lib import winpe
 
 from glazier.lib import constants
+from glazier.lib import errors
 
 
 class LogCopyTest(absltest.TestCase):
@@ -56,8 +57,8 @@ class LogCopyTest(absltest.TestCase):
 
   @mock.patch.object(log_copy.registry, 'get_value', autospec=True)
   def testGetLogFileNameError(self, gv):
-    gv.side_effect = log_copy.registry.Error
-    self.assertRaises(log_copy.LogCopyError, self.lc._GetLogFileName)
+    gv.return_value = None
+    self.assertRaises(errors.LogCopyError, self.lc._GetLogFileName)
 
   @mock.patch.object(log_copy.LogCopy, '_EventLogUpload', autospec=True)
   def testEventLogCopy(self, event_up):
@@ -92,12 +93,12 @@ class LogCopyTest(absltest.TestCase):
     unmap_drive.assert_called_with(mock.ANY, 'l:')
     # map error
     map_drive.return_value = None
-    self.assertRaises(log_copy.LogCopyError, self.lc.ShareCopy, self.log_file,
+    self.assertRaises(errors.LogCopyError, self.lc.ShareCopy, self.log_file,
                       log_host)
     # copy error
     map_drive.return_value = True
     copy.side_effect = shutil.Error()
-    self.assertRaises(log_copy.LogCopyError, self.lc.ShareCopy, self.log_file,
+    self.assertRaises(errors.LogCopyError, self.lc.ShareCopy, self.log_file,
                       log_host)
 
 

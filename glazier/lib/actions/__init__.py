@@ -78,9 +78,6 @@ UpdateMSU = updates.UpdateMSU
 Warn = abort.Warn
 WriteDiskSpace = disk.WriteDiskSpace
 
-ActionError = base.ActionError
-ValidationError = base.ValidationError
-
 RestartEvent = base.RestartEvent
 ServerChangeEvent = base.ServerChangeEvent
 ShutdownEvent = base.ShutdownEvent

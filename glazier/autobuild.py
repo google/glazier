@@ -74,7 +74,7 @@ class AutoBuild(object):
         try:
           b = builder.ConfigBuilder(self._build_info)
           b.Start(out_file=task_list, in_path=root_path)
-        except builder.ConfigBuilderError as e:
+        except errors.ConfigBuilderError as e:
           # TODO(b/157460932): Migrate to GlazierError
           terminator.log_and_exit('Failed to build the task list',
                                   self._build_info, 4302, e)
@@ -82,7 +82,7 @@ class AutoBuild(object):
       try:
         r = runner.ConfigRunner(self._build_info)
         r.Start(task_list=task_list)
-      except runner.ConfigRunnerError as e:
+      except errors.ConfigRunnerError as e:
         # TODO(b/157460932): Migrate to GlazierError
         terminator.log_and_exit('Failed to execute the task list',
                                 self._build_info, 4304, e)

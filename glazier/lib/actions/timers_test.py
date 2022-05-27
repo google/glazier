@@ -18,9 +18,9 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib.actions import timers
-from glazier.lib.actions.base import ValidationError
 
 from glazier.lib import constants
+from glazier.lib import errors
 
 KEY_PATH = r'{0}\{1}'.format(constants.REG_ROOT, 'Timers')
 VALUE_NAME = 'build_yaml'
@@ -45,17 +45,17 @@ class TimersTest(absltest.TestCase):
   @mock.patch.object(timers.registry, 'set_value', autospec=True)
   def testSetTimerError(self, sv, build_info):
     build_info.TimerGet.return_value = VALUE_DATA
-    sv.side_effect = timers.registry.Error
+    sv.side_effect = errors.RegistrySetError
     st = timers.SetTimer([VALUE_NAME], build_info)
-    self.assertRaises(timers.ActionError, st.Run)
+    self.assertRaises(errors.ActionError, st.Run)
 
   def testSetTimerValidate(self):
     st = timers.SetTimer(VALUE_NAME, None)
-    self.assertRaises(ValidationError, st.Validate)
+    self.assertRaises(errors.ValidationError, st.Validate)
     st = timers.SetTimer([1, 2, 3], None)
-    self.assertRaises(ValidationError, st.Validate)
+    self.assertRaises(errors.ValidationError, st.Validate)
     st = timers.SetTimer([1], None)
-    self.assertRaises(ValidationError, st.Validate)
+    self.assertRaises(errors.ValidationError, st.Validate)
     st = timers.SetTimer([VALUE_NAME], None)
     st.Validate()
 

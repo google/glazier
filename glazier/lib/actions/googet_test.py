@@ -19,6 +19,8 @@ from unittest import mock
 from absl.testing import absltest
 from glazier.lib.actions import googet
 
+from glazier.lib import errors
+
 
 class GooGetTest(absltest.TestCase):
 
@@ -97,13 +99,13 @@ class GooGetTest(absltest.TestCase):
                                build_info=self.bi)
 
     # GooGetError
-    install.side_effect = googet.googet.Error
-    self.assertRaises(googet.ActionError, gi.Run)
+    install.side_effect = errors.GooGetError
+    self.assertRaises(errors.ActionError, gi.Run)
 
     # IndexError
     gi = googet.GooGetInstall([[]], self.bi)
-    install.side_effect = googet.googet.Error
-    self.assertRaises(googet.ActionError, gi.Run)
+    install.side_effect = IndexError
+    self.assertRaises(errors.ActionError, gi.Run)
 
   def testValidation(self):
     # Valid calls
@@ -116,20 +118,20 @@ class GooGetTest(absltest.TestCase):
 
     # List not passed
     g = googet.GooGetInstall(['String'], self.bi)
-    self.assertRaises(googet.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
 
     # Too few args
     g = googet.GooGetInstall([[]], self.bi)
-    self.assertRaises(googet.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
 
     # Too many args
     g = googet.GooGetInstall([
         [self.pkg, self.flags, self.path, 'abc']], self.bi)
-    self.assertRaises(googet.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
 
     # Type error
     g = googet.GooGetInstall(self.args.append(1), self.bi)
-    self.assertRaises(googet.ValidationError, g.Validate)
+    self.assertRaises(errors.ValidationError, g.Validate)
 
 
 if __name__ == '__main__':

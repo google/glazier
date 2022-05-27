@@ -20,6 +20,8 @@ from absl.testing import absltest
 from glazier.lib import buildinfo
 from glazier.lib.config import base
 
+from glazier.lib import errors
+
 
 class BaseTest(absltest.TestCase):
 
@@ -35,11 +37,11 @@ class BaseTest(absltest.TestCase):
     set_timer.assert_called_with(build_info=self.buildinfo, args=['TestTimer'])
     self.assertTrue(set_timer.return_value.Run.called)
     # invalid command
-    self.assertRaises(base.ConfigError, self.cb._ProcessAction, 'BadSetTimer',
+    self.assertRaises(errors.ConfigError, self.cb._ProcessAction, 'BadSetTimer',
                       ['Timer1'])
     # action error
-    set_timer.side_effect = base.actions.ActionError
-    self.assertRaises(base.ConfigError, self.cb._ProcessAction, 'SetTimer',
+    set_timer.side_effect = errors.ActionError
+    self.assertRaises(errors.ConfigError, self.cb._ProcessAction, 'SetTimer',
                       ['Timer1'])
 
 

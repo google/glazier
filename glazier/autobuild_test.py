@@ -78,13 +78,13 @@ class AutobuildTest(absltest.TestCase):
     self.assertTrue(st.called)
 
     # ConfigBuilderError
-    builder.side_effect = autobuild.builder.ConfigBuilderError
+    builder.side_effect = errors.ConfigBuilderError
     self.autobuild.RunBuild()
     log_and_exit.assert_called_with('Failed to build the task list',
                                     self.autobuild._build_info, 4302, mock.ANY)
     # ConfigRunnerError
     builder.side_effect = None
-    runner.side_effect = autobuild.runner.ConfigRunnerError
+    runner.side_effect = errors.ConfigRunnerError
     self.autobuild.RunBuild()
     log_and_exit.assert_called_with('Failed to execute the task list',
                                     self.autobuild._build_info, 4304, mock.ANY)

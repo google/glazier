@@ -19,6 +19,8 @@ from unittest import mock
 from absl.testing import absltest
 from glazier.lib.actions import tpm
 
+from glazier.lib import errors
+
 
 class TpmTest(absltest.TestCase):
 
@@ -29,17 +31,17 @@ class TpmTest(absltest.TestCase):
     bitlocker.assert_called_with('ps_tpm')
     self.assertTrue(bitlocker.return_value.Enable.called)
     bitlocker.return_value.Enable.side_effect = tpm.bitlocker.BitlockerError
-    self.assertRaises(tpm.ActionError, b.Run)
+    self.assertRaises(errors.ActionError, b.Run)
 
   def testBitlockerEnableValidate(self):
     b = tpm.BitlockerEnable(30, None)
-    self.assertRaises(tpm.ValidationError, b.Validate)
+    self.assertRaises(errors.ValidationError, b.Validate)
     b = tpm.BitlockerEnable([], None)
-    self.assertRaises(tpm.ValidationError, b.Validate)
+    self.assertRaises(errors.ValidationError, b.Validate)
     b = tpm.BitlockerEnable(['invalid'], None)
-    self.assertRaises(tpm.ValidationError, b.Validate)
+    self.assertRaises(errors.ValidationError, b.Validate)
     b = tpm.BitlockerEnable(['ps_tpm', 'ps_tpm'], None)
-    self.assertRaises(tpm.ValidationError, b.Validate)
+    self.assertRaises(errors.ValidationError, b.Validate)
     b = tpm.BitlockerEnable(['ps_tpm'], None)
     b.Validate()
 

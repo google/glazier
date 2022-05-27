@@ -18,7 +18,8 @@ import logging
 from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import RestartEvent
 from glazier.lib.actions.base import ShutdownEvent
-from glazier.lib.actions.base import ValidationError
+
+from glazier.lib import errors
 
 
 class _PowerAction(BaseAction):
@@ -27,14 +28,14 @@ class _PowerAction(BaseAction):
   def Validate(self):
     self._TypeValidator(self._args, list)
     if len(self._args) not in [1, 2, 3]:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise errors.ValidationError('Invalid args length: %s' % self._args)
     if not isinstance(self._args[0], str) and not isinstance(self._args[0],
                                                              int):
-      raise ValidationError('Invalid argument type: %s' % self._args[0])
+      raise errors.ValidationError('Invalid argument type: %s' % self._args[0])
     if len(self._args) > 1 and not isinstance(self._args[1], str):
-      raise ValidationError('Invalid argument type: %s' % self._args[1])
+      raise errors.ValidationError('Invalid argument type: %s' % self._args[1])
     if len(self._args) > 2 and not isinstance(self._args[2], bool):
-      raise ValidationError('Invalid argument type: %s' % self._args[2])
+      raise errors.ValidationError('Invalid argument type: %s' % self._args[2])
 
 
 class Reboot(_PowerAction):

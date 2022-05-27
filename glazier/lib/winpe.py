@@ -21,10 +21,6 @@ import functools
 from glazier.lib import registry
 
 
-class Error(Exception):
-  pass
-
-
 @functools.lru_cache()
 def check_winpe() -> bool:
   """Verify image environment is WinPE or Host.

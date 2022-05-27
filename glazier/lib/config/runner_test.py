@@ -23,6 +23,8 @@ from glazier.lib.config import runner
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 
+from glazier.lib import errors
+
 
 class ConfigRunnerTest(absltest.TestCase):
 
@@ -74,8 +76,8 @@ class ConfigRunnerTest(absltest.TestCase):
   def testPopTask(self, dump):
     self.cr._PopTask([1, 2, 3])
     dump.assert_called_with('/tmp/task_list.yaml', [2, 3], mode='w')
-    dump.side_effect = runner.files.Error
-    with self.assertRaises(runner.ConfigRunnerError):
+    dump.side_effect = errors.FileWriteError('some/file/path')
+    with self.assertRaises(errors.ConfigRunnerError):
       self.cr._PopTask([1, 2])
 
   @mock.patch.object(runner.files, 'Remove', autospec=True)
@@ -155,8 +157,8 @@ class ConfigRunnerTest(absltest.TestCase):
 
   @mock.patch.object(runner.base.actions, 'SetTimer', autospec=True)
   def testProcessWithActionError(self, set_timer):
-    set_timer.side_effect = runner.base.actions.ActionError
-    self.assertRaises(runner.ConfigRunnerError, self.cr._ProcessTasks, [{
+    set_timer.side_effect = errors.ActionError
+    self.assertRaises(errors.ConfigRunnerError, self.cr._ProcessTasks, [{
         'data': {
             'SetTimer': ['Timer1']
         },
@@ -165,7 +167,7 @@ class ConfigRunnerTest(absltest.TestCase):
     }])
 
   def testProcessWithInvalidCommand(self):
-    self.assertRaises(runner.ConfigRunnerError, self.cr._ProcessTasks, [{
+    self.assertRaises(errors.ConfigRunnerError, self.cr._ProcessTasks, [{
         'data': {
             'BadSetTimer': ['Timer1']
         },
@@ -175,8 +177,8 @@ class ConfigRunnerTest(absltest.TestCase):
 
   @mock.patch.object(runner.files, 'Read', autospec=True)
   def testStartWithMissingFile(self, reader):
-    reader.side_effect = runner.files.Error
-    self.assertRaises(runner.ConfigRunnerError, self.cr.Start,
+    reader.side_effect = errors.FileReadError('some/file/path')
+    self.assertRaises(errors.ConfigRunnerError, self.cr.Start,
                       '/tmp/path/missing.yaml')
 
   @mock.patch.object(runner.base.actions, 'SetTimer', autospec=True)

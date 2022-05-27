@@ -24,10 +24,7 @@ from glazier.lib import logs
 from glazier.lib import registry
 
 from glazier.lib import constants
-
-
-class LogCopyError(Exception):
-  pass
+from glazier.lib import errors
 
 
 class LogCopyCredentials(object):
@@ -67,7 +64,7 @@ class LogCopy(object):
         for line in content:
           logger.info(line)
     except IOError as e:
-      raise LogCopyError(
+      raise errors.LogCopyError(
           'Unable to open log file. It will not be imported into '
           'the Windows Event Log.') from e
 
@@ -77,11 +74,10 @@ class LogCopy(object):
     Returns:
       The full text file log name (string).
     """
-    try:
-      hostname = registry.get_value('name', path=constants.REG_ROOT)
-    except registry.Error as e:
-      raise LogCopyError('Hostname could not be determined for log copy: %s' %
-                         str(e)) from e
+    hostname = registry.get_value('name', path=constants.REG_ROOT)
+    if not hostname:
+      raise errors.LogCopyError('Hostname could not be determined for log copy')
+
     destination_file_date = gtime.now().replace(microsecond=0)
     destination_file_date = destination_file_date.isoformat()
     destination_file_date = destination_file_date.replace(':', '')
@@ -108,10 +104,10 @@ class LogCopy(object):
       try:
         shutil.copy(source_log, destination)
       except shutil.Error as e:
-        raise LogCopyError('Log copy failed.') from e
+        raise errors.LogCopyError('Log copy failed.') from e
       mapper.UnmapDrive('l:')
     else:
-      raise LogCopyError('Drive mapping failed.')
+      raise errors.LogCopyError('Drive mapping failed.')
 
   def EventLogCopy(self, source_log: str):
     """Copy a log file to EventLog."""

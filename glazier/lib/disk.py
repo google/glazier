@@ -19,10 +19,7 @@ import shutil
 from glazier.lib import registry
 
 from glazier.lib import constants
-
-
-class Error(Exception):
-  pass
+from glazier.lib import errors
 
 
 def get_disk_space():
@@ -51,5 +48,5 @@ def set_disk_space() -> None:
     try:
       registry.set_value(
           f'disk_space_{k}_bytes', str(v), path=constants.REG_ROOT)
-    except registry.Error as e:
+    except errors.RegistrySetError as e:
       logging.error('Failed to write %s_disk_space to registry: %s', k, str(e))

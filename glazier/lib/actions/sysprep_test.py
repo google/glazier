@@ -20,6 +20,8 @@ from absl.testing import absltest
 from glazier.lib.actions import sysprep
 from pyfakefs import fake_filesystem
 
+from glazier.lib import errors
+
 
 UNATTEND_XML = r"""<?xml version='1.0' encoding='utf-8'?>
 <unattend xmlns="urn:schemas-microsoft-com:unattend">
@@ -75,7 +77,7 @@ class SysprepTest(absltest.TestCase):
       result = [line.strip() for line in handle.readlines()]
       self.assertIn('<TimeZone>Yakutsk Standard Time</TimeZone>', result)
     # IOError
-    self.assertRaises(sysprep.ActionError, st._EditUnattend,
+    self.assertRaises(errors.ActionError, st._EditUnattend,
                       'Yakutsk Standard Time',
                       '/windows/panther/noneattend.xml')
 

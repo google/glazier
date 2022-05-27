@@ -25,10 +25,6 @@ from glazier.lib import errors
 from glazier.lib import policies
 
 
-class ConfigRunnerError(base.ConfigError):
-  pass
-
-
 class ConfigRunner(base.ConfigBase):
   """Executes all steps from the installation task list."""
 
@@ -36,8 +32,8 @@ class ConfigRunner(base.ConfigBase):
     self._task_list_path = task_list
     try:
       data = files.Read(self._task_list_path)
-    except files.Error as e:
-      raise ConfigRunnerError() from e
+    except errors.FileError as e:
+      raise errors.ConfigRunnerError() from e
     self._ProcessTasks(data)
 
   def _PopTask(self, tasks):
@@ -47,8 +43,8 @@ class ConfigRunner(base.ConfigBase):
       files.Dump(self._task_list_path, tasks, mode='w')
       if not tasks:
         files.Remove(self._task_list_path)
-    except files.Error as e:
-      raise ConfigRunnerError() from e
+    except errors.FileError as e:
+      raise errors.ConfigRunnerError() from e
 
   def _ProcessTasks(self, tasks):
     """Process the pending tasks list.
@@ -76,8 +72,8 @@ class ConfigRunner(base.ConfigBase):
         else:
           try:
             self._ProcessAction(element, entry[element])
-          except base.ConfigError as e:
-            raise ConfigRunnerError() from e
+          except errors.ConfigError as e:
+            raise errors.ConfigRunnerError() from e
           except base.actions.RestartEvent as e:
             if e.task_list_path:
               self._task_list_path = e.task_list_path
@@ -114,4 +110,4 @@ class ConfigRunner(base.ConfigBase):
     except AttributeError as e:
       raise errors.UnknownPolicyError(policy=str(line)) from e
     except policies.ImagingPolicyException as e:
-      raise ConfigRunnerError() from e
+      raise errors.ConfigRunnerError() from e
