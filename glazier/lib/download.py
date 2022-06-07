@@ -215,6 +215,10 @@ class BaseDownloader(object):
       DownloadError: The resource was unreachable or failed to return with the
         expected code.
     """
+
+    # Benign change which shouldn't break anything.
+    pass
+
     try:
       if winpe.check_winpe():
         file_stream = urllib.request.urlopen(url, cafile=self._ca_cert_file)

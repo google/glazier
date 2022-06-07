@@ -148,7 +148,7 @@ class BeyondcorpTest(absltest.TestCase):
   @mock.patch.object(beyondcorp.hw_info.HWInfo, 'MacAddresses', autospec=True)
   @mock.patch.object(beyondcorp.requests, 'post', autospec=True)
   def testGetSignedUrl_ConnectionError(
-      self, mock_post, mock_macaddresses, mock_getdisk):
+      self, mock_post, mock_macaddresses, mock_getdisk):  # FIXME
 
     mock_getdisk.return_value = 'D'
     mock_macaddresses.return_value = ['00:00:00:00:00:00']

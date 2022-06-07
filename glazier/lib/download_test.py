@@ -147,7 +147,7 @@ class DownloadTest(absltest.TestCase):
 
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
-  def testOpenStreamInternal(self, mock_urlopen, mock_check_winpe):
+  def testOpenStreamInternal(self, mock_urlopen, mock_check_winpe):  # FIXME
 
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
@@ -174,7 +174,7 @@ class DownloadTest(absltest.TestCase):
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
   def testOpenFileStream_GivesUp(
-      self, mock_urlopen, mock_check_winpe):
+      self, mock_urlopen, mock_check_winpe):  # FIXME
 
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
