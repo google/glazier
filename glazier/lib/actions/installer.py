@@ -18,14 +18,13 @@ import os
 import time
 # do not remove: internal placeholder 1
 from glazier.chooser import chooser
+from glazier.lib import events
 from glazier.lib import log_copy
 from glazier.lib import registry
 from glazier.lib import stage
 from glazier.lib.actions import file_system
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
-from glazier.lib.actions.base import RestartEvent
-from glazier.lib.actions.base import ServerChangeEvent
 from glazier.lib.actions.base import ValidationError
 import yaml
 
@@ -118,7 +117,7 @@ class ChangeServer(BaseAction):
   def Run(self):
     self._build_info.ConfigServer(set_to=self._args[0])
     self._build_info.ActiveConfigPath(set_to=self._args[1])
-    raise ServerChangeEvent('Action triggering server change.')
+    raise events.ServerChangeEvent('Action triggering server change.')
 
   def Validate(self):
     self._ListOfStringsValidator(self._args, 2)
@@ -134,7 +133,7 @@ class ExitWinPE(BaseAction):
     cp = file_system.CopyFile(
         [constants.WINPE_BUILD_LOG, constants.SYS_BUILD_LOG], self._build_info)
     cp.Run()
-    raise RestartEvent(
+    raise events.RestartEvent(
         'Leaving WinPE', timeout=10, task_list_path=constants.SYS_TASK_LIST)
 
 

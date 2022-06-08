@@ -17,6 +17,7 @@
 from unittest import mock
 
 from absl.testing import absltest
+from glazier.lib import events
 from glazier.lib.actions import system
 
 
@@ -25,7 +26,7 @@ class SystemTest(absltest.TestCase):
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testRebootPop(self, build_info):
     r = system.Reboot([30, 'reboot for reasons', True], build_info)
-    with self.assertRaises(system.RestartEvent) as evt:
+    with self.assertRaises(events.RestartEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '30')
@@ -35,7 +36,7 @@ class SystemTest(absltest.TestCase):
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testRebootReason(self, build_info):
     r = system.Reboot([30, 'reboot for reasons'], build_info)
-    with self.assertRaises(system.RestartEvent) as evt:
+    with self.assertRaises(events.RestartEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '30')
@@ -45,7 +46,7 @@ class SystemTest(absltest.TestCase):
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testRebootTimeout(self, build_info):
     r = system.Reboot([10], build_info)
-    with self.assertRaises(system.RestartEvent) as evt:
+    with self.assertRaises(events.RestartEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '10')
@@ -71,7 +72,7 @@ class SystemTest(absltest.TestCase):
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testShutdownPop(self, build_info):
     r = system.Shutdown([15, 'shutdown for reasons', True], build_info)
-    with self.assertRaises(system.ShutdownEvent) as evt:
+    with self.assertRaises(events.ShutdownEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '15')
@@ -81,7 +82,7 @@ class SystemTest(absltest.TestCase):
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testShutdownReason(self, build_info):
     r = system.Shutdown([15, 'shutdown for reasons'], build_info)
-    with self.assertRaises(system.ShutdownEvent) as evt:
+    with self.assertRaises(events.ShutdownEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '15')
@@ -91,7 +92,7 @@ class SystemTest(absltest.TestCase):
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def testShutdownTimeout(self, build_info):
     r = system.Shutdown([1], build_info)
-    with self.assertRaises(system.ShutdownEvent) as evt:
+    with self.assertRaises(events.ShutdownEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '1')

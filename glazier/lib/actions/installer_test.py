@@ -17,6 +17,7 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import buildinfo
+from glazier.lib import events
 from glazier.lib import stage
 from glazier.lib.actions import installer
 
@@ -141,7 +142,7 @@ class InstallerTest(absltest.TestCase):
     build_info = buildinfo.BuildInfo()
     d = installer.ChangeServer(
         ['http://new-server.example.com', '/new/conf/root'], build_info)
-    self.assertRaises(installer.ServerChangeEvent, d.Run)
+    self.assertRaises(events.ServerChangeEvent, d.Run)
     self.assertEqual(build_info.ConfigServer(), 'http://new-server.example.com')
     self.assertEqual(build_info.ActiveConfigPath(), '/new/conf/root')
 
@@ -149,7 +150,7 @@ class InstallerTest(absltest.TestCase):
   def testExitWinPE(self, copy):
     cache = constants.SYS_CACHE
     ex = installer.ExitWinPE(None, None)
-    with self.assertRaises(installer.RestartEvent):
+    with self.assertRaises(events.RestartEvent):
       ex.Run()
     copy.assert_has_calls([
         mock.call(['/task_list.yaml',

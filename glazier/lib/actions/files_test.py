@@ -17,6 +17,7 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import buildinfo
+from glazier.lib import events
 from glazier.lib.actions import files
 
 from pyfakefs import fake_filesystem
@@ -58,14 +59,14 @@ class FilesTest(absltest.TestCase):
 
     # reboot codes - no retry
     e = files.Execute([['cmd.exe /c script.bat', [0], [2, 4]]], bi)
-    with self.assertRaises(files.RestartEvent) as cm:
+    with self.assertRaises(events.RestartEvent) as cm:
       e.Run()
     exception = cm.exception
     self.assertEqual(exception.retry_on_restart, False)
 
     # reboot codes -  retry
     e = files.Execute([['cmd.exe /c #script.bat', [0], [2, 4], True]], bi)
-    with self.assertRaises(files.RestartEvent) as cm:
+    with self.assertRaises(events.RestartEvent) as cm:
       e.Run()
     exception = cm.exception
     self.assertEqual(exception.retry_on_restart, True)

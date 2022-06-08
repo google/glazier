@@ -19,6 +19,7 @@ from unittest import mock
 from absl.testing import absltest
 from glazier.lib import buildinfo
 from glazier.lib import constants
+from glazier.lib import events
 from glazier.lib.config import runner
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
@@ -96,7 +97,7 @@ class ConfigRunnerTest(absltest.TestCase):
         'path': ['path1'],
         'server': 'https://glazier.example.com'
     }]
-    event = runner.base.actions.RestartEvent('Some reason', timeout=25)
+    event = events.RestartEvent('Some reason', timeout=25)
     action.side_effect = event
     self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
     restart.assert_called_with(25, 'Some reason')
@@ -104,7 +105,7 @@ class ConfigRunnerTest(absltest.TestCase):
     pop.reset_mock()
 
     # with retry
-    event = runner.base.actions.RestartEvent(
+    event = events.RestartEvent(
         'Some other reason', timeout=10, retry_on_restart=True)
     action.side_effect = event
     self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
@@ -112,7 +113,7 @@ class ConfigRunnerTest(absltest.TestCase):
     self.assertFalse(pop.called)
 
     # with pop
-    event = runner.base.actions.RestartEvent(
+    event = events.RestartEvent(
         'Some other reason', timeout=10, pop_next=True)
     action.side_effect = event
     self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
@@ -130,7 +131,7 @@ class ConfigRunnerTest(absltest.TestCase):
         'path': ['path1'],
         'server': 'https://glazier.example.com'
     }]
-    event = runner.base.actions.ShutdownEvent('Some reason', timeout=25)
+    event = events.ShutdownEvent('Some reason', timeout=25)
     action.side_effect = event
     self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
     shutdown.assert_called_with(25, 'Some reason')
@@ -138,7 +139,7 @@ class ConfigRunnerTest(absltest.TestCase):
     pop.reset_mock()
 
     # with retry
-    event = runner.base.actions.ShutdownEvent(
+    event = events.ShutdownEvent(
         'Some other reason', timeout=10, retry_on_restart=True)
     action.side_effect = event
     self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
@@ -146,7 +147,7 @@ class ConfigRunnerTest(absltest.TestCase):
     self.assertFalse(pop.called)
 
     # with pop
-    event = runner.base.actions.ShutdownEvent(
+    event = events.ShutdownEvent(
         'Some other reason', timeout=10, pop_next=True)
     action.side_effect = event
     self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)

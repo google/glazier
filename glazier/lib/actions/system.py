@@ -15,9 +15,9 @@
 """Actions for interacting with the host system."""
 
 import logging
+
+from glazier.lib import events
 from glazier.lib.actions.base import BaseAction
-from glazier.lib.actions.base import RestartEvent
-from glazier.lib.actions.base import ShutdownEvent
 from glazier.lib.actions.base import ValidationError
 
 
@@ -50,7 +50,7 @@ class Reboot(_PowerAction):
       pop_next = bool(self._args[2])
     logging.info('Rebooting with a timeout of %s and a reason of %s', timeout,
                  reason)
-    raise RestartEvent(reason, timeout=timeout, pop_next=pop_next)
+    raise events.RestartEvent(reason, timeout=timeout, pop_next=pop_next)
 
 
 class Shutdown(_PowerAction):
@@ -66,4 +66,4 @@ class Shutdown(_PowerAction):
       pop_next = self._args[2]
     logging.info('Shutting down with a timeout of %s and a reason of %s',
                  timeout, reason)
-    raise ShutdownEvent(reason, timeout=timeout, pop_next=pop_next)
+    raise events.ShutdownEvent(reason, timeout=timeout, pop_next=pop_next)

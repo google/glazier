@@ -117,8 +117,6 @@ class ConfigBuilder(base.ConfigBase):
       for control in controls:
         if 'pin' not in control or self._MatchPin(control['pin']):
           self._StoreControls(control, yaml_config.get('templates'))
-    except actions.ServerChangeEvent as e:
-      raise
     finally:
       # close out any timers before raising a server change
       timer_stop = 'stop_{}_{}'.format(conf_path.rstrip('/'), conf_file)

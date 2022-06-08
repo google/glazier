@@ -18,6 +18,7 @@ from __future__ import absolute_import
 
 # do not remove: internal placeholder 1
 
+from glazier.lib import events
 from glazier.lib.actions import abort
 from glazier.lib.actions import base
 from glazier.lib.actions import disk
@@ -81,9 +82,9 @@ WriteDiskSpace = disk.WriteDiskSpace
 ActionError = base.ActionError
 ValidationError = base.ValidationError
 
-RestartEvent = base.RestartEvent
-ServerChangeEvent = base.ServerChangeEvent
-ShutdownEvent = base.ShutdownEvent
+RestartEvent = events.RestartEvent
+ServerChangeEvent = events.ServerChangeEvent
+ShutdownEvent = events.ShutdownEvent
 
 # Legacy naming
 choice = installer.AddChoice

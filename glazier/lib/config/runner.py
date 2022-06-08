@@ -16,6 +16,7 @@
 import sys
 
 from glazier.lib import constants
+from glazier.lib import events
 from glazier.lib import power
 from glazier.lib.config import base
 from glazier.lib.config import files
@@ -78,7 +79,7 @@ class ConfigRunner(base.ConfigBase):
             self._ProcessAction(element, entry[element])
           except base.ConfigError as e:
             raise ConfigRunnerError() from e
-          except base.actions.RestartEvent as e:
+          except events.RestartEvent as e:
             if e.task_list_path:
               self._task_list_path = e.task_list_path
             if not e.retry_on_restart:
@@ -87,7 +88,7 @@ class ConfigRunner(base.ConfigBase):
               self._PopTask(tasks)
             power.Restart(e.timeout, str(e))
             sys.exit(0)
-          except base.actions.ShutdownEvent as e:
+          except events.ShutdownEvent as e:
             if e.task_list_path:
               self._task_list_path = e.task_list_path
             if not e.retry_on_restart:

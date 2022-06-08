@@ -19,11 +19,11 @@ import shlex
 from typing import List
 import zipfile
 from glazier.lib import cache
+from glazier.lib import events
 from glazier.lib import execute
 from glazier.lib import file_util
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
-from glazier.lib.actions.base import RestartEvent
 from glazier.lib.actions.base import ValidationError
 
 from glazier.lib import download
@@ -54,7 +54,7 @@ class Execute(BaseAction):
       raise ActionError('KeyboardInterrupt detected, exiting.') from e
 
     if result in reboot_codes:
-      raise RestartEvent(
+      raise events.RestartEvent(
           'Restart triggered by exit code: %d' % result,
           5,
           retry_on_restart=restart_retry)

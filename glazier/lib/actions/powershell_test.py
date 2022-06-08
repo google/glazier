@@ -19,6 +19,7 @@ from unittest import mock
 from absl.testing import absltest
 from absl.testing import parameterized
 from glazier.lib import buildinfo
+from glazier.lib import events
 from glazier.lib.actions import powershell
 
 from glazier.lib import errors
@@ -80,7 +81,7 @@ class PowershellTest(parameterized.TestCase):
   def testPSScriptRebootNoRetry(self, cache, run):
     cache.return_value = SCRIPT_PATH
     run.return_value = 1337
-    with self.assertRaises(powershell.RestartEvent) as cm:
+    with self.assertRaises(events.RestartEvent) as cm:
       powershell.PSScript([SCRIPT, ARGS, [0], [1337, 1338]], self.bi).Run()
     self.assertEqual(cm.exception.retry_on_restart, False)
     run.assert_called_with(mock.ANY, SCRIPT_PATH, ARGS, [0, 1337, 1338])
@@ -92,7 +93,7 @@ class PowershellTest(parameterized.TestCase):
     cache.return_value = SCRIPT_PATH
     ps = powershell.PSScript([SCRIPT, ARGS, [0], [1337, 1338], True], self.bi)
     run.return_value = 1337
-    self.assertRaises(powershell.RestartEvent, ps.Run)
+    self.assertRaises(events.RestartEvent, ps.Run)
     run.assert_called_with(mock.ANY, SCRIPT_PATH, ARGS, [0, 1337, 1338])
     cache.assert_called_with(mock.ANY, SCRIPT, self.bi)
 
@@ -228,7 +229,7 @@ class PowershellTest(parameterized.TestCase):
       powershell.powershell.PowerShell, 'RunCommand', autospec=True)
   def testPSCommandRebootNoRetry(self, run):
     run.return_value = 1337
-    with self.assertRaises(powershell.RestartEvent) as cm:
+    with self.assertRaises(events.RestartEvent) as cm:
       powershell.PSCommand([COMMAND, [0], [1337, 1338]], self.bi).Run()
     self.assertEqual(cm.exception.retry_on_restart, False)
     run.assert_called_with(mock.ANY, TOKENIZED_COMMAND, [0, 1337, 1338])
@@ -238,7 +239,7 @@ class PowershellTest(parameterized.TestCase):
   def testPSCommandRebootRetry(self, run):
     ps = powershell.PSCommand([COMMAND, [0], [1337, 1338], True], self.bi)
     run.return_value = 1337
-    with self.assertRaises(powershell.RestartEvent) as cm:
+    with self.assertRaises(events.RestartEvent) as cm:
       ps.Run()
     exception = cm.exception
     self.assertEqual(exception.retry_on_restart, True)

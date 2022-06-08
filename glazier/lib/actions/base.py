@@ -28,39 +28,6 @@ class ActionError(Exception):
 class ValidationError(Exception):
   """Failure validating a command type."""
 
-#
-# Event Types
-#
-
-# pylint: disable=g-bad-exception-name
-
-
-class PowerEvent(Exception):
-
-  def __init__(self,
-               message,
-               timeout,
-               retry_on_restart=False,
-               task_list_path=None,
-               pop_next=False):
-    super(PowerEvent, self).__init__(message)
-    self.retry_on_restart = retry_on_restart
-    self.task_list_path = task_list_path
-    self.timeout = timeout
-    self.pop_next = pop_next
-
-
-class RestartEvent(PowerEvent):
-  """Action requesting a host restart."""
-
-
-class ShutdownEvent(PowerEvent):
-  """Action requesting a host shutdown."""
-
-
-class ServerChangeEvent(Exception):
-  """Action indicating a config server change."""
-
 
 class BaseAction(object):
   """Generic action type."""

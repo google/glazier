@@ -17,10 +17,10 @@
 import logging
 from typing import List
 from glazier.lib import cache
+from glazier.lib import events
 from glazier.lib import powershell
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
-from glazier.lib.actions.base import RestartEvent
 from glazier.lib.actions.base import ValidationError
 
 from glazier.lib import errors
@@ -63,8 +63,9 @@ class PSScript(BaseAction):
       raise ActionError(e) from e
 
     if result in reboot_codes:
-      raise RestartEvent('Restart triggered by exit code %d' % result, 5,
-                         retry_on_restart=restart_retry)
+      raise events.RestartEvent(
+          'Restart triggered by exit code %d' % result, 5,
+          retry_on_restart=restart_retry)
     elif result not in success_codes:
       raise ActionError('Script returned invalid exit code %d' % result)
 
@@ -154,9 +155,8 @@ class PSCommand(BaseAction):
       raise ActionError(e) from e
 
     if result in reboot_codes:
-      raise RestartEvent(
-          'Restart triggered by exit code %d' % result,
-          5,
+      raise events.RestartEvent(
+          'Restart triggered by exit code %d' % result, 5,
           retry_on_restart=restart_retry)
     elif result not in success_codes:
       raise ActionError('Command returned invalid exit code %d' % result)
