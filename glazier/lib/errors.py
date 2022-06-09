@@ -27,13 +27,25 @@ class GlazierError(Exception):
   def __init__(
       self, error_code: Optional[int] = None, message: Optional[str] = None):
 
-    error_code = error_code if error_code is not None else DEFAULT_ERROR_CODE
-    message = message if message is not None else 'Unknown Exception'
+    self.error_code = (
+        error_code if error_code is not None else DEFAULT_ERROR_CODE)
+    self.message = message if message is not None else 'Unknown Exception'
 
-    self.error_code = error_code
-    message = f'{message} (Error Code: {error_code})'
+    super().__init__()
 
-    super().__init__(message)
+  def __str__(self):
+
+    s = f'{self.message} (Error Code: {self.error_code})'
+
+    # If this exception was raised from another root-cause exception, include
+    # the root-cause description in the description of this one.
+    if self.__cause__ is not None:
+      cause_message = (
+          self.__cause__.message if isinstance(self.__cause__, GlazierError)
+          else str(self.__cause__))
+      s = f'{s} (Cause: {cause_message})'
+
+    return s
 
 
 class UnsupportedPEError(GlazierError):
@@ -49,39 +61,44 @@ class UnsupportedPEError(GlazierError):
     .iso file. Please update before continuing.
 
     """
-    super().__init__(7001, message)  # Was previously 4100.
+    super().__init__(
+        error_code=7001,  # Was previously 4100.
+        message=message)
 
 
 class UnsupportedModelError(GlazierError):
 
   def __init__(self, model: str):
     super().__init__(
-        7002,  # Was previously 4101.
-        f'System OS/model does not have imaging support: {model}')
+        error_code=7002,  # Was previously 4101.
+        message=f'System OS/model does not have imaging support: {model}')
 
 
 class ExecError(GlazierError):
 
   def __init__(self, command: str):
     super().__init__(
-        7003,  # Was previously 4141.
-        f'Failed to execute [{command}]')
+        error_code=7003,  # Was previously 4141.
+        message=f'Failed to execute [{command}]')
 
 
 class ExecTimeoutError(GlazierError):
 
   def __init__(self, command: str, seconds: int):
     super().__init__(
-        7004,  # Was previously 4142.
-        f'Failed to execute [{command}] after [{seconds}] second(s)')
+        error_code=7004,  # Was previously 4142.
+        message=f'Failed to execute [{command}] after [{seconds}] second(s)')
 
 
 class ExecReturnError(GlazierError):
 
   def __init__(self, command: str, exit_code: int):
+    message = (
+        f'Executing [{command}] returned invalid exit code [{exit_code}]'
+    )
     super().__init__(
-        7005,  # Was previously 4143.
-        f'Executing [{command}] returned invalid exit code [{exit_code}]')
+        error_code=7005,  # Was previously 4143.
+        message=message)
 
 
 class ExecReturnOutError(GlazierError):
@@ -91,87 +108,87 @@ class ExecReturnOutError(GlazierError):
         f'Executing [{command}] returned invalid exit code [{exit_code}]: '
         f'{output}')
     super().__init__(
-        7006,  # Was previously 4144.
-        message)
+        error_code=7006,  # Was previously 4144.
+        message=message)
 
 
 class ConfigBuilderError(GlazierError):
 
   def __init__(self):
     super().__init__(
-        7007,  # Was previously 4300.
-        'Failed to build the task list')
+        error_code=7007,  # Was previously 4300.
+        message='Failed to build the task list')
 
 
 class ConfigRunnerError(GlazierError):
 
   def __init__(self):
     super().__init__(
-        7008,  # Was previously 4301.
-        'Failed to execute the task list')
+        error_code=7008,  # Was previously 4301.
+        message='Failed to execute the task list')
 
 
 class SysInfoError(GlazierError):
 
   def __init__(self):
     super().__init__(
-        7009,  # Was previously 4311.
-        'Error gathering system information')
+        error_code=7009,  # Was previously 4311.
+        message='Error gathering system information')
 
 
 class UnknownActionError(GlazierError):
 
   def __init__(self, action: str):
     super().__init__(
-        7010,  # Was previously 4312.
-        f'Unknown imaging action [{action}]')
+        error_code=7010,  # Was previously 4312.
+        message=f'Unknown imaging action [{action}]')
 
 
 class UnknownPolicyError(GlazierError):
 
   def __init__(self, policy: str):
     super().__init__(
-        7011,  # Was previously 4313.
-        f'Unknown imaging policy [{policy}]')
+        error_code=7011,  # Was previously 4313.
+        message=f'Unknown imaging policy [{policy}]')
 
 
 class CheckUrlError(GlazierError):
 
   def __init__(self, url: str):
     super().__init__(
-        7012,  # Was previously 4314.
-        f'Failed to verify url [{url}]')
+        error_code=7012,  # Was previously 4314.
+        message=f'Failed to verify url [{url}]')
 
 
 class RegistrySetError(GlazierError):
 
   def __init__(self):
     super().__init__(
-        7013,  # Was previously 4340.
-        'Failed to set registry value')
+        error_code=7013,  # Was previously 4340.
+        message='Failed to set registry value')
 
 
 class WebServerError(GlazierError):
 
   def __init__(self):
     super().__init__(
-        7014,  # Was previously 5000.
-        'Failed to reach web server')
+        error_code=7014,  # Was previously 5000.
+        message='Failed to reach web server')
 
 
 class ServiceError(GlazierError):
 
   def __init__(self):
     super().__init__(
-        7015,  # Was previously 5300.
-        'Service unavailable')
+        error_code=7015,  # Was previously 5300.
+        message='Service unavailable')
 
 
 class CacheError(GlazierError):
 
   def __init__(self, file_path: str):
     message = f'Unable to download required file: {file_path}'
-    super().__init__(7016, message)
+    super().__init__(error_code=7016, message=message)
 
 
 class BeyondCorpError(GlazierError):
@@ -185,25 +202,25 @@ class BeyondCorpGiveUpError(BeyondCorpError):
         f'Failed after {tries} attempt(s) over {elapsed:0.1f} seconds.\n\n'
         'Do you have a valid network configuration?'
     )
-    super().__init__(7017, message)
+    super().__init__(error_code=7017, message=message)
 
 
 class BeyondCorpSeedFileError(BeyondCorpError):
 
   def __init__(self):
-    super().__init__(7018, 'BeyondCorp seed file not found')
+    super().__init__(error_code=7018, message='BeyondCorp seed file not found')
 
 
 class BeyondCorpDriveLetterError(BeyondCorpError):
 
   def __init__(self, message: str):
-    super().__init__(7019, message)
+    super().__init__(error_code=7019, message=message)
 
 
 class BeyondCorpSignedUrlRequestError(BeyondCorpError):
 
   def __init__(self, message: str):
-    super().__init__(7020, message)
+    super().__init__(error_code=7020, message=message)
 
 
 class BeyondCorpSignedUrlResponseError(BeyondCorpError):
@@ -213,4 +230,4 @@ class BeyondCorpSignedUrlResponseError(BeyondCorpError):
         f'Invalid response from signed url. '
         f'Status Code: {status_code}, Status: {status}'
     )
-    super().__init__(7021, message)
+    super().__init__(error_code=7021, message=message)

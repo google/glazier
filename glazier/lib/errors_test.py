@@ -18,17 +18,93 @@ import random
 import string
 
 from absl.testing import absltest
+from absl.testing import parameterized
 from glazier.lib import errors
 
 
-class GlazierErrorTest(absltest.TestCase):
+def _raise_from(*exception_chain):
 
-  def testStr(self):
-    err = errors.GlazierError(9999, 'some error message')
-    expected_str = 'some error message (Error Code: 9999)'
+  previous_ex = exception_chain[0]
+
+  for current_ex in exception_chain[1:]:
+    try:
+
+      # Raise the previous exception in the chain.
+      try:
+        raise previous_ex
+
+      # Catch it and wrap it in the current exception.
+      except Exception as e:  # pylint: disable=broad-except
+        raise current_ex from e
+
+    except Exception as new_previous_ex:  # pylint: disable=broad-except
+      previous_ex = new_previous_ex
+
+  return previous_ex
+
+
+class GlazierErrorTest(parameterized.TestCase):
+
+  @parameterized.named_parameters(
+      (
+          '_NoInitArgs',
+          None, None, None,
+          'Unknown Exception (Error Code: 7000)'
+      ),
+      (
+          '_ErrorCodeOnly',
+          9999, None, None,
+          'Unknown Exception (Error Code: 9999)'
+      ),
+      (
+          '_MessageOnly',
+          None, 'some error message', None,
+          'some error message (Error Code: 7000)'
+      ),
+      (
+          '_ErrorCodeAndMessage',
+          9999, 'some error message', None,
+          'some error message (Error Code: 9999)'
+      ),
+      (
+          '_NoInitArgs_WithCause',
+          None, None, [Exception('inner message')],
+          'Unknown Exception (Error Code: 7000) (Cause: inner message)'
+      ),
+      (
+          '_ErrorCodeOnly_WithCause',
+          9999, None, [Exception('inner message')],
+          'Unknown Exception (Error Code: 9999) (Cause: inner message)'
+      ),
+      (
+          '_MessageOnly_WithCause',
+          None, 'some error message', [Exception('inner message')],
+          'some error message (Error Code: 7000) (Cause: inner message)'
+      ),
+      (
+          '_ErrorCodeAndMessage_WithCause',
+          9999, 'some error message', [Exception('inner message')],
+          'some error message (Error Code: 9999) (Cause: inner message)'
+      ),
+      (
+          '_MultipleRaisesFrom',
+          3333, 'outer message',
+          [
+              errors.GlazierError(error_code=1111, message='inner message 1'),
+              errors.GlazierError(error_code=2222, message='inner message 2'),
+          ],
+          'outer message (Error Code: 3333) (Cause: inner message 2)'
+      ),
+  )
+  def test_str(self, error_code, message, exception_chain, expected_str):
+
+    err = errors.GlazierError(error_code=error_code, message=message)
+    if exception_chain:
+      err = _raise_from(*exception_chain, err)
+
     self.assertEqual(expected_str, str(err))
 
-  def testSubclasses(self):
+  def test_subclasses(self):
 
     # Collect all subclasses of GlazierError in the "errors" module.
     tuples = inspect.getmembers(
