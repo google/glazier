@@ -16,19 +16,49 @@
 See https://google.github.io/glazier/error_codes more information.
 """
 
+import enum
+
 from typing import Optional
 
-DEFAULT_ERROR_CODE = 7000  # Was previously 4000.
+
+@enum.unique
+class ErrorCode(enum.IntEnum):
+  """Unique error codes for all anticipated Glazier errors."""
+
+  DEFAULT = 7000  # Was previously 4000.
+  UNSUPPORTED_WINPE_VERSION = 7001  # Was previously 4100.
+  UNSUPPORTED_MODEL = 7002  # Was previously 4101.
+  EXECUTION_FAILED = 7003  # Was previously 4141.
+  EXECUTION_TIMEOUT = 7004  # Was previously 4142.
+  EXECUTION_RETURN = 7005  # Was previously 4143.
+  EXECUTION_RETURN_OUT = 7006  # Was previously 4144.
+  FAILED_TASK_LIST_BUILD = 7007  # Was previously 4300.
+  FAILED_TASK_LIST_RUN = 7008  # Was previously 4301.
+  SYS_INFO = 7009  # Was previously 4311.
+  UNKNOWN_ACTION = 7010  # Was previously 4312.
+  UNKNOWN_POLICY = 7011  # Was previously 4313.
+  FAILED_URL_VERIFICATION = 7012  # Was previously 4314.
+  FAILED_REGISTRY_WRITE = 7013  # Was previously 4340.
+  UNREACHABLE_WEB_SERVER = 7014  # Was previously 5000.
+  SERVICE_ERROR = 7015  # Was previously 5300.
+  CACHE_MISS = 7016
+  BEYONDCORP_GIVE_UP = 7017
+  BEYONDCORP_SEED_FILE_MISSING = 7018
+  BEYONDCORP_DRIVE_LETTER_ERROR = 7019
+  BEYONDCORP_REQUEST_ERROR = 7020
+  BEYONDCORP_RESPONSE_ERROR = 7021
 
 
 class GlazierError(Exception):
   """Base error for all other Glazier errors."""
 
   def __init__(
-      self, error_code: Optional[int] = None, message: Optional[str] = None):
+      self,
+      error_code: Optional[int] = ErrorCode.DEFAULT,
+      message: Optional[str] = None):
 
     self.error_code = (
-        error_code if error_code is not None else DEFAULT_ERROR_CODE)
+        error_code if error_code is not None else ErrorCode.DEFAULT)
     self.message = message if message is not None else 'Unknown Exception'
 
     super().__init__()
@@ -62,7 +92,7 @@ class UnsupportedPEError(GlazierError):
 
     """
     super().__init__(
-        error_code=7001,  # Was previously 4100.
+        error_code=ErrorCode.UNSUPPORTED_WINPE_VERSION,
         message=message)
 
 
@@ -70,7 +100,7 @@ class UnsupportedModelError(GlazierError):
 
   def __init__(self, model: str):
     super().__init__(
-        error_code=7002,  # Was previously 4101.
+        error_code=ErrorCode.UNSUPPORTED_MODEL,
         message=f'System OS/model does not have imaging support: {model}')
 
 
@@ -78,7 +108,7 @@ class ExecError(GlazierError):
 
   def __init__(self, command: str):
     super().__init__(
-        error_code=7003,  # Was previously 4141.
+        error_code=ErrorCode.EXECUTION_FAILED,
         message=f'Failed to execute [{command}]')
 
 
@@ -86,7 +116,7 @@ class ExecTimeoutError(GlazierError):
 
   def __init__(self, command: str, seconds: int):
     super().__init__(
-        error_code=7004,  # Was previously 4142.
+        error_code=ErrorCode.EXECUTION_TIMEOUT,
         message=f'Failed to execute [{command}] after [{seconds}] second(s)')
 
 
@@ -97,7 +127,7 @@ class ExecReturnError(GlazierError):
         f'Executing [{command}] returned invalid exit code [{exit_code}]'
     )
     super().__init__(
-        error_code=7005,  # Was previously 4143.
+        error_code=ErrorCode.EXECUTION_RETURN,
         message=message)
 
 
@@ -108,7 +138,7 @@ class ExecReturnOutError(GlazierError):
         f'Executing [{command}] returned invalid exit code [{exit_code}]: '
         f'{output}')
     super().__init__(
-        error_code=7006,  # Was previously 4144.
+        error_code=ErrorCode.EXECUTION_RETURN_OUT,
         message=message)
 
 
@@ -116,7 +146,7 @@ class ConfigBuilderError(GlazierError):
 
   def __init__(self):
     super().__init__(
-        error_code=7007,  # Was previously 4300.
+        error_code=ErrorCode.FAILED_TASK_LIST_BUILD,
         message='Failed to build the task list')
 
 
@@ -124,7 +154,7 @@ class ConfigRunnerError(GlazierError):
 
   def __init__(self):
     super().__init__(
-        error_code=7008,  # Was previously 4301.
+        error_code=ErrorCode.FAILED_TASK_LIST_RUN,
         message='Failed to execute the task list')
 
 
@@ -132,7 +162,7 @@ class SysInfoError(GlazierError):
 
   def __init__(self):
     super().__init__(
-        error_code=7009,  # Was previously 4311.
+        error_code=ErrorCode.SYS_INFO,
         message='Error gathering system information')
 
 
@@ -140,7 +170,7 @@ class UnknownActionError(GlazierError):
 
   def __init__(self, action: str):
     super().__init__(
-        error_code=7010,  # Was previously 4312.
+        error_code=ErrorCode.UNKNOWN_ACTION,
         message=f'Unknown imaging action [{action}]')
 
 
@@ -148,7 +178,7 @@ class UnknownPolicyError(GlazierError):
 
   def __init__(self, policy: str):
     super().__init__(
-        error_code=7011,  # Was previously 4313.
+        error_code=ErrorCode.UNKNOWN_POLICY,
         message=f'Unknown imaging policy [{policy}]')
 
 
@@ -156,7 +186,7 @@ class CheckUrlError(GlazierError):
 
   def __init__(self, url: str):
     super().__init__(
-        error_code=7012,  # Was previously 4314.
+        error_code=ErrorCode.FAILED_URL_VERIFICATION,
         message=f'Failed to verify url [{url}]')
 
 
@@ -164,7 +194,7 @@ class RegistrySetError(GlazierError):
 
   def __init__(self):
     super().__init__(
-        error_code=7013,  # Was previously 4340.
+        error_code=ErrorCode.FAILED_REGISTRY_WRITE,
         message='Failed to set registry value')
 
 
@@ -172,7 +202,7 @@ class WebServerError(GlazierError):
 
   def __init__(self):
     super().__init__(
-        error_code=7014,  # Was previously 5000.
+        error_code=ErrorCode.UNREACHABLE_WEB_SERVER,
         message='Failed to reach web server')
 
 
@@ -180,15 +210,16 @@ class ServiceError(GlazierError):
 
   def __init__(self):
     super().__init__(
-        error_code=7015,  # Was previously 5300.
+        error_code=ErrorCode.SERVICE_ERROR,
         message='Service unavailable')
 
 
 class CacheError(GlazierError):
 
   def __init__(self, file_path: str):
-    message = f'Unable to download required file: {file_path}'
-    super().__init__(error_code=7016, message=message)
+    super().__init__(
+        error_code=ErrorCode.CACHE_MISS,
+        message=f'Unable to download required file: {file_path}')
 
 
 class BeyondCorpError(GlazierError):
@@ -202,25 +233,33 @@ class BeyondCorpGiveUpError(BeyondCorpError):
         f'Failed after {tries} attempt(s) over {elapsed:0.1f} seconds.\n\n'
         'Do you have a valid network configuration?'
     )
-    super().__init__(error_code=7017, message=message)
+    super().__init__(
+        error_code=ErrorCode.BEYONDCORP_GIVE_UP,
+        message=message)
 
 
 class BeyondCorpSeedFileError(BeyondCorpError):
 
   def __init__(self):
-    super().__init__(error_code=7018, message='BeyondCorp seed file not found')
+    super().__init__(
+        error_code=ErrorCode.BEYONDCORP_SEED_FILE_MISSING,
+        message='BeyondCorp seed file not found')
 
 
 class BeyondCorpDriveLetterError(BeyondCorpError):
 
   def __init__(self, message: str):
-    super().__init__(error_code=7019, message=message)
+    super().__init__(
+        error_code=ErrorCode.BEYONDCORP_DRIVE_LETTER_ERROR,
+        message=message)
 
 
 class BeyondCorpSignedUrlRequestError(BeyondCorpError):
 
   def __init__(self, message: str):
-    super().__init__(error_code=7020, message=message)
+    super().__init__(
+        error_code=ErrorCode.BEYONDCORP_REQUEST_ERROR,
+        message=message)
 
 
 class BeyondCorpSignedUrlResponseError(BeyondCorpError):
@@ -230,4 +269,6 @@ class BeyondCorpSignedUrlResponseError(BeyondCorpError):
         f'Invalid response from signed url. '
         f'Status Code: {status_code}, Status: {status}'
     )
-    super().__init__(error_code=7021, message=message)
+    super().__init__(
+        error_code=ErrorCode.BEYONDCORP_RESPONSE_ERROR,
+        message=message)

@@ -111,7 +111,7 @@ class AutobuildTest(absltest.TestCase):
     self.autobuild.RunBuild()
     log_and_exit.assert_called_with(
         'Unknown Exception', self.autobuild._build_info,
-        errors.DEFAULT_ERROR_CODE, mock.ANY)
+        errors.ErrorCode.DEFAULT, mock.ANY)
 
 
 if __name__ == '__main__':

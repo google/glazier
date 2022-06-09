@@ -93,7 +93,7 @@ class AutoBuild(object):
       terminator.log_and_exit(str(e), self._build_info, e.error_code, e)
     except Exception as e:  # pylint: disable=broad-except
       terminator.log_and_exit(
-          'Unknown Exception', self._build_info, errors.DEFAULT_ERROR_CODE, e)
+          'Unknown Exception', self._build_info, errors.ErrorCode.DEFAULT, e)
 
 
 def main(unused_argv):

@@ -21,6 +21,8 @@ from absl.testing import absltest
 from absl.testing import parameterized
 from glazier.lib import errors
 
+ErrorCode = errors.ErrorCode
+
 
 def _raise_from(*exception_chain):
 
@@ -88,12 +90,12 @@ class GlazierErrorTest(parameterized.TestCase):
       ),
       (
           '_MultipleRaisesFrom',
-          3333, 'outer message',
+          9999, 'outer message',
           [
               errors.GlazierError(error_code=1111, message='inner message 1'),
               errors.GlazierError(error_code=2222, message='inner message 2'),
           ],
-          'outer message (Error Code: 3333) (Cause: inner message 2)'
+          'outer message (Error Code: 9999) (Cause: inner message 2)'
       ),
   )
   def test_str(self, error_code, message, exception_chain, expected_str):
@@ -106,9 +108,11 @@ class GlazierErrorTest(parameterized.TestCase):
 
   def test_subclasses(self):
 
+    def predicate(m):
+      return inspect.isclass(m) and m != errors.GlazierError and m != ErrorCode
+
     # Collect all subclasses of GlazierError in the "errors" module.
-    tuples = inspect.getmembers(
-        errors, lambda sc: inspect.isclass(sc) and sc != errors.GlazierError)
+    tuples = inspect.getmembers(errors, predicate)
     subclasses = [t[1] for t in tuples]
 
     # Track the encountered error codes, in order to detect duplicates.
