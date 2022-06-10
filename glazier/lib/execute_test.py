@@ -81,6 +81,14 @@ class ExecuteTest(absltest.TestCase):
                       return_codes=[1338])
 
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
+  def test_execute_binary_check_return(self, popen):
+    popen_instance = popen.return_value
+    popen_instance.returncode = 1337
+    popen_instance.stdout = io.BytesIO(b'foo\nbar')
+    self.assertEqual(
+        execute.execute_binary(self.binary, check_return_code=True), 1337)
+
+  @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
   def test_execute_binary_windows_error(self, popen):
     execute.WindowsError = Exception
     popen.side_effect = execute.WindowsError

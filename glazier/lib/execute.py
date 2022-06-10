@@ -42,10 +42,12 @@ def format_command(binary: str, args: Optional[List[str]] = None):
   return cmd, ' '.join(map(str, cmd))
 
 
-def execute_binary(binary: str, args: Optional[List[str]] = None,
+def execute_binary(binary: str,
+                   args: Optional[List[str]] = None,
                    return_codes: Optional[List[int]] = None,
                    shell: bool = False,
-                   log: bool = True) -> int:
+                   log: bool = True,
+                   check_return_code: bool = False) -> int:
   """Execute a binary with optional parameters and return codes.
 
   Args:
@@ -54,9 +56,11 @@ def execute_binary(binary: str, args: Optional[List[str]] = None,
     return_codes: Acceptable exit/return codes. Defaults to 0.
     shell: Log to console only. Defaults to False and ignores log value.
     log: Display log messages. Defaults to True.
+    check_return_code: Always return a return code, even when there is an error.
 
   Returns:
-    Process return code if successfully exited.
+    Process return code if successfully exited or check_return_code is
+    specified.
 
   Raises:
     Error: Command returned invalid exit code.
@@ -91,7 +95,7 @@ def execute_binary(binary: str, args: Optional[List[str]] = None,
 
   process.wait()
 
-  if process.returncode not in return_codes:
+  if process.returncode not in return_codes and not check_return_code:
     raise Error(
         f'Executing [{string}] returned invalid exit code [{process.returncode}]'
     )
@@ -101,7 +105,7 @@ def execute_binary(binary: str, args: Optional[List[str]] = None,
 
 def check_output(binary: str,
                  args: Optional[List[str]] = None,
-                 return_codes: List[int] = None,
+                 return_codes: Optional[List[int]] = None,
                  timeout: int = 300) -> str:
   """Executes a binary with optional parameters and checks the output.
 
