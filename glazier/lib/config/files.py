@@ -20,10 +20,51 @@ from glazier.lib import file_util
 import yaml
 
 from glazier.lib import download
+from glazier.lib import errors
 
 
-class Error(Exception):
+class Error(errors.GlazierError):
   pass
+
+
+class FileMoveError(Error):
+
+  def __init__(self, src: str, dest: str):
+    super().__init__(
+        error_code=errors.ErrorCode.FILE_MOVE_ERROR,
+        message=f'Failed to move file from {src} to {dest}')
+
+
+class FileRemoveError(Error):
+
+  def __init__(self, path: str):
+    super().__init__(
+        error_code=errors.ErrorCode.FILE_REMOVE_ERROR,
+        message=f'Failed to remove file: {path}')
+
+
+class FileWriteError(Error):
+
+  def __init__(self, path: str):
+    super().__init__(
+        error_code=errors.ErrorCode.FILE_WRITE_ERROR,
+        message=f'Failed to write file: {path}')
+
+
+class FileReadError(Error):
+
+  def __init__(self, path: str):
+    super().__init__(
+        error_code=errors.ErrorCode.FILE_READ_ERROR,
+        message=f'Failed to read file: {path}')
+
+
+class FileDownloadError(Error):
+
+  def __init__(self, url: str):
+    super().__init__(
+        error_code=errors.ErrorCode.FILE_DOWNLOAD_ERROR,
+        message=f'Could not download file: {url}')
 
 
 def Remove(path: str, backup: bool = True):
@@ -40,12 +81,12 @@ def Remove(path: str, backup: bool = True):
     try:
       file_util.Move(path, path + '.bak')
     except file_util.Error as e:
-      raise Error('Failed to create backup file (%s)' % str(e)) from e
+      raise FileMoveError(path, path + '.bak') from e
   else:
     try:
       file_util.Remove(path)
     except file_util.Error as e:
-      raise Error('Failed to remove file (%s)' % str(e)) from e
+      raise FileRemoveError(path) from e
 
 
 def Dump(path: str, data: Any, mode: str = 'w'):
@@ -58,18 +99,19 @@ def Dump(path: str, data: Any, mode: str = 'w'):
   """
   file_util.CreateDirectories(path)
   tmp_f = path + '.tmp'
+
   # Write to a .tmp file to avoid corrupting the original if aborted mid-way.
   try:
     with open(tmp_f, mode) as handle:
       handle.write(yaml.dump(data))
   except IOError as e:
-    raise Error(
-        'Could not save data to yaml file %s: %s' % (path, str(e))) from e
+    raise FileWriteError(path) from e
+
   # Replace the original with the tmp.
   try:
     file_util.Move(tmp_f, path)
   except file_util.Error as e:
-    raise Error('Could not replace config file. (%s)' % str(e)) from e
+    raise FileMoveError(tmp_f, path) from e
 
 
 def Read(path: str):
@@ -91,7 +133,7 @@ def Read(path: str):
     try:
       path = downloader.DownloadFileTemp(path)
     except download.DownloadError as e:
-      raise Error('Could not download yaml file %s: %s' % (path, str(e))) from e
+      raise FileDownloadError(path) from e
   return _YamlReader(path)
 
 
@@ -110,5 +152,5 @@ def _YamlReader(path: str) -> str:
     with open(path, 'r') as yaml_file:
       yaml_config = yaml.safe_load(yaml_file)
   except IOError as e:
-    raise Error('Could not read yaml file %s: %s' % (path, str(e))) from e
+    raise FileReadError(path) from e
   return yaml_config
