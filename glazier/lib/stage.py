@@ -31,6 +31,8 @@ from absl import flags
 from glazier.lib import constants
 from glazier.lib import registry
 
+from glazier.lib import errors
+
 FLAGS = flags.FLAGS
 STAGES_ROOT = constants.REG_ROOT + r'\Stages'
 ACTIVE_KEY = '_Active'
@@ -40,8 +42,48 @@ flags.DEFINE_integer(
     'Time in minutes until an active stage is considered expired.')
 
 
-class Error(Exception):
+class Error(errors.GlazierError):
   pass
+
+
+class ExpirationError(Error):
+
+  def __init__(self, stage_id: int):
+    super().__init__(
+        error_code=errors.ErrorCode.STAGE_EXPIRATION_ERROR,
+        message=f'Active stage {stage_id} has expired')
+
+
+class InvalidStartTimeError(Error):
+
+  def __init__(self, stage_id: int):
+    super().__init__(
+        error_code=errors.ErrorCode.STAGE_INVALID_START_TIME_ERROR,
+        message=f'Stage {stage_id} does not contain a valid start time.')
+
+
+class InvalidStageIdError(Error):
+
+  def __init__(self, stage_id_type: type(type)):
+    super().__init__(
+        error_code=errors.ErrorCode.STAGE_INVALID_ID_ERROR,
+        message=f'Invalid stage ID type; got: {stage_id_type}, want: int')
+
+
+class ExitError(Error):
+
+  def __init__(self, stage_id: int):
+    super().__init__(
+        error_code=errors.ErrorCode.STAGE_EXIT_ERROR,
+        message=f'Error while exiting stage: {stage_id}')
+
+
+class UpdateError(Error):
+
+  def __init__(self, stage_id: int):
+    super().__init__(
+        error_code=errors.ErrorCode.STAGE_UPDATE_ERROR,
+        message=f'Error while updating stage: {stage_id}')
 
 
 def exit_stage(stage_id: int):
@@ -52,14 +94,14 @@ def exit_stage(stage_id: int):
     registry.set_value('End', str(end), 'HKLM', _stage_root(stage_id))
     registry.set_value(ACTIVE_KEY, '', 'HKLM', STAGES_ROOT)
   except registry.Error as e:
-    raise Error(e) from e
+    raise ExitError(stage_id) from e
 
 
 def _check_expiration(stage_id: int):
   expiration = datetime.timedelta(minutes=FLAGS.stage_timeout_minutes)
   time_in_stage = get_active_time(stage_id)
   if time_in_stage > expiration:
-    raise Error('active stage %d has expired' % stage_id)
+    raise ExpirationError(stage_id)
 
 
 def get_active_stage() -> Optional[int]:
@@ -80,7 +122,7 @@ def get_active_time(stage_id: int) -> datetime.timedelta:
   """Get the amount of time we've been in the current stage."""
   start, end = _get_start_end(stage_id)
   if not start:
-    raise Error('Stage %d does not contain a valid Start time.' % stage_id)
+    raise InvalidStartTimeError(stage_id)
   if not end:
     logging.info('Stage %d not complete. Using current time.', stage_id)
     end = _utc_now()
@@ -138,7 +180,7 @@ def _load_time(stage_id: int, key: str) -> Optional[datetime.datetime]:
 def set_stage(stage_id: int):
   """Sets or updates the current build stage."""
   if not isinstance(stage_id, int):
-    raise Error('Invalid stage type; got: %s, want: int' % type(stage_id))
+    raise InvalidStageIdError(type(stage_id))
 
   active = get_active_stage()
   if active:
@@ -149,7 +191,7 @@ def set_stage(stage_id: int):
     registry.set_value('Start', str(start), 'HKLM', _stage_root(stage_id))
     registry.set_value(ACTIVE_KEY, str(stage_id), 'HKLM', STAGES_ROOT)
   except registry.Error as e:
-    raise Error(e) from e
+    raise UpdateError(stage_id) from e
 
 
 def _stage_root(stage_id: int) -> str:
