@@ -47,6 +47,9 @@ class ErrorCode(enum.IntEnum):
   BEYONDCORP_DRIVE_LETTER_ERROR = 7019
   BEYONDCORP_REQUEST_ERROR = 7020
   BEYONDCORP_RESPONSE_ERROR = 7021
+  TASK_LIST_REMOVE_ERROR = 7022  # Was previously 4303.
+  TASK_LIST_BUILD_ERROR = 7023  # Was previously 4302.
+  TASK_LIST_EXECUTE_ERROR = 7024  # Was previously 4304.
 
 
 class GlazierError(Exception):

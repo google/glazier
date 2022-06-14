@@ -19,6 +19,8 @@ from absl.testing import absltest
 from glazier.lib import terminator
 from glazier.lib import winpe
 
+from glazier.lib import errors
+
 _HELP_MSG = (
     f'See {terminator.constants.SYS_BUILD_LOG} for more info. Need help? Visit '
     f'{terminator.constants.HELP_URI}')
@@ -34,7 +36,8 @@ class TerminatorTest(absltest.TestCase):
       terminator.log_and_exit('image failed', terminator.buildinfo.BuildInfo())
     log.critical.assert_called_with(
         f'image failed\n\nSee {terminator.constants.WINPE_BUILD_LOG} for more '
-        f'info. Need help? Visit {terminator.constants.HELP_URI}#4000')
+        f'info. Need help? Visit '
+        f'{terminator.constants.HELP_URI}#{errors.ErrorCode.DEFAULT}')
     self.assertTrue(log.debug.called)
 
   @mock.patch.object(terminator, 'logging', autospec=True)
@@ -54,7 +57,7 @@ class TerminatorTest(absltest.TestCase):
           collect=False)
     log.critical.assert_called_with(
         f'image failed\n\nException] FakeException\n\n'
-        f'{_HELP_MSG}#4000')
+        f'{_HELP_MSG}#{errors.ErrorCode.DEFAULT}')
 
 if __name__ == '__main__':
   absltest.main()

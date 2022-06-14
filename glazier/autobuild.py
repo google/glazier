@@ -57,8 +57,9 @@ class AutoBuild(object):
         os.remove(location)
       except OSError as e:
         # TODO(b/157460932): Migrate to GlazierError
-        terminator.log_and_exit('Unable to remove task list', self._build_info,
-                                4303, e)
+        terminator.log_and_exit(
+            'Unable to remove task list', self._build_info,
+            errors.ErrorCode.TASK_LIST_REMOVE_ERROR, e)
     return location
 
   def RunBuild(self):
@@ -76,16 +77,19 @@ class AutoBuild(object):
           b.Start(out_file=task_list, in_path=root_path)
         except builder.ConfigBuilderError as e:
           # TODO(b/157460932): Migrate to GlazierError
-          terminator.log_and_exit('Failed to build the task list',
-                                  self._build_info, 4302, e)
+          terminator.log_and_exit(
+              'Failed to build the task list', self._build_info,
+              errors.ErrorCode.TASK_LIST_BUILD_ERROR, e)
 
       try:
         r = runner.ConfigRunner(self._build_info)
         r.Start(task_list=task_list)
       except runner.ConfigRunnerError as e:
         # TODO(b/157460932): Migrate to GlazierError
-        terminator.log_and_exit('Failed to execute the task list',
-                                self._build_info, 4304, e)
+        terminator.log_and_exit(
+            'Failed to execute the task list', self._build_info,
+            errors.ErrorCode.TASK_LIST_EXECUTE_ERROR, e)
+
     except KeyboardInterrupt:
       logging.info('KeyboardInterrupt detected, exiting.')
       sys.exit(1)

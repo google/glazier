@@ -62,8 +62,9 @@ class AutobuildTest(absltest.TestCase):
     autobuild.FLAGS.preserve_tasks = False
     operatingsystem.remove.side_effect = OSError
     self.autobuild._SetupTaskList()
-    log_and_exit.assert_called_with('Unable to remove task list',
-                                    self.autobuild._build_info, 4303, mock.ANY)
+    log_and_exit.assert_called_with(
+        'Unable to remove task list', self.autobuild._build_info,
+        errors.ErrorCode.TASK_LIST_REMOVE_ERROR, mock.ANY)
 
   @mock.patch.object(autobuild.terminator, 'log_and_exit', autospec=True)
   @mock.patch.object(autobuild.title, 'set_title', autospec=True)
@@ -80,14 +81,17 @@ class AutobuildTest(absltest.TestCase):
     # ConfigBuilderError
     builder.side_effect = autobuild.builder.ConfigBuilderError
     self.autobuild.RunBuild()
-    log_and_exit.assert_called_with('Failed to build the task list',
-                                    self.autobuild._build_info, 4302, mock.ANY)
+    log_and_exit.assert_called_with(
+        'Failed to build the task list', self.autobuild._build_info,
+        errors.ErrorCode.TASK_LIST_BUILD_ERROR, mock.ANY)
+
     # ConfigRunnerError
     builder.side_effect = None
     runner.side_effect = autobuild.runner.ConfigRunnerError
     self.autobuild.RunBuild()
-    log_and_exit.assert_called_with('Failed to execute the task list',
-                                    self.autobuild._build_info, 4304, mock.ANY)
+    log_and_exit.assert_called_with(
+        'Failed to execute the task list', self.autobuild._build_info,
+        errors.ErrorCode.TASK_LIST_EXECUTE_ERROR, mock.ANY)
 
   @mock.patch.object(title, 'set_title', autospec=True)
   def testKeyboardInterrupt(self, st):

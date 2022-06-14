@@ -15,7 +15,7 @@ indicate that your code has encountered an error.
 For simplicity, error codes will be put into buckets similar to HTTP status code
 mapping (1xx, 2xx, etc.). Four digits will be used for scalability and
 disambiguation from HTTP error code mappings. If no status code is defined by
-the error, the default will be used (4000). Error codes are included as HTML
+the error, the default will be used (7000). Error codes are included as HTML
 anchors for easily troubleshooting issues through documentation.
 
 Error codes achieve the following objectives:

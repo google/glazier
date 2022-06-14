@@ -23,11 +23,12 @@ from glazier.lib import logs
 from glazier.lib import winpe
 
 from glazier.lib import constants
+from glazier.lib import errors
 
 
 def log_and_exit(msg: str,
                  build_info: buildinfo.BuildInfo,
-                 code: int = 4000,
+                 code: int = errors.ErrorCode.DEFAULT,
                  exception: Optional[Exception] = None,
                  collect: bool = True):
   """Logs a user-facing error message and exits.
