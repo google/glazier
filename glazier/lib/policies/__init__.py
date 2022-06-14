@@ -30,4 +30,3 @@ DiskEncryption = disk_encryption.DiskEncryption
 UnsupportedOs = os.UnsupportedOs
 
 ImagingPolicyException = base.ImagingPolicyException
-ImagingPolicyWarning = base.ImagingPolicyWarning

@@ -50,6 +50,7 @@ class ErrorCode(enum.IntEnum):
   TASK_LIST_REMOVE_ERROR = 7022  # Was previously 4303.
   TASK_LIST_BUILD_ERROR = 7023  # Was previously 4302.
   TASK_LIST_EXECUTE_ERROR = 7024  # Was previously 4304.
+  POLICY_VERIFICATION_ERROR = 7025
 
 
 class GlazierError(Exception):

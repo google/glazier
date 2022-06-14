@@ -14,15 +14,16 @@
 
 """Generic imaging policy class."""
 
+from glazier.lib import errors
 
-class ImagingPolicyException(Exception):
+
+class ImagingPolicyException(errors.GlazierError):
   """Policy verification failed with a fatal condition."""
-  pass
 
-
-class ImagingPolicyWarning(Exception):
-  """Policy verification failed with a non-fatal condition."""
-  pass
+  def __init__(self, message: str):
+    super().__init__(
+        error_code=errors.ErrorCode.POLICY_VERIFICATION_ERROR,
+        message=message)
 
 
 class BasePolicy(object):
