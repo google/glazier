@@ -26,6 +26,9 @@ from xml.dom.minidom import parse
 from absl import flags
 from glazier.lib import resources
 
+from glazier.lib import errors
+
+
 FLAGS = flags.FLAGS
 
 RESOURCE_PATH = 'cldr/common/supplemental/windowsZones.xml'
@@ -34,8 +37,16 @@ flags.DEFINE_string('windows_zones_resource', RESOURCE_PATH,
                     'Timezone map file location.')
 
 
-class TimezoneError(Exception):
+class Error(errors.GlazierError):
   pass
+
+
+class TimezoneError(Error):
+
+  def __init__(self):
+    super().__init__(
+        error_code=errors.ErrorCode.TIMEZONE_ERROR,
+        message=f'Cannot load zone map from {FLAGS.windows_zones_resource}.')
 
 
 class Timezone(object):
@@ -51,8 +62,8 @@ class Timezone(object):
     try:
       win_zones = parse(res.GetResourceFileName(FLAGS.windows_zones_resource))
     except resources.FileNotFound as e:
-      raise TimezoneError(
-          'Cannot load zone map from %s.' % FLAGS.windows_zones_resource) from e
+      raise TimezoneError() from e
+
     for zone in win_zones.getElementsByTagName('mapZone'):
       self.zones[zone.getAttribute('type')] = zone.getAttribute('other')
 

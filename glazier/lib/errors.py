@@ -62,6 +62,7 @@ class ErrorCode(enum.IntEnum):
   STAGE_EXIT_ERROR = 7034
   STAGE_INVALID_TYPE_ERROR = 7035
   STAGE_UPDATE_ERROR = 7036
+  TIMEZONE_ERROR = 7037
 
 
 class GlazierError(Exception):
