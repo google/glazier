@@ -94,14 +94,6 @@ class GlazierError(Exception):
     return s
 
 
-class UnsupportedModelError(GlazierError):
-
-  def __init__(self, model: str):
-    super().__init__(
-        error_code=ErrorCode.UNSUPPORTED_MODEL,
-        message=f'System OS/model does not have imaging support: {model}')
-
-
 class ExecError(GlazierError):
 
   def __init__(self, command: str):
