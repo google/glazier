@@ -22,11 +22,36 @@ from glazier.lib import winpe
 import yaml
 
 from glazier.lib import constants
+from glazier.lib import errors
 from gwinpy.wmi import hw_info
 
 
-class Error(Exception):
+class Error(errors.GlazierError):
   pass
+
+
+class RegistryWriteError(Error):
+
+  def __init__(self, name: str, value: str):
+    super().__init__(
+        error_code=errors.ErrorCode.FAILED_REGISTRY_WRITE,
+        message=f'Registry write failed (Name: {name}, Value: {value}')
+
+
+class BuildInfoKeyMissingError(Error):
+
+  def __init__(self, key: str, path: str):
+    super().__init__(
+        error_code=errors.ErrorCode.BUILD_INFO_KEY_MISSING,
+        message=f'Could not determine {key} from file: {path}')
+
+
+class BuildInfoFileMissingError(Error):
+
+  def __init__(self):
+    super().__init__(
+        error_code=errors.ErrorCode.BUILD_INFO_FILE_MISSING,
+        message='Could not locate build info file.')
 
 
 def _generate_id() -> str:
@@ -36,8 +61,7 @@ def _generate_id() -> str:
     The image identifier as a string.
   """
   hw = hw_info.HWInfo()
-  return ('%s-%s' %
-          (str(hw.BiosSerial()), str(uuid.uuid4())[:7])).upper()
+  return ('%s-%s' % (str(hw.BiosSerial()), str(uuid.uuid4())[:7])).upper()
 
 
 def _set_id() -> str:
@@ -46,7 +70,7 @@ def _set_id() -> str:
   try:
     registry.set_value('image_id', image_id, path=constants.REG_ROOT)
   except registry.Error as e:
-    raise Error(e) from e
+    raise RegistryWriteError('image_id', image_id) from e
   return image_id
 
 
@@ -65,17 +89,21 @@ def _check_file() -> str:
   path = os.path.join(constants.SYS_CACHE, 'build_info.yaml')
   if os.path.exists(path):
     with open(path) as handle:
+
       try:
         input_config = yaml.safe_load(handle)
         image_id = input_config['BUILD']['image_id']
+      except KeyError as e:
+        raise BuildInfoKeyMissingError(str(e), path) from e
+
+      try:
         registry.set_value('image_id', image_id, path=constants.REG_ROOT)
         return image_id
       except registry.Error as e:
-        raise Error(e) from e
-      except KeyError as e:
-        raise Error('Could not determine %s from file: %s.' % (e, path)) from e
+        raise RegistryWriteError('image_id', image_id) from e
+
   else:
-    raise Error('Could not locate build info file.')
+    raise BuildInfoFileMissingError()
 
 
 def check_id() -> str:
