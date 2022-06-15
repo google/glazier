@@ -93,24 +93,6 @@ class GlazierError(Exception):
     return s
 
 
-class UnsupportedPEError(GlazierError):
-  """Error raised when an image has an outdated version of WinPE."""
-
-  def __init__(self):
-    message = """
-                  !!!!! Warning !!!!!
-
-    This image is not running the latest WinPE version.
-
-    This scenario typically occurs when you are booting off of an outdated
-    .iso file. Please update before continuing.
-
-    """
-    super().__init__(
-        error_code=ErrorCode.UNSUPPORTED_WINPE_VERSION,
-        message=message)
-
-
 class UnsupportedModelError(GlazierError):
 
   def __init__(self, model: str):
