@@ -19,14 +19,25 @@ from typing import Any, Dict
 from absl import flags
 from glazier.lib.spec import flags as flag_spec
 
+from glazier.lib import errors
+
+
 SPEC_OPTS: Dict[str, Any] = {
     'flag': flag_spec,
 }
 FLAGS = flags.FLAGS
 
 
-class UnknownSpec(Exception):
+class Error(errors.GlazierError):
   pass
+
+
+class UnknownSpec(Error):
+
+  def __init__(self, spec: str):
+    super().__init__(
+        error_code=errors.ErrorCode.UNKNOWN_SPEC,
+        message=f'Unknown spec: {spec}')
 
 
 def GetModule():
