@@ -20,8 +20,46 @@ from typing import List, Optional
 from glazier.lib import errors
 
 
-class Error(Exception):
+class Error(errors.GlazierError):
   pass
+
+
+class ExecError(Error):
+
+  def __init__(self, command: str):
+    super().__init__(
+        error_code=errors.ErrorCode.EXECUTION_FAILED,
+        message=f'Failed to execute [{command}]')
+
+
+class ExecTimeoutError(Error):
+
+  def __init__(self, command: str, seconds: int):
+    super().__init__(
+        error_code=errors.ErrorCode.EXECUTION_TIMEOUT,
+        message=f'Failed to execute [{command}] after [{seconds}] second(s)')
+
+
+class ExecReturnError(Error):
+
+  def __init__(self, command: str, exit_code: int):
+    message = (
+        f'Executing [{command}] returned invalid exit code [{exit_code}]'
+    )
+    super().__init__(
+        error_code=errors.ErrorCode.EXECUTION_RETURN,
+        message=message)
+
+
+class ExecReturnOutError(Error):
+
+  def __init__(self, command: str, exit_code: int, output: str):
+    message = (
+        f'Executing [{command}] returned invalid exit code [{exit_code}]: '
+        f'{output}')
+    super().__init__(
+        error_code=errors.ErrorCode.EXECUTION_RETURN_OUT,
+        message=message)
 
 
 def format_command(binary: str, args: Optional[List[str]] = None):
@@ -82,7 +120,7 @@ def execute_binary(binary: str,
     process = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, shell=shell,
                                universal_newlines=True)
   except WindowsError as e:  # pylint: disable=undefined-variable
-    raise Error(f'Failed to execute [{string}]: {str(e)}') from e
+    raise ExecError(string) from e
 
   # Optionally log output to standard logger
   if not shell and log:
@@ -96,9 +134,7 @@ def execute_binary(binary: str,
   process.wait()
 
   if process.returncode not in return_codes and not check_return_code:
-    raise Error(
-        f'Executing [{string}] returned invalid exit code [{process.returncode}]'
-    )
+    raise ExecReturnError(string, process.returncode)
 
   return process.returncode
 
@@ -140,9 +176,9 @@ def check_output(binary: str,
     # Exception object contains the code and output
     out = e.output.strip()
     if e.returncode not in return_codes:
-      raise errors.ExecReturnOutError(string, e.returncode, out)
+      raise ExecReturnOutError(string, e.returncode, out) from e
     return out
   except subprocess.TimeoutExpired as e:
-    raise errors.ExecTimeoutError(string, timeout) from e
+    raise ExecTimeoutError(string, timeout) from e
 
   return process

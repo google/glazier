@@ -97,44 +97,6 @@ class GlazierError(Exception):
     return s
 
 
-class ExecError(GlazierError):
-
-  def __init__(self, command: str):
-    super().__init__(
-        error_code=ErrorCode.EXECUTION_FAILED,
-        message=f'Failed to execute [{command}]')
-
-
-class ExecTimeoutError(GlazierError):
-
-  def __init__(self, command: str, seconds: int):
-    super().__init__(
-        error_code=ErrorCode.EXECUTION_TIMEOUT,
-        message=f'Failed to execute [{command}] after [{seconds}] second(s)')
-
-
-class ExecReturnError(GlazierError):
-
-  def __init__(self, command: str, exit_code: int):
-    message = (
-        f'Executing [{command}] returned invalid exit code [{exit_code}]'
-    )
-    super().__init__(
-        error_code=ErrorCode.EXECUTION_RETURN,
-        message=message)
-
-
-class ExecReturnOutError(GlazierError):
-
-  def __init__(self, command: str, exit_code: int, output: str):
-    message = (
-        f'Executing [{command}] returned invalid exit code [{exit_code}]: '
-        f'{output}')
-    super().__init__(
-        error_code=ErrorCode.EXECUTION_RETURN_OUT,
-        message=message)
-
-
 class ConfigBuilderError(GlazierError):
 
   def __init__(self):
