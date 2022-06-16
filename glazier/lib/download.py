@@ -39,8 +39,6 @@ from glazier.lib import beyondcorp
 from glazier.lib import file_util
 from glazier.lib import winpe
 
-from glazier.lib import errors
-
 if typing.TYPE_CHECKING:
   import http.client
 
@@ -387,7 +385,7 @@ class BaseDownloader(object):
     try:
       return self._beyondcorp.GetSignedUrl(
           url[url.startswith(config_server) and len(config_server):])
-    except errors.BeyondCorpError as e:
+    except beyondcorp.Error as e:
       raise DownloadError(e) from e
 
   def _StoreDebugInfo(self,

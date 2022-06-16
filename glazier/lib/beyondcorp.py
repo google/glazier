@@ -45,6 +45,58 @@ flags.DEFINE_string('sign_endpoint', None, 'The signing URL endpoint to use')
 flags.DEFINE_string('seed_path', None, 'Path to the seed file on disk')
 
 
+class Error(errors.GlazierError):
+  pass
+
+
+class BeyondCorpGiveUpError(Error):
+
+  def __init__(self, tries: int, elapsed: float):
+    message = (
+        f'Failed after {tries} attempt(s) over {elapsed:0.1f} seconds.\n\n'
+        'Do you have a valid network configuration?'
+    )
+    super().__init__(
+        error_code=errors.ErrorCode.BEYONDCORP_GIVE_UP,
+        message=message)
+
+
+class BeyondCorpSeedFileError(Error):
+
+  def __init__(self):
+    super().__init__(
+        error_code=errors.ErrorCode.BEYONDCORP_SEED_FILE_MISSING,
+        message='BeyondCorp seed file not found')
+
+
+class BeyondCorpDriveLetterError(Error):
+
+  def __init__(self, message: str):
+    super().__init__(
+        error_code=errors.ErrorCode.BEYONDCORP_DRIVE_LETTER_ERROR,
+        message=message)
+
+
+class BeyondCorpSignedUrlRequestError(Error):
+
+  def __init__(self, message: str):
+    super().__init__(
+        error_code=errors.ErrorCode.BEYONDCORP_REQUEST_ERROR,
+        message=message)
+
+
+class BeyondCorpSignedUrlResponseError(Error):
+
+  def __init__(self, status_code: str, status: str):
+    message = (
+        f'Invalid response from signed url. '
+        f'Status Code: {status_code}, Status: {status}'
+    )
+    super().__init__(
+        error_code=errors.ErrorCode.BEYONDCORP_RESPONSE_ERROR,
+        message=message)
+
+
 # Required in order to patch BACKOFF_MAX_TIME to a more reasonable value in the
 # unit tests. Passing a callable to the max_time argument of
 # @backoff.on_exception() pushes the evaluation of that value to runtime,
@@ -55,7 +107,7 @@ def GetBackoffMaxTime():
 
 
 def BackoffGiveupHandler(details):
-  raise errors.BeyondCorpGiveUpError(details['tries'], details['elapsed'])
+  raise BeyondCorpGiveUpError(details['tries'], details['elapsed'])
 
 
 class BeyondCorp(object):
@@ -71,7 +123,7 @@ class BeyondCorp(object):
       with open(FLAGS.seed_path) as p:
         return json.load(p)
     except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
-      raise errors.BeyondCorpSeedFileError() from e
+      raise BeyondCorpSeedFileError() from e
 
   @functools.lru_cache()
   def CheckBeyondCorp(self) -> bool:
@@ -125,8 +177,8 @@ class BeyondCorp(object):
       label: Drive label to use when querying for drive letter.
 
     Raises:
-      BCError: Error executing WMI query.
-      BCError: BeyondCorp drive letter was empty.
+      BeyondCorpDriveLetterError: Error executing WMI query, or BeyondCorp drive
+        letter was empty.
 
     Returns:
       Drive letter for the drive that contains the seed.
@@ -135,12 +187,11 @@ class BeyondCorp(object):
     try:
       drive_letter = wmi_query.WMIQuery().Query(query)[0].Name
     except wmi_query.WmiError as e:
-      raise errors.BeyondCorpDriveLetterError(
+      raise BeyondCorpDriveLetterError(
           'Failed to query WMI for BeyondCorp drive letter.') from e
 
     if not drive_letter:
-      raise errors.BeyondCorpDriveLetterError(
-          'BeyondCorp drive letter was empty.')
+      raise BeyondCorpDriveLetterError('BeyondCorp drive letter was empty.')
 
     logging.debug('BeyondCorp Drive letter = %s', drive_letter)
 
@@ -158,17 +209,20 @@ class BeyondCorp(object):
       relative_path: the relative path of the file being downloaded.
 
     Raises:
-      BCError: Error with retrieving info from sign endpoint
+      BeyondCorpSignedUrlRequestError: Error with retrieving info from the
+        signing endpoint.
+      BeyondCorpSignedUrlResponseError: Non-success response received from the
+        signing endpoint.
 
     Returns:
       A signed_url string
     """
     if not FLAGS.use_signed_url:
-      raise errors.BeyondCorpSignedUrlRequestError(
+      raise BeyondCorpSignedUrlRequestError(
           'use_signed_url flag not configured.')
 
     if FLAGS.sign_endpoint is None or FLAGS.seed_path is None:
-      raise errors.BeyondCorpSignedUrlRequestError(
+      raise BeyondCorpSignedUrlRequestError(
           'sign_endpoint and seed_path cannot be None when using Signed URL.')
 
     hwinfo = hw_info.HWInfo()
@@ -200,6 +254,6 @@ class BeyondCorp(object):
     if (
         res.status_code != 200 or res.json()['Status'] != 'Success' or
         not res.json()['SignedURL']):
-      raise errors.BeyondCorpSignedUrlResponseError(
+      raise BeyondCorpSignedUrlResponseError(
           res.status_code, res.json()['Status'])
     return res.json()['SignedURL']
