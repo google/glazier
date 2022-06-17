@@ -76,6 +76,7 @@ class ErrorCode(enum.IntEnum):
   BITLOCKER_ACTIVATION_FAILED = 7048
   BITLOCKER_UNKNOWN_MODE = 7049
   LOG_COPY_FAILURE = 7050
+  CANNOT_SET_CONSOLE_TITLE = 7051
 
 
 class GlazierError(Exception):

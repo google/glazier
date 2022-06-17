@@ -26,9 +26,19 @@ from glazier.lib import constants
 from glazier.lib import stage
 from glazier.lib import winpe
 
+from glazier.lib import errors
 
-class Error(Exception):
+
+class Error(errors.GlazierError):
   pass
+
+
+class CannotSetConsoleTitleError(Error):
+
+  def __init__(self):
+    super().__init__(
+        error_code=errors.ErrorCode.CANNOT_SET_CONSOLE_TITLE,
+        message='Failed to set console title')
 
 
 def _base_title() -> Optional[str]:
@@ -101,4 +111,4 @@ def set_title(string: Optional[str] = None) -> str:
     logging.debug('Set console title: %s', title)
     return title
   except OSError as e:
-    raise Error(f'Failed to set console title: {str(e)}') from e
+    raise CannotSetConsoleTitleError() from e
