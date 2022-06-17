@@ -30,9 +30,9 @@ class LogCopyTest(absltest.TestCase):
 
   @mock.patch.object(winpe, 'check_winpe', autospec=True)
   @mock.patch.object(log_copy.logging, 'FileHandler', autospec=True)
-  def setUp(self, unused_handler, wpe):
+  def setUp(self, unused_handler, mock_check_winpe):
     super(LogCopyTest, self).setUp()
-    wpe.return_value = False
+    mock_check_winpe.return_value = False
     self.log_file = r'C:\Windows\Logs\Glazier\glazier.log'
     self.lc = log_copy.LogCopy()
     # win32 modules
@@ -44,61 +44,66 @@ class LogCopyTest(absltest.TestCase):
   @mock.patch.object(log_copy.gtime, 'now', autospec=True)
   @mock.patch.object(log_copy.logging, 'FileHandler', autospec=True)
   @mock.patch.object(log_copy.registry, 'get_value', autospec=True)
-  def testGetLogFileName(self, gv, unused_log, dt):
+  def test_get_log_file_name(self, mock_get_value, unused_log, mock_now):
     lc = log_copy.LogCopy()
-    gv.return_value = 'WORKSTATION1-W'
+    mock_get_value.return_value = 'WORKSTATION1-W'
     now = datetime.datetime.utcnow()
     out_date = now.replace(microsecond=0).isoformat().replace(':', '')
-    dt.return_value = now
+    mock_now.return_value = now
     result = lc._GetLogFileName()
     self.assertEqual(result, r'l:\WORKSTATION1-W-' + out_date + '.log')
-    gv.assert_called_with('name', path=constants.REG_ROOT)
+    mock_get_value.assert_called_with('name', path=constants.REG_ROOT)
 
   @mock.patch.object(log_copy.registry, 'get_value', autospec=True)
-  def testGetLogFileNameError(self, gv):
-    gv.side_effect = log_copy.registry.Error
-    self.assertRaises(log_copy.LogCopyError, self.lc._GetLogFileName)
+  def test_get_log_file_name_error(self, mock_get_value):
+    mock_get_value.side_effect = log_copy.registry.Error
+    with self.assertRaises(log_copy.LogCopyError):
+      self.lc._GetLogFileName()
 
   @mock.patch.object(log_copy.LogCopy, '_EventLogUpload', autospec=True)
-  def testEventLogCopy(self, event_up):
+  def test_event_log_copy(self, mock_eventlogupload):
     self.lc.EventLogCopy(self.log_file)
-    event_up.assert_called_with(self.lc, self.log_file)
+    mock_eventlogupload.assert_called_with(self.lc, self.log_file)
 
   @mock.patch.object(winpe, 'check_winpe', autospec=True)
   @mock.patch.object(log_copy.LogCopy, '_GetLogFileName', autospec=True)
   @mock.patch.object(log_copy.shutil, 'copy', autospec=True)
   @mock.patch.object(log_copy.drive_map.DriveMap, 'UnmapDrive', autospec=True)
   @mock.patch.object(log_copy.drive_map.DriveMap, 'MapDrive', autospec=True)
-  def testShareUpload(self, map_drive, unmap_drive, copy, get_file_name, wpe):
+  def test_share_upload(
+      self, mock_mapdrive, mock_unmapdrive, mock_copy, mock_getlogfilename,
+      mock_check_winpe):
 
     class TestCredProvider(log_copy.LogCopyCredentials):
 
       def GetUsername(self):
-        wpe.return_value = False
+        mock_check_winpe.return_value = False
         return 'test_user'
 
       def GetPassword(self):
-        wpe.return_value = False
+        mock_check_winpe.return_value = False
         return 'test_pass'
 
     log_copy.LogCopyCredentials = TestCredProvider
 
     log_host = 'log-host.example.com'
-    get_file_name.return_value = 'log.txt'
+    mock_getlogfilename.return_value = 'log.txt'
     self.lc.ShareCopy(self.log_file, log_host)
-    map_drive.assert_called_with(mock.ANY, 'l:', 'log-host.example.com',
-                                 'test_user', 'test_pass')
-    copy.assert_called_with(self.log_file, 'log.txt')
-    unmap_drive.assert_called_with(mock.ANY, 'l:')
+    mock_mapdrive.assert_called_with(
+        mock.ANY, 'l:', 'log-host.example.com', 'test_user', 'test_pass')
+    mock_copy.assert_called_with(self.log_file, 'log.txt')
+    mock_unmapdrive.assert_called_with(mock.ANY, 'l:')
+
     # map error
-    map_drive.return_value = None
-    self.assertRaises(log_copy.LogCopyError, self.lc.ShareCopy, self.log_file,
-                      log_host)
+    mock_mapdrive.return_value = None
+    with self.assertRaises(log_copy.LogCopyError):
+      self.lc.ShareCopy(self.log_file, log_host)
+
     # copy error
-    map_drive.return_value = True
-    copy.side_effect = shutil.Error()
-    self.assertRaises(log_copy.LogCopyError, self.lc.ShareCopy, self.log_file,
-                      log_host)
+    mock_mapdrive.return_value = True
+    mock_copy.side_effect = shutil.Error()
+    with self.assertRaises(log_copy.LogCopyError):
+      self.lc.ShareCopy(self.log_file, log_host)
 
 
 if __name__ == '__main__':

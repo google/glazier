@@ -24,10 +24,19 @@ from glazier.lib import logs
 from glazier.lib import registry
 
 from glazier.lib import constants
+from glazier.lib import errors
 
 
-class LogCopyError(Exception):
+class Error(errors.GlazierError):
   pass
+
+
+class LogCopyError(Error):
+
+  def __init__(self, message: str):
+    super().__init__(
+        error_code=errors.ErrorCode.LOG_COPY_FAILURE,
+        message=message)
 
 
 class LogCopyCredentials(object):
@@ -80,8 +89,9 @@ class LogCopy(object):
     try:
       hostname = registry.get_value('name', path=constants.REG_ROOT)
     except registry.Error as e:
-      raise LogCopyError('Hostname could not be determined for log copy: %s' %
-                         str(e)) from e
+      raise LogCopyError(
+          'Hostname could not be determined for log copy') from e
+
     destination_file_date = gtime.now().replace(microsecond=0)
     destination_file_date = destination_file_date.isoformat()
     destination_file_date = destination_file_date.replace(':', '')

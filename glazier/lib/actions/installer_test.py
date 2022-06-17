@@ -18,6 +18,7 @@ from unittest import mock
 from absl.testing import absltest
 from glazier.lib import buildinfo
 from glazier.lib import events
+from glazier.lib import log_copy
 from glazier.lib import stage
 from glazier.lib.actions import installer
 
@@ -29,7 +30,7 @@ from glazier.lib import constants
 class InstallerTest(absltest.TestCase):
 
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
-  def testAddChoice(self, build_info):
+  def test_add_choice(self, mock_buildinfo):
     choice = {
         'type':
             'toggle',
@@ -48,11 +49,11 @@ class InstallerTest(absltest.TestCase):
             'label': 'True'
         }]
     }
-    a = installer.AddChoice(choice, build_info)
+    a = installer.AddChoice(choice, mock_buildinfo)
     a.Run()
-    build_info.AddChooserOption.assert_called_with(choice)
+    mock_buildinfo.AddChooserOption.assert_called_with(choice)
 
-  def testAddChoiceValidate(self):
+  def test_add_choice_validate(self):
     choice = {
         'type':
             'toggle',
@@ -104,15 +105,15 @@ class InstallerTest(absltest.TestCase):
     self.assertRaises(installer.ValidationError, a.Validate)
 
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
-  def testBuildInfoDump(self, build_info):
-    d = installer.BuildInfoDump(None, build_info)
+  def test_build_info_dump(self, mock_buildinfo):
+    d = installer.BuildInfoDump(None, mock_buildinfo)
     d.Run()
-    build_info.Serialize.assert_called_with('{}/build_info.yaml'.format(
-        constants.SYS_CACHE))
+    mock_buildinfo.Serialize.assert_called_with(
+        '{}/build_info.yaml'.format(constants.SYS_CACHE))
 
   @mock.patch.object(installer.registry, 'set_value', autospec=True)
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
-  def testBuildInfoSave(self, build_info, sv):
+  def test_build_info_save(self, mock_buildinfo, mock_set_value):
     fs = fake_filesystem.FakeFilesystem()
     installer.open = fake_filesystem.FakeFileOpen(fs)
     installer.os = fake_filesystem.FakeOsModule(fs)
@@ -121,67 +122,76 @@ class InstallerTest(absltest.TestCase):
         '{}/build_info.yaml'.format(constants.SYS_CACHE),
         contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, opt 3: 12345}}\n'
     )
-    s = installer.BuildInfoSave(None, build_info)
+    s = installer.BuildInfoSave(None, mock_buildinfo)
     s.Run()
-    sv.assert_has_calls([
-        mock.call('opt 1', True, 'HKLM', constants.REG_ROOT),
-        mock.call('TIMER_opt 2', 'some value', 'HKLM', timer_root),
-        mock.call('opt 3', 12345, 'HKLM', constants.REG_ROOT),
-    ],
-                        any_order=True)
+    mock_set_value.assert_has_calls(
+        [
+            mock.call('opt 1', True, 'HKLM', constants.REG_ROOT),
+            mock.call('TIMER_opt 2', 'some value', 'HKLM', timer_root),
+            mock.call('opt 3', 12345, 'HKLM', constants.REG_ROOT),
+        ],
+        any_order=True)
     s.Run()
 
   @mock.patch.object(installer.logging, 'debug', autospec=True)
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
-  def testBuildInfoSaveError(self, build_info, d):
-    installer.BuildInfoSave(None, build_info).Run()
-    d.assert_called_with('%s does not exist - skipped processing.',
-                         '{}/build_info.yaml'.format(constants.SYS_CACHE))
+  def test_build_info_save_error(self, mock_buildinfo, mock_debug):
+    installer.BuildInfoSave(None, mock_buildinfo).Run()
+    mock_debug.assert_called_with(
+        '%s does not exist - skipped processing.',
+        '{}/build_info.yaml'.format(constants.SYS_CACHE))
 
-  def testChangeServer(self):
+  def test_change_server(self):
     build_info = buildinfo.BuildInfo()
     d = installer.ChangeServer(
         ['http://new-server.example.com', '/new/conf/root'], build_info)
-    self.assertRaises(events.ServerChangeEvent, d.Run)
+    with self.assertRaises(events.ServerChangeEvent):
+      d.Run()
     self.assertEqual(build_info.ConfigServer(), 'http://new-server.example.com')
     self.assertEqual(build_info.ActiveConfigPath(), '/new/conf/root')
 
   @mock.patch.object(installer.file_system, 'CopyFile', autospec=True)
-  def testExitWinPE(self, copy):
+  def test_exit_win_pe(self, mock_copyfile):
     cache = constants.SYS_CACHE
     ex = installer.ExitWinPE(None, None)
     with self.assertRaises(events.RestartEvent):
       ex.Run()
-    copy.assert_has_calls([
+    mock_copyfile.assert_has_calls([
         mock.call(['/task_list.yaml',
                    '%s/task_list.yaml' % cache], mock.ANY),
     ])
-    copy.return_value.Run.assert_called()
+    mock_copyfile.return_value.Run.assert_called()
 
   @mock.patch.object(installer.log_copy, 'LogCopy', autospec=True)
-  def testLogCopy(self, copy):
+  def test_log_copy(self, mock_logcopy):
+
     log_file = r'X:\glazier.log'
     log_host = 'log-server.example.com'
+
     # copy eventlog
     lc = installer.LogCopy([log_file], None)
     lc.Run()
-    copy.return_value.EventLogCopy.assert_called_with(log_file)
-    self.assertFalse(copy.return_value.ShareCopy.called)
-    copy.reset_mock()
+    mock_logcopy.return_value.EventLogCopy.assert_called_with(log_file)
+    self.assertFalse(mock_logcopy.return_value.ShareCopy.called)
+    mock_logcopy.reset_mock()
+
     # copy both
     lc = installer.LogCopy([log_file, log_host], None)
     lc.Run()
-    copy.return_value.EventLogCopy.assert_called_with(log_file)
-    copy.return_value.ShareCopy.assert_called_with(log_file, log_host)
-    copy.reset_mock()
-    # copy errors
-    copy.return_value.EventLogCopy.side_effect = installer.log_copy.LogCopyError
-    copy.return_value.ShareCopy.side_effect = installer.log_copy.LogCopyError
-    lc.Run()
-    copy.return_value.EventLogCopy.assert_called_with(log_file)
-    copy.return_value.ShareCopy.assert_called_with(log_file, log_host)
+    mock_logcopy.return_value.EventLogCopy.assert_called_with(log_file)
+    mock_logcopy.return_value.ShareCopy.assert_called_with(log_file, log_host)
+    mock_logcopy.reset_mock()
 
-  def testLogCopyValidate(self):
+    # copy errors
+    mock_logcopy.return_value.EventLogCopy.side_effect = log_copy.LogCopyError(
+        'fail')
+    mock_logcopy.return_value.ShareCopy.side_effect = log_copy.LogCopyError(
+        'fail')
+    lc.Run()
+    mock_logcopy.return_value.EventLogCopy.assert_called_with(log_file)
+    mock_logcopy.return_value.ShareCopy.assert_called_with(log_file, log_host)
+
+  def test_log_copy_validate(self):
     log_host = 'log-server.example.com'
     lc = installer.LogCopy(r'X:\glazier.log', None)
     self.assertRaises(installer.ValidationError, lc.Validate)
@@ -195,18 +205,18 @@ class InstallerTest(absltest.TestCase):
     lc.Validate()
 
   @mock.patch.object(installer.time, 'sleep', autospec=True)
-  def testSleep(self, sleep):
+  def test_sleep(self, sleep):
     s = installer.Sleep([1520], None)
     s.Run()
     sleep.assert_called_with(1520)
 
   @mock.patch.object(installer.time, 'sleep', autospec=True)
-  def testSleepString(self, sleep):
+  def test_sleep_string(self, sleep):
     s = installer.Sleep([1234, 'Some Reason.'], None)
     s.Run()
     sleep.assert_called_with(1234)
 
-  def testSleepValidate(self):
+  def test_sleep_validate(self):
     s = installer.Sleep('30', None)
     self.assertRaises(installer.ValidationError, s.Validate)
     s = installer.Sleep([1, 2, 3], None)
@@ -220,7 +230,7 @@ class InstallerTest(absltest.TestCase):
 
   @mock.patch.object(installer.chooser, 'Chooser', autospec=True)
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
-  def testShowChooser(self, build_info, chooser):
+  def test_show_chooser(self, build_info, chooser):
     c = installer.ShowChooser(None, build_info)
     c.Run()
     self.assertTrue(chooser.return_value.Display.called)
@@ -230,32 +240,32 @@ class InstallerTest(absltest.TestCase):
     self.assertTrue(build_info.FlushChooserOptions.called)
 
   @mock.patch.object(installer.stage, 'set_stage', autospec=True)
-  def testStartStage(self, set_stage):
+  def test_start_stage(self, set_stage):
     s = installer.StartStage([1], None)
     s.Run()
     set_stage.assert_called_with(1)
 
   @mock.patch.object(installer.stage, 'set_stage', autospec=True)
   @mock.patch.object(installer.stage, 'exit_stage', autospec=True)
-  def testStartNonTerminalStage(self, exit_stage, set_stage):
+  def test_start_non_terminal_stage(self, exit_stage, set_stage):
     installer.StartStage([50, False], None).Run()
     set_stage.assert_called_with(50)
     self.assertFalse(exit_stage.called)
 
   @mock.patch.object(installer.stage, 'set_stage', autospec=True)
   @mock.patch.object(installer.stage, 'exit_stage', autospec=True)
-  def testStartTerminalStage(self, exit_stage, set_stage):
+  def test_start_terminal_stage(self, exit_stage, set_stage):
     installer.StartStage([100, True], None).Run()
     set_stage.assert_called_with(100)
     exit_stage.assert_called_with(100)
 
   @mock.patch.object(installer.stage, 'set_stage', autospec=True)
-  def testStartStageException(self, set_stage):
+  def test_start_stage_exception(self, set_stage):
     set_stage.side_effect = stage.Error('Test')
     ss = installer.StartStage([2], None)
     self.assertRaises(installer.ActionError, ss.Run)
 
-  def testStartStageValidate(self):
+  def test_start_stage_validate(self):
     s = installer.StartStage('30', None)
     self.assertRaises(installer.ValidationError, s.Validate)
     s = installer.StartStage([1, 2, 3], None)
