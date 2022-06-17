@@ -18,12 +18,37 @@ from glazier.lib import execute
 from glazier.lib import powershell
 
 from glazier.lib import constants
+from glazier.lib import errors
 
 SUPPORTED_MODES = ['ps_tpm', 'bde_tpm']
 
 
-class BitlockerError(Exception):
+class Error(errors.GlazierError):
   pass
+
+
+class BitlockerEnableTpmError(Error):
+
+  def __init__(self):
+    super().__init__(
+        error_code=errors.ErrorCode.BITLOCKER_ENABLE_TPM_FAILED,
+        message='Error while enabling TPM via Powershell')
+
+
+class BitlockerActivationFailedError(Error):
+
+  def __init__(self):
+    super().__init__(
+        error_code=errors.ErrorCode.BITLOCKER_ACTIVATION_FAILED,
+        message='Bitlocker activation failed')
+
+
+class BitlockerUnknownModeError(Error):
+
+  def __init__(self, mode: str):
+    super().__init__(
+        error_code=errors.ErrorCode.BITLOCKER_UNKNOWN_MODE,
+        message=f'Unknown mode: {mode}')
 
 
 class Bitlocker(object):
@@ -32,7 +57,7 @@ class Bitlocker(object):
   def __init__(self, mode: str):
     self._mode = mode
 
-  def _PsTpm(self):
+  def _EnableTpm(self):
     """Enable TPM mode using Powershell (Win8 +)."""
     ps = powershell.PowerShell()
     try:
@@ -45,13 +70,12 @@ class Bitlocker(object):
                      'Add-BitLockerKeyProtector', 'C:',
                      '-RecoveryPasswordProtector', '>NUL'])
     except powershell.PowerShellError as e:
-      raise BitlockerError('Error enabling Bitlocker via Powershell: %s.' %
-                           str(e)) from e
+      raise BitlockerEnableTpmError() from e
 
   def Enable(self):
     """Enable bitlocker."""
     if self._mode == 'ps_tpm':
-      self._PsTpm()
+      self._EnableTpm()
     elif self._mode == 'bde_tpm':
       try:
         execute.execute_binary(
@@ -61,6 +85,6 @@ class Bitlocker(object):
             ],
             shell=True)
       except execute.Error as e:
-        raise BitlockerError(str(e)) from e
+        raise BitlockerActivationFailedError() from e
     else:
-      raise BitlockerError(f'Unknown mode: {self._mode}.')
+      raise BitlockerUnknownModeError(self._mode)

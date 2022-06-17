@@ -19,6 +19,7 @@ from unittest import mock
 from absl.testing import absltest
 from glazier.lib import bitlocker
 from glazier.lib import execute
+from glazier.lib import powershell
 
 from glazier.lib import constants
 
@@ -27,10 +28,10 @@ class BitlockerTest(absltest.TestCase):
 
   @mock.patch.object(
       bitlocker.powershell.PowerShell, 'RunCommand', autospec=True)
-  def testPowershell(self, ps):
+  def test_enable_tpm_error(self, mock_runcommand):
     bit = bitlocker.Bitlocker(mode='ps_tpm')
     bit.Enable()
-    ps.assert_has_calls([
+    mock_runcommand.assert_has_calls([
         mock.call(mock.ANY, [
             "$ErrorActionPreference='Stop'", ';', 'Enable-BitLocker', 'C:',
             '-TpmProtector', '-UsedSpaceOnly', '-SkipHardwareTest ', '>>',
@@ -41,26 +42,29 @@ class BitlockerTest(absltest.TestCase):
             'C:', '-RecoveryPasswordProtector', '>NUL'
         ])
     ])
-    ps.side_effect = bitlocker.powershell.PowerShellError
-    self.assertRaises(bitlocker.BitlockerError, bit.Enable)
+    mock_runcommand.side_effect = powershell.PowerShellError
+    with self.assertRaises(bitlocker.BitlockerEnableTpmError):
+      bit.Enable()
 
   @mock.patch.object(execute, 'execute_binary', autospec=True)
-  def testManageBde(self, eb):
+  def test_enable_execute_binary_error(self, mock_execute_binary):
     bit = bitlocker.Bitlocker(mode='bde_tpm')
-    eb.return_value = 0
+    mock_execute_binary.return_value = 0
     bit.Enable()
-    eb.assert_called_with(
+    mock_execute_binary.assert_called_with(
         'C:/Windows/System32/cmd.exe', [
             '/c', 'C:/Windows/System32/manage-bde.exe', '-on', 'c:', '-rp',
             '>NUL'
         ],
         shell=True)
-    eb.side_effect = execute.Error
-    self.assertRaises(bitlocker.BitlockerError, bit.Enable)
+    mock_execute_binary.side_effect = execute.Error
+    with self.assertRaises(bitlocker.BitlockerActivationFailedError):
+      bit.Enable()
 
-  def testFailure(self):
+  def test_enable_unknown_mode(self):
     bit = bitlocker.Bitlocker(mode='unsupported')
-    self.assertRaises(bitlocker.BitlockerError, bit.Enable)
+    with self.assertRaises(bitlocker.BitlockerUnknownModeError):
+      bit.Enable()
 
 
 if __name__ == '__main__':

@@ -17,29 +17,35 @@
 from unittest import mock
 
 from absl.testing import absltest
+from absl.testing import parameterized
+from glazier.lib import bitlocker
 from glazier.lib.actions import tpm
 
 
-class TpmTest(absltest.TestCase):
+class TpmTest(parameterized.TestCase):
 
   @mock.patch.object(tpm.bitlocker, 'Bitlocker', autospec=True)
-  def testBitlockerEnable(self, bitlocker):
+  def test_bitlocker_enable(self, mock_bitlocker):
     b = tpm.BitlockerEnable(['ps_tpm'], None)
     b.Run()
-    bitlocker.assert_called_with('ps_tpm')
-    self.assertTrue(bitlocker.return_value.Enable.called)
-    bitlocker.return_value.Enable.side_effect = tpm.bitlocker.BitlockerError
-    self.assertRaises(tpm.ActionError, b.Run)
+    mock_bitlocker.assert_called_with('ps_tpm')
+    self.assertTrue(mock_bitlocker.return_value.Enable.called)
+    mock_bitlocker.return_value.Enable.side_effect = bitlocker.Error
+    with self.assertRaises(tpm.ActionError):
+      b.Run()
 
-  def testBitlockerEnableValidate(self):
-    b = tpm.BitlockerEnable(30, None)
-    self.assertRaises(tpm.ValidationError, b.Validate)
-    b = tpm.BitlockerEnable([], None)
-    self.assertRaises(tpm.ValidationError, b.Validate)
-    b = tpm.BitlockerEnable(['invalid'], None)
-    self.assertRaises(tpm.ValidationError, b.Validate)
-    b = tpm.BitlockerEnable(['ps_tpm', 'ps_tpm'], None)
-    self.assertRaises(tpm.ValidationError, b.Validate)
+  @parameterized.named_parameters(
+      ('_wrong_arg_type', 30, None),
+      ('_arg_list_too_short', [], None),
+      ('_unsupported_mode', ['invalid'], None),
+      ('_arg_list_too_long', ['ps_tpm', 'ps_tpm'], None),
+  )
+  def test_bitlocker_enable_failure(self, enable_args, build_info):
+    b = tpm.BitlockerEnable(enable_args, build_info)
+    with self.assertRaises(tpm.ValidationError):
+      b.Validate()
+
+  def test_bitlocker_enable_success(self):
     b = tpm.BitlockerEnable(['ps_tpm'], None)
     b.Validate()
 
