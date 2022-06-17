@@ -39,6 +39,8 @@ from glazier.lib import beyondcorp
 from glazier.lib import file_util
 from glazier.lib import winpe
 
+from glazier.lib import errors
+
 if typing.TYPE_CHECKING:
   import http.client
 
@@ -51,6 +53,74 @@ BACKOFF_MAX_TIME = 600
 FLAGS = flags.FLAGS
 
 
+class Error(errors.GlazierError):
+  pass
+
+
+class DownloadGiveUpError(Error):
+
+  def __init__(self, tries: int, elapsed: float):
+    super().__init__(
+        error_code=errors.ErrorCode.DOWNLOAD_GIVE_UP,
+        message=f'Failed after {tries} attempt(s) over {elapsed:0.1f} seconds')
+
+
+class DownloadFailedError(Error):
+
+  def __init__(self, url: str, code: int):
+    super().__init__(
+        error_code=errors.ErrorCode.DOWNLOAD_FAILED,
+        message=f'Invalid return code [{code}] for file {url}')
+
+
+class InvalidRemoteUrlError(Error):
+
+  def __init__(self, url: str):
+    super().__init__(
+        error_code=errors.ErrorCode.DOWNLOAD_INVALID_REMOTE_URL,
+        message=f'Invalid remote server URL "{url}".')
+
+
+class LocalCopyError(Error):
+
+  def __init__(self, src: str, dest: str):
+    super().__init__(
+        error_code=errors.ErrorCode.DOWNLOAD_LOCAL_COPY_ERROR,
+        message=f'Unable to copy local file from {src} to {dest}')
+
+
+class SignedUrlError(Error):
+
+  def __init__(self, url: str):
+    super().__init__(
+        error_code=errors.ErrorCode.DOWNLOAD_SIGNED_URL_ERROR,
+        message=f'Failed to obtain signed URL: {url}')
+
+
+class MissingFileStreamError(Error):
+
+  def __init__(self):
+    super().__init__(
+        error_code=errors.ErrorCode.DOWNLOAD_MISSING_FILE_STREAM,
+        message='Cannot save to disk, missing file stream')
+
+
+class StreamToDiskError(Error):
+
+  def __init__(self, message: str):
+    super().__init__(
+        error_code=errors.ErrorCode.DOWNLOAD_STREAM_TO_DISK_ERROR,
+        message=message)
+
+
+class FileValidationError(Error):
+
+  def __init__(self, message: str):
+    super().__init__(
+        error_code=errors.ErrorCode.DOWNLOAD_VALIDATION_ERROR,
+        message=message)
+
+
 # Required in order to patch BACKOFF_MAX_TIME to a more reasonable value in the
 # unit tests. Passing a callable to the max_time argument of
 # @backoff.on_exception() pushes the evaluation of that value to runtime,
@@ -61,9 +131,7 @@ def GetBackoffMaxTime():
 
 
 def BackoffGiveupHandler(details):
-  raise DownloadError(
-      'Failed after {tries} attempt(s) over {elapsed:0.1f} seconds'.format(
-          **details))
+  raise DownloadGiveUpError(details['tries'], details['elapsed'])
 
 
 def IsLocal(string: str) -> bool:
@@ -140,11 +208,6 @@ def PathCompile(build_info,
   return path
 
 
-class DownloadError(Exception):
-  """The transfer of the file failed."""
-  pass
-
-
 class BaseDownloader(object):
   """Downloads files over HTTPS."""
 
@@ -210,8 +273,8 @@ class BaseDownloader(object):
       file_stream: urlopen's file stream
 
     Raises:
-      DownloadError: The resource was unreachable or failed to return with the
-        expected code.
+      DownloadFailedError: The resource was unreachable or failed to return with
+        the expected code.
     """
     try:
       if winpe.check_winpe():
@@ -225,8 +288,8 @@ class BaseDownloader(object):
       raise
 
     # First attempt failed with URLError. Try something else before giving up.
-    except urllib.error.URLError as e:
-      logging.error('Error while downloading "%s": %s', url, e)
+    except urllib.error.URLError as e1:
+      logging.error('Error while downloading "%s": %s', url, e1)
 
       try:
         logging.info('Trying again with machine context...')
@@ -239,8 +302,8 @@ class BaseDownloader(object):
         raise
 
       # Second attempt failed with URLError. Reraise and trigger a retry.
-      except urllib.error.URLError as e:
-        logging.error('Error while downloading "%s": %s', url, e)
+      except urllib.error.URLError as e2:
+        logging.error('Error while downloading "%s": %s', url, e2)
         raise
 
     # We successfully retrieved a file stream, so just return it.
@@ -254,8 +317,7 @@ class BaseDownloader(object):
 
     # For anything else, fail permanently with a DownloadError.
     else:
-      raise DownloadError('Invalid return code for file %s. [%d]' %
-                          (url, file_stream.getcode()))
+      raise DownloadFailedError(url, file_stream.getcode())
 
   def _OpenStream(
       self,
@@ -272,15 +334,15 @@ class BaseDownloader(object):
       file_stream: urlopen's file stream
 
     Raises:
-      DownloadError: The resource was unreachable or failed to return with the
-        expected code.
+      InvalidRemoteUrlError: The resource was unreachable or failed to return
+        with the expected code.
     """
     self._InstallOpeners()
 
     url = url.strip()
     parsed = urllib.parse.urlparse(url)
     if not parsed.netloc:
-      raise DownloadError('Invalid remote server URL "%s".' % url)
+      raise InvalidRemoteUrlError(url)
 
     return self._OpenFileStream(url, status_codes)
 
@@ -297,7 +359,7 @@ class BaseDownloader(object):
     try:
       self._OpenStream(url, status_codes=status_codes)
       return True
-    except DownloadError as e:
+    except Error as e:
       logging.error(e)
     return False
 
@@ -316,7 +378,7 @@ class BaseDownloader(object):
       show_progress: Print download progress to stdout (overrides default).
 
     Raises:
-      DownloadError: failure writing file to the save_location
+      LocalCopyError: failure writing file to the save_location
     """
     self._save_location = save_location
     if IsRemote(url):
@@ -328,7 +390,7 @@ class BaseDownloader(object):
       try:
         file_util.Copy(url, save_location)
       except file_util.Error as e:
-        raise DownloadError(e) from e
+        raise LocalCopyError(url, save_location) from e
 
   def DownloadFileTemp(self, url: str, show_progress: bool = False) -> str:
     """Downloads a file to temporary storage.
@@ -377,7 +439,7 @@ class BaseDownloader(object):
       A string with the applicable URLs
 
     Raises:
-      DownloadError: Failed to obtain SignedURL.
+      SignedUrlError: Failed to obtain SignedURL.
     """
     if not FLAGS.use_signed_url:
       return url
@@ -386,7 +448,7 @@ class BaseDownloader(object):
       return self._beyondcorp.GetSignedUrl(
           url[url.startswith(config_server) and len(config_server):])
     except beyondcorp.Error as e:
-      raise DownloadError(e) from e
+      raise SignedUrlError(url) from e
 
   def _StoreDebugInfo(self,
                       file_stream: 'http.client.HTTPResponse',
@@ -437,14 +499,14 @@ class BaseDownloader(object):
       show_progress: Print download progress to stdout (overrides default).
 
     Raises:
-      DownloadError: Error retrieving file or saving to disk.
+      Error: Error retrieving file or saving to disk.
     """
     progress = self._default_show_progress
     if show_progress is not None:
       progress = show_progress
 
     if file_stream is None:
-      raise DownloadError('Cannot save to disk, missing file stream')
+      raise MissingFileStreamError()
 
     bytes_so_far = 0
     url, total_size = self._GetFileStreamSize(file_stream)
@@ -463,10 +525,12 @@ class BaseDownloader(object):
             self._DownloadChunkReport(bytes_so_far, total_size)
     except socket.error as e:
       self._StoreDebugInfo(file_stream, str(e))
-      raise DownloadError('Socket error during download.') from e
+      raise StreamToDiskError('Socket error during download.') from e
     except IOError as e:
-      raise DownloadError('File location could not be opened for writing: %s' %
-                          self._save_location) from e
+      message = (
+          f'File location could not be opened for writing: '
+          f'{self._save_location}')
+      raise StreamToDiskError(message) from e
     self._Validate(file_stream, total_size)
     file_stream.close()
 
@@ -479,18 +543,20 @@ class BaseDownloader(object):
       expected_size:  The total size of the file being downloaded.
 
     Raises:
-      DownloadError: File failed validation.
+      FileValidationError: File failed validation.
     """
     if not os.path.exists(self._save_location):
       self._StoreDebugInfo(file_stream)
-      raise DownloadError('Could not locate file at %s' % self._save_location)
+      raise FileValidationError(
+          f'Could not locate file at {self._save_location}')
 
     actual_file_size = os.path.getsize(self._save_location)
     if actual_file_size != expected_size:
       self._StoreDebugInfo(file_stream)
-      message = ('File size of %s bytes did not match expected size of %s!' %
-                 (actual_file_size, expected_size))
-      raise DownloadError(message)
+      message = (
+          f'File size of {actual_file_size} bytes did not match expected size '
+          f'of {expected_size}!')
+      raise FileValidationError(message)
 
   def VerifyShaHash(self, file_path: str, expected: str) -> bool:
     """Verifies the SHA256 hash of a file.

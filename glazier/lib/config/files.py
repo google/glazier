@@ -132,7 +132,7 @@ def Read(path: str):
     downloader = download.Download()
     try:
       path = downloader.DownloadFileTemp(path)
-    except download.DownloadError as e:
+    except download.Error as e:
       raise FileDownloadError(path) from e
   return _YamlReader(path)
 

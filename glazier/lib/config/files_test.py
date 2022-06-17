@@ -50,7 +50,7 @@ class FilesTest(absltest.TestCase):
         'https://glazier-server.example.com/unstable/dir/test-build.yaml')
     self.assertEqual(result['data'], 'set1')
     # download error
-    download.side_effect = files.download.DownloadError
+    download.side_effect = files.download.Error
     self.assertRaises(
         files.Error, files.Read,
         'https://glazier-server.example.com/unstable/dir/test-build.yaml')

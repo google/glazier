@@ -110,7 +110,7 @@ class Get(BaseAction):
                           (dst, e)) from e
       try:
         downloader.DownloadFile(full_url, dst, show_progress=True)
-      except download.DownloadError as e:
+      except download.Error as e:
         downloader.PrintDebugInfo()
         raise ActionError('Transfer error while downloading %s: %s' %
                           (full_url, str(e))) from e
