@@ -66,6 +66,7 @@ class ErrorCode(enum.IntEnum):
   BUILD_INFO_KEY_MISSING = 7038
   BUILD_INFO_FILE_MISSING = 7039
   UNKNOWN_SPEC = 7040
+  MODULE_NOT_AVAILABLE = 7041
 
 
 class GlazierError(Exception):

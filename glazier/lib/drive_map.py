@@ -17,9 +17,20 @@
 import logging
 import time
 
+from glazier.lib import errors
 
-class ModuleImportError(Exception):
+
+class Error(errors.GlazierError):
+  pass
+
+
+class ModuleImportError(Error):
   """Error loading required python modules."""
+
+  def __init__(self, module: str):
+    super().__init__(
+        error_code=errors.ErrorCode.MODULE_NOT_AVAILABLE,
+        message=f'No module named "{module}" available on this platform')
 
 
 class DriveMap(object):
@@ -88,12 +99,10 @@ class DriveMap(object):
       import win32wnet  # pylint: disable=g-import-not-at-top
       self._win32wnet = win32wnet
     except ImportError as e:
-      raise ModuleImportError(
-          'No win32wnet module available on this platform.') from e
+      raise ModuleImportError('win32wnet') from e
 
     try:
       import win32netcon  # pylint: disable=g-import-not-at-top
       self._win32netcon = win32netcon
     except ImportError as e:
-      raise ModuleImportError(
-          'No win32netcon module available on this platform.') from e
+      raise ModuleImportError('win32netcon') from e
