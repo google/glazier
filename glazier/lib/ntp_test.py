@@ -29,16 +29,20 @@ class NtpTest(absltest.TestCase):
   @mock.patch.object(ntp.time, 'sleep', autospec=True)
   @mock.patch.object(execute, 'execute_binary', autospec=True)
   @mock.patch.object(ntp.ntplib.NTPClient, 'request', autospec=True)
-  def testSyncClockToNtp(self, request, eb, sleep):
+  def test_sync_clock_to_ntp(self, request, eb, sleep):
+
     os.environ['TZ'] = 'UTC'
     time.tzset()
     return_time = mock.Mock()
     return_time.ref_time = 1453220630.64458
     request.side_effect = iter([None, None, None, return_time])
     eb.return_value = True
+
     # Too Few Retries
-    self.assertRaises(ntp.NtpException, ntp.SyncClockToNtp)
+    with self.assertRaises(ntp.NoNtpResponseError):
+      ntp.SyncClockToNtp()
     sleep.assert_has_calls([mock.call(30), mock.call(30)])
+
     # Sufficient Retries
     ntp.SyncClockToNtp(retries=3, server='time.google.com')
     request.assert_called_with(mock.ANY, 'time.google.com', version=3)
@@ -50,12 +54,16 @@ class NtpTest(absltest.TestCase):
             f'{constants.SYS_SYSTEM32}/cmd.exe', ['/c', 'time', '16:23:50'],
             shell=True)
     ])
+
     # Socket Error
     request.side_effect = ntp.socket.gaierror
-    self.assertRaises(ntp.NtpException, ntp.SyncClockToNtp)
+    with self.assertRaises(ntp.NoNtpResponseError):
+      ntp.SyncClockToNtp()
+
     # NTP lib error
     request.side_effect = ntp.ntplib.NTPException
-    self.assertRaises(ntp.NtpException, ntp.SyncClockToNtp)
+    with self.assertRaises(ntp.NoNtpResponseError):
+      ntp.SyncClockToNtp()
 
 
 if __name__ == '__main__':

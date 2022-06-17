@@ -25,12 +25,22 @@ from glazier.lib import execute
 from glazier.lib.constants import WINPE_SYSTEM32
 import ntplib
 
+from glazier.lib import errors
+
 BINARY = os.path.join(WINPE_SYSTEM32, 'cmd.exe')
 RETRY_DELAY = 30
 
 
-class NtpException(Exception):
+class Error(errors.GlazierError):
   pass
+
+
+class NoNtpResponseError(Error):
+
+  def __init__(self):
+    super().__init__(
+        error_code=errors.ErrorCode.NO_NTP_RESPONSE,
+        message='No response from NTP server.')
 
 
 def SyncClockToNtp(retries: int = 2, server: str = 'time.google.com'):
@@ -57,7 +67,7 @@ def SyncClockToNtp(retries: int = 2, server: str = 'time.google.com'):
     attempts += 1
 
   if not response:
-    raise NtpException('No response from NTP server.')
+    raise NoNtpResponseError()
 
   local_time = time.localtime(response.ref_time)
   current_date = time.strftime('%m-%d-%Y', local_time)
