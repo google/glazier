@@ -26,12 +26,46 @@ from glazier.lib import constants
 from glazier.lib import execute
 from glazier.lib import winpe
 
+from glazier.lib import errors
+
 if typing.TYPE_CHECKING:
   from glazier.lib import buildinfo
 
 
-class Error(Exception):
+class Error(errors.GlazierError):
   pass
+
+
+class GooGetFlagError(Error):
+
+  def __init__(self, message: str):
+    super().__init__(
+        error_code=errors.ErrorCode.GOOGET_FLAG_ERROR,
+        message=message)
+
+
+class GooGetBinaryNotFoundError(Error):
+
+  def __init__(self, path: str):
+    super().__init__(
+        error_code=errors.ErrorCode.GOOGET_BINARY_NOT_FOUND,
+        message=f'Cannot find path of GooGet binary: {path}')
+
+
+class GooGetMissingPackageNameError(Error):
+
+  def __init__(self):
+    super().__init__(
+        error_code=errors.ErrorCode.GOOGET_MISSING_PACKAGE_NAME,
+        message='Missing package name for GooGet install.')
+
+
+class GooGetCommandFailedError(Error):
+
+  def __init__(self, retries: int):
+    super().__init__(
+        error_code=errors.ErrorCode.GOOGET_COMMAND_FAILED,
+        message=f'GooGet command failed after {retries} attempts')
 
 
 class GooGetInstall(object):
@@ -52,23 +86,24 @@ class GooGetInstall(object):
       branch: active release branch
 
     Raises:
-      Error: GooGet flags(s) were not passed as a list
-      Error: GooGet source(s) not specified
+      GooGetFlagError: GooGet flags(s) were not passed as a list, or were
+          improperly specified.
 
     Returns:
       Adjusted strings that are part of the sources array.
     """
     if not isinstance(flags, list):
-      raise Error('GooGet flags were not passed as a list')
+      raise GooGetFlagError('GooGet flags were not passed as a list')
 
     # URL should be kept separate from other optional flags
     url, options = [], []
 
     if re.search(r'(-root)', str(flags)):
-      raise Error('Root flag detected, remove flag to continue.')
+      raise GooGetFlagError('Root flag detected, remove flag to continue.')
 
     if re.search(r'(-sources)', str(flags)):
-      raise Error('Sources keyword detected, Enter URL without \'-sources\'')
+      raise GooGetFlagError(
+          'Sources keyword detected, Enter URL without \'-sources\'')
 
     for flag in flags:
       # Find all URLs
@@ -114,14 +149,16 @@ class GooGetInstall(object):
       and/or -sources
 
     Raises:
-      Error: The GooGet command failed.
+      GooGetBinaryNotFoundError: If googet.exe cannot be found.
+      GooGetMissingPackageNameError: If the GooGet package is not specified.
+      GooGetCommandFailedError: If execution of googet.exe fails for any reason.
     """
     if not kwargs['path']:
       kwargs['path'] = os.path.join(self._GooGet(), 'googet.exe')
     if not os.path.exists(kwargs['path']):
-      raise Error('Cannot find path of GooGet binary [%s]' % kwargs['path'])
+      raise GooGetBinaryNotFoundError(kwargs['path'])
     if not pkg:
-      raise Error('Missing package name for GooGet install.')
+      raise GooGetMissingPackageNameError()
 
     # Pass --root as GOOGETROOT environmental variable may not exist
     root = '--root=' + self._GooGet()
@@ -147,4 +184,4 @@ class GooGetInstall(object):
         logging.info('Retrying in %d seconds', sleep)
         time.sleep(sleep)
 
-    raise Error('GooGet command failed after %d attempts' % retries)
+    raise GooGetCommandFailedError(retries)
