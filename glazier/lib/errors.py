@@ -71,6 +71,7 @@ class ErrorCode(enum.IntEnum):
   GOOGET_BINARY_NOT_FOUND = 7043
   GOOGET_MISSING_PACKAGE_NAME = 7044
   GOOGET_COMMAND_FAILED = 7045
+  AUTOBUILD_ERROR = 7046
 
 
 class GlazierError(Exception):
@@ -100,22 +101,6 @@ class GlazierError(Exception):
       s = f'{s} (Cause: {cause_message})'
 
     return s
-
-
-class ConfigBuilderError(GlazierError):
-
-  def __init__(self):
-    super().__init__(
-        error_code=ErrorCode.FAILED_TASK_LIST_BUILD,
-        message='Failed to build the task list')
-
-
-class ConfigRunnerError(GlazierError):
-
-  def __init__(self):
-    super().__init__(
-        error_code=ErrorCode.FAILED_TASK_LIST_RUN,
-        message='Failed to execute the task list')
 
 
 class SysInfoError(GlazierError):

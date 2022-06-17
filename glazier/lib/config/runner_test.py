@@ -42,7 +42,7 @@ class ConfigRunnerTest(absltest.TestCase):
   @mock.patch.object(runner.files, 'Remove', autospec=True)
   @mock.patch.object(runner.base.actions, 'pull', autospec=True)
   @mock.patch.object(runner.files, 'Dump', autospec=True)
-  def testIteration(self, dump, pull, remove):
+  def test_iteration(self, mock_dump, mock_pull, mock_remove):
     conf = [{
         'data': {
             'pull': 'val1'
@@ -63,33 +63,33 @@ class ConfigRunnerTest(absltest.TestCase):
         'server': 'https://glazier.example.com'
     }]
     self.cr._ProcessTasks(conf)
-    dump.assert_has_calls([
+    mock_dump.assert_has_calls([
         mock.call(self.cr._task_list_path, conf[1:], mode='w'),
         mock.call(self.cr._task_list_path, conf[2:], mode='w'),
         mock.call(self.cr._task_list_path, [], mode='w')
     ])
-    pull.assert_has_calls([])
-    self.assertTrue(remove.called)
+    mock_pull.assert_has_calls([])
+    self.assertTrue(mock_remove.called)
 
   @mock.patch.object(runner.files, 'Dump', autospec=True)
-  def testPopTask(self, dump):
+  def test_pop_task(self, mock_dump):
     self.cr._PopTask([1, 2, 3])
-    dump.assert_called_with('/tmp/task_list.yaml', [2, 3], mode='w')
-    dump.side_effect = runner.files.Error
+    mock_dump.assert_called_with('/tmp/task_list.yaml', [2, 3], mode='w')
+    mock_dump.side_effect = runner.files.Error
     with self.assertRaises(runner.ConfigRunnerError):
       self.cr._PopTask([1, 2])
 
   @mock.patch.object(runner.files, 'Remove', autospec=True)
   @mock.patch.object(runner.files, 'Dump', autospec=True)
-  def testPopLastTask(self, dump, remove):
+  def test_pop_last_task(self, mock_dump, mock_remove):
     self.cr._PopTask([1])
-    dump.assert_called_with('/tmp/task_list.yaml', [], mode='w')
-    remove.assert_called_with('/tmp/task_list.yaml')
+    mock_dump.assert_called_with('/tmp/task_list.yaml', [], mode='w')
+    mock_remove.assert_called_with('/tmp/task_list.yaml')
 
   @mock.patch.object(runner.power, 'Restart', autospec=True)
   @mock.patch.object(runner.ConfigRunner, '_ProcessAction', autospec=True)
   @mock.patch.object(runner.ConfigRunner, '_PopTask', autospec=True)
-  def testRestartEvents(self, pop, action, restart):
+  def test_restart_events(self, mock_poptask, mock_processaction, mock_restart):
     conf = [{
         'data': {
             'Shutdown': ['25', 'Reason']
@@ -98,32 +98,37 @@ class ConfigRunnerTest(absltest.TestCase):
         'server': 'https://glazier.example.com'
     }]
     event = events.RestartEvent('Some reason', timeout=25)
-    action.side_effect = event
-    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
-    restart.assert_called_with(25, 'Some reason')
-    self.assertTrue(pop.called)
-    pop.reset_mock()
+    mock_processaction.side_effect = event
+    with self.assertRaises(SystemExit):
+      self.cr._ProcessTasks(conf)
+    mock_restart.assert_called_with(25, 'Some reason')
+    self.assertTrue(mock_poptask.called)
+    mock_poptask.reset_mock()
 
     # with retry
     event = events.RestartEvent(
         'Some other reason', timeout=10, retry_on_restart=True)
-    action.side_effect = event
-    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
-    restart.assert_called_with(10, 'Some other reason')
-    self.assertFalse(pop.called)
+    mock_processaction.side_effect = event
+    with self.assertRaises(SystemExit):
+      self.cr._ProcessTasks(conf)
+    mock_restart.assert_called_with(10, 'Some other reason')
+    self.assertFalse(mock_poptask.called)
 
     # with pop
     event = events.RestartEvent(
         'Some other reason', timeout=10, pop_next=True)
-    action.side_effect = event
-    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
-    restart.assert_called_with(10, 'Some other reason')
-    self.assertTrue(pop.called)
+    mock_processaction.side_effect = event
+    with self.assertRaises(SystemExit):
+      self.cr._ProcessTasks(conf)
+    mock_restart.assert_called_with(10, 'Some other reason')
+    self.assertTrue(mock_poptask.called)
 
   @mock.patch.object(runner.power, 'Shutdown', autospec=True)
   @mock.patch.object(runner.ConfigRunner, '_ProcessAction', autospec=True)
   @mock.patch.object(runner.ConfigRunner, '_PopTask', autospec=True)
-  def testShutdownEvents(self, pop, action, shutdown):
+  def test_shutdown_events(
+      self, mock_poptask, mock_processaction, mock_shutdown):
+
     conf = [{
         'data': {
             'Restart': ['25', 'Reason']
@@ -132,60 +137,71 @@ class ConfigRunnerTest(absltest.TestCase):
         'server': 'https://glazier.example.com'
     }]
     event = events.ShutdownEvent('Some reason', timeout=25)
-    action.side_effect = event
-    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
-    shutdown.assert_called_with(25, 'Some reason')
-    self.assertTrue(pop.called)
-    pop.reset_mock()
+    mock_processaction.side_effect = event
+    with self.assertRaises(SystemExit):
+      self.cr._ProcessTasks(conf)
+    mock_shutdown.assert_called_with(25, 'Some reason')
+    self.assertTrue(mock_poptask.called)
+    mock_poptask.reset_mock()
 
     # with retry
     event = events.ShutdownEvent(
         'Some other reason', timeout=10, retry_on_restart=True)
-    action.side_effect = event
-    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
-    shutdown.assert_called_with(10, 'Some other reason')
-    self.assertFalse(pop.called)
+    mock_processaction.side_effect = event
+    with self.assertRaises(SystemExit):
+      self.cr._ProcessTasks(conf)
+    mock_shutdown.assert_called_with(10, 'Some other reason')
+    self.assertFalse(mock_poptask.called)
 
     # with pop
     event = events.ShutdownEvent(
         'Some other reason', timeout=10, pop_next=True)
-    action.side_effect = event
-    self.assertRaises(SystemExit, self.cr._ProcessTasks, conf)
-    shutdown.assert_called_with(10, 'Some other reason')
-    self.assertTrue(pop.called)
+    mock_processaction.side_effect = event
+    with self.assertRaises(SystemExit):
+      self.cr._ProcessTasks(conf)
+    mock_shutdown.assert_called_with(10, 'Some other reason')
+    self.assertTrue(mock_poptask.called)
 
   @mock.patch.object(runner.base.actions, 'SetTimer', autospec=True)
-  def testProcessWithActionError(self, set_timer):
-    set_timer.side_effect = runner.base.actions.ActionError
-    self.assertRaises(runner.ConfigRunnerError, self.cr._ProcessTasks, [{
-        'data': {
-            'SetTimer': ['Timer1']
-        },
-        'path': ['/autobuild'],
-        'server': 'https://glazier.example.com'
-    }])
+  def test_process_with_action_error(self, mock_settimer):
+    mock_settimer.side_effect = runner.base.actions.ActionError
+    with self.assertRaises(runner.ConfigRunnerError):
+      self.cr._ProcessTasks(
+          [{
+              'data': {
+                  'SetTimer': ['Timer1']
+              },
+              'path': ['/autobuild'],
+              'server': 'https://glazier.example.com'
+          }]
+      )
 
-  def testProcessWithInvalidCommand(self):
-    self.assertRaises(runner.ConfigRunnerError, self.cr._ProcessTasks, [{
-        'data': {
-            'BadSetTimer': ['Timer1']
-        },
-        'path': ['/autobuild'],
-        'server': 'https://glazier.example.com'
-    }])
+  def test_process_with_invalid_command(self):
+    with self.assertRaises(runner.ConfigRunnerError):
+      self.cr._ProcessTasks(
+          [{
+              'data': {
+                  'BadSetTimer': ['Timer1']
+              },
+              'path': ['/autobuild'],
+              'server': 'https://glazier.example.com'
+          }]
+      )
 
   @mock.patch.object(runner.files, 'Read', autospec=True)
-  def testStartWithMissingFile(self, reader):
-    reader.side_effect = runner.files.Error
-    self.assertRaises(runner.ConfigRunnerError, self.cr.Start,
-                      '/tmp/path/missing.yaml')
+  def test_start_with_missing_file(self, mock_read):
+    mock_read.side_effect = runner.files.Error
+    with self.assertRaises(runner.ConfigRunnerError):
+      self.cr.Start('/tmp/path/missing.yaml')
 
   @mock.patch.object(runner.base.actions, 'SetTimer', autospec=True)
   @mock.patch.object(runner.files, 'Read', autospec=True)
   @mock.patch.object(runner.files, 'Remove', autospec=True)
   @mock.patch.object(runner.files, 'Dump', autospec=True)
-  def testStartWithActions(self, dump, remove, reader, set_timer):
-    reader.return_value = [{
+  def test_start_with_actions(
+      self, mock_dump, mock_remove, mock_read, mock_settimer):
+
+    mock_read.return_value = [{
         'data': {
             'SetTimer': ['TestTimer']
         },
@@ -193,21 +209,23 @@ class ConfigRunnerTest(absltest.TestCase):
         'server': 'https://glazier.example.com'
     }]
     self.cr.Start('/tmp/path/tasks.yaml')
-    reader.assert_called_with('/tmp/path/tasks.yaml')
-    set_timer.assert_called_with(build_info=self.buildinfo, args=['TestTimer'])
-    self.assertTrue(set_timer.return_value.Run.called)
-    self.assertTrue(dump.called)
-    self.assertTrue(remove.called)
+    mock_read.assert_called_with('/tmp/path/tasks.yaml')
+    mock_settimer.assert_called_with(
+        build_info=self.buildinfo, args=['TestTimer'])
+    self.assertTrue(mock_settimer.return_value.Run.called)
+    self.assertTrue(mock_dump.called)
+    self.assertTrue(mock_remove.called)
 
   @mock.patch.object(runner.download.Download, 'CheckUrl', autospec=True)
-  def testVerifyUrls(self, dl):
-    dl.return_value = True
+  def test_verify_urls(self, mock_checkurl):
+    mock_checkurl.return_value = True
     constants.FLAGS.verify_urls = ['http://www.example.com/']
     self.cr._ProcessTasks([])
-    dl.assert_called_with(mock.ANY, 'http://www.example.com/', [200])
+    mock_checkurl.assert_called_with(mock.ANY, 'http://www.example.com/', [200])
     # fail
-    dl.return_value = False
-    self.assertRaises(runner.errors.CheckUrlError, self.cr._ProcessTasks, [])
+    mock_checkurl.return_value = False
+    with self.assertRaises(runner.errors.CheckUrlError):
+      self.cr._ProcessTasks([])
 
 
 if __name__ == '__main__':

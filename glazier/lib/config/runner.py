@@ -26,8 +26,16 @@ from glazier.lib import errors
 from glazier.lib import policies
 
 
-class ConfigRunnerError(base.ConfigError):
+class Error(errors.GlazierError):
   pass
+
+
+class ConfigRunnerError(Error):
+
+  def __init__(self):
+    super().__init__(
+        error_code=errors.ErrorCode.FAILED_TASK_LIST_RUN,
+        message='Failed to execute the task list')
 
 
 class ConfigRunner(base.ConfigBase):

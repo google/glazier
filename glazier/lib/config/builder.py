@@ -62,8 +62,16 @@ _ALLOW_IN_TEMPLATE = [
 _ALLOW_IN_CONTROL = _ALLOW_IN_TEMPLATE + ['pin']
 
 
-class ConfigBuilderError(base.ConfigError):
+class Error(errors.GlazierError):
   pass
+
+
+class ConfigBuilderError(Error):
+
+  def __init__(self):
+    super().__init__(
+        error_code=errors.ErrorCode.FAILED_TASK_LIST_BUILD,
+        message='Failed to build the task list')
 
 
 class ConfigBuilder(base.ConfigBase):

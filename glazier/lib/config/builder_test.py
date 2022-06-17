@@ -32,9 +32,10 @@ class ConfigBuilderTest(absltest.TestCase):
     self.cb._task_list = []
 
   @mock.patch.object(buildinfo.BuildInfo, 'BuildPinMatch', autospec=True)
-  def testMatchPin(self, bpm):
+  def test_match_pin(self, mock_buildpinmatch):
+
     # All direct matching.
-    bpm.side_effect = iter([True, True])
+    mock_buildpinmatch.side_effect = iter([True, True])
     pins = {
         'computer_model': [
             'HP Z640 Workstation',
@@ -43,8 +44,9 @@ class ConfigBuilderTest(absltest.TestCase):
         'os_code': ['win7']
     }
     self.assertTrue(self.cb._MatchPin(pins))
+
     # Inverse match + direct match.
-    bpm.side_effect = iter([False, True])
+    mock_buildpinmatch.side_effect = iter([False, True])
     pins = {
         'computer_model': [
             'HP Z640 Workstation',
@@ -53,56 +55,64 @@ class ConfigBuilderTest(absltest.TestCase):
         'os_code': ['win7']
     }
     self.assertFalse(self.cb._MatchPin(pins))
+
     # Inverse miss.
-    bpm.side_effect = iter([True, False])
+    mock_buildpinmatch.side_effect = iter([True, False])
     pins = {'computer_model': ['!VMWare Virtual Platform'], 'os_code': ['win8']}
     self.assertFalse(self.cb._MatchPin(pins))
+
     # Empty set.
     pins = {}
     self.assertTrue(self.cb._MatchPin(pins))
+
     # Inverse miss + direct mismatch.
-    bpm.side_effect = iter([False, False])
+    mock_buildpinmatch.side_effect = iter([False, False])
     pins = {'computer_model': ['VMWare Virtual Platform'], 'os_code': ['win8']}
     self.assertFalse(self.cb._MatchPin(pins))
+
     # Error
-    bpm.side_effect = buildinfo.Error
-    self.assertRaises(builder.errors.SysInfoError, self.cb._MatchPin, pins)
+    mock_buildpinmatch.side_effect = buildinfo.Error
+    with self.assertRaises(builder.errors.SysInfoError):
+      self.cb._MatchPin(pins)
 
   @mock.patch.object(builder.ConfigBuilder, '_ProcessAction', autospec=True)
-  def testRealtime(self, process):
+  def test_realtime(self, mock_processaction):
     config = {'ShowChooser': ['Chooser Stuff']}
     self.cb._StoreControls(config, {})
-    process.assert_called_with(mock.ANY, 'ShowChooser', ['Chooser Stuff'])
-    process.reset_mock()
+    mock_processaction.assert_called_with(
+        mock.ANY, 'ShowChooser', ['Chooser Stuff'])
+    mock_processaction.reset_mock()
     config = {'CopyFile': [r'C:\input.txt', r'C:\output.txt']}
     self.cb._StoreControls(config, {})
-    self.assertFalse(process.called)
+    self.assertFalse(mock_processaction.called)
     self.assertEqual(self.cb._task_list[0]['data'], config)
 
   @mock.patch.object(builder.ConfigBuilder, '_Start', autospec=True)
   @mock.patch.object(files, 'Dump', autospec=True)
-  def testStartWithRestart(self, dump, start):
-    start.side_effect = iter([actions.ServerChangeEvent('test'), None])
+  def test_start_with_restart(self, mock_dump, mock_start):
+    mock_start.side_effect = iter([actions.ServerChangeEvent('test'), None])
     self.cb.Start('/task/list/path.yaml', '/root1')
-    start.assert_has_calls([
+    mock_start.assert_has_calls([
         mock.call(self.cb, '/root1', 'build.yaml'),
         mock.call(self.cb, '', 'build.yaml'),
     ])
-    dump.assert_called_with('/task/list/path.yaml', [], mode='a')
+    mock_dump.assert_called_with('/task/list/path.yaml', [], mode='a')
 
   @mock.patch.object(builder.ConfigBuilder, '_StoreControls', autospec=True)
   @mock.patch.object(builder.download, 'PathCompile', autospec=True)
   @mock.patch.object(builder.files, 'Read', autospec=True)
-  def testStartWithServerChange(self, read, path, store):
-    path.return_value = '/'
-    read.return_value = {
+  def test_start_with_server_change(
+      self, mock_read, mock_pathcompile, mock_storecontrols):
+
+    mock_pathcompile.return_value = '/'
+    mock_read.return_value = {
         'controls': [{
             'ServerChangeEvent': ['https://glazier.example.com', '/']
         }]
     }
-    store.side_effect = iter([actions.ServerChangeEvent('test')])
-    self.assertRaises(actions.ServerChangeEvent, self.cb._Start, '/task/path/',
-                      'list.yaml')
+    mock_storecontrols.side_effect = iter([actions.ServerChangeEvent('test')])
+    with self.assertRaises(actions.ServerChangeEvent):
+      self.cb._Start('/task/path/', 'list.yaml')
     self.assertEqual(self.cb._task_list[0]['data']['SetTimer'],
                      ['start_/task/path_list.yaml'])
     self.assertEqual(self.cb._task_list[1]['data']['SetTimer'],
