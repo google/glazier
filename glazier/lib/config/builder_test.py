@@ -72,7 +72,7 @@ class ConfigBuilderTest(absltest.TestCase):
 
     # Error
     mock_buildpinmatch.side_effect = buildinfo.Error
-    with self.assertRaises(builder.errors.SysInfoError):
+    with self.assertRaises(builder.SysInfoError):
       self.cb._MatchPin(pins)
 
   @mock.patch.object(builder.ConfigBuilder, '_ProcessAction', autospec=True)

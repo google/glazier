@@ -74,6 +74,14 @@ class ConfigBuilderError(Error):
         message='Failed to build the task list')
 
 
+class SysInfoError(Error):
+
+  def __init__(self):
+    super().__init__(
+        error_code=errors.ErrorCode.SYS_INFO,
+        message='Error gathering system information')
+
+
 class ConfigBuilder(base.ConfigBase):
   """Builds the complete task list for the installation."""
 
@@ -168,7 +176,7 @@ class ConfigBuilder(base.ConfigBase):
         if not self._build_info.BuildPinMatch(pin, pins[pin]):
           return False
       except buildinfo.Error as e:
-        raise errors.SysInfoError() from e
+        raise SysInfoError() from e
     return True
 
   def _StoreControls(self, control, templates):

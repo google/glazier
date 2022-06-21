@@ -119,14 +119,6 @@ class GlazierError(Exception):
     return s
 
 
-class SysInfoError(GlazierError):
-
-  def __init__(self):
-    super().__init__(
-        error_code=ErrorCode.SYS_INFO,
-        message='Error gathering system information')
-
-
 class UnknownActionError(GlazierError):
 
   def __init__(self, action: str):
