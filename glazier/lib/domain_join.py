@@ -27,6 +27,8 @@ from glazier.lib import constants
 from glazier.lib import interact
 from glazier.lib import powershell
 
+from glazier.lib import errors
+
 
 AUTH_OPTS = [
     'auto',
@@ -34,8 +36,16 @@ AUTH_OPTS = [
 ]
 
 
-class DomainJoinError(Exception):
+class Error(errors.GlazierError):
   pass
+
+
+class DomainJoinError(Error):
+
+  def __init__(self, message: str):
+    super().__init__(
+        error_code=errors.ErrorCode.DOMAIN_JOIN_FAILURE,
+        message=message)
 
 
 class DomainJoinCredentials(object):

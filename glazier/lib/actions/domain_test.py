@@ -17,38 +17,46 @@
 from unittest import mock
 
 from absl.testing import absltest
+from absl.testing import parameterized
 from glazier.lib.actions import domain
 
 
-class DomainTest(absltest.TestCase):
+class DomainTest(parameterized.TestCase):
 
   @mock.patch.object(domain.domain_join, 'DomainJoin', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testDomainJoin(self, build_info, join):
+  def test_domain_join(self, mock_buildinfo, mock_domainjoin):
+
     args = ['interactive', 'domain.test.com']
-    dj = domain.DomainJoin(args, build_info)
+    dj = domain.DomainJoin(args, mock_buildinfo)
     dj.Run()
-    join.assert_called_with('interactive', 'domain.test.com', None)
+    mock_domainjoin.assert_called_with('interactive', 'domain.test.com', None)
+
     # default ou
     args += ['OU=Test,DC=DOMAIN,DC=TEST,DC=COM']
-    dj = domain.DomainJoin(args, build_info)
+    dj = domain.DomainJoin(args, mock_buildinfo)
     dj.Run()
-    join.assert_called_with('interactive', 'domain.test.com',
-                            'OU=Test,DC=DOMAIN,DC=TEST,DC=COM')
-    # error
-    join.return_value.JoinDomain.side_effect = (
-        domain.domain_join.DomainJoinError)
-    self.assertRaises(domain.ActionError, dj.Run)
+    mock_domainjoin.assert_called_with(
+        'interactive', 'domain.test.com', 'OU=Test,DC=DOMAIN,DC=TEST,DC=COM')
 
-  def testDomainJoinValidate(self):
-    dj = domain.DomainJoin('interactive', None)
-    self.assertRaises(domain.ValidationError, dj.Validate)
-    dj = domain.DomainJoin([1, 2, 3], None)
-    self.assertRaises(domain.ValidationError, dj.Validate)
-    dj = domain.DomainJoin([1], None)
-    self.assertRaises(domain.ValidationError, dj.Validate)
-    dj = domain.DomainJoin(['unknown'], None)
-    self.assertRaises(domain.ValidationError, dj.Validate)
+    # error
+    mock_domainjoin.return_value.JoinDomain.side_effect = (
+        domain.domain_join.DomainJoinError('join failed'))
+    with self.assertRaises(domain.ActionError):
+      dj.Run()
+
+  @parameterized.named_parameters(
+      ('_not_a_list', 'interactive', None),
+      ('_invalid_list_member_types', [1, 2, 3], None),
+      ('_list_too_short', [1], None),
+      ('_invalid_list_member_values', ['unknown'], None),
+  )
+  def test_domain_join_validation_failure(self, join_args, build_info):
+    dj = domain.DomainJoin(join_args, build_info)
+    with self.assertRaises(domain.ValidationError):
+      dj.Validate()
+
+  def test_domain_join_validation_success(self):
     dj = domain.DomainJoin(['interactive', 'domain.test.com'], None)
     dj.Validate()
 
