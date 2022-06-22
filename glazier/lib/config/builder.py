@@ -82,6 +82,14 @@ class SysInfoError(Error):
         message='Error gathering system information')
 
 
+class UnknownActionError(Error):
+
+  def __init__(self, action: str):
+    super().__init__(
+        error_code=errors.ErrorCode.UNKNOWN_ACTION,
+        message=f'Unknown imaging action [{action}]')
+
+
 class ConfigBuilder(base.ConfigBase):
   """Builds the complete task list for the installation."""
 
@@ -187,7 +195,7 @@ class ConfigBuilder(base.ConfigBase):
       templates: Any templates declared in the current config.
 
     Raises:
-      ConfigBuilderError: Attempt to process an unknown command element.
+      UnknownActionError: Attempt to process an unknown command element.
     """
     for element in control:
       if element == 'pin':
@@ -208,4 +216,4 @@ class ConfigBuilder(base.ConfigBase):
               'server': copy.deepcopy(self._build_info.ConfigServer())
           })
       else:
-        raise errors.UnknownActionError(str(element))
+        raise UnknownActionError(str(element))

@@ -119,14 +119,6 @@ class GlazierError(Exception):
     return s
 
 
-class UnknownActionError(GlazierError):
-
-  def __init__(self, action: str):
-    super().__init__(
-        error_code=ErrorCode.UNKNOWN_ACTION,
-        message=f'Unknown imaging action [{action}]')
-
-
 class UnknownPolicyError(GlazierError):
 
   def __init__(self, policy: str):
