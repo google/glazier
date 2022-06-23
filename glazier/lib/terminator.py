@@ -55,7 +55,7 @@ def log_and_exit(msg: str,
   if collect:
     try:
       logs.Collect(os.path.join(build_info.CachePath(), r'\glazier_logs.zip'))
-    except logs.LogError as e:
+    except logs.Error as e:
       logging.error('logs collection failed with %s', e)
 
   # Log the full traceback to _BUILD_LOG to assist in troubleshooting

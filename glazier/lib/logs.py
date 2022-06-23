@@ -24,12 +24,30 @@ from glazier.lib import constants
 from glazier.lib import file_util
 from glazier.lib import winpe
 
+from glazier.lib import errors
+
 
 DATE_FMT = '%m%d %H:%M:%S'
 
 
-class LogError(Exception):
+class Error(errors.GlazierError):
   pass
+
+
+class LogCollectionError(Error):
+
+  def __init__(self):
+    super().__init__(
+        error_code=errors.ErrorCode.LOGS_COLLECTION_ERROR,
+        message='Error encountered while collecting logs')
+
+
+class LogOpenError(Error):
+
+  def __init__(self, log_file: str):
+    super().__init__(
+        error_code=errors.ErrorCode.LOGS_OPEN_ERROR,
+        message=f'Failed to open log file: {log_file}')
 
 
 def GetLogsPath():
@@ -52,7 +70,7 @@ def Collect(path: str):
         arc.write(os.path.join(root, f))
     arc.close()
   except (IOError, ValueError) as e:
-    raise LogError(e) from e
+    raise LogCollectionError() from e
 
 
 def Setup():
@@ -85,7 +103,7 @@ def Setup():
   try:
     fh = logging.FileHandler(log_file)
   except IOError as e:
-    raise LogError('Failed to open log file %s.' % log_file) from e
+    raise LogOpenError(log_file) from e
   fh.setLevel(logging.DEBUG)
   fh.setFormatter(debug_formatter)
   logger.addHandler(fh)

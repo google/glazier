@@ -29,7 +29,7 @@ TEST_ID = '1A19SEL90000R90DZN7A-1234567'
 
 class LoggingTest(absltest.TestCase):
 
-  def testCollect(self):
+  def test_collect(self):
     with Patcher() as patcher:
       files = [
           os.path.join(constants.SYS_LOGS_PATH, 'log1.log'),
@@ -43,54 +43,61 @@ class LoggingTest(absltest.TestCase):
         with out.open(files[1].lstrip('/')) as f2:
           self.assertEqual(f2.read(), b'log2 content')
 
-  def testCollectIOErr(self):
+  def test_collect_io_err(self):
     with Patcher() as patcher:
       patcher.fs.create_dir(constants.SYS_LOGS_PATH)
-      with self.assertRaises(logs.LogError):
+      with self.assertRaises(logs.LogCollectionError):
         logs.Collect(constants.SYS_LOGS_PATH)
 
   @mock.patch.object(zipfile.ZipFile, 'write', autospec=True)
-  def testCollectValueErr(self, wr):
-    wr.side_effect = ValueError('ZIP does not support timestamps before 1980')
+  def test_collect_value_err(self, mock_write):
+    mock_write.side_effect = ValueError(
+        'ZIP does not support timestamps before 1980')
     with Patcher() as patcher:
       patcher.fs.create_dir(constants.SYS_LOGS_PATH)
       patcher.fs.create_file(os.path.join(constants.SYS_LOGS_PATH, 'log1.log'))
-      with self.assertRaises(logs.LogError):
+      with self.assertRaises(logs.LogCollectionError):
         logs.Collect(r'C:\glazier.zip')
 
   @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
-  def testGetLogsPath(self, wpe):
+  def test_get_logs_path(self, mock_check_winpe):
+
     # WinPE
-    wpe.return_value = True
+    mock_check_winpe.return_value = True
     self.assertEqual(logs.GetLogsPath(), logs.constants.WINPE_LOGS_PATH)
 
     # Host
-    wpe.return_value = False
+    mock_check_winpe.return_value = False
     self.assertEqual(logs.GetLogsPath(), logs.constants.SYS_LOGS_PATH)
 
   @mock.patch.object(file_util, 'CreateDirectories')
   @mock.patch.object(logs.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(logs.logging, 'FileHandler')
-  def testSetup(self, fh, wpe, ii, create_dir):
-    ii.return_value = TEST_ID
-    wpe.return_value = False
+  def test_setup(
+      self, mock_filehandler, mock_check_winpe, mock_imageid,
+      mock_createdirectories):
+    mock_imageid.return_value = TEST_ID
+    mock_check_winpe.return_value = False
     logs.Setup()
-    create_dir.assert_called_with(r'%s\glazier.log' %
-                                  logs.constants.SYS_LOGS_PATH)
-    fh.assert_called_with(r'%s\glazier.log' % logs.constants.SYS_LOGS_PATH)
+    mock_createdirectories.assert_called_with(
+        r'%s\glazier.log' % logs.constants.SYS_LOGS_PATH)
+    mock_filehandler.assert_called_with(
+        r'%s\glazier.log' % logs.constants.SYS_LOGS_PATH)
 
   @mock.patch.object(file_util, 'CreateDirectories')
   @mock.patch.object(logs.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(logs.logging, 'FileHandler')
-  def testSetupError(self, fh, wpe, ii, create_dir):
-    ii.return_value = TEST_ID
-    wpe.return_value = False
-    fh.side_effect = IOError
-    with self.assertRaises(logs.LogError):
+  def test_setup_error(
+      self, mock_filehandler, mock_check_winpe, mock_imageid,
+      mock_createdirectories):
+    mock_imageid.return_value = TEST_ID
+    mock_check_winpe.return_value = False
+    mock_filehandler.side_effect = IOError
+    with self.assertRaises(logs.LogOpenError):
       logs.Setup()
-    self.assertTrue(create_dir.called)
+    self.assertTrue(mock_createdirectories.called)
 
 
 if __name__ == '__main__':
