@@ -224,7 +224,7 @@ class ConfigRunnerTest(absltest.TestCase):
     mock_checkurl.assert_called_with(mock.ANY, 'http://www.example.com/', [200])
     # fail
     mock_checkurl.return_value = False
-    with self.assertRaises(runner.errors.CheckUrlError):
+    with self.assertRaises(runner.CheckUrlError):
       self.cr._ProcessTasks([])
 
 

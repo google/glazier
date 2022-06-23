@@ -46,6 +46,14 @@ class UnknownPolicyError(Error):
         message=f'Unknown imaging policy [{policy}]')
 
 
+class CheckUrlError(Error):
+
+  def __init__(self, url: str):
+    super().__init__(
+        error_code=errors.ErrorCode.FAILED_URL_VERIFICATION,
+        message=f'Failed to verify url [{url}]')
+
+
 class ConfigRunner(base.ConfigBase):
   """Executes all steps from the installation task list."""
 
@@ -74,13 +82,15 @@ class ConfigRunner(base.ConfigBase):
       tasks: The list of pending tasks.
 
     Raises:
-      ConfigRunnerError: failure to confirm verify_urls
+      CheckUrlError: failure to confirm verify_urls.
+      ConfigRunnerError: error encountered while running a task.
     """
     if constants.FLAGS.verify_urls:
       dl = download.Download()
       for url in constants.FLAGS.verify_urls:
         if not dl.CheckUrl(url, [200]):
-          raise errors.CheckUrlError(url=url)
+          # TODO(b/236982963): Include the non-200 status code in the message.
+          raise CheckUrlError(url=url)
 
     while tasks:
       self._build_info.ActiveConfigPath(set_to=tasks[0]['path'])

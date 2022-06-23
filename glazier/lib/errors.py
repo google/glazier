@@ -125,14 +125,6 @@ class GlazierError(Exception):
     return s
 
 
-class CheckUrlError(GlazierError):
-
-  def __init__(self, url: str):
-    super().__init__(
-        error_code=ErrorCode.FAILED_URL_VERIFICATION,
-        message=f'Failed to verify url [{url}]')
-
-
 class RegistrySetError(GlazierError):
 
   def __init__(self):
