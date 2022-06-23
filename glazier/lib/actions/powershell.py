@@ -59,7 +59,7 @@ class PSScript(BaseAction):
     try:
       result = powershell.PowerShell(shell, log).RunLocal(
           script, ps_args, success_codes + reboot_codes)
-    except powershell.PowerShellError as e:
+    except powershell.Error as e:
       raise ActionError(e) from e
 
     if result in reboot_codes:
@@ -151,7 +151,7 @@ class PSCommand(BaseAction):
       # exits 0 or 1 by default.
       result = powershell.PowerShell(shell, log).RunCommand(
           command + ['; exit $LASTEXITCODE'], success_codes + reboot_codes)
-    except powershell.PowerShellError as e:
+    except powershell.Error as e:
       raise ActionError(e) from e
 
     if result in reboot_codes:

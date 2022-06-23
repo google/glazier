@@ -42,7 +42,7 @@ class BitlockerTest(absltest.TestCase):
             'C:', '-RecoveryPasswordProtector', '>NUL'
         ])
     ])
-    mock_runcommand.side_effect = powershell.PowerShellError
+    mock_runcommand.side_effect = powershell.Error
     with self.assertRaises(bitlocker.BitlockerEnableTpmError):
       bit.Enable()
 

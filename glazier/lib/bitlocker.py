@@ -69,7 +69,7 @@ class Bitlocker(object):
       ps.RunCommand(['$ErrorActionPreference=\'Stop\'', ';',
                      'Add-BitLockerKeyProtector', 'C:',
                      '-RecoveryPasswordProtector', '>NUL'])
-    except powershell.PowerShellError as e:
+    except powershell.Error as e:
       raise BitlockerEnableTpmError() from e
 
   def Enable(self):

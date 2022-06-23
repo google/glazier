@@ -23,9 +23,59 @@ from glazier.lib import execute
 from glazier.lib import resources
 from glazier.lib import winpe
 
+from glazier.lib import errors
 
-class PowerShellError(Exception):
+
+_SUPPORTED_EXECUTION_POLICIES = frozenset([
+    'Restricted', 'RemoteSigned', 'AllSigned', 'Unrestricted'
+])
+_SUPPORTED_PARAMETERS = frozenset(['-Command', '-File'])
+
+
+class Error(errors.GlazierError):
   pass
+
+
+class UnsupportedParameterError(Error):
+
+  def __init__(self, parameter: str):
+    supported_params_str = str(sorted(list(_SUPPORTED_PARAMETERS)))
+    message = (
+        f'Unsupported PowerShell parameter \'{parameter}\' '
+        f'not found in {supported_params_str}.'
+    )
+    super().__init__(
+        error_code=errors.ErrorCode.POWERSHELL_UNSUPPORTED_PARAMETER,
+        message=message)
+
+
+class PowerShellExecutionError(Error):
+
+  def __init__(self):
+    super().__init__(
+        error_code=errors.ErrorCode.POWERSHELL_EXECUTION_ERROR,
+        message='Error encountered during PowerShell execution')
+
+
+class InvalidPathError(Error):
+
+  def __init__(self, path: str):
+    super().__init__(
+        error_code=errors.ErrorCode.POWERSHELL_INVALID_PATH,
+        message=f'A path required by PowerShell in invalid: {path}')
+
+
+class UnsupportedExecutionPolicyError(Error):
+
+  def __init__(self, policy: str):
+    supported_policies_str = str(sorted(list(_SUPPORTED_EXECUTION_POLICIES)))
+    message = (
+        f'Unsupported execution policy \'{policy}\' '
+        f'not found in {supported_policies_str}.'
+    )
+    super().__init__(
+        error_code=errors.ErrorCode.POWERSHELL_UNSUPPORTED_EXECUTION_POLICY,
+        message=message)
 
 
 def _Powershell() -> str:
@@ -56,17 +106,17 @@ class PowerShell(object):
       Process returncode if successfully exited.
 
     Raises:
-      PowerShellError: failure to execute powershell command cleanly
+      Error: failure to execute powershell command cleanly
     """
-    if op not in ['-Command', '-File']:
-      raise PowerShellError('Unsupported PowerShell parameter: %s' % op)
+    if op not in _SUPPORTED_PARAMETERS:
+      raise UnsupportedParameterError(op)
 
     try:
-      return execute.execute_binary(_Powershell(),
-                                    ['-NoProfile', '-NoLogo', op] + args,
-                                    ok_result, self.shell, self.log)
+      return execute.execute_binary(
+          _Powershell(), ['-NoProfile', '-NoLogo', op] + args, ok_result,
+          self.shell, self.log)
     except execute.Error as e:
-      raise PowerShellError(e) from e
+      raise PowerShellExecutionError() from e
 
   def RunCommand(self,
                  command: List[str],
@@ -93,7 +143,7 @@ class PowerShell(object):
       path: the resource path string
 
     Raises:
-      PowerShellError: unable to locate the requested resource
+      ResourceNotFoundError: unable to locate the requested resource.
 
     Returns:
       The local filesystem path as a string.
@@ -102,7 +152,7 @@ class PowerShell(object):
     try:
       path = r.GetResourceFileName(path)
     except resources.FileNotFound as e:
-      raise PowerShellError(e) from e
+      raise InvalidPathError(path) from e
     return os.path.normpath(path)
 
   def RunResource(self, path: str, args: List[str],
@@ -134,10 +184,10 @@ class PowerShell(object):
       Process returncode if successfully exited.
 
     Raises:
-      PowerShellError: Invalid path supplied for execution.
+      InvalidPathError: Invalid path supplied for execution.
     """
     if not os.path.exists(path):
-      raise PowerShellError('Cannot find path to script. [%s]' % path)
+      raise InvalidPathError(path)
     assert isinstance(args, list), 'args must be passed as a list'
     if ok_result:
       assert isinstance(ok_result,
@@ -151,17 +201,18 @@ class PowerShell(object):
       policy: One of Restricted, RemoteSigned, AllSigned, Unrestricted
 
     Raises:
-      PowerShellError: Attempting to set an unsupported policy.
+      UnsupportedExecutionPolicyError: Attempting to set an unsupported policy.
     """
-    if policy not in ['Restricted', 'RemoteSigned', 'AllSigned', 'Unrestricted'
-                     ]:
-      raise PowerShellError('Unknown execution policy: %s' % policy)
+    if policy not in _SUPPORTED_EXECUTION_POLICIES:
+      raise UnsupportedExecutionPolicyError(policy)
+
     self.RunCommand(['Set-ExecutionPolicy', '-ExecutionPolicy', policy])
 
   def StartShell(self):
     """Start the PowerShell interpreter."""
     try:
-      execute.execute_binary(_Powershell(), ['-NoProfile', '-NoLogo'],
-                             shell=self.shell, log=self.log)
+      execute.execute_binary(
+          _Powershell(), ['-NoProfile', '-NoLogo'], shell=self.shell,
+          log=self.log)
     except execute.Error as e:
-      raise PowerShellError(e) from e
+      raise PowerShellExecutionError() from e
