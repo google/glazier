@@ -123,14 +123,6 @@ class GlazierError(Exception):
     return s
 
 
-class UnknownPolicyError(GlazierError):
-
-  def __init__(self, policy: str):
-    super().__init__(
-        error_code=ErrorCode.UNKNOWN_POLICY,
-        message=f'Unknown imaging policy [{policy}]')
-
-
 class CheckUrlError(GlazierError):
 
   def __init__(self, url: str):

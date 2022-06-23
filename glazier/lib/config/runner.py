@@ -38,6 +38,14 @@ class ConfigRunnerError(Error):
         message='Failed to execute the task list')
 
 
+class UnknownPolicyError(Error):
+
+  def __init__(self, policy: str):
+    super().__init__(
+        error_code=errors.ErrorCode.UNKNOWN_POLICY,
+        message=f'Unknown imaging policy [{policy}]')
+
+
 class ConfigRunner(base.ConfigBase):
   """Executes all steps from the installation task list."""
 
@@ -121,6 +129,6 @@ class ConfigRunner(base.ConfigBase):
       policy = check(build_info=self._build_info)
       policy.Verify()
     except AttributeError as e:
-      raise errors.UnknownPolicyError(policy=str(line)) from e
+      raise UnknownPolicyError(policy=str(line)) from e
     except policies.ImagingPolicyException as e:
       raise ConfigRunnerError() from e
