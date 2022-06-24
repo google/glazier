@@ -27,8 +27,6 @@ from glazier.lib import registry
 from pyfakefs import fake_filesystem
 from requests.models import Response
 
-from glazier.lib import errors
-
 
 _TEST_SEED = '{"Seed": {"Seed": "seed_contents"}, "Signature": "Signature"}'
 _TEST_WIM = 'test_wim'
@@ -180,14 +178,6 @@ class BeyondcorpTest(absltest.TestCase):
     mock_set_value.assert_called_with = ('beyond_corp', 'True')
     self.assertTrue(self.beyondcorp.CheckBeyondCorp())
 
-  @mock.patch.object(registry, 'set_value', autospec=True)
-  def test_check_beyond_corp_signed_url_first_registry_set_error(
-      self, mock_set_value):
-
-    beyondcorp.FLAGS.use_signed_url = True
-    mock_set_value.side_effect = errors.RegistrySetError
-    self.assertRaises(errors.RegistrySetError, self.beyondcorp.CheckBeyondCorp)
-
   @mock.patch.object(registry, 'get_value', autospec=True)
   def test_check_beyond_corp_no_signed_url_get_true(self, mock_get_value):
     beyondcorp.FLAGS.use_signed_url = False
@@ -213,14 +203,6 @@ class BeyondcorpTest(absltest.TestCase):
     mock_get_value.return_value = None
     self.assertFalse(self.beyondcorp.CheckBeyondCorp())
     mock_set_value.assert_called_with = ('beyond_corp', 'False')
-
-  @mock.patch.object(registry, 'set_value', autospec=True)
-  def test_check_beyond_corp_no_signed_url_second_registry_set_error(
-      self, mock_set_value):
-
-    beyondcorp.FLAGS.use_signed_url = False
-    mock_set_value.side_effect = errors.RegistrySetError
-    self.assertRaises(errors.RegistrySetError, self.beyondcorp.CheckBeyondCorp)
 
   def test_get_disk_success(self):
     self.mock_wmi.return_value.Query.return_value = [mock.Mock(Name='D')]

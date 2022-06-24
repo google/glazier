@@ -126,14 +126,6 @@ class GlazierError(Exception):
     return s
 
 
-class RegistrySetError(GlazierError):
-
-  def __init__(self):
-    super().__init__(
-        error_code=ErrorCode.FAILED_REGISTRY_WRITE,
-        message='Failed to set registry value')
-
-
 class WebServerError(GlazierError):
 
   def __init__(self):
