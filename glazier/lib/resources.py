@@ -18,13 +18,23 @@ import os
 # do not remove: internal placeholder 1
 from absl import flags
 
+from glazier.lib import errors
+
 FLAGS = flags.FLAGS
-flags.DEFINE_string('resource_path', '',
-                    'Path to top level installer resource file storage.')
+flags.DEFINE_string(
+    'resource_path', '', 'Path to top level installer resource file storage.')
 
 
-class FileNotFound(Exception):
+class Error(errors.GlazierError):
   pass
+
+
+class FileNotFound(Error):
+
+  def __init__(self, path: str):
+    super().__init__(
+        error_code=errors.ErrorCode.FILE_NOT_FOUND,
+        message=f'The following path does not exist: {path}')
 
 
 class Resources(object):
@@ -54,4 +64,4 @@ class Resources(object):
 
     if os.path.exists(path):
       return path
-    raise FileNotFound('Could not locate a resource with path %s.' % path)
+    raise FileNotFound(path)

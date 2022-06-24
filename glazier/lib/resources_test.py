@@ -30,10 +30,11 @@ class ResourcesTest(absltest.TestCase):
     self.fs.create_file('/test/file.txt')
     self.fs.create_file('/test2/resources/file.txt')
 
-  def testGetResourceFileName(self):
+  def test_get_resource_file_name(self):
+
     r = resources.Resources('/test')
-    self.assertRaises(resources.FileNotFound, r.GetResourceFileName,
-                      'missing.txt')
+    with self.assertRaises(resources.FileNotFound):
+      r.GetResourceFileName('missing.txt')
     self.assertEqual(r.GetResourceFileName('file.txt'), '/test/file.txt')
 
     with mock.patch.object(resources.os.path, 'dirname') as dirname:

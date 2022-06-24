@@ -94,6 +94,7 @@ class ErrorCode(enum.IntEnum):
   POWERSHELL_UNSUPPORTED_EXECUTION_POLICY = 7066
   LOGS_COLLECTION_ERROR = 7067
   LOGS_OPEN_ERROR = 7068
+  FILE_NOT_FOUND = 7069
 
 
 class GlazierError(Exception):
