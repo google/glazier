@@ -39,8 +39,8 @@ class ErrorCode(enum.IntEnum):
   UNKNOWN_POLICY = 7011  # Was previously 4313.
   FAILED_URL_VERIFICATION = 7012  # Was previously 4314.
   FAILED_REGISTRY_WRITE = 7013  # Was previously 4340.
-  UNREACHABLE_WEB_SERVER = 7014  # Was previously 5000.
-  SERVICE_ERROR = 7015  # Was previously 5300.
+  UNREACHABLE_WEB_SERVER = 7014  # Was previously 5000. Deprecated.
+  SERVICE_ERROR = 7015  # Was previously 5300. Deprecated.
   CACHE_MISS = 7016
   BEYONDCORP_GIVE_UP = 7017
   BEYONDCORP_SEED_FILE_MISSING = 7018
@@ -124,22 +124,6 @@ class GlazierError(Exception):
       s = f'{s} (Cause: {cause_message})'
 
     return s
-
-
-class WebServerError(GlazierError):
-
-  def __init__(self):
-    super().__init__(
-        error_code=ErrorCode.UNREACHABLE_WEB_SERVER,
-        message='Failed to reach web server')
-
-
-class ServiceError(GlazierError):
-
-  def __init__(self):
-    super().__init__(
-        error_code=ErrorCode.SERVICE_ERROR,
-        message='Service unavailable')
 
 
 class CacheError(GlazierError):
