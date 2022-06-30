@@ -23,8 +23,6 @@ from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import ValidationError
 
-from glazier.lib import errors
-
 
 class PSScript(BaseAction):
   """Execute a PowerShell script file."""
@@ -53,7 +51,7 @@ class PSScript(BaseAction):
     logging.info('Interpreting PowerShell script: %s', script)
     try:
       script = cache.Cache().CacheFromLine(script, self._build_info)  # pytype: disable=annotation-type-mismatch
-    except errors.CacheError as e:
+    except cache.Error as e:
       raise ActionError(e) from e
 
     try:
@@ -143,7 +141,7 @@ class PSCommand(BaseAction):
       logging.info('Interpreting PowerShell script: %s', command[0])
       try:
         command[0] = cache.Cache().CacheFromLine(command[0], self._build_info)  # pytype: disable=container-type-mismatch
-      except errors.CacheError as e:
+      except cache.Error as e:
         raise ActionError(e) from e
 
     try:

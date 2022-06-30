@@ -27,7 +27,6 @@ from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import ValidationError
 
 from glazier.lib import download
-from glazier.lib import errors
 
 
 class Execute(BaseAction):
@@ -38,7 +37,7 @@ class Execute(BaseAction):
     logging.debug('Interpreting command: %s', command)
     try:
       command_cache = cache.Cache().CacheFromLine(command, self._build_info)
-    except errors.CacheError as e:
+    except cache.Error as e:
       raise ActionError(e) from e
 
     try:

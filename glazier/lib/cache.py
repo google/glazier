@@ -29,6 +29,18 @@ if typing.TYPE_CHECKING:
 DNLD_RE = re.compile(r'([@|#][\S]+)')
 
 
+class Error(errors.GlazierError):
+  pass
+
+
+class CacheError(Error):
+
+  def __init__(self, file_path: str):
+    super().__init__(
+        error_code=errors.ErrorCode.CACHE_MISS,
+        message=f'Unable to download required file: {file_path}')
+
+
 class Cache(object):
   """Handles interation with the on-disk build cache."""
 
@@ -86,7 +98,7 @@ class Cache(object):
           self._downloader.DownloadFile(file_path, destination)
         except download.Error as e:
           self._downloader.PrintDebugInfo()
-          raise errors.CacheError(file_path) from e
+          raise CacheError(file_path) from e
       else:  # bypass download for local files
         destination = file_path
       line = line.replace(match, destination)

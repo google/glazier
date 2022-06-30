@@ -21,8 +21,6 @@ from absl.testing import absltest
 from glazier.lib import cache
 from pyfakefs import fake_filesystem
 
-from glazier.lib import errors
-
 
 class CacheTest(absltest.TestCase):
 
@@ -36,7 +34,7 @@ class CacheTest(absltest.TestCase):
     cache.os = os_module
     cache.open = self.mock_open
 
-  def MockTransform(self, string, unused_info):
+  def fake_transform(self, string, unused_info):
     if '#' in string:
       string = string.replace('#', 'https://test.example.com/release/')
     if '@' in string:
@@ -45,7 +43,7 @@ class CacheTest(absltest.TestCase):
 
   @mock.patch.object(cache.download, 'Transform', autospec=True)
   @mock.patch.object(cache.download.Download, 'DownloadFile', autospec=True)
-  def testCacheFromLine(self, download, transform):
+  def test_cache_from_line(self, mock_downloadfile, mock_transform):
     cache_path = r'C:\Cache\Path'
     build_info = mock.Mock()
     build_info.CachePath.return_value = cache_path
@@ -55,36 +53,36 @@ class CacheTest(absltest.TestCase):
     local2 = os.path.join(cache_path, 'config_file.conf')
     line_in = 'msiexec /i @%s /qa /l*v CONF=#%s' % (remote1, remote2)
     line_out = 'msiexec /i %s /qa /l*v CONF=%s' % (local1, local2)
-    download.return_value = True
-    transform.side_effect = self.MockTransform
+    mock_downloadfile.return_value = True
+    mock_transform.side_effect = self.fake_transform
     result = self.cache.CacheFromLine(line_in, build_info)
     self.assertEqual(result, line_out)
     call1 = mock.call(self.cache._downloader,
                       'https://test.example.com/bin/%s' % remote1, local1)
     call2 = mock.call(self.cache._downloader,
                       'https://test.example.com/release/%s' % remote2, local2)
-    download.assert_has_calls([call1, call2])
+    mock_downloadfile.assert_has_calls([call1, call2])
     # download exception
     transfer_err = cache.download.Error('Error message.')
-    download.side_effect = transfer_err
-    self.assertRaises(errors.CacheError, self.cache.CacheFromLine,
-                      '@%s' % remote2, build_info)
+    mock_downloadfile.side_effect = transfer_err
+    with self.assertRaises(cache.CacheError):
+      self.cache.CacheFromLine('@%s' % remote2, build_info)
 
   @mock.patch.object(cache.download, 'Transform', autospec=True)
-  def testCacheFromLineLocal(self, transform):
+  def test_cache_from_line_local(self, mock_transform):
     line_in = 'powershell.exe -file @path/to/script.ps1'
     line_out = 'powershell.exe -file C:/glazier/path/to/script.ps1'
-    transform.return_value = 'C:/glazier/path/to/script.ps1'
+    mock_transform.return_value = 'C:/glazier/path/to/script.ps1'
     result = self.cache.CacheFromLine(line_in, mock.Mock())
     self.assertEqual(result, line_out)
 
-  def testDestinationPath(self):
+  def test_destination_path(self):
     path = self.cache._DestinationPath(
         'C:', 'http://some.web.address/folder/other/'
         'an_installer.msi')
     self.assertEqual(path, os.path.join('C:', 'an_installer.msi'))
 
-  def testFindDownload(self):
+  def test_find_download(self):
     line_test = self.cache._FindDownload('powershell -file '
                                          r'C:\run_some_file.ps1')
     self.assertIsNone(line_test)

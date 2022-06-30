@@ -19,10 +19,9 @@ from unittest import mock
 from absl.testing import absltest
 from absl.testing import parameterized
 from glazier.lib import buildinfo
+from glazier.lib import cache
 from glazier.lib import events
 from glazier.lib.actions import powershell
-
-from glazier.lib import errors
 
 
 SCRIPT = '#Some-Script.ps1'
@@ -55,7 +54,7 @@ class PowershellTest(parameterized.TestCase):
 
     # Cache error
     mock_runlocal.side_effect = None
-    mock_cachefromline.side_effect = errors.CacheError('some/file/path')
+    mock_cachefromline.side_effect = cache.CacheError('some/file/path')
     with self.assertRaises(powershell.ActionError):
       ps.Run()
 
@@ -238,7 +237,7 @@ class PowershellTest(parameterized.TestCase):
   def test_ps_command_cache_error(self, mock_cachefromline, mock_runcommand):
     ps = powershell.PSCommand([SCRIPT + ' -confirm:$false'], self.bi)
     mock_runcommand.side_effect = None
-    mock_cachefromline.side_effect = errors.CacheError('some/file/path')
+    mock_cachefromline.side_effect = cache.CacheError('some/file/path')
     with self.assertRaises(powershell.ActionError):
       ps.Run()
 

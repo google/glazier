@@ -130,11 +130,3 @@ class GlazierError(Exception):
       s = f'{s} (Cause: {cause_message})'
 
     return s
-
-
-class CacheError(GlazierError):
-
-  def __init__(self, file_path: str):
-    super().__init__(
-        error_code=ErrorCode.CACHE_MISS,
-        message=f'Unable to download required file: {file_path}')
