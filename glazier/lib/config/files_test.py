@@ -30,53 +30,62 @@ class FilesTest(absltest.TestCase):
     files.open = fake_filesystem.FakeFileOpen(self.filesystem)
     files.file_util.os = fake_filesystem.FakeOsModule(self.filesystem)
 
-  def testDump(self):
+  def test_dump(self):
     op_list = ['op1', ['op2a', 'op2b'], 'op3', {'op4a': 'op4b'}]
     files.Dump('/tmp/foo/dump.txt', op_list)
     result = files._YamlReader('/tmp/foo/dump.txt')
     self.assertEqual(result[1], ['op2a', 'op2b'])
     self.assertEqual(result[3], {'op4a': 'op4b'})
-    self.assertRaises(files.Error, files.Dump, '/tmp', [])
+    with self.assertRaises(files.Error):
+      files.Dump('/tmp', [])
 
   @mock.patch.object(files.download.Download, 'DownloadFileTemp', autospec=True)
-  def testRead(self, download):
+  def test_read(self, mock_downloadtempfile):
+
     self.filesystem.create_file('/tmp/downloaded1.yaml', contents='data: set1')
     self.filesystem.create_file('/tmp/downloaded2.yaml', contents='data: set2')
-    download.return_value = '/tmp/downloaded1.yaml'
+    mock_downloadtempfile.return_value = '/tmp/downloaded1.yaml'
     result = files.Read(
         'https://glazier-server.example.com/unstable/dir/test-build.yaml')
-    download.assert_called_with(
+    mock_downloadtempfile.assert_called_with(
         mock.ANY,
         'https://glazier-server.example.com/unstable/dir/test-build.yaml')
     self.assertEqual(result['data'], 'set1')
+
     # download error
-    download.side_effect = files.download.Error
-    self.assertRaises(
-        files.Error, files.Read,
-        'https://glazier-server.example.com/unstable/dir/test-build.yaml')
+    mock_downloadtempfile.side_effect = files.download.Error
+    with self.assertRaises(files.Error):
+      files.Read(
+          'https://glazier-server.example.com/unstable/dir/test-build.yaml')
+
     # local
     result = files.Read('/tmp/downloaded2.yaml')
     self.assertEqual(result['data'], 'set2')
 
   @mock.patch.object(files.file_util, 'Remove', autospec=True)
-  def testRemoveWithoutBackup(self, remove):
+  def test_remove_without_backup(self, mock_remove):
+
     files.Remove('/test/file/name.yaml', backup=False)
-    remove.assert_called_with('/test/file/name.yaml')
+    mock_remove.assert_called_with('/test/file/name.yaml')
+
     # error handling
-    remove.side_effect = file_util.Error('test error')
-    self.assertRaises(
-        files.Error, files.Remove, '/test/file/name.yaml', backup=False)
+    mock_remove.side_effect = file_util.Error('test error')
+    with self.assertRaises(files.Error):
+      files.Remove('/test/file/name.yaml', backup=False)
 
   @mock.patch.object(files.file_util, 'Move', autospec=True)
-  def testRemoveWithBackup(self, move):
-    files.Remove('/test/file/name.yaml', backup=True)
-    move.assert_called_with('/test/file/name.yaml', '/test/file/name.yaml.bak')
-    # error handling
-    move.side_effect = file_util.Error('test error')
-    self.assertRaises(
-        files.Error, files.Remove, '/test/file/name.yaml', backup=True)
+  def test_remove_with_backup(self, mock_move):
 
-  def testYamlReader(self):
+    files.Remove('/test/file/name.yaml', backup=True)
+    mock_move.assert_called_with(
+        '/test/file/name.yaml', '/test/file/name.yaml.bak')
+
+    # error handling
+    mock_move.side_effect = file_util.Error('test error')
+    with self.assertRaises(files.Error):
+      files.Remove('/test/file/name.yaml', backup=True)
+
+  def test_yaml_reader(self):
     self.filesystem.create_file(
         '/foo/bar/baz.txt', contents='- item4\n- item5\n- item6')
     result = files._YamlReader('/foo/bar/baz.txt')

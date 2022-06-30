@@ -18,9 +18,43 @@ import logging
 import os
 import shutil
 
+from glazier.lib import errors
 
-class Error(Exception):
+
+class Error(errors.GlazierError):
   pass
+
+
+class FileCopyError(Error):
+
+  def __init__(self, src: str, dest: str):
+    super().__init__(
+        error_code=errors.ErrorCode.FILE_COPY_ERROR,
+        message=f'Unable to copy {src} to {dest}')
+
+
+class DirectoryCreationError(Error):
+
+  def __init__(self, dirname: str):
+    super().__init__(
+        error_code=errors.ErrorCode.DIRECTORY_CREATION_ERROR,
+        message=f'Unable to create directory: {dirname}')
+
+
+class FileMoveError(Error):
+
+  def __init__(self, src: str, dest: str):
+    super().__init__(
+        error_code=errors.ErrorCode.FILE_MOVE_ERROR,
+        message=f'Failed to move file from {src} to {dest}')
+
+
+class FileRemoveError(Error):
+
+  def __init__(self, path: str):
+    super().__init__(
+        error_code=errors.ErrorCode.FILE_REMOVE_ERROR,
+        message=f'Failed to remove file: {path}')
 
 
 def Copy(src: str, dst: str):
@@ -38,7 +72,7 @@ def Copy(src: str, dst: str):
     shutil.copy2(src, dst)
     logging.info('Copying: %s to %s', src, dst)
   except (shutil.Error, IOError) as e:
-    raise Error('Unable to copy %s to %s: %s' % (src, dst, str(e))) from e
+    raise FileCopyError(src, dst) from e
 
 
 def CreateDirectories(path: str):
@@ -56,7 +90,7 @@ def CreateDirectories(path: str):
     try:
       os.makedirs(dirname)
     except (shutil.Error, OSError) as e:
-      raise Error('Unable to make directory: %s' % dirname) from e
+      raise DirectoryCreationError(dirname) from e
 
 
 def Move(src: str, dst: str):
@@ -75,8 +109,7 @@ def Move(src: str, dst: str):
     Remove(dst)
     os.rename(src, dst)
   except OSError as e:
-    raise Error(
-        'Failure moving file from %s to %s. (%s)' % (src, dst, str(e))) from e
+    raise FileMoveError(src, dst) from e
 
 
 def Remove(path: str):
@@ -92,4 +125,4 @@ def Remove(path: str):
     if os.path.exists(path):
       os.remove(path)
   except OSError as e:
-    raise Error('Failure removing file %s. (%s)' % (path, str(e))) from e
+    raise FileRemoveError(path) from e
