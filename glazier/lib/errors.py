@@ -104,6 +104,7 @@ class ErrorCode(enum.IntEnum):
   FILE_COPY_ERROR = 7076
   DIRECTORY_CREATION_ERROR = 7077
   REGISTRY_DELETE_ERROR = 7078
+  IDENTITY_WRITE_ERROR = 7079
 
 
 class GlazierError(Exception):

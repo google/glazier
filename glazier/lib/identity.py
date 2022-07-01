@@ -22,10 +22,19 @@ from glazier.lib import interact
 from glazier.lib import registry
 
 from glazier.lib import constants
+from glazier.lib import errors
 
 
-class Error(Exception):
+class Error(errors.GlazierError):
   pass
+
+
+class IdentityWriteError(Error):
+
+  def __init__(self, name: str):
+    super().__init__(
+        error_code=errors.ErrorCode.IDENTITY_WRITE_ERROR,
+        message=f'Failed to write {name} to registry')
 
 
 @functools.lru_cache()
@@ -62,7 +71,7 @@ def set_username(username: Optional[str] = None,
   try:
     registry.set_value('Username', username, path=constants.REG_ROOT)
   except registry.Error as e:
-    raise Error(e) from e
+    raise IdentityWriteError('username') from e
 
   return username
 
@@ -104,6 +113,6 @@ def set_hostname(hostname: Optional[str] = None) -> str:
   try:
     registry.set_value('Name', hostname, path=constants.REG_ROOT)
   except registry.Error as e:
-    raise Error(e) from e
+    raise IdentityWriteError('hostname') from e
 
   return hostname
