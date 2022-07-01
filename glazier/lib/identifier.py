@@ -15,6 +15,7 @@
 
 import logging
 import os
+from typing import Union, Optional
 import uuid
 
 from glazier.lib import registry
@@ -32,10 +33,14 @@ class Error(errors.GlazierError):
 
 class RegistryWriteError(Error):
 
-  def __init__(self, name: str, value: str):
+  def __init__(self, name: str, value: Union[str, int], path: Optional[str]):
+    message = (
+        f'Failed to write to registry: '
+        f'(Name: {name}, Value: {value}, Path: {path})'
+    )
     super().__init__(
-        error_code=errors.ErrorCode.FAILED_REGISTRY_WRITE,
-        message=f'Registry write failed (Name: {name}, Value: {value}')
+        error_code=errors.ErrorCode.REGISTRY_WRITE_ERROR,
+        message=message)
 
 
 class BuildInfoKeyMissingError(Error):
@@ -70,7 +75,8 @@ def _set_id() -> str:
   try:
     registry.set_value('image_id', image_id, path=constants.REG_ROOT)
   except registry.Error as e:
-    raise RegistryWriteError('image_id', image_id) from e
+    raise RegistryWriteError(
+        'image_id', image_id, constants.REG_ROOT) from e
   return image_id
 
 
@@ -100,7 +106,8 @@ def _check_file() -> str:
         registry.set_value('image_id', image_id, path=constants.REG_ROOT)
         return image_id
       except registry.Error as e:
-        raise RegistryWriteError('image_id', image_id) from e
+        raise RegistryWriteError(
+            'image_id', image_id, constants.REG_ROOT) from e
 
   else:
     raise BuildInfoFileMissingError()

@@ -30,52 +30,54 @@ class RegistryTest(absltest.TestCase):
     self.value = 'some_value'
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  def test_get_value(self, reg):
-    reg.return_value.GetKeyValue.return_value = self.value
+  def test_get_value(self, mock_registry):
+    mock_registry.return_value.GetKeyValue.return_value = self.value
     self.assertEqual(registry.get_value(self.name), self.value)
-    reg.assert_called_with('HKLM')
-    reg.return_value.GetKeyValue.assert_called_with(
+    mock_registry.assert_called_with('HKLM')
+    mock_registry.return_value.GetKeyValue.assert_called_with(
         key_path=constants.REG_ROOT,
         key_name=self.name,
         use_64bit=constants.USE_REG_64)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  def test_get_value_none(self, reg):
-    reg.return_value.GetKeyValue.side_effect = registry.registry.RegistryError
+  def test_get_value_none(self, mock_registry):
+    mock_registry.return_value.GetKeyValue.side_effect = (
+        registry.registry.RegistryError)
     self.assertIsNone(registry.get_value(self.name))
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   @mock.patch.object(logging, 'debug', autospec=True)
-  def test_get_value_silent(self, d, reg):
-    reg.return_value.GetKeyValue.return_value = self.value
+  def test_get_value_silent(self, mock_debug, mock_registry):
+    mock_registry.return_value.GetKeyValue.return_value = self.value
     registry.get_value(self.name, log=False)
-    self.assertFalse(d.called)
+    self.assertFalse(mock_debug.called)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  def test_get_values(self, reg):
-    reg.return_value.GetRegKeys.return_value = self.value
+  def test_get_values(self, mock_registry):
+    mock_registry.return_value.GetRegKeys.return_value = self.value
     self.assertEqual(registry.get_values(self.name), self.value)
-    reg.assert_called_with('HKLM')
-    reg.return_value.GetRegKeys.assert_called_with(
+    mock_registry.assert_called_with('HKLM')
+    mock_registry.return_value.GetRegKeys.assert_called_with(
         key_path=self.name, use_64bit=constants.USE_REG_64)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  def test_get_values_none(self, reg):
-    reg.return_value.GetRegKeys.side_effect = registry.registry.RegistryError
+  def test_get_values_none(self, mock_registry):
+    mock_registry.return_value.GetRegKeys.side_effect = (
+        registry.registry.RegistryError)
     self.assertIsNone(registry.get_values(self.name))
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   @mock.patch.object(logging, 'debug', autospec=True)
-  def test_get_values_silent(self, d, reg):
-    reg.return_value.GetRegKeys.return_value = self.value
+  def test_get_values_silent(self, mock_debug, mock_registry):
+    mock_registry.return_value.GetRegKeys.return_value = self.value
     registry.get_values(self.name, log=False)
-    self.assertFalse(d.called)
+    self.assertFalse(mock_debug.called)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  def test_set_value(self, reg):
+  def test_set_value(self, mock_registry):
     registry.set_value(self.name, self.value)
-    reg.assert_called_with('HKLM')
-    reg.return_value.SetKeyValue.assert_has_calls([
+    mock_registry.assert_called_with('HKLM')
+    mock_registry.return_value.SetKeyValue.assert_has_calls([
         mock.call(
             key_path=constants.REG_ROOT,
             key_name=self.name,
@@ -85,21 +87,23 @@ class RegistryTest(absltest.TestCase):
     ])
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  def test_set_value_error(self, reg):
-    reg.return_value.SetKeyValue.side_effect = registry.registry.RegistryError
-    self.assertRaises(registry.Error, registry.set_value, self.name, self.value)
+  def test_set_value_error(self, mock_registry):
+    mock_registry.return_value.SetKeyValue.side_effect = (
+        registry.registry.RegistryError)
+    with self.assertRaises(registry.Error):
+      registry.set_value(self.name, self.value)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   @mock.patch.object(logging, 'debug', autospec=True)
-  def test_set_value_silent(self, d, unused_reg):
+  def test_set_value_silent(self, mock_debug, unused_registry):
     registry.set_value(self.name, self.value, log=False)
-    self.assertFalse(d.called)
+    self.assertFalse(mock_debug.called)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  def test_remove_value(self, reg):
+  def test_remove_value(self, mock_registry):
     registry.remove_value(self.name)
-    reg.assert_called_with('HKLM')
-    reg.return_value.RemoveKeyValue.assert_has_calls([
+    mock_registry.assert_called_with('HKLM')
+    mock_registry.return_value.RemoveKeyValue.assert_has_calls([
         mock.call(
             key_path=constants.REG_ROOT,
             key_name=self.name,
@@ -108,24 +112,26 @@ class RegistryTest(absltest.TestCase):
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   @mock.patch.object(logging, 'warning', autospec=True)
-  def test_remove_value_not_found(self, w, reg):
-    reg.return_value.RemoveKeyValue.side_effect = registry.registry.RegistryError(
-        'Test', errno=2)
+  def test_remove_value_not_found(self, mock_warning, mock_registry):
+    mock_registry.return_value.RemoveKeyValue.side_effect = (
+        registry.registry.RegistryError('Test', errno=2))
     registry.remove_value(self.name)
-    w.assert_called_with(
+    mock_warning.assert_called_with(
         r'Failed to delete non-existant registry key: '
         r'%s:\%s\%s', 'HKLM', constants.REG_ROOT, self.name)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
-  def test_remove_value_error(self, reg):
-    reg.return_value.RemoveKeyValue.side_effect = registry.registry.RegistryError
-    self.assertRaises(registry.Error, registry.remove_value, self.name)
+  def test_remove_value_error(self, mock_registry):
+    mock_registry.return_value.RemoveKeyValue.side_effect = (
+        registry.registry.RegistryError)
+    with self.assertRaises(registry.Error):
+      registry.remove_value(self.name)
 
   @mock.patch.object(registry.registry, 'Registry', autospec=True)
   @mock.patch.object(logging, 'debug', autospec=True)
-  def test_remove_value_silent(self, d, unused_reg):
+  def test_remove_value_silent(self, mock_debug, unused_registry):
     registry.remove_value(self.name, log=False)
-    self.assertFalse(d.called)
+    self.assertFalse(mock_debug.called)
 
 if __name__ == '__main__':
   absltest.main()

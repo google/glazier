@@ -38,7 +38,7 @@ class ErrorCode(enum.IntEnum):
   UNKNOWN_ACTION = 7010  # Was previously 4312.
   UNKNOWN_POLICY = 7011  # Was previously 4313.
   FAILED_URL_VERIFICATION = 7012  # Was previously 4314.
-  FAILED_REGISTRY_WRITE = 7013  # Was previously 4340.
+  REGISTRY_WRITE_ERROR = 7013  # Was previously 4340.
   UNREACHABLE_WEB_SERVER = 7014  # Was previously 5000. Deprecated.
   SERVICE_ERROR = 7015  # Was previously 5300. Deprecated.
   CACHE_MISS = 7016
@@ -103,6 +103,7 @@ class ErrorCode(enum.IntEnum):
   UNSUPPORTED_RELEASE_VERSION = 7075
   FILE_COPY_ERROR = 7076
   DIRECTORY_CREATION_ERROR = 7077
+  REGISTRY_DELETE_ERROR = 7078
 
 
 class GlazierError(Exception):

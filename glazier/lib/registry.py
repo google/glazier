@@ -21,11 +21,36 @@ import logging
 from typing import Optional, Union, List
 
 from glazier.lib import constants
+from glazier.lib import errors
 from gwinpy.registry import registry
 
 
-class Error(Exception):
+class Error(errors.GlazierError):
   pass
+
+
+class RegistryWriteError(Error):
+
+  def __init__(self, name: str, value: Union[str, int], path: Optional[str]):
+    message = (
+        f'Failed to write to registry: '
+        f'(Name: {name}, Value: {value}, Path: {path})'
+    )
+    super().__init__(
+        error_code=errors.ErrorCode.REGISTRY_WRITE_ERROR,
+        message=message)
+
+
+class RegistryDeleteError(Error):
+
+  def __init__(self, name: str, path: Optional[str]):
+    message = (
+        f'Failed to delete from registry: '
+        f'(Name: {name}, Path: {path})'
+    )
+    super().__init__(
+        error_code=errors.ErrorCode.REGISTRY_DELETE_ERROR,
+        message=message)
 
 
 def get_value(name: str,
@@ -93,7 +118,7 @@ def set_value(name: str,
       logging.debug(r'Set registry value: %s:\%s\%s = %s', root, path, name,
                     str(value))
   except registry.RegistryError as e:
-    raise Error(e) from e
+    raise RegistryWriteError(name, value, path) from e
 
 
 def get_values(path: str,
@@ -154,4 +179,4 @@ def remove_value(name: str,
       logging.warning(r'Failed to delete non-existant registry key: %s:\%s\%s',
                       root, path, name)
     else:
-      raise Error(e) from e
+      raise RegistryDeleteError(name, path) from e
