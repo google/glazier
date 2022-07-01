@@ -28,13 +28,13 @@ class FieldsTest(absltest.TestCase):
     super(FieldsTest, self).setUp()
     self.root = tk.Tk()
 
-  def testLabel(self, unused_tk):
+  def test_label(self, unused_tk):
     fields.Label(self.root, 'some label')
 
-  def testSeparator(self, unused_tk):
+  def test_separator(self, unused_tk):
     fields.Separator(self.root)
 
-  def testToggle(self, unused_tk):
+  def test_toggle(self, unused_tk):
     opts = {'prompt': 'enable puppet',
             'options': [{'label': 'true', 'value': True, 'default': True},
                         {'label': 'false', 'value': False}]}
@@ -60,42 +60,41 @@ class RadioMenuTest(absltest.TestCase):
     tk.StringVar.return_value.get.return_value = 'en-us'
     self.rm = fields.RadioMenu(self.root, opts)
 
-  def testRadioMenu(self):
+  def test_radio_menu(self):
     self.rm.select.set.assert_called_with('en-us')
     self.rm.button.configure.assert_called_with(text='en-us')
 
 
 class TimerTest(absltest.TestCase):
 
-  class Quit(Exception):
-    pass
-
   @mock.patch.object(fields, 'tk', autospec=True)
   def setUp(self, tk):
     super(TimerTest, self).setUp()
     self.root = tk.Tk()
-    self.root.quit.side_effect = TimerTest.Quit
+    self.root.quit.side_effect = Exception
     self.timer = fields.Timer(self.root, timeout=10)
 
-  def testPause(self):
+  def test_pause(self):
     self.timer.Pause(None)
     self.assertEqual(self.timer._counter, -1)
 
-  def testCountdown(self):
-    # countdown
+  def test_countdown(self):
     self.assertEqual(self.timer._counter, 10)
     self.timer.Countdown()
     self.assertEqual(self.timer._counter, 9)
     self.assertTrue(self.root.after.called)
     self.assertFalse(self.root.quit.called)
     self.root.reset_mock()
-    # timeout
+
+  def test_timeout(self):
     self.timer._counter = 0
-    self.assertRaises(TimerTest.Quit, self.timer.Countdown)
+    with self.assertRaises(Exception):
+      self.timer.Countdown()
     self.assertFalse(self.root.after.called)
     self.assertTrue(self.root.quit.called)
     self.root.reset_mock()
-    # interrupt
+
+  def test_interrupt(self):
     self.timer._counter = -1
     self.timer.Countdown()
     self.assertFalse(self.root.after.called)
