@@ -23,16 +23,9 @@ class DiskTest(absltest.TestCase):
 
   @mock.patch.object(disk.disk, 'set_disk_space', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def test_write_disk_space(self, bi, disk_space):
-    disk.WriteDiskSpace([], bi).Run()
-    self.assertTrue(disk_space.called)
-
-  @mock.patch.object(disk.disk, 'set_disk_space', autospec=True)
-  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def test_write_disk_space_error(self, bi, disk_space):
-    disk_space.side_effect = disk.ActionError
-    with self.assertRaises(disk.ActionError):
-      disk.WriteDiskSpace([], bi).Run()
+  def test_write_disk_space(self, mock_buildinfo, mock_set_disk_space):
+    disk.WriteDiskSpace([], mock_buildinfo).Run()
+    self.assertTrue(mock_set_disk_space.called)
 
 
 if __name__ == '__main__':

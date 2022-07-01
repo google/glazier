@@ -29,23 +29,23 @@ _DISK = _SPACE(total=1073741824000, used=536870912000, free=536870912000)
 class DiskTest(absltest.TestCase):
 
   @mock.patch.object(shutil, 'disk_usage', autospec=True)
-  def test_get_disk_space(self, usage):
-    usage.return_value = _DISK
+  def test_get_disk_space(self, mock_disk_usage):
+    mock_disk_usage.return_value = _DISK
     self.assertEqual(disk.get_disk_space(), _DISK)
 
   @mock.patch.object(disk.logging, 'error', autospec=True)
   @mock.patch.object(shutil, 'disk_usage', autospec=True)
-  def test_get_disk_space_error(self, usage, err):
-    usage.side_effect = FileNotFoundError
+  def test_get_disk_space_error(self, mock_disk_usage, err):
+    mock_disk_usage.side_effect = FileNotFoundError
     disk.get_disk_space()
     self.assertTrue(err.called)
 
   @mock.patch.object(disk.registry, 'set_value', autospec=True)
   @mock.patch.object(disk, 'get_disk_space', autospec=True)
-  def test_set_disk_space(self, get_space, sv):
-    get_space.return_value = _DISK
+  def test_set_disk_space(self, mock_get_disk_space, mock_set_value):
+    mock_get_disk_space.return_value = _DISK
     disk.set_disk_space()
-    sv.assert_has_calls([
+    mock_set_value.assert_has_calls([
         mock.call(
             'disk_space_total_bytes', mock.ANY, path=constants.REG_ROOT),
         mock.call(
@@ -56,10 +56,11 @@ class DiskTest(absltest.TestCase):
 
   @mock.patch.object(disk.registry.registry, 'Registry', autospec=True)
   @mock.patch.object(disk.logging, 'error', autospec=True)
-  def test_set_disk_space_error(self, err, reg):
-    reg.return_value.SetKeyValue.side_effect = disk.registry.registry.RegistryError
+  def test_set_disk_space_error(self, mock_error, mock_registry):
+    mock_registry.return_value.SetKeyValue.side_effect = (
+        disk.registry.registry.RegistryError)
     disk.set_disk_space()
-    self.assertTrue(err.called)
+    self.assertTrue(mock_error.called)
 
 if __name__ == '__main__':
   absltest.main()

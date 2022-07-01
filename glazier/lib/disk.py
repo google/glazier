@@ -21,10 +21,6 @@ from glazier.lib import registry
 from glazier.lib import constants
 
 
-class Error(Exception):
-  pass
-
-
 def get_disk_space():
   """Get the total, used, and free disk space.
 
