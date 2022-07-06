@@ -1,30 +1,30 @@
 # Glazier Installer Actions
 
-<!--* freshness: { owner: 'winops-imaging' reviewed: '2021-07-09' } *-->
+<!--* freshness: { owner: 'winops-imaging' reviewed: '2022-07-06' } *-->
 
 Actions are classes which the configuration handler may call to perform a
 variety of tasks during imaging.
 
 ## Usage
 
-Each module should inherit from BaseAction and will receive a BuildInfo instance
-(self.\_build_info).
+Each module should inherit from `BaseAction` and will receive a `BuildInfo`
+instance (`self._build_info`).
 
-Arguments are stored as a data structure in the self.\_args variable, commonly
+Arguments are stored as a data structure in the `self._args` variable, commonly
 as an ordered list or dictionary.
 
 Each action class should override the Run function to execute its main behavior.
 
-If an action fails, the module should raise ActionError with a message
+If an action fails, the module should raise `ActionError` with a message
 explaining the cause of failure. This will abort the build.
 
 ## Validation
 
-Config validation can be accomplished by overriding the Validate() function.
-Validate should test the inputs (\_args) for correctness. If \_args contains any
-unexpected or inappropriate data, ValidationError should be raised.
+Config validation can be accomplished by overriding the `Validate()` function.
+Validate should test the inputs (`_args`) for correctness. If `_args` contains
+any unexpected or inappropriate data, `ValidationError` should be raised.
 
-Validate() will pass for any actions which have not overridden it with custom
+`Validate()` will pass for any actions which have not overridden it with custom
 rules.
 
 ## Actions
@@ -83,7 +83,7 @@ original location will be handled.
 
 #### Examples
 
-```
+```yaml
 ChangeServer: ['https://new-server.example.com', '/new/config/path']
 ```
 
@@ -96,12 +96,14 @@ Copy directories from source to destination.
 *   Format: List
     *   Arg1[str]: Source directory path
     *   Arg2[str]: Destination directory path.
-    *   Arg3[bool]: Delete existing directory before copying. (optional)
+    *   Arg3[bool]: Delete existing directory before copying. (Optional)
 
 #### Examples
 
-```
+```yaml
 CopyDir: ['X:\Glazier', 'C:\Glazier\Old']
+
+# Delete existing directory before copying
 CopyDir: ['X:\Glazier', 'C:\Glazier\Old', true]
 ```
 
@@ -130,7 +132,7 @@ Also available as MultiCopyFile for copying larger sets of files.
 
 #### Examples
 
-```
+```yaml
 CopyFile: ['X:\glazier.log', 'C:\Windows\Logs\glazier.log']
 
 MultiCopyFile:
@@ -149,9 +151,9 @@ OS.)
     *   Arg1[str]: The desired method to use for the join, as defined by the
         domain join library.
     *   Arg2[str]: The name of the domain to join.
-    *   Arg3[str]: The OU to join the machine to. (optional)
+    *   Arg3[str]: The OU to join the machine to. (Optional)
 
-#### Example
+#### Examples
 
 ```
 DomainJoin: ['interactive', 'domain.example.com']
@@ -164,9 +166,9 @@ Process drivers in WIM format. Downloads file, verifies hash, creates an empty
 directory, mounts wim file, applies drivers to the base image, and finally
 unmounts wim.
 
-#### Example
+#### Examples
 
-```
+```yaml
 Driver: ['@/Driver/HP/z840/win10/20160909/z840.wim',
          'C:\Glazier_Cache\z840.wim',
          'cd8f4222a9ba4c4493d8df208fe38cdad969514512d6f5dfd0f7cc7e1ea2c782']
@@ -193,21 +195,24 @@ program executions occurring as part of a typical imaging process.
             *   Default: False
         *   ArgE[bool]: Log console output ONLY to the shell.
             *   Default: False
-    *   Arg2[list]: The second command to execute. (optional)
+    *   Arg2[list]: The second command to execute. (Optional)
     *   ...
 
 #### Examples
 
-```
+```yaml
 Execute: [
   # Using defaults.
   ['C:\Windows\System32\netsh.exe interface teredo set state disabled'],
+
   # 0 or 1 are successful exit codes, 3010 will trigger a restart.
   ['C:\Windows\System32\msiexec.exe /i @Drivers/HP/zbook/HP_Hotkey_Support_6_2_20_8.msi /qn /norestart', [0,1], [3010]],
+
   # 0 is a successful exit code, 2 will trigger a restart, and True will rerun the command after the restart.
-  ['C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #secureboot.ps1', [0], [2], True]
+  ['C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #secureboot.ps1', [0], [2], True],
+
   # 0 is a successful exit code, 2 will trigger a restart, and True will ONLY log output to console.
-  ['C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #secureboot.ps1', [0], [2], False. True]
+  ['C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #secureboot.ps1', [0], [2], False. True],
 ]
 ```
 
@@ -244,7 +249,7 @@ To use checksum verification, add the computed SHA256 hash as a third argument
 to the list. This argument is optional, and being absent or null bypasses
 verification.
 
-```
+```yaml
 Get:
     - ['windows10.wim', 'c:\base.wim', '4b5b6bf0e59dadb4663ad9b4110bf0794ba24c344291f30d47467d177feb4776']
 ```
@@ -255,13 +260,13 @@ Get:
     *   Arg1[list]: The first file to retrieve.
         *   ArgA[str]: The remote path to the source file.
         *   ArgB[str]: The local destination path for the file.
-        *   ArgC[str]: The sha256 sum of the file for verification. (optional)
-    *   Arg2[list]: The second file to retrieve. (optional)
+        *   ArgC[str]: The sha256 sum of the file for verification. (Optional)
+    *   Arg2[list]: The second file to retrieve. (Optional)
     *   ...
 
 #### Examples
 
-```
+```yaml
 Get:
     - ['win2008-x64-se.wim', 'c:\base.wim']
     - ['win2008-x64-se.wim.sha256', 'c:\base.wim.sha256']
@@ -282,11 +287,11 @@ Supports multiple packages via nested list structure.
             URLs, -reinstall, -redownload, etc.
             *   If the % character is used in ArgB, it will be replaced for the
                 current build branch, taken from glazier/lib/buildinfo.
-        *   ArgC[str]: googet.exe location (optional)
+        *   ArgC[str]: googet.exe location (Optional)
         *   ArgD[int]: Installation retry attemps (optional, defaults to 5)
         *   ArgE[int]: Installation retry sleep interval in seconds (optional,
             defaults to 30)
-    *   Arg2[str]: The second GooGet package to install (optional)
+    *   Arg2[str]: The second GooGet package to install (Optional)
     *   ...
 
 #### Examples
@@ -295,14 +300,19 @@ Supports multiple packages via nested list structure.
     GooGetInstall: [
       # Specify only GooGet package name
       ['test_package_v1'],
+
       # Package name with additional GooGet arguments
       ['test_package_v1', ['http://example.com/team-unstable, http://example.co.uk/secure-unstable, https://example.jp/unstable/ -reinstall whatever']],
+
       # Package name, no GooGet arguments, but with custom path to googet.exe
       ['test_package_v1', [], 'C:\ProgramData\GooGet\googet.exe'],
+
       # Package name, custom GooGet arguments, and custom path to googet.exe
       ['test_package_v1', ['http://example.com/team-unstable, http://example.co.uk/secure-unstable, https://example.jp/unstable/ -reinstall whatever'], 'C:\ProgramData\GooGet\googet.exe'],
+
       # Package name with custom retry count of 3 and sleep interval of 60 seconds
       ['test_package_v1', [], , 3, 60],
+
       # Replaces '%' in custom GooGet arguments with the current build branch
       ['test_package_v1', ['http://example.com/team-%, http://example.co.uk/secure-%, https://example.jp/%/ -reinstall whatever'], 'C:\ProgramData\GooGet\googet.exe'],
     ]
@@ -323,11 +333,11 @@ share.
 
 *   Format: List
     *   Arg1[str]: Full path name of the source log file.
-    *   Arg2[str]: The path to the destination file share. (optional)
+    *   Arg2[str]: The path to the destination file share. (Optional)
 
 #### Examples
 
-```
+```yaml
 LogCopy: ['C:\Windows\Logs\glazier.log', '\\shares.example.com\logs-share']
 ```
 
@@ -342,7 +352,7 @@ Make a directory.
 
 #### Examples
 
-```
+```yaml
 MkDir: ['C:\Glazier_Cache']
 ```
 
@@ -485,12 +495,12 @@ Also available as MultiRegAdd for creating larger sets of registry keys.
         *   ArgD([str] or [int]: Key value
         *   ArgE[str]: Key type (REG_SZ or REG_DWORD)
         *   ArgF[bool]: Use 64bit Registry (Optional)
-    *   Arg2[list]: Second key to add (optional)
+    *   Arg2[list]: Second key to add (Optional)
     *   ...
 
 #### Examples
 
-```
+```yaml
 RegAdd: ['HKLM', 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform', 'KeyManagementServiceName', 'kms.example.com', 'REG_SZ']
 
 MultiRegAdd:
@@ -518,12 +528,12 @@ Delete a registry key.
         *   ArgB[str]: Key path
         *   ArgC[str]: Key name
         *   ArgD[bool]: Use 64bit Registry (Optional)
-    *   Arg2[list]: Second key to add (optional)
+    *   Arg2[list]: Second key to add (Optional)
     *   ...
 
 #### Examples
 
-```
+```yaml
 RegDel: ['HKLM', 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform', 'KeyManagementServiceName']
 
 MultiRegDel:
@@ -546,7 +556,7 @@ Restart the host machine.
 
 #### Examples
 
-```
+```yaml
 Reboot: [30]
 Reboot: [10, "Restarting to finish installing drivers."]
 Reboot: [10, "Restarting to finish installing drivers.", True]
@@ -564,7 +574,7 @@ Remove one or more directories.
 
 #### Examples
 
-```
+```yaml
 RmDir: ['C:\Glazier_Cache', 'D:\Glazier_Cache']
 ```
 
@@ -587,7 +597,7 @@ Creates the imaging cache directory with the path stored in BuildInfo.
 
 #### Examples
 
-```
+```yaml
 SetupCache: []
 ```
 
@@ -602,7 +612,7 @@ Add an imaging timer.
 
 #### Examples
 
-```
+```yaml
 SetTimer: ['TimerName']
 ```
 
@@ -630,9 +640,13 @@ Shutdown the host machine.
 
 #### Examples
 
-```
+```yaml
 Shutdown: [30]
+
+# Display reason message
 Shutdown: [10, "Shutting down to save power."]
+
+# Display reason message and remove the next item in the task list
 Shutdown: [10, "Shutting down to save power.", True]
 ```
 
@@ -648,8 +662,10 @@ Pause the installer.
 
 #### Examples
 
-```
+```yaml
 Sleep: [30]
+
+# Display reason message
 Sleep: [300, "Waiting for Group Policy to apply..."]
 ```
 
@@ -673,8 +689,10 @@ Directory domain without direct line of sight to a domain controller.
 ```yaml
 # Using defaults.
 SpliceDomainJoin: []
+
 # Attempt unattend, without fallback, and 3 retry attempts.
 SpliceDomainJoin: [3, True, False]
+
 # Don't attempt unattend with 5 retry attemps.
 SpliceDomainJoin: [5, False]
 ```
@@ -692,11 +710,11 @@ through the imaging process.
     *   Arg1[int]: Stage number
     *   Arg2[bool]: If True, indicates a terminal stage (the last stage of the
         build). The action will set both the start and end time on the stage,
-        assuming no subsequent stages are yet to come. (optional)
+        assuming no subsequent stages are yet to come. (Optional)
 
 #### Examples
 
-```
+```yaml
 StartStage: [1]
 ```
 
@@ -713,7 +731,7 @@ Unzip a zip file to the local filesystem.
 
 #### Examples
 
-```
+```yaml
 Unzip: ['C:\some_archive.zip', 'C:\Some\Destination\Path']
 ```
 
@@ -723,9 +741,9 @@ Process updates in MSU format. Downloads file, verifies hash, creates a
 SYS_CACHE\Updates folder that is used as a temp location to extract the msu
 file, and applies the update to the base image.
 
-#### Example
+#### Examples
 
-```
+```yaml
 Update: ['@/Driver/HP/z840/win7/20160909/kb290292.msu',
          'C:\Glazier_Cache\kb290292.msu',
          'cd8f4222a9ba4c4493d8df208fe38cdad969514512d6f5dfd0f7cc7e1ea2c782']
@@ -742,7 +760,7 @@ Issue a warning that can be bypassed by the user.
 
 #### Examples
 
-```
+```yaml
 Warn: ["You probably don't want to do this, or bad things will happen."]
 ```
 
@@ -752,6 +770,6 @@ Writes the current total, used, and free disk space to registry (in bytes).
 
 #### Examples
 
-```
+```yaml
 WriteDiskSpace: []
 ```
