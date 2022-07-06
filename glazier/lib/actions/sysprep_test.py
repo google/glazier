@@ -67,25 +67,29 @@ class SysprepTest(absltest.TestCase):
     sysprep.open = self.fake_open
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testSetUnattendTimeZoneEditUnattend(self, build_info):
-    st = sysprep.SetUnattendTimeZone([], build_info)
+  def test_set_unattend_time_zone_edit_unattend(self, mock_buildinfo):
+    st = sysprep.SetUnattendTimeZone([], mock_buildinfo)
     st._EditUnattend(
         'Yakutsk Standard Time', unattend_path='/windows/panther/unattend.xml')
     with self.fake_open('/windows/panther/unattend.xml') as handle:
       result = [line.strip() for line in handle.readlines()]
       self.assertIn('<TimeZone>Yakutsk Standard Time</TimeZone>', result)
+
     # IOError
-    self.assertRaises(sysprep.ActionError, st._EditUnattend,
-                      'Yakutsk Standard Time',
-                      '/windows/panther/noneattend.xml')
+    with self.assertRaises(sysprep.ActionError):
+      st._EditUnattend(
+          'Yakutsk Standard Time', '/windows/panther/noneattend.xml')
 
   @mock.patch.object(sysprep.timezone, 'Timezone', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(
       sysprep.SetUnattendTimeZone, '_EditUnattend', autospec=True)
   @mock.patch.object(sysprep.dhcp, 'GetDhcpOption', autospec=True)
-  def testSetUnattendTimeZoneRun(self, dhcp, edit, build_info, timezone):
-    build_info.NetInterfaces.return_value = [
+  def test_set_unattend_time_zone_run(
+      self, mock_getdhcpoption, mock_editunattend, mock_buildinfo,
+      mock_timezone):
+
+    mock_buildinfo.NetInterfaces.return_value = [
         mock.Mock(
             ip_address='127.0.0.1',
             mac_address='11:22:33:44:55:66',
@@ -98,13 +102,14 @@ class SysprepTest(absltest.TestCase):
             mac_address='AA:BB:CC:DD:EE:FF',
             dhcp_server='192.168.1.1')
     ]
-    st = sysprep.SetUnattendTimeZone([], build_info)
+    st = sysprep.SetUnattendTimeZone([], mock_buildinfo)
+
     # Normal Run
-    timezone.return_value.TranslateZone.return_value = (
+    mock_timezone.return_value.TranslateZone.return_value = (
         'New Zealand Standard Time')
-    dhcp.side_effect = iter([b'', b'', b'Antarctica/McMurdo'])
+    mock_getdhcpoption.side_effect = iter([b'', b'', b'Antarctica/McMurdo'])
     st.Run()
-    dhcp.assert_has_calls([
+    mock_getdhcpoption.assert_has_calls([
         mock.call(
             client_addr='127.0.0.1',
             client_mac='11:22:33:44:55:66',
@@ -121,25 +126,28 @@ class SysprepTest(absltest.TestCase):
             option=101,
             server_addr='255.255.255.255')
     ])
-    edit.assert_called_with(st, u'New Zealand Standard Time')
-    timezone.assert_called_with(load_map=True)
-    timezone.return_value.TranslateZone.assert_called_with('Antarctica/McMurdo')
-    timezone.reset_mock()
+    mock_editunattend.assert_called_with(st, u'New Zealand Standard Time')
+    mock_timezone.assert_called_with(load_map=True)
+    mock_timezone.return_value.TranslateZone.assert_called_with(
+        'Antarctica/McMurdo')
+    mock_timezone.reset_mock()
+
     # Failed Mapping
-    dhcp.side_effect = None
-    dhcp.return_value = b'Antarctica/NorthPole'
-    timezone.return_value.TranslateZone.return_value = ''
+    mock_getdhcpoption.side_effect = None
+    mock_getdhcpoption.return_value = b'Antarctica/NorthPole'
+    mock_timezone.return_value.TranslateZone.return_value = ''
     st.Run()
-    edit.assert_called_with(st, u'Pacific Standard Time')
-    timezone.assert_called_with(load_map=True)
-    timezone.return_value.TranslateZone.assert_called_with(
+    mock_editunattend.assert_called_with(st, u'Pacific Standard Time')
+    mock_timezone.assert_called_with(load_map=True)
+    mock_timezone.return_value.TranslateZone.assert_called_with(
         'Antarctica/NorthPole')
-    timezone.reset_mock()
+    mock_timezone.reset_mock()
+
     # No Result
-    dhcp.return_value = b''
+    mock_getdhcpoption.return_value = b''
     st.Run()
-    edit.assert_called_with(st, u'Pacific Standard Time')
-    self.assertFalse(timezone.called)
+    mock_editunattend.assert_called_with(st, u'Pacific Standard Time')
+    self.assertFalse(mock_timezone.called)
 
 
 if __name__ == '__main__':

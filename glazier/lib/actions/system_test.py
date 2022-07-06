@@ -24,8 +24,8 @@ from glazier.lib.actions import system
 class SystemTest(absltest.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testRebootPop(self, build_info):
-    r = system.Reboot([30, 'reboot for reasons', True], build_info)
+  def test_reboot_pop(self, mock_buildinfo):
+    r = system.Reboot([30, 'reboot for reasons', True], mock_buildinfo)
     with self.assertRaises(events.RestartEvent) as evt:
       r.Run()
     ex = evt.exception
@@ -34,8 +34,8 @@ class SystemTest(absltest.TestCase):
     self.assertEqual(ex.pop_next, True)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testRebootReason(self, build_info):
-    r = system.Reboot([30, 'reboot for reasons'], build_info)
+  def test_reboot_reason(self, mock_buildinfo):
+    r = system.Reboot([30, 'reboot for reasons'], mock_buildinfo)
     with self.assertRaises(events.RestartEvent) as evt:
       r.Run()
     ex = evt.exception
@@ -44,8 +44,8 @@ class SystemTest(absltest.TestCase):
     self.assertEqual(ex.pop_next, False)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testRebootTimeout(self, build_info):
-    r = system.Reboot([10], build_info)
+  def test_reboot_timeout(self, mock_buildinfo):
+    r = system.Reboot([10], mock_buildinfo)
     with self.assertRaises(events.RestartEvent) as evt:
       r.Run()
     ex = evt.exception
@@ -53,15 +53,20 @@ class SystemTest(absltest.TestCase):
     self.assertEqual(str(ex), 'unspecified')
     self.assertEqual(ex.pop_next, False)
 
-  def testRebootValidate(self):
+  # TODO(b/237812617): Parameterize this test.
+  def test_reboot_validate(self):
     r = system.Reboot(True, None)
-    self.assertRaises(system.ValidationError, r.Validate)
+    with self.assertRaises(system.ValidationError):
+      r.Validate()
     r = system.Reboot([30, 40], None)
-    self.assertRaises(system.ValidationError, r.Validate)
+    with self.assertRaises(system.ValidationError):
+      r.Validate()
     r = system.Reboot([30, 'reasons', 'True'], None)
-    self.assertRaises(system.ValidationError, r.Validate)
+    with self.assertRaises(system.ValidationError):
+      r.Validate()
     r = system.Reboot([1, 2, 3, 4], None)
-    self.assertRaises(system.ValidationError, r.Validate)
+    with self.assertRaises(system.ValidationError):
+      r.Validate()
     r = system.Reboot([30, 'reasons', True], None)
     r.Validate()
     r = system.Reboot([30, 'reasons'], None)
@@ -70,8 +75,8 @@ class SystemTest(absltest.TestCase):
     r.Validate()
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testShutdownPop(self, build_info):
-    r = system.Shutdown([15, 'shutdown for reasons', True], build_info)
+  def test_shutdown_pop(self, mock_buildinfo):
+    r = system.Shutdown([15, 'shutdown for reasons', True], mock_buildinfo)
     with self.assertRaises(events.ShutdownEvent) as evt:
       r.Run()
     ex = evt.exception
@@ -80,8 +85,8 @@ class SystemTest(absltest.TestCase):
     self.assertEqual(ex.pop_next, True)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testShutdownReason(self, build_info):
-    r = system.Shutdown([15, 'shutdown for reasons'], build_info)
+  def test_shutdown_reason(self, mock_buildinfo):
+    r = system.Shutdown([15, 'shutdown for reasons'], mock_buildinfo)
     with self.assertRaises(events.ShutdownEvent) as evt:
       r.Run()
     ex = evt.exception
@@ -90,8 +95,8 @@ class SystemTest(absltest.TestCase):
     self.assertEqual(ex.pop_next, False)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testShutdownTimeout(self, build_info):
-    r = system.Shutdown([1], build_info)
+  def test_shutdown_timeout(self, mock_buildinfo):
+    r = system.Shutdown([1], mock_buildinfo)
     with self.assertRaises(events.ShutdownEvent) as evt:
       r.Run()
     ex = evt.exception
@@ -99,15 +104,20 @@ class SystemTest(absltest.TestCase):
     self.assertEqual(str(ex), 'unspecified')
     self.assertEqual(ex.pop_next, False)
 
-  def testShutdownValidate(self):
+  # TODO(b/237812617): Parameterize this test.
+  def test_shutdown_validate(self):
     s = system.Shutdown(True, None)
-    self.assertRaises(system.ValidationError, s.Validate)
+    with self.assertRaises(system.ValidationError):
+      s.Validate()
     s = system.Shutdown([30, 40], None)
-    self.assertRaises(system.ValidationError, s.Validate)
+    with self.assertRaises(system.ValidationError):
+      s.Validate()
     s = system.Shutdown([30, 'reasons', 'True'], None)
-    self.assertRaises(system.ValidationError, s.Validate)
+    with self.assertRaises(system.ValidationError):
+      s.Validate()
     s = system.Shutdown([1, 2, 3, 4], None)
-    self.assertRaises(system.ValidationError, s.Validate)
+    with self.assertRaises(system.ValidationError):
+      s.Validate()
     s = system.Shutdown([30, 'reasons', True], None)
     s.Validate()
     s = system.Shutdown([30, 'reasons'], None)

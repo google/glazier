@@ -32,30 +32,36 @@ class TimersTest(absltest.TestCase):
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(timers.registry, 'set_value', autospec=True)
   @mock.patch.object(timers.logging, 'info', autospec=True)
-  def testSetTimer(self, i, sv, build_info):
-    build_info.TimerGet.return_value = VALUE_DATA
-    st = timers.SetTimer([VALUE_NAME], build_info)
+  def test_set_timer(self, mock_info, mock_set_value, mock_buildinfo):
+    mock_buildinfo.TimerGet.return_value = VALUE_DATA
+    st = timers.SetTimer([VALUE_NAME], mock_buildinfo)
     st.Run()
-    build_info.TimerSet.assert_called_with(VALUE_NAME)
-    sv.assert_called_with('TIMER_' + VALUE_NAME, VALUE_DATA, 'HKLM',
-                          KEY_PATH, log=False)
-    i.assert_called_with('Set image timer: %s (%s)', VALUE_NAME, VALUE_DATA)
+    mock_buildinfo.TimerSet.assert_called_with(VALUE_NAME)
+    mock_set_value.assert_called_with(
+        'TIMER_' + VALUE_NAME, VALUE_DATA, 'HKLM', KEY_PATH, log=False)
+    mock_info.assert_called_with(
+        'Set image timer: %s (%s)', VALUE_NAME, VALUE_DATA)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(timers.registry, 'set_value', autospec=True)
-  def testSetTimerError(self, sv, build_info):
-    build_info.TimerGet.return_value = VALUE_DATA
-    sv.side_effect = timers.registry.Error
-    st = timers.SetTimer([VALUE_NAME], build_info)
-    self.assertRaises(timers.ActionError, st.Run)
+  def test_set_timer_error(self, mock_set_value, mock_buildinfo):
+    mock_buildinfo.TimerGet.return_value = VALUE_DATA
+    mock_set_value.side_effect = timers.registry.Error
+    st = timers.SetTimer([VALUE_NAME], mock_buildinfo)
+    with self.assertRaises(timers.ActionError):
+      st.Run()
 
-  def testSetTimerValidate(self):
+  # TODO(b/237812617): Parameterize this test.
+  def test_set_timer_validate(self):
     st = timers.SetTimer(VALUE_NAME, None)
-    self.assertRaises(ValidationError, st.Validate)
+    with self.assertRaises(ValidationError):
+      st.Validate()
     st = timers.SetTimer([1, 2, 3], None)
-    self.assertRaises(ValidationError, st.Validate)
+    with self.assertRaises(ValidationError):
+      st.Validate()
     st = timers.SetTimer([1], None)
-    self.assertRaises(ValidationError, st.Validate)
+    with self.assertRaises(ValidationError):
+      st.Validate()
     st = timers.SetTimer([VALUE_NAME], None)
     st.Validate()
 

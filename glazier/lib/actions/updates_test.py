@@ -28,7 +28,9 @@ class UpdatesTest(absltest.TestCase):
   @mock.patch('glazier.lib.download.Download.DownloadFile', autospec=True)
   @mock.patch.object(updates.execute, 'execute_binary', autospec=True)
   @mock.patch.object(updates.file_util, 'CreateDirectories', autospec=True)
-  def testUpdateMSU(self, mkdir, exe, dl, sha, rpath):
+  def test_update_msu(
+      self, mock_createdirectories, mock_execute_binary, mock_downloadfile,
+      mock_verifyshahash, mock_releasepath):
     bi = BuildInfo()
 
     # Setup
@@ -38,50 +40,57 @@ class UpdatesTest(absltest.TestCase):
         'd1acbdd8652d6c78ce284bf511f3a7f5f776a0a91357aca060039a99c6a93a16')
     conf = {'data': {'update': [[remote, local, sha_256]]},
             'path': ['/autobuild']}
-    rpath.return_value = '/'
+    mock_releasepath.return_value = '/'
 
     # Success
     um = updates.UpdateMSU(conf['data']['update'], bi)
     um.Run()
-    dl.assert_called_with(
+    mock_downloadfile.assert_called_with(
         mock.ANY, ('https://glazier-server.example.com/'
                    'bin/Drivers/HP/KB2990941-v3-x64.msu'),
         local,
         show_progress=True)
-    sha.assert_called_with(mock.ANY, local, sha_256)
+    mock_verifyshahash.assert_called_with(mock.ANY, local, sha_256)
     cache = updates.constants.SYS_CACHE
-    exe.assert_called_with(
+    mock_execute_binary.assert_called_with(
         f'{updates.constants.SYS_SYSTEM32}/dism.exe', [
             '/image:c:\\', '/Add-Package',
             '/PackagePath:c:\\KB2990941-v3-x64.msu',
             f'/ScratchDir:{cache}\\Updates\\'
         ],
         shell=True)
-    mkdir.assert_called_with('%s\\Updates\\' % cache)
+    mock_createdirectories.assert_called_with('%s\\Updates\\' % cache)
 
     # Invalid format
     conf['data']['update'][0][1] = 'C:\\Windows6.1-KB2990941-v3-x64.cab'
     um = updates.UpdateMSU(conf['data']['update'], bi)
-    self.assertRaises(updates.ActionError, um.Run)
+    with self.assertRaises(updates.ActionError):
+      um.Run()
     conf['data']['update'][0][1] = 'C:\\Windows6.1-KB2990941-v3-x64.msu'
 
     # Dism Fail
-    exe.side_effect = updates.execute.Error
+    mock_execute_binary.side_effect = updates.execute.Error
     with self.assertRaises(updates.ActionError):
       um.Run()
 
-  def testUpdateMSUValidate(self):
+  # TODO(b/237812617): Parameterize this test.
+  def test_update_msu_validate(self):
     g = updates.UpdateMSU('String', None)
-    self.assertRaises(updates.ValidationError, g.Validate)
+    with self.assertRaises(updates.ValidationError):
+      g.Validate()
     g = updates.UpdateMSU([[1, 2, 3]], None)
-    self.assertRaises(updates.ValidationError, g.Validate)
+    with self.assertRaises(updates.ValidationError):
+      g.Validate()
     g = updates.UpdateMSU([[1, '/tmp/out/path']], None)
-    self.assertRaises(updates.ValidationError, g.Validate)
+    with self.assertRaises(updates.ValidationError):
+      g.Validate()
     g = updates.UpdateMSU([['/tmp/src.zip', 2]], None)
-    self.assertRaises(updates.ValidationError, g.Validate)
+    with self.assertRaises(updates.ValidationError):
+      g.Validate()
     g = updates.UpdateMSU(
         [['https://glazier/bin/src.msu', '/tmp/out/src.zip']], None)
-    self.assertRaises(updates.ValidationError, g.Validate)
+    with self.assertRaises(updates.ValidationError):
+      g.Validate()
     g = updates.UpdateMSU(
         [['https://glazier/bin/src.msu', '/tmp/out/src.msu']], None)
     g.Validate()
@@ -90,7 +99,8 @@ class UpdatesTest(absltest.TestCase):
     g.Validate()
     g = updates.UpdateMSU([['https://glazier/bin/src.zip', '/tmp/out/src.zip',
                             '12345', '67890']], None)
-    self.assertRaises(updates.ValidationError, g.Validate)
+    with self.assertRaises(updates.ValidationError):
+      g.Validate()
 
 
 if __name__ == '__main__':
