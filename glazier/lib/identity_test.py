@@ -29,6 +29,7 @@ class RegUtilTest(absltest.TestCase):
 
   @mock.patch.object(identity.registry, 'get_value', autospec=True)
   def test_get_username(self, mock_get_value):
+    identity.get_username.cache_clear()
     mock_get_value.return_value = USERNAME
     self.assertEqual(identity.get_username(), USERNAME)
 
@@ -71,6 +72,7 @@ class RegUtilTest(absltest.TestCase):
 
   @mock.patch.object(identity.registry, 'get_value', autospec=True)
   def test_get_hostname(self, mock_get_value):
+    identity.get_hostname.cache_clear()
     mock_get_value.return_value = HOSTNAME
     self.assertEqual(identity.get_hostname(), HOSTNAME)
 
