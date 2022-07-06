@@ -20,7 +20,7 @@ from glazier.lib.policies import base
 
 class BaseTest(absltest.TestCase):
 
-  def testVerify(self):
+  def test_verify(self):
     b = base.BasePolicy(None)
     b.Verify()
 

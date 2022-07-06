@@ -29,18 +29,22 @@ class BaseTest(absltest.TestCase):
     self.cb = base.ConfigBase(self.buildinfo)
 
   @mock.patch.object(base.actions, 'SetTimer', autospec=True)
-  def testProcessActions(self, set_timer):
+  def test_process_actions(self, mock_settimer):
+
     # valid command
     self.cb._ProcessAction('SetTimer', ['TestTimer'])
-    set_timer.assert_called_with(build_info=self.buildinfo, args=['TestTimer'])
-    self.assertTrue(set_timer.return_value.Run.called)
+    mock_settimer.assert_called_with(
+        build_info=self.buildinfo, args=['TestTimer'])
+    self.assertTrue(mock_settimer.return_value.Run.called)
+
     # invalid command
-    self.assertRaises(base.ConfigError, self.cb._ProcessAction, 'BadSetTimer',
-                      ['Timer1'])
+    with self.assertRaises(base.ConfigError):
+      self.cb._ProcessAction('BadSetTimer', ['Timer1'])
+
     # action error
-    set_timer.side_effect = base.actions.ActionError
-    self.assertRaises(base.ConfigError, self.cb._ProcessAction, 'SetTimer',
-                      ['Timer1'])
+    mock_settimer.side_effect = base.actions.ActionError
+    with self.assertRaises(base.ConfigError):
+      self.cb._ProcessAction('SetTimer', ['Timer1'])
 
 
 if __name__ == '__main__':

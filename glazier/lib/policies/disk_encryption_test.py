@@ -22,8 +22,8 @@ import mock
 class DiskEncryptionTest(absltest.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testVerify(self, build_info):
-    de = disk_encryption.DiskEncryption(build_info)
+  def test_verify(self, mock_buildinfo):
+    de = disk_encryption.DiskEncryption(mock_buildinfo)
     de._build_info.EncryptionLevel.return_value = 'none'
     de._build_info.TpmPresent.return_value = True
     de.Verify()
@@ -32,7 +32,8 @@ class DiskEncryptionTest(absltest.TestCase):
     de._build_info.EncryptionLevel.return_value = 'tpm'
     de.Verify()
     de._build_info.TpmPresent.return_value = False
-    self.assertRaises(disk_encryption.ImagingPolicyException, de.Verify)
+    with self.assertRaises(disk_encryption.ImagingPolicyException):
+      de.Verify()
 
 
 if __name__ == '__main__':

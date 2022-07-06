@@ -24,35 +24,38 @@ class DeviceModelTest(absltest.TestCase):
   @mock.patch('builtins.input', autospec=True)
   @mock.patch('builtins.print', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testVerify(self, build_info, user_out, user_in):
-    dm = device_model.DeviceModel(build_info)
+  def test_verify(self, mock_buildinfo, mock_print, mock_input):
+    dm = device_model.DeviceModel(mock_buildinfo)
 
     # Tier1
     dm._build_info.SupportTier.return_value = 1
     self.assertTrue(dm.Verify())
 
     # Tier 2
-    user_in.return_value = 'yes'
+    mock_input.return_value = 'yes'
     dm._build_info.ComputerModel.return_value = 'Test Workstation'
     dm._build_info.SupportTier.return_value = 2
     self.assertTrue(dm.Verify())
-    user_out.assert_called_with(device_model.DeviceModel.PARTIAL_NOTICE %
-                                'Test Workstation')
+    mock_print.assert_called_with(
+        device_model.DeviceModel.PARTIAL_NOTICE % 'Test Workstation')
+
     # Unsupported: Continue
-    user_in.return_value = 'Y'
+    mock_input.return_value = 'Y'
     dm._build_info.SupportTier.return_value = 0
     self.assertTrue(dm.Verify())
-    user_out.assert_called_with(device_model.DeviceModel.UNSUPPORTED_NOTICE %
-                                'Test Workstation')
+    mock_print.assert_called_with(
+        device_model.DeviceModel.UNSUPPORTED_NOTICE % 'Test Workstation')
+
     # Unsupported: Abort
-    user_in.return_value = 'n'
-    self.assertRaises(device_model.ImagingPolicyException, dm.Verify)
+    mock_input.return_value = 'n'
+    with self.assertRaises(device_model.ImagingPolicyException):
+      dm.Verify()
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testBannedPlatform(self, build_info):
-    bp = device_model.BannedPlatform(build_info)
-    self.assertRaises(device_model.ImagingPolicyException,
-                      bp.Verify)
+  def test_banned_platform(self, mock_buildinfo):
+    bp = device_model.BannedPlatform(mock_buildinfo)
+    with self.assertRaises(device_model.ImagingPolicyException):
+      bp.Verify()
 
 
 if __name__ == '__main__':
