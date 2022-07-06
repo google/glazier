@@ -112,6 +112,7 @@ class TitleTest(absltest.TestCase):
   def test_set_title_string(
       self, mock_check_winpe, mock_release, mock_imageid, mock_system):
 
+    title.constants.FLAGS.config_root_path = '/'
     mock_check_winpe.return_value = False
     mock_imageid.return_value = _TEST_ID
     mock_release.return_value = None
@@ -131,6 +132,7 @@ class TitleTest(absltest.TestCase):
     mock_check_winpe.return_value = False
     mock_imageid.return_value = None
     mock_get_active_stage.return_value = _STAGE
+    title.constants.FLAGS.config_root_path = '/'
     mock_release.return_value = None
     self.assertEqual(title.set_title(), f'{_PREFIX} [Stage: {_STAGE}]')
     mock_system.assert_called_with(f'title {_PREFIX} [Stage: {_STAGE}]')
