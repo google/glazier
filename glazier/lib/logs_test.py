@@ -21,6 +21,7 @@ from absl.testing import absltest
 from glazier.lib import constants
 from glazier.lib import file_util
 from glazier.lib import logs
+from glazier.lib import winpe
 
 from pyfakefs.fake_filesystem_unittest import Patcher
 
@@ -29,7 +30,9 @@ TEST_ID = '1A19SEL90000R90DZN7A-1234567'
 
 class LoggingTest(absltest.TestCase):
 
-  def test_collect(self):
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
+  def test_collect(self, mock_check_winpe):
+    mock_check_winpe.return_value = False
     with Patcher() as patcher:
       files = [
           os.path.join(constants.SYS_LOGS_PATH, 'log1.log'),
@@ -50,7 +53,9 @@ class LoggingTest(absltest.TestCase):
         logs.Collect(constants.SYS_LOGS_PATH)
 
   @mock.patch.object(zipfile.ZipFile, 'write', autospec=True)
-  def test_collect_value_err(self, mock_write):
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
+  def test_collect_value_err(self, mock_check_winpe, mock_write):
+    mock_check_winpe.return_value = False
     mock_write.side_effect = ValueError(
         'ZIP does not support timestamps before 1980')
     with Patcher() as patcher:
@@ -59,7 +64,7 @@ class LoggingTest(absltest.TestCase):
       with self.assertRaises(logs.LogCollectionError):
         logs.Collect(r'C:\glazier.zip')
 
-  @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
   def test_get_logs_path(self, mock_check_winpe):
 
     # WinPE
@@ -72,7 +77,7 @@ class LoggingTest(absltest.TestCase):
 
   @mock.patch.object(file_util, 'CreateDirectories')
   @mock.patch.object(logs.buildinfo.BuildInfo, 'ImageID', autospec=True)
-  @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
   @mock.patch.object(logs.logging, 'FileHandler')
   def test_setup(
       self, mock_filehandler, mock_check_winpe, mock_imageid,
@@ -87,7 +92,7 @@ class LoggingTest(absltest.TestCase):
 
   @mock.patch.object(file_util, 'CreateDirectories')
   @mock.patch.object(logs.buildinfo.BuildInfo, 'ImageID', autospec=True)
-  @mock.patch.object(logs.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
   @mock.patch.object(logs.logging, 'FileHandler')
   def test_setup_error(
       self, mock_filehandler, mock_check_winpe, mock_imageid,
