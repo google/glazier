@@ -37,17 +37,17 @@ class AutobuildTest(absltest.TestCase):
     autobuild.os = fake_filesystem.FakeOsModule(self.filesystem)
 
   @mock.patch.object(winpe, 'check_winpe', autospec=True)
-  def testSetupTaskList(self, wpe):
+  def test_setup_task_list(self, mock_check_winpe):
     # Host
     tasklist = autobuild.constants.SYS_TASK_LIST
-    wpe.return_value = False
+    mock_check_winpe.return_value = False
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
     autobuild.FLAGS.preserve_tasks = True
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
 
     # WinPE
     self.filesystem.create_file(autobuild.constants.WINPE_TASK_LIST)
-    wpe.return_value = True
+    mock_check_winpe.return_value = True
     tasklist = autobuild.constants.WINPE_TASK_LIST
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
     self.assertTrue(autobuild.os.path.exists(tasklist))
@@ -57,12 +57,12 @@ class AutobuildTest(absltest.TestCase):
 
   @mock.patch.object(autobuild.terminator, 'log_and_exit', autospec=True)
   @mock.patch.object(autobuild, 'os', autospec=True)
-  def testSetupTaskListError(self, operatingsystem, log_and_exit):
+  def test_setup_task_list_error(self, mock_os, mock_log_and_exit):
     self.filesystem.create_file(autobuild.constants.SYS_TASK_LIST)
     autobuild.FLAGS.preserve_tasks = False
-    operatingsystem.remove.side_effect = OSError
+    mock_os.remove.side_effect = OSError
     self.autobuild._SetupTaskList()
-    log_and_exit.assert_called_with(
+    mock_log_and_exit.assert_called_with(
         'Unable to remove task list', self.autobuild._build_info,
         errors.ErrorCode.TASK_LIST_REMOVE_ERROR, mock.ANY)
 
@@ -72,30 +72,32 @@ class AutobuildTest(absltest.TestCase):
   @mock.patch.object(autobuild.runner, 'ConfigRunner', autospec=True)
   @mock.patch.object(autobuild.builder, 'ConfigBuilder', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'BeyondCorp', autospec=True)
-  def testRunBuild(self, bc, builder, runner, wpe, st, log_and_exit):
-    bc.return_value = False
-    wpe.return_value = False
+  def test_run_build(
+      self, mock_beyondcorp, mock_configbuilder, mock_configrunner,
+      mock_check_winpe, mock_set_title, mock_log_and_exit):
+    mock_beyondcorp.return_value = False
+    mock_check_winpe.return_value = False
     self.autobuild.RunBuild()
-    self.assertTrue(st.called)
+    self.assertTrue(mock_set_title.called)
 
     # ConfigBuilderError
-    builder.side_effect = autobuild.builder.ConfigBuilderError
+    mock_configbuilder.side_effect = autobuild.builder.ConfigBuilderError
     self.autobuild.RunBuild()
-    log_and_exit.assert_called_with(
+    mock_log_and_exit.assert_called_with(
         'Failed to build the task list', self.autobuild._build_info,
         errors.ErrorCode.TASK_LIST_BUILD_ERROR, mock.ANY)
 
     # ConfigRunnerError
-    builder.side_effect = None
-    runner.side_effect = autobuild.runner.ConfigRunnerError
+    mock_configbuilder.side_effect = None
+    mock_configrunner.side_effect = autobuild.runner.ConfigRunnerError
     self.autobuild.RunBuild()
-    log_and_exit.assert_called_with(
+    mock_log_and_exit.assert_called_with(
         'Failed to execute the task list', self.autobuild._build_info,
         errors.ErrorCode.TASK_LIST_EXECUTE_ERROR, mock.ANY)
 
   @mock.patch.object(title, 'set_title', autospec=True)
-  def testKeyboardInterrupt(self, st):
-    st.side_effect = KeyboardInterrupt
+  def test_keyboard_interrupt(self, mock_set_title):
+    mock_set_title.side_effect = KeyboardInterrupt
     with self.assertRaises(SystemExit) as cm:
       self.autobuild.RunBuild()
     self.assertEqual(cm.exception.code, 1)
@@ -103,17 +105,17 @@ class AutobuildTest(absltest.TestCase):
 
   @mock.patch.object(autobuild.terminator, 'log_and_exit', autospec=True)
   @mock.patch.object(title, 'set_title', autospec=True)
-  def testGlazierError(self, st, log_and_exit):
-    st.side_effect = autobuild.errors.GlazierError
+  def test_glazier_error(self, mock_set_title, mock_log_and_exit):
+    mock_set_title.side_effect = autobuild.errors.GlazierError
     self.autobuild.RunBuild()
-    self.assertTrue(log_and_exit.called)
+    self.assertTrue(mock_log_and_exit.called)
 
   @mock.patch.object(autobuild.terminator, 'log_and_exit', autospec=True)
   @mock.patch.object(title, 'set_title', autospec=True)
-  def testMainException(self, st, log_and_exit):
-    st.side_effect = Exception
+  def test_main_exception(self, mock_set_title, mock_log_and_exit):
+    mock_set_title.side_effect = Exception
     self.autobuild.RunBuild()
-    log_and_exit.assert_called_with(
+    mock_log_and_exit.assert_called_with(
         'Unknown Exception', self.autobuild._build_info,
         errors.ErrorCode.DEFAULT, mock.ANY)
 
