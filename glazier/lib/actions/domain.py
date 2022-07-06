@@ -38,4 +38,4 @@ class DomainJoin(BaseAction):
   def Validate(self):
     self._ListOfStringsValidator(self._args, length=2, max_length=3)
     if self._args[0] not in domain_join.AUTH_OPTS:
-      raise ValidationError('Invalid join method: %s' % self._args[0])
+      raise ValidationError(f'Invalid join method: {self._args[0]}')

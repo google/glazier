@@ -28,11 +28,11 @@ class BitlockerEnable(BaseAction):
       bl = bitlocker.Bitlocker(mode)
       bl.Enable()
     except bitlocker.Error as e:
-      raise ActionError('Failure enabling Bitlocker. (%s)' % str(e)) from e
+      raise ActionError('Failure enabling Bitlocker.') from e
 
   def Validate(self):
     self._ListOfStringsValidator(self._args, 1)
     if self._args[0] not in bitlocker.SUPPORTED_MODES:
       raise ValidationError(
-          'Unknown mode for BitlockerEnable: %s' % self._args[0])
+          f'Unknown mode for BitlockerEnable: {self._args[0]}')
 

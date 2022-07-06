@@ -52,25 +52,25 @@ class PSScript(BaseAction):
     try:
       script = cache.Cache().CacheFromLine(script, self._build_info)  # pytype: disable=annotation-type-mismatch
     except cache.Error as e:
-      raise ActionError(e) from e
+      raise ActionError() from e
 
     try:
       result = powershell.PowerShell(shell, log).RunLocal(
           script, ps_args, success_codes + reboot_codes)
     except powershell.Error as e:
-      raise ActionError(e) from e
+      raise ActionError() from e
 
     if result in reboot_codes:
       raise events.RestartEvent(
           'Restart triggered by exit code %d' % result, 5,
           retry_on_restart=restart_retry)
     elif result not in success_codes:
-      raise ActionError('Script returned invalid exit code %d' % result)
+      raise ActionError(f'Script returned invalid exit code {result}')
 
   def Validate(self):
     self._TypeValidator(self._args, list)
     if not 1 <= len(self._args) <= 7:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise ValidationError(f'Invalid args length: {len(self._args)}')
     self._TypeValidator(self._args[0], str)
     if len(self._args) > 1:  # ps_args
       self._TypeValidator(self._args[1], list)
@@ -105,7 +105,7 @@ class MultiPSScript(BaseAction):
     try:
       self._TypeValidator(self._args, list)
     except ValidationError as e:
-      raise ActionError(e) from e
+      raise ActionError() from e
     for arg in self._args:
       PSScript(arg, self._build_info).Validate()
 
@@ -142,7 +142,7 @@ class PSCommand(BaseAction):
       try:
         command[0] = cache.Cache().CacheFromLine(command[0], self._build_info)  # pytype: disable=container-type-mismatch
       except cache.Error as e:
-        raise ActionError(e) from e
+        raise ActionError() from e
 
     try:
       # Exit $LASTEXITCODE is necessary because PowerShell.exe -Command only
@@ -150,19 +150,19 @@ class PSCommand(BaseAction):
       result = powershell.PowerShell(shell, log).RunCommand(
           command + ['; exit $LASTEXITCODE'], success_codes + reboot_codes)
     except powershell.Error as e:
-      raise ActionError(e) from e
+      raise ActionError() from e
 
     if result in reboot_codes:
       raise events.RestartEvent(
           'Restart triggered by exit code %d' % result, 5,
           retry_on_restart=restart_retry)
     elif result not in success_codes:
-      raise ActionError('Command returned invalid exit code %d' % result)
+      raise ActionError(f'Command returned invalid exit code {result}')
 
   def Validate(self):
     self._TypeValidator(self._args, list)
     if not 1 <= len(self._args) <= 6:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise ValidationError(f'Invalid args length: {len(self._args)}')
     self._TypeValidator(self._args[0], str)
     if len(self._args) > 1:
       self._TypeValidator(self._args[1], list)
@@ -195,6 +195,6 @@ class MultiPSCommand(BaseAction):
     try:
       self._TypeValidator(self._args, list)
     except ValidationError as e:
-      raise ActionError(e) from e
+      raise ActionError() from e
     for arg in self._args:
       PSCommand(arg, self._build_info).Validate()

@@ -56,17 +56,17 @@ class GooGetInstall(BaseAction):
                              path=path,
                              flags=flags)
       except googet.Error as e:
-        raise ActionError("Failure executing GooGet command: '%s'" % e) from e
+        raise ActionError('Failure executing GooGet command') from e
       except IndexError as e:
-        raise ActionError("Unable to access all required arguments in command "
-                          "'%s'" % str(args)) from e
+        message = f'Unable to access all required arguments in command "{args}"'
+        raise ActionError(message) from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)
     for args in self._args:
       if not 1 <= len(args) <= 5:
-        raise ValidationError("Invalid GooGet args '%s' with length of "
-                              "'%d'" % (args, len(args)))
+        raise ValidationError(
+            f'Invalid GooGet args "{args}" with length of {len(args)}')
       self._TypeValidator(args[0], str)  # Package
       if len(args) > 1:
         self._TypeValidator(args[1], list)  # Flags

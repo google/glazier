@@ -47,7 +47,7 @@ class DriverWIM(BaseAction):
       file_ext = os.path.splitext(dst)[1]
 
       if file_ext not in self.FILE_EXT_SUPPORTED:
-        raise ActionError('Unsupported driver file format %s.' % dst)
+        raise ActionError(f'Unsupported driver file format {dst}.')
 
       g = Get([wim], self._build_info)
       g.Run()
@@ -60,12 +60,12 @@ class DriverWIM(BaseAction):
     for cmd_arg in self._args:
       self._TypeValidator(cmd_arg, list)
       if not 2 <= len(cmd_arg) <= 3:
-        raise ValidationError('Invalid args length: %s' % cmd_arg)
+        raise ValidationError(f'Invalid args length: {len(cmd_arg)}')
       self._TypeValidator(cmd_arg[0], str)  # remote
       self._TypeValidator(cmd_arg[1], str)  # local
       file_ext = os.path.splitext(cmd_arg[1])[1]
       if file_ext not in self.FILE_EXT_SUPPORTED:
-        raise ValidationError('Invalid file type: %s' % cmd_arg[1])
+        raise ValidationError(f'Invalid file type: {cmd_arg[1]}')
       if len(cmd_arg) > 2:  # hash
         for arg in cmd_arg[2]:
           self._TypeValidator(arg, str)
@@ -93,8 +93,8 @@ class DriverWIM(BaseAction):
           ['/add-driver', f'{mount_dir}*.inf', '/subdirs'],
           shell=True)
     except execute.Error as e:
-      raise ActionError('Error adding drivers to DriverStore from %s. (%s)' %
-                        (mount_dir, e)) from e
+      raise ActionError(
+          f'Error adding drivers to DriverStore from {mount_dir}.') from e
 
   def _AddDriverWinPE(self, mount_dir):
     """Command used to process drivers in a given directory.
@@ -119,8 +119,8 @@ class DriverWIM(BaseAction):
           ['/Image:c:', '/Add-Driver', f'/Driver:{mount_dir}', '/Recurse'],
           shell=True)
     except execute.Error as e:
-      raise ActionError('Error applying drivers to image from %s. (%s)' %
-                        (mount_dir, e)) from e
+      raise ActionError(
+          f'Error applying drivers to image from {mount_dir}.') from e
 
   def _ProcessWim(self, wim_file):
     """Processes WIM driver files using DISM commands.
@@ -153,7 +153,7 @@ class DriverWIM(BaseAction):
           ],
           shell=True)
     except execute.Error as e:
-      raise ActionError('Unable to mount image %s. (%s)' % (wim_file, e)) from e
+      raise ActionError(f'Unable to mount image {wim_file}.') from e
 
     logging.info('Applying %s image to main disk.', wim_file)
     if winpe.check_winpe():
@@ -168,5 +168,4 @@ class DriverWIM(BaseAction):
           ['/Unmount-Image', f'/MountDir:{mount_dir}', '/Discard'],
           shell=True)
     except execute.Error as e:
-      raise ActionError(
-          'Error unmounting image. Unable to continue. (%s)' % e) from e
+      raise ActionError('Error unmounting image. Unable to continue.') from e

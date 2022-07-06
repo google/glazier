@@ -46,7 +46,7 @@ class UpdateMSU(BaseAction):
       file_ext = os.path.splitext(dst)[1]
 
       if file_ext not in self.FILE_EXT_SUPPORTED:
-        raise ActionError('Unsupported update file format %s.' % dst)
+        raise ActionError(f'Unsupported update file format {dst}.')
 
       g = Get([msu], self._build_info)
       g.Run()
@@ -59,12 +59,12 @@ class UpdateMSU(BaseAction):
     for cmd_arg in self._args:
       self._TypeValidator(cmd_arg, list)
       if not 2 <= len(cmd_arg) <= 3:
-        raise ValidationError('Invalid args length: %s' % cmd_arg)
+        raise ValidationError(f'Invalid args length: {len(cmd_arg)}')
       self._TypeValidator(cmd_arg[0], str)  # remote
       self._TypeValidator(cmd_arg[1], str)  # local
       file_ext = os.path.splitext(cmd_arg[1])[1]
       if file_ext not in self.FILE_EXT_SUPPORTED:
-        raise ValidationError('Invalid file type: %s' % cmd_arg[1])
+        raise ValidationError(f'Invalid file type: {cmd_arg[1]}')
       if len(cmd_arg) > 2:  # hash
         for arg in cmd_arg[2]:
           self._TypeValidator(arg, str)
@@ -100,5 +100,4 @@ class UpdateMSU(BaseAction):
           ],
           shell=True)
     except execute.Error as e:
-      raise ActionError(
-          'Failed to process update %s: %s' % (msu_file, e)) from e
+      raise ActionError(f'Failed to process update {msu_file}') from e

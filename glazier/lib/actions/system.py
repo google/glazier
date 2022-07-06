@@ -27,14 +27,14 @@ class _PowerAction(BaseAction):
   def Validate(self):
     self._TypeValidator(self._args, list)
     if len(self._args) not in [1, 2, 3]:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise ValidationError(f'Invalid args length: {len(self._args)}')
     if not isinstance(self._args[0], str) and not isinstance(self._args[0],
                                                              int):
-      raise ValidationError('Invalid argument type: %s' % self._args[0])
+      raise ValidationError(f'Invalid argument type: {self._args[0]}')
     if len(self._args) > 1 and not isinstance(self._args[1], str):
-      raise ValidationError('Invalid argument type: %s' % self._args[1])
+      raise ValidationError(f'Invalid argument type: {self._args[1]}')
     if len(self._args) > 2 and not isinstance(self._args[2], bool):
-      raise ValidationError('Invalid argument type: %s' % self._args[2])
+      raise ValidationError(f'Invalid argument type: {self._args[2]}')
 
 
 class Reboot(_PowerAction):

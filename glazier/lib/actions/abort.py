@@ -27,16 +27,16 @@ class Abort(BaseAction):
 
   def Run(self):
     message = self._args[0]
-    raise ActionError(str(message))
+    raise ActionError(message)
 
   def Validate(self):
     if not isinstance(self._args, list):
-      raise ValidationError('Invalid args type (%s): %s' %
-                            (type(self._args), self._args))
+      raise ValidationError(
+          f'Invalid args type ({type(self._args)}): {self._args}')
     if len(self._args) != 1:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise ValidationError(f'Invalid args length: {len(self._args)}')
     if not isinstance(self._args[0], str):
-      raise ValidationError('Invalid argument type: %s' % self._args[0])
+      raise ValidationError(f'Invalid argument type: {self._args[0]}')
 
 
 class Warn(BaseAction):
@@ -51,9 +51,9 @@ class Warn(BaseAction):
 
   def Validate(self):
     if not isinstance(self._args, list):
-      raise ValidationError('Invalid args type (%s): %s' %
-                            (type(self._args), self._args))
+      raise ValidationError(
+          f'Invalid args type ({type(self._args)}): {self._args}')
     if len(self._args) != 1:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise ValidationError(f'Invalid args length: {self._args}')
     if not isinstance(self._args[0], str):
-      raise ValidationError('Invalid argument type: %s' % self._args[0])
+      raise ValidationError(f'Invalid argument type: {type(self._args[0])}')

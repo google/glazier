@@ -35,15 +35,15 @@ class RegAdd(BaseAction):
                          self._args[0], self._args[1],
                          self._args[4], use_64bit=use_64bit)
     except registry.Error as e:
-      raise ActionError(e) from e
+      raise ActionError() from e
     except IndexError as e:
-      raise ActionError('Unable to access all required arguments. [%s]' %
-                        str(self._args)) from e
+      raise ActionError(
+          f'Unable to access all required arguments: {self._args}') from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)
     if not 5 <= len(self._args) <= 6:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise ValidationError(f'Invalid args length: {len(self._args)}')
     self._TypeValidator(self._args[0], str)  # Root key
     self._TypeValidator(self._args[1], str)  # Key path
     self._TypeValidator(self._args[2], str)  # Key name
@@ -53,7 +53,7 @@ class RegAdd(BaseAction):
       self._TypeValidator(self._args[3], str)
     self._TypeValidator(self._args[4], str)  # Key type
     if self._args[4] not in ['REG_DWORD', 'REG_SZ']:
-      raise ValidationError('Unsupported Key type passed: %s' % self._args[4])
+      raise ValidationError(f'Unsupported Key type passed: {self._args[4]}')
     if len(self._args) > 5:  # Use 64bit Registry
       self._TypeValidator(self._args[5], bool)
 
@@ -67,8 +67,8 @@ class MultiRegAdd(BaseAction):
         ra = RegAdd(arg, self._build_info)
         ra.Run()
     except IndexError as e:
-      raise ActionError('Unable to determine registry sets from %s.' %
-                        str(self._args)) from e
+      raise ActionError(
+          f'Unable to determine registry sets from {self._args}.') from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)
@@ -90,15 +90,15 @@ class RegDel(BaseAction):
       registry.remove_value(self._args[2], self._args[0],
                             self._args[1], use_64bit=use_64bit)
     except registry.Error as e:
-      raise ActionError(e) from e
+      raise ActionError() from e
     except IndexError as e:
-      msg = 'Unable to access all required arguments. [%s]' % str(self._args)
-      raise ActionError(msg) from e
+      message = f'Unable to access all required arguments: {self._args}'
+      raise ActionError(message) from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)
     if not 3 <= len(self._args) <= 4:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise ValidationError(f'Invalid args length: {len(self._args)}')
     self._TypeValidator(self._args[0], str)  # Root key
     self._TypeValidator(self._args[1], str)  # Key path
     self._TypeValidator(self._args[2], str)  # Key name
@@ -115,8 +115,8 @@ class MultiRegDel(BaseAction):
         rd = RegDel(arg, self._build_info)
         rd.Run()
     except IndexError as e:
-      raise ActionError('Unable to determine registry sets from %s.' %
-                        str(self._args)) from e
+      raise ActionError(
+          f'Unable to determine registry sets from {self._args}.') from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)

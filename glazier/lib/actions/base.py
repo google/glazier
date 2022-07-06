@@ -15,18 +15,31 @@
 """Generic imaging action class."""
 
 import logging
+from typing import Optional
 
-#
-# Error Types
-#
+from glazier.lib import errors
 
 
-class ActionError(Exception):
+class ActionError(errors.GlazierError):
   """Failure completing requested action."""
 
+  def __init__(self, message: Optional[str] = None):
 
-class ValidationError(Exception):
+    if message is None:
+      message = 'Error encountered while executing action'
+
+    super().__init__(
+        error_code=errors.ErrorCode.ACTION_ERROR,
+        message=message)
+
+
+class ValidationError(errors.GlazierError):
   """Failure validating a command type."""
+
+  def __init__(self, message: str):
+    super().__init__(
+        error_code=errors.ErrorCode.VALIDATION_ERROR,
+        message=message)
 
 
 class BaseAction(object):

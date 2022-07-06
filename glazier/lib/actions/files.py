@@ -38,7 +38,7 @@ class Execute(BaseAction):
     try:
       command_cache = cache.Cache().CacheFromLine(command, self._build_info)
     except cache.Error as e:
-      raise ActionError(e) from e
+      raise ActionError() from e
 
     try:
       command_list = shlex.split(command_cache, posix=False)
@@ -48,7 +48,7 @@ class Execute(BaseAction):
           success_codes + reboot_codes,
           shell=shell)
     except (execute.Error, ValueError) as e:
-      raise ActionError(e) from e
+      raise ActionError() from e
     except KeyboardInterrupt as e:
       raise ActionError('KeyboardInterrupt detected, exiting.') from e
 
@@ -58,7 +58,7 @@ class Execute(BaseAction):
           5,
           retry_on_restart=restart_retry)
     elif result not in success_codes:
-      raise ActionError('Command returned invalid exit code: %d' % result)
+      raise ActionError(f'Command returned invalid exit code: {result}')
 
   def Run(self):
     for cmd in self._args:
@@ -74,7 +74,7 @@ class Execute(BaseAction):
     for cmd_arg in self._args:
       self._TypeValidator(cmd_arg, list)
       if not 1 <= len(cmd_arg) <= 5:
-        raise ValidationError('Invalid args length: %s' % cmd_arg)
+        raise ValidationError(f'Invalid args length: {len(cmd_arg)}')
       self._TypeValidator(cmd_arg[0], str)  # cmd
       if len(cmd_arg) > 1:  # success codes
         self._TypeValidator(cmd_arg[1], list)
@@ -105,19 +105,18 @@ class Get(BaseAction):
       try:
         file_util.CreateDirectories(dst)
       except file_util.Error as e:
-        raise ActionError('Could not create destination directory %s. %s' %
-                          (dst, e)) from e
+        raise ActionError(
+            f'Could not create destination directory: {dst}') from e
       try:
         downloader.DownloadFile(full_url, dst, show_progress=True)
       except download.Error as e:
         downloader.PrintDebugInfo()
-        raise ActionError('Transfer error while downloading %s: %s' %
-                          (full_url, str(e))) from e
+        raise ActionError(f'Transfer error while downloading {full_url}') from e
       if len(arg) > 2 and arg[2]:
         logging.info('Verifying SHA256 hash for %s.', dst)
         hash_ok = downloader.VerifyShaHash(dst, arg[2])
         if not hash_ok:
-          raise ActionError('SHA256 hash for %s was incorrect.' % dst)
+          raise ActionError(f'SHA256 hash for {dst} was incorrect.')
 
   def Validate(self):
     self._TypeValidator(self._args, list)
@@ -133,19 +132,19 @@ class Unzip(BaseAction):
       zip_file = self._args[0]
       out_path = self._args[1]
     except IndexError as e:
-      raise ActionError('Unable to determine desired paths from %s.' %
-                        str(self._args)) from e
+      raise ActionError(
+          f'Unable to determine desired paths from {self._args}.') from e
 
     try:
       file_util.CreateDirectories(out_path)
     except file_util.Error as e:
-      raise ActionError('Unable to create output path %s.' % out_path) from e
+      raise ActionError(f'Unable to create output path {out_path}.') from e
 
     try:
       zf = zipfile.ZipFile(zip_file)
       zf.extractall(out_path)
     except (IOError, zipfile.BadZipfile) as e:
-      raise ActionError('Bad zip file given as input.  %s' % e) from e
+      raise ActionError('Bad zip file given as input.') from e
 
   def Validate(self):
     self._ListOfStringsValidator(self._args, 2)

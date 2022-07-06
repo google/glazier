@@ -50,12 +50,12 @@ class SpliceDomainJoin(BaseAction):
     try:
       self._splice.domain_join(max_retries, unattended, fallback, generator)
     except splice.Error as e:
-      raise ActionError(e) from e
+      raise ActionError() from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)
     if not 0 <= len(self._args) <= 4:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise ValidationError(f'Invalid args length: {len(self._args)}')
     expected_types = (int, bool, bool, str)
     for arg, expected in zip(self._args, expected_types):
       self._TypeValidator(arg, expected)

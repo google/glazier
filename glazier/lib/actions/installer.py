@@ -46,7 +46,7 @@ class AddChoice(BaseAction):
 
     for f in ['name', 'type', 'prompt', 'options']:
       if f not in choice:
-        raise ValidationError('Missing required field %s: %s' % (f, choice))
+        raise ValidationError(f'Missing required field {f}: {choice}')
 
     for f in ['name', 'type', 'prompt']:
       self._TypeValidator(choice[f], str)
@@ -56,11 +56,11 @@ class AddChoice(BaseAction):
       self._TypeValidator(opt, dict)
 
       if 'label' not in opt:
-        raise ValidationError('Missing required field %s: %s' % ('label', opt))
+        raise ValidationError(f'Missing required field "label": {opt}')
       self._TypeValidator(opt['label'], str)
 
       if 'value' not in opt:
-        raise ValidationError('Missing required field %s: %s' % ('value', opt))
+        raise ValidationError(f'Missing required field "value": {opt}')
       self._TypeValidator(opt['value'], (bool, str))
 
       if 'tip' in opt:
@@ -95,7 +95,7 @@ class BuildInfoSave(BaseAction):
       try:
         registry.set_value(value_name, value_data, 'HKLM', key_path)
       except registry.Error as e:
-        raise ActionError(e) from e
+        raise ActionError() from e
 
   def Run(self):
     path = os.path.join(constants.SYS_CACHE, 'build_info.yaml')
@@ -194,7 +194,7 @@ class Sleep(BaseAction):
   def Validate(self):
     self._TypeValidator(self._args, list)
     if len(self._args) > 2:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise ValidationError(f'Invalid args length: {len(self._args)}')
     self._TypeValidator(self._args[0], int)
     if len(self._args) > 1:
       self._TypeValidator(self._args[1], str)
@@ -210,12 +210,12 @@ class StartStage(BaseAction):
       if len(self._args) > 1 and self._args[1]:
         stage.exit_stage(int(self._args[0]))
     except stage.Error as e:
-      raise ActionError(e) from e
+      raise ActionError() from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)
     if len(self._args) > 2:
-      raise ValidationError('Invalid args length: %s' % self._args)
+      raise ValidationError(f'Invalid args length: {len(self._args)}')
     self._TypeValidator(self._args[0], int)
     if len(self._args) > 1:
       self._TypeValidator(self._args[1], bool)
