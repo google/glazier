@@ -23,11 +23,12 @@ from glazier.lib.actions import abort
 class AbortTest(absltest.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def testAbort(self, build_info):
-    ab = abort.Abort(['abort message'], build_info)
+  def test_abort(self, mock_buildinfo):
+    ab = abort.Abort(['abort message'], mock_buildinfo)
     self.assertRaises(abort.ActionError, ab.Run)
 
-  def testAbortValidate(self):
+  # TODO(b/237812617): Parameterize this test.
+  def test_abort_validate(self):
     ab = abort.Abort('abort message', None)
     self.assertRaises(abort.ValidationError, ab.Validate)
     ab = abort.Abort([1, 2, 3], None)
@@ -39,16 +40,17 @@ class AbortTest(absltest.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch('glazier.lib.interact.Prompt', autospec=True)
-  def testWarn(self, prompt, build_info):
-    warn = abort.Warn(['warning message'], build_info)
-    prompt.return_value = None
+  def test_warn(self, mock_prompt, mock_buildinfo):
+    warn = abort.Warn(['warning message'], mock_buildinfo)
+    mock_prompt.return_value = None
     self.assertRaises(abort.ActionError, warn.Run)
-    prompt.return_value = 'no thanks'
+    mock_prompt.return_value = 'no thanks'
     self.assertRaises(abort.ActionError, warn.Run)
-    prompt.return_value = 'Y'
+    mock_prompt.return_value = 'Y'
     warn.Run()
 
-  def testWarnValidate(self):
+  # TODO(b/237812617): Parameterize this test.
+  def test_warn_validate(self):
     warn = abort.Warn('abort message', None)
     self.assertRaises(abort.ValidationError, warn.Validate)
     warn = abort.Warn([1, 2, 3], None)

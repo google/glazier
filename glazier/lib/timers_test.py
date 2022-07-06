@@ -25,7 +25,7 @@ class TimersTest(absltest.TestCase):
     super(TimersTest, self).setUp()
     self.t = timers.Timers()
 
-  def testGetAll(self):
+  def test_get_all(self):
     time_2 = datetime.datetime.now()
     self.t.Set('timer_1')
     self.t.Set('timer_2', at_time=time_2)

@@ -20,7 +20,7 @@ from glazier.lib.actions import base
 
 class BaseTest(absltest.TestCase):
 
-  def testRun(self):
+  def test_run(self):
     b = base.BaseAction(None, None)
     b.Run()
     b.Validate()
