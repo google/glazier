@@ -123,31 +123,31 @@ class ChooserTest(absltest.TestCase):
     self.fs.create_file('/resources/logo.gif')
 
   @mock.patch.object(chooser.fields, 'Timer', autospec=True)
-  def testDislpay(self, timer):
-    self.ui.timer = timer.return_value
+  def test_display(self, mock_timer):
+    self.ui.timer = mock_timer.return_value
     self.ui.Display()
 
   @mock.patch.object(chooser.fields, 'Timer', autospec=True)
   @mock.patch.object(chooser, 'tk', autospec=True)
   @mock.patch.object(chooser.resources.Resources, 'GetResourceFileName')
-  def testGuiFooter(self, resources, tk, timer):
+  def test_gui_footer(self, mock_getresourcefilename, mock_tk, mock_timer):
     logo = r'C:\Glazier\resources\logo.gif'
-    resources.return_value = logo
+    mock_getresourcefilename.return_value = logo
     self.ui._GuiFooter()
-    resources.assert_called_with('logo.gif')
-    timer.assert_called_with(self.ui.root)
-    tk.PhotoImage.assert_called_with(file=logo)
+    mock_getresourcefilename.assert_called_with('logo.gif')
+    mock_timer.assert_called_with(self.ui.root)
+    mock_tk.PhotoImage.assert_called_with(file=logo)
 
-  def testGuiHeader(self):
+  def test_gui_header(self):
     self.ui._GuiHeader()
 
   @mock.patch.object(chooser.fields, 'RadioMenu', autospec=True)
   @mock.patch.object(chooser.fields, 'Separator', autospec=True)
   @mock.patch.object(chooser.fields, 'Toggle', autospec=True)
-  def testLoadOptions(self, toggle, unused_sep, radio):
+  def test_load_options(self, mock_toggle, unused_sep, mock_radiomenu):
     self.ui._LoadOptions(_TEST_CONF)
-    self.assertEqual(radio.call_args[0][1]['name'], 'system_locale')
-    self.assertEqual(toggle.call_args[0][1]['name'], 'puppet_enable')
+    self.assertEqual(mock_radiomenu.call_args[0][1]['name'], 'system_locale')
+    self.assertEqual(mock_toggle.call_args[0][1]['name'], 'puppet_enable')
     # bad options
     self.ui._LoadOptions([{
         'name': 'notype'
@@ -159,7 +159,7 @@ class ChooserTest(absltest.TestCase):
         'type': 'unknown'
     }])
 
-  def testQuit(self):
+  def test_quit(self):
     self.ui._Quit()
     responses = self.ui.Responses()
     self.assertEqual(responses['field2'], 'value2')

@@ -33,124 +33,142 @@ class RegistryTest(absltest.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(registry.registry, 'set_value', autospec=True)
-  def testAdd(self, sv, build_info):
+  def test_add(self, mock_set_value, mock_buildinfo):
     # Mock add registry keys
-    ra = registry.RegAdd(ARGS, build_info)
+    ra = registry.RegAdd(ARGS, mock_buildinfo)
     ra.Run()
-    sv.assert_called_with(NAME, VALUE, ROOT, PATH, TYPE, USE_64)
+    mock_set_value.assert_called_with(NAME, VALUE, ROOT, PATH, TYPE, USE_64)
 
     # Registry error
-    sv.side_effect = registry.registry.Error
-    self.assertRaises(registry.ActionError, ra.Run)
+    mock_set_value.side_effect = registry.registry.Error
+    with self.assertRaises(registry.ActionError):
+      ra.Run()
 
+  # TODO(b/237812617): Parameterize this test.
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(registry.registry, 'set_value', autospec=True)
-  def testMultiAdd(self, sv, build_info):
-    ra = registry.RegAdd(ARGS, build_info)
+  def test_multi_add(self, mock_set_value, mock_buildinfo):
+    ra = registry.RegAdd(ARGS, mock_buildinfo)
     ra.Run()
-    sv.assert_called_with(NAME, VALUE, ROOT, PATH, TYPE, USE_64)
+    mock_set_value.assert_called_with(NAME, VALUE, ROOT, PATH, TYPE, USE_64)
 
     # Missing arguments
     args = [ROOT, PATH, NAME, VALUE]
-    ra = registry.RegAdd(args, build_info)
-    self.assertRaises(registry.ActionError, ra.Run)
+    ra = registry.RegAdd(args, mock_buildinfo)
+    with self.assertRaises(registry.ActionError):
+      ra.Run()
 
     # Multiple missing arguments
     args = [ARGS, [ROOT, PATH, NAME, VALUE]]
-    ra = registry.MultiRegAdd(args, build_info)
-    self.assertRaises(registry.ActionError, ra.Run)
+    ra = registry.MultiRegAdd(args, mock_buildinfo)
+    with self.assertRaises(registry.ActionError):
+      ra.Run()
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(registry.registry, 'remove_value', autospec=True)
-  def testDel(self, rv, build_info):
+  def test_del(self, mock_remove_value, mock_buildinfo):
     # Variable definition
     args = [ROOT, PATH, NAME]
 
     # Mock delete registry keys
-    rd = registry.RegDel(args, build_info)
+    rd = registry.RegDel(args, mock_buildinfo)
     rd.Run()
-    rv.assert_called_with(NAME, ROOT, PATH, USE_64)
+    mock_remove_value.assert_called_with(NAME, ROOT, PATH, USE_64)
 
     # Registry error
-    rv.side_effect = registry.registry.Error
-    self.assertRaises(registry.ActionError, rd.Run)
+    mock_remove_value.side_effect = registry.registry.Error
+    with self.assertRaises(registry.ActionError):
+      rd.Run()
 
   @mock.patch(
       'glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(registry.registry, 'remove_value', autospec=True)
-  def testMultiDel(self, rv, build_info):
+  def test_multi_del(self, mock_remove_value, mock_buildinfo):
     # Mock delete registry keys
     args = [ROOT, PATH, NAME, False]
-    rd = registry.RegDel(args, build_info)
+    rd = registry.RegDel(args, mock_buildinfo)
     rd.Run()
-    rv.assert_called_with(NAME, ROOT, PATH, False)
+    mock_remove_value.assert_called_with(NAME, ROOT, PATH, False)
 
     # Missing arguments
     args = [ROOT, PATH]
-    rd = registry.RegDel(args, build_info)
-    self.assertRaises(registry.ActionError, rd.Run)
+    rd = registry.RegDel(args, mock_buildinfo)
+    with self.assertRaises(registry.ActionError):
+      rd.Run()
 
     # Multiple missing arguments
     args = [[ROOT, PATH], [ROOT]]
-    rd = registry.MultiRegDel(args, build_info)
-    self.assertRaises(registry.ActionError, rd.Run)
+    rd = registry.MultiRegDel(args, mock_buildinfo)
+    with self.assertRaises(registry.ActionError):
+      rd.Run()
 
-  def testAddValidation(self):
+  # TODO(b/237812617): Parameterize this test.
+  def test_add_validation(self):
     # List not passed
     r = registry.RegAdd(NAME, None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    with self.assertRaises(registry.ValidationError):
+      r.Validate()
 
     # Too many args
     r = registry.RegAdd([ROOT, PATH, NAME, NAME, TYPE, True, NAME], None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    with self.assertRaises(registry.ValidationError):
+      r.Validate()
 
     # Not enough args
     r = registry.RegAdd([PATH, NAME, NAME, TYPE], None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    with self.assertRaises(registry.ValidationError):
+      r.Validate()
 
     # Type error
     r = registry.RegAdd([ROOT, PATH, NAME, '1', 'REG_DWORD'], None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    with self.assertRaises(registry.ValidationError):
+      r.Validate()
 
     # Too many keys
     r = registry.RegAdd([
         [ROOT, PATH, NAME, 1, TYPE],
         [ROOT, PATH, NAME, 100, TYPE]], None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    with self.assertRaises(registry.ValidationError):
+      r.Validate()
 
     # Valid calls
     r = registry.RegAdd([ROOT, PATH, NAME, VALUE, TYPE], None)
     r.Validate()
 
-  def testMultiAddValidation(self):
+  def test_multi_add_validation(self):
     # Valid calls
     r = registry.MultiRegAdd([ARGS, [ROOT, PATH, NAME, 100, 'REG_DWORD']], None)
     r.Validate()
 
-  def testDelValidation(self):
+  # TODO(b/237812617): Parameterize this test.
+  def test_del_validation(self):
     # List not passed
     r = registry.RegDel(NAME, None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    with self.assertRaises(registry.ValidationError):
+      r.Validate()
 
     # Too many args
     r = registry.RegDel([ROOT, PATH, NAME, VALUE], None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    with self.assertRaises(registry.ValidationError):
+      r.Validate()
 
     # Not enough args
     r = registry.RegDel([PATH, NAME], None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    with self.assertRaises(registry.ValidationError):
+      r.Validate()
 
     # Too many keys
     r = registry.RegDel([[ROOT, PATH, NAME], [ROOT, PATH, NAME]], None)
-    self.assertRaises(registry.ValidationError, r.Validate)
+    with self.assertRaises(registry.ValidationError):
+      r.Validate()
 
     # Valid calls
     r = registry.RegDel([ROOT, PATH, NAME], None)
     r.Validate()
 
-  def testMultiDelValidation(self):
+  def test_multi_del_validation(self):
     # Valid calls
     r = registry.MultiRegDel([[ROOT, PATH, NAME], [ROOT, PATH, NAME]], None)
     r.Validate()

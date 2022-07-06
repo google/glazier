@@ -38,74 +38,78 @@ class GooGetTest(absltest.TestCase):
     self.args = [self.pkg, self.flags, self.path, self.retries, self.sleep]
     self.bi = bi
 
+  # TODO(b/237812617): Parameterize this test.
   @mock.patch.object(googet.googet, 'GooGetInstall', autospec=True)
-  def testInstall(self, install):
-    install = install.return_value.LaunchGooGet
+  def test_install(self, mock_install):
+    mock_install = mock_install.return_value.LaunchGooGet
 
     # All args
     gi = googet.GooGetInstall([self.args], self.bi)
     gi.Run()
-    install.assert_called_with(pkg=self.pkg, flags=self.flags, path=self.path,
-                               retries=self.retries, sleep=self.sleep,
-                               build_info=self.bi)
+    mock_install.assert_called_with(
+        pkg=self.pkg, flags=self.flags, path=self.path, retries=self.retries,
+        sleep=self.sleep, build_info=self.bi)
 
     # All args multi
     gi = googet.GooGetInstall([self.args, self.args], self.bi)
     gi.Run()
-    install.assert_called_with(pkg=self.pkg, flags=self.flags, path=self.path,
-                               retries=self.retries, sleep=self.sleep,
-                               build_info=self.bi)
+    mock_install.assert_called_with(
+        pkg=self.pkg, flags=self.flags, path=self.path, retries=self.retries,
+        sleep=self.sleep, build_info=self.bi)
 
     # No flags
     self.args = [[self.pkg, None, self.path]]
     gi = googet.GooGetInstall(self.args, self.bi)
     gi.Run()
-    install.assert_called_with(pkg=self.pkg, path=self.path, flags=None,
-                               retries=self.def_retries, sleep=self.def_sleep,
-                               build_info=self.bi)
+    mock_install.assert_called_with(
+        pkg=self.pkg, path=self.path, flags=None, retries=self.def_retries,
+        sleep=self.def_sleep, build_info=self.bi)
 
     # No path
     self.args = [[self.pkg, self.flags]]
     gi = googet.GooGetInstall(self.args, self.bi)
     gi.Run()
-    install.assert_called_with(pkg=self.pkg, flags=self.flags, path=None,
-                               retries=self.def_retries, sleep=self.def_sleep,
-                               build_info=self.bi)
+    mock_install.assert_called_with(
+        pkg=self.pkg, flags=self.flags, path=None, retries=self.def_retries,
+        sleep=self.def_sleep, build_info=self.bi)
 
     # Just package
     self.args = [[self.pkg]]
     gi = googet.GooGetInstall(self.args, self.bi)
     gi.Run()
-    install.assert_called_with(pkg=self.pkg, path=None, flags=None,
-                               retries=self.def_retries, sleep=self.def_sleep,
-                               build_info=self.bi)
+    mock_install.assert_called_with(
+        pkg=self.pkg, path=None, flags=None, retries=self.def_retries,
+        sleep=self.def_sleep, build_info=self.bi)
 
     # Just package multi
     self.args = [[self.pkg], [self.pkg]]
     gi = googet.GooGetInstall(self.args, self.bi)
     gi.Run()
-    install.assert_called_with(pkg=self.pkg, path=None, flags=None,
-                               retries=self.def_retries, sleep=self.def_sleep,
-                               build_info=self.bi)
+    mock_install.assert_called_with(
+        pkg=self.pkg, path=None, flags=None, retries=self.def_retries,
+        sleep=self.def_sleep, build_info=self.bi)
 
     # Package custom retry count and sleep interval
     self.args = [[self.pkg, None, None, self.retries, self.sleep]]
     gi = googet.GooGetInstall(self.args, self.bi)
     gi.Run()
-    install.assert_called_with(pkg=self.pkg, path=None, flags=None,
-                               retries=self.retries, sleep=self.sleep,
-                               build_info=self.bi)
+    mock_install.assert_called_with(
+        pkg=self.pkg, path=None, flags=None, retries=self.retries,
+        sleep=self.sleep, build_info=self.bi)
 
     # GooGetError
-    install.side_effect = googet.googet.Error
-    self.assertRaises(googet.ActionError, gi.Run)
+    mock_install.side_effect = googet.googet.Error
+    with self.assertRaises(googet.ActionError):
+      gi.Run()
 
     # IndexError
     gi = googet.GooGetInstall([[]], self.bi)
-    install.side_effect = googet.googet.Error
-    self.assertRaises(googet.ActionError, gi.Run)
+    mock_install.side_effect = googet.googet.Error
+    with self.assertRaises(googet.ActionError):
+      gi.Run()
 
-  def testValidation(self):
+  # TODO(b/237812617): Parameterize this test.
+  def test_validation(self):
     # Valid calls
     g = googet.GooGetInstall([self.args], self.bi)
     g.Validate()
@@ -116,20 +120,24 @@ class GooGetTest(absltest.TestCase):
 
     # List not passed
     g = googet.GooGetInstall(['String'], self.bi)
-    self.assertRaises(googet.ValidationError, g.Validate)
+    with self.assertRaises(googet.ValidationError):
+      g.Validate()
 
     # Too few args
     g = googet.GooGetInstall([[]], self.bi)
-    self.assertRaises(googet.ValidationError, g.Validate)
+    with self.assertRaises(googet.ValidationError):
+      g.Validate()
 
     # Too many args
     g = googet.GooGetInstall([
         [self.pkg, self.flags, self.path, 'abc']], self.bi)
-    self.assertRaises(googet.ValidationError, g.Validate)
+    with self.assertRaises(googet.ValidationError):
+      g.Validate()
 
     # Type error
     g = googet.GooGetInstall(self.args.append(1), self.bi)
-    self.assertRaises(googet.ValidationError, g.Validate)
+    with self.assertRaises(googet.ValidationError):
+      g.Validate()
 
 
 if __name__ == '__main__':
