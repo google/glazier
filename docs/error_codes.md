@@ -12,97 +12,90 @@ indicate that your code has encountered an error.
 
 ## Background
 
-For simplicity, error codes will be put into buckets similar to HTTP status code
-mapping (1xx, 2xx, etc.). Four digits will be used for scalability and
-disambiguation from HTTP error code mappings. If no status code is defined by
-the error, the default will be used (7000). Error codes are included as HTML
-anchors for easily troubleshooting issues through documentation.
+For simplicity, Glazier error codes are all four digit numbers that follow the
+pattern 7XXX. If no status code is defined by the error, the default (7000) will
+be used.
 
 Error codes achieve the following objectives:
 
-1.  Convey error code
-1.  Short*, actionable log messages
-1.  Documentation explaining error codes is a living doc and can be updated as
-    necessary
+1.  Convey the error code.
+1.  Provide short*, actionable log messages.
+1.  Documentation explaining error codes is a living document and can be updated
+    as necessary.
 1.  Data can be inferred based on the error code itself with where the issue
-    originates (e.g. 4011 could relay information regarding file share access
-    issues)
+    originates (e.g. 7060 could relay information about not receiving an NTP
+    response)
 
 \* Having short status codes is essential since every exception will have this
 string appended to it. The aim is to give the end consumer concise and
 actionable steps for troubleshooting most known errors.
 
-### Top-level buckets
+## Error Code Reference
 
-Below are examples of error codes that can be implemented based on existing
-Glazier exceptions. This list is not meant to be the final mapping or an
-exhaustive enumeration. Always refer to errors.py for the latest error code
-mappings. All critical errors should be added to the error library, rather than
-individual libraries. The expectation is error codes point to anchors in your
-internal documentation. Error code buckets are shown below:
-
-Code     | Example
--------- | ------------------------------------
-**1XXX** | Informational (reserved)
-**2XXX** | Success (reserved)
-**3XXX** | Redirection (reserved)
-**4XXX** | Client Error
-4000     | Default error code
-41XX     | Unsupported method
-42XX     | Time issues
-43XX     | Invalid request (ex: too large)
-44XX     | Validation Error
-45XX     | Request Blocked (ex: firewall/proxy)
-49XX     | Unknown/Misc
-**5XXX** | Server Error
-50XX     | Internal Server Error
-53XX     | Service Unavailable
+Always refer to
+[`errors.py`](https://github.com/google/glazier/blob/master/glazier/glazier/lib/errors.py)
+for the most up-to-date error code values. All critical error codes should be
+added to that library, rather than individual libraries. The expectation is
+error codes point to anchors in your internal documentation.
 
 ## Defining Fatal Errors
 
-The below format should be used when any exception is thrown to ensure errors
-get logged appropriately. All arguments are optional. If no arguments are
-provided, error code 4000 will be used by default. _\**kwargs_ can be any number
-of key/value pairs that correspond with string format fields in the error
-message.
+The below pattern should be used when defining and raising any custom
+`Exception`, in order to ensure details are logged appropriately. In this
+example, we'll be introducing a new module, `division.py`.
 
 ```python
-raise G<NameofError>(exception: Optional[str],
-                     replacements: Optional[List[Union[bool, int, str]]])
-```
+# In errors.py:
 
-**Example file, let's say division.py**:
+@enum.unique
+class ErrorCode(enum.IntEnum):
+  DEFAULT = 7000
+  ...
+  DIVIDE_BY_ZERO_ERROR = 7999  # Our new error code.
+```
 
 ```python
-from glazier.lib import error
+# In division.py:
 
-a = 1
-b = 0
-try:
-  a / b
-except ZeroDivisionError as e:
-  raise errors.GDivideByZeroError(e, [a, b])
+from glazier.lib import errors
+
+class Error(errors.GlazierError):
+  """Base class for all Exceptions in division.py."""
+  pass
+
+class DivideByZeroError(Error):
+
+  def __init__(self, numerator: int, denominator: int):
+    super().__init__(
+        error_code=errors.ErrorCode.DIVIDE_BY_ZERO_ERROR,
+        message=f'You tried to divide {numerator} by {denominator}')
+
+def VeryBadCode():
+  a = 1
+  b = 0
+  try:
+    a / b
+  except ZeroDivisionError as e:
+    raise DivideByZeroError(a, b) from e  # Use raise/from whenever possible.
 ```
 
-**Example corresponding message defined in the `_ERRORS` dictionary in
-errors.py**:
+In this example, the error message will be as follows:
 
-```python
-# This is the added error message with a and b args
-'GDivideByZeroError': [4101, 'Failed to divide [{}] by [{}]']
-```
+> You tried to divide 1 by 0 (Error Code: 7999) (Cause: division by zero)
 
-The error message will be as follows:
-
-> Failed to divide [1] by [0]
+NOTE: When raising a custom `GlazierError` subclass (in this example,
+`DivideByZeroError`), it behooves you to raise that `Exception` using Python's
+`raise from` syntax. The reason for this is that `GlazierError` will include the
+root-cause message (in this example, "division by zero") along with whatever
+custom error message you define.
 
 Once this exception is caught by `autobuild.py`, the following log message will
 be displayed:
 
 ```
-<Context> terminator.py:93] CRITICAL - Failed to divide [1] by [0]
+<Context> terminator.py:93] CRITICAL - You tried to divide 1 by 0 (Error Code: 7999) (Cause: division by zero)
 
 Exception <file.py>:<lineno>] division by zero
 
-See <LogFile> for more info. Need help? Visit https://glazier-failures.example.com#4101
+See <LogFile> for more info. Need help? Visit https://glazier-failures.example.com#7999
 ```
