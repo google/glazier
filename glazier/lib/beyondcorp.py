@@ -171,7 +171,7 @@ class BeyondCorp(object):
   def _GetDisk(self, label: str) -> str:
     """Leverages the drive label to define the drive letter.
 
-    The BeyondCorp USB device is not gaurenteed to be on a certain drive letter.
+    The BeyondCorp USB device is not guaranteed to be on a certain drive letter.
 
     Args:
       label: Drive label to use when querying for drive letter.
