@@ -67,11 +67,11 @@ class ErrorCode(enum.IntEnum):
   # Error while writing to the registry. Was previously 4340.
   REGISTRY_WRITE_ERROR = 7013
 
-  # Deprecated. Was previously 5000.
-  UNREACHABLE_WEB_SERVER = 7014
+  # Held to prevent reuse. Was previously UNREACHABLE_WEB_SERVER (5000).
+  DEPRECATED_01 = 7014
 
-  # Deprecated. Was previously 5300.
-  SERVICE_ERROR = 7015
+  # Held to prevent reuse. Was previously SERVICE_ERROR (5300).
+  DEPRECATED_02 = 7015
 
   # A file cannot be found in cache.
   CACHE_MISS = 7016
@@ -130,8 +130,8 @@ class ErrorCode(enum.IntEnum):
   # Error encountered while exiting a stage.
   STAGE_EXIT_ERROR = 7034
 
-  # Deprecated.
-  STAGE_INVALID_TYPE_ERROR = 7035
+  # Held to prevent reuse. Was previously STAGE_INVALID_TYPE_ERROR.
+  DEPRECATED_03 = 7035
 
   # Error encountered while updating a stage.
   STAGE_UPDATE_ERROR = 7036
@@ -163,8 +163,8 @@ class ErrorCode(enum.IntEnum):
   # GooGet command failed for some reason.
   GOOGET_COMMAND_FAILED = 7045
 
-  # Deprecated.
-  AUTOBUILD_ERROR = 7046
+  # Held to prevent reuse. Was previously AUTOBUILD_ERROR.
+  DEPRECATED_04 = 7046
 
   # Failed to enable TPM via PowerShell.
   BITLOCKER_ENABLE_TPM_FAILED = 7047
