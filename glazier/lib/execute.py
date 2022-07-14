@@ -41,24 +41,19 @@ class ExecTimeoutError(Error):
 
 
 class ExecReturnError(Error):
+  """Raised when an external process returns an invalid exit code."""
 
-  def __init__(self, command: str, exit_code: int):
+  def __init__(
+      self, command: str, exit_code: int, output: Optional[str] = None):
+
     message = (
         f'Executing [{command}] returned invalid exit code [{exit_code}]'
     )
+    if output is not None:
+      message = f'{message}\nCommand output: {output}'
+
     super().__init__(
         error_code=errors.ErrorCode.EXECUTION_RETURN,
-        message=message)
-
-
-class ExecReturnOutError(Error):
-
-  def __init__(self, command: str, exit_code: int, output: str):
-    message = (
-        f'Executing [{command}] returned invalid exit code [{exit_code}]: '
-        f'{output}')
-    super().__init__(
-        error_code=errors.ErrorCode.EXECUTION_RETURN_OUT,
         message=message)
 
 
@@ -155,7 +150,7 @@ def check_output(binary: str,
     Process stdout if the operation completed successfully.
 
   Raises:
-    ExecReturnOutError
+    ExecReturnError
     ExecTimeoutError
   """
   cmd, string = format_command(binary, args)
@@ -176,7 +171,7 @@ def check_output(binary: str,
     # Exception object contains the code and output
     out = e.output.strip()
     if e.returncode not in return_codes:
-      raise ExecReturnOutError(string, e.returncode, out) from e
+      raise ExecReturnError(string, e.returncode, out) from e
     return out
   except subprocess.TimeoutExpired as e:
     raise ExecTimeoutError(string, timeout) from e

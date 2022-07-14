@@ -20,6 +20,8 @@ from absl.testing import absltest
 from glazier.lib import execute
 from pyfakefs import fake_filesystem
 
+from glazier.lib import errors
+
 
 class ExecuteTest(absltest.TestCase):
 
@@ -132,7 +134,7 @@ class ExecuteTest(absltest.TestCase):
         1, self.binary, b'output')
     with self.assertRaises(execute.errors.GlazierError) as cm:
       execute.check_output(self.binary, ['arg1', 'arg2'])
-    self.assertEqual(cm.exception.error_code, 7006)
+    self.assertEqual(cm.exception.error_code, errors.ErrorCode.EXECUTION_RETURN)
     self.assertIsNotNone(cm.exception)
     mock_info.assert_called_with('Executing: %s', 'C:\\foo.exe arg1 arg2')
 
@@ -143,7 +145,8 @@ class ExecuteTest(absltest.TestCase):
         self.binary, 300, b'output')
     with self.assertRaises(execute.errors.GlazierError) as cm:
       execute.check_output(self.binary, ['arg1', 'arg2'])
-    self.assertEqual(cm.exception.error_code, 7004)
+    self.assertEqual(
+        cm.exception.error_code, errors.ErrorCode.EXECUTION_TIMEOUT)
     self.assertIsNotNone(cm.exception)
     mock_info.assert_called_with('Executing: %s', 'C:\\foo.exe arg1 arg2')
 

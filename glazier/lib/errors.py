@@ -43,8 +43,8 @@ class ErrorCode(enum.IntEnum):
   # An external command returned an invalid exit code. Was previously 4143.
   EXECUTION_RETURN = 7005
 
-  # An external command returned an invalid exit code. Was previously 4144.
-  EXECUTION_RETURN_OUT = 7006
+  # Held to prevent reuse. Was previously EXECUTION_RETURN_OUT (4144).
+  DEPRECATED_05 = 7006
 
   # A Glazier task list cannot be built. Was previously 4300.
   FAILED_TASK_LIST_BUILD = 7007
