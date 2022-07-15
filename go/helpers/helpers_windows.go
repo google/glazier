@@ -175,6 +175,7 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 		cmd.Stderr = &errbuf
 	}
 
+	start := time.Now()
 	// Start command asynchronously
 	logger.V(2).Infof("Executing: %v \n", cmd.Args)
 	if err := cmd.Start(); err != nil {
@@ -205,6 +206,7 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 	}
 
 	result.ExitCode = cmd.ProcessState.ExitCode()
+	result.ProcessTimer = time.Since(start)
 
 	if conf.Verifier != nil {
 		return verify(path, result, *conf.Verifier)

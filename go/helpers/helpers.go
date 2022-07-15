@@ -27,10 +27,11 @@ import (
 
 // ExecResult holds the output from a subprocess execution.
 type ExecResult struct {
-	Stdout   []byte
-	Stderr   []byte
-	ExitCode int
-	ExitErr  error
+	Stdout       []byte
+	Stderr       []byte
+	ExitCode     int
+	ExitErr      error
+	ProcessTimer time.Duration
 }
 
 // ExecError holds errors and output from failed subprocess executions.
