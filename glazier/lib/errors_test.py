@@ -20,29 +20,9 @@ import string
 from absl.testing import absltest
 from absl.testing import parameterized
 from glazier.lib import errors
+from glazier.lib import test_utils
 
 ErrorCode = errors.ErrorCode
-
-
-def _raise_from(*exception_chain):
-
-  previous_ex = exception_chain[0]
-
-  for current_ex in exception_chain[1:]:
-    try:
-
-      # Raise the previous exception in the chain.
-      try:
-        raise previous_ex
-
-      # Catch it and wrap it in the current exception.
-      except Exception as e:  # pylint: disable=broad-except
-        raise current_ex from e
-
-    except Exception as new_previous_ex:  # pylint: disable=broad-except
-      previous_ex = new_previous_ex
-
-  return previous_ex
 
 
 class GlazierErrorTest(parameterized.TestCase):
@@ -102,7 +82,7 @@ class GlazierErrorTest(parameterized.TestCase):
 
     err = errors.GlazierError(error_code=error_code, message=message)
     if exception_chain:
-      err = _raise_from(*exception_chain, err)
+      err = test_utils.RaiseFrom(*exception_chain, err)
 
     self.assertEqual(expected_str, str(err))
 
