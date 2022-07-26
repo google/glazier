@@ -11,27 +11,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tests for glazier.lib.actions.drivers."""
 
 from unittest import mock
 
 from absl.testing import absltest
+from absl.testing import parameterized
 from glazier.lib.actions import drivers
 from glazier.lib.buildinfo import BuildInfo
 
 
-class DriversTest(absltest.TestCase):
+class DriversTest(parameterized.TestCase):
 
   @mock.patch.object(BuildInfo, 'ReleasePath')
   @mock.patch('glazier.lib.download.Download.VerifyShaHash', autospec=True)
   @mock.patch('glazier.lib.download.Download.DownloadFile', autospec=True)
   @mock.patch.object(drivers.execute, 'execute_binary', autospec=True)
   @mock.patch.object(drivers.file_util, 'CreateDirectories', autospec=True)
-  def test_driver_wim(
-      self, mock_createdirectories, mock_execute_binaries, mock_downloadfile,
-      mock_verifyshahash, mock_releasepath):
+  def test_driver_wim(self, mock_createdirectories, mock_execute_binaries,
+                      mock_downloadfile, mock_verifyshahash, mock_releasepath):
+
     bi = BuildInfo()
+
     # Setup
     remote = '@Drivers/Lenovo/W54x-Win10-Storage.wim'
     local = r'c:\W54x-Win10-Storage.wim'
@@ -56,10 +57,8 @@ class DriversTest(absltest.TestCase):
     mock_verifyshahash.assert_called_with(mock.ANY, local, sha_256)
     cache = drivers.constants.SYS_CACHE
     mock_execute_binaries.assert_called_with(
-        f'{drivers.constants.WINPE_SYSTEM32}/dism.exe', [
-            '/Unmount-Image', f'/MountDir:{cache}\\Drivers\\',
-            '/Discard'
-        ],
+        f'{drivers.constants.WINPE_SYSTEM32}/dism.exe',
+        ['/Unmount-Image', f'/MountDir:{cache}\\Drivers\\', '/Discard'],
         shell=True)
     mock_createdirectories.assert_called_with('%s\\Drivers\\' % cache)
 
@@ -74,38 +73,41 @@ class DriversTest(absltest.TestCase):
     mock_execute_binaries.side_effect = drivers.execute.Error
     with self.assertRaises(drivers.ActionError):
       dw.Run()
+
     # Dism Fail
     mock_execute_binaries.side_effect = iter([0, drivers.execute.Error])
     with self.assertRaises(drivers.ActionError):
       dw.Run()
+
     # Unmount Fail
     mock_execute_binaries.side_effect = iter([0, 0, drivers.execute.Error])
     with self.assertRaises(drivers.ActionError):
       dw.Run()
 
-  # TODO(b/237812617): Parameterize this test.
-  def test_driver_wim_validate(self):
-    g = drivers.DriverWIM('String', None)
-    self.assertRaises(drivers.ValidationError, g.Validate)
-    g = drivers.DriverWIM([[1, 2, 3]], None)
-    self.assertRaises(drivers.ValidationError, g.Validate)
-    g = drivers.DriverWIM([[1, '/tmp/out/path']], None)
-    self.assertRaises(drivers.ValidationError, g.Validate)
-    g = drivers.DriverWIM([['/tmp/src.zip', 2]], None)
-    self.assertRaises(drivers.ValidationError, g.Validate)
-    g = drivers.DriverWIM([['https://glazier/bin/src.wim', '/tmp/out/src.zip']],
-                          None)
-    self.assertRaises(drivers.ValidationError, g.Validate)
-    g = drivers.DriverWIM([['https://glazier/bin/src.wim', '/tmp/out/src.wim']],
-                          None)
-    g.Validate()
-    g = drivers.DriverWIM(
-        [['https://glazier/bin/src.wim', '/tmp/out/src.wim', '12345']], None)
-    g.Validate()
-    g = drivers.DriverWIM(
-        [['https://glazier/bin/src.zip', '/tmp/out/src.zip', '12345', '67890']],
-        None)
-    self.assertRaises(drivers.ValidationError, g.Validate)
+  @parameterized.named_parameters(
+      ('_invalid_arg_type_1', 'String', None),
+      ('_invalid_arg_type_2', [[1, 2, 3]], None),
+      ('_invalid_arg_type_3', [[1, '/tmp/out/path']], None),
+      ('_invalid_arg_type_4', [['/tmp/src.zip', 2]], None),
+      ('_invalid_file_type',
+       [['https://glazier/bin/src.wim', '/tmp/out/src.zip']], None),
+      ('_invalid_args_length', [[
+          'https://glazier/bin/src.zip', '/tmp/out/src.zip', '12345', '67890'
+      ]], None),
+  )
+  def test_driver_wim_validation_error(self, action_args, build_info):
+    g = drivers.DriverWIM(action_args, build_info)
+    with self.assertRaises(drivers.ValidationError):
+      g.Validate()
+
+  @parameterized.named_parameters(
+      ('_without_hash', [['https://glazier/bin/src.wim', '/tmp/out/src.wim']
+                        ], None),
+      ('_with_hash',
+       [['https://glazier/bin/src.wim', '/tmp/out/src.wim', '12345']], None),
+  )
+  def test_driver_wim_validation_success(self, action_args, build_info):
+    drivers.DriverWIM(action_args, build_info).Validate()
 
 
 if __name__ == '__main__':
