@@ -13,8 +13,11 @@
 # limitations under the License.
 """Utility code for use with tests."""
 
+import re
+from absl.testing import parameterized
 
-def RaiseFrom(*exception_chain):
+
+def raise_from(*exception_chain):
   """Collapses multiple Exceptions into a final Exception, using raise/from."""
 
   previous_ex = exception_chain[0]
@@ -34,3 +37,24 @@ def RaiseFrom(*exception_chain):
       previous_ex = new_previous_ex
 
   return previous_ex
+
+
+class GlazierTestCase(parameterized.TestCase):
+  """General-purpose test case for Glazier unit tests."""
+
+  def assert_lines_match_patterns(self, lines, patterns):
+    """Asserts that each given line matches the corresponding pattern."""
+
+    # Ensure the input is split by newlines.
+    lines = lines.splitlines() if isinstance(lines, str) else lines
+
+    # Strip out all empty lines.
+    lines = list(filter(None, lines))
+
+    # Ensure the lines and patterns match up 1:1.
+    self.assertEqual(len(lines), len(patterns))
+
+    # Step through each line and pattern and make sure they match.
+    for line, pattern in zip(lines, patterns):
+      regex = re.compile(pattern)
+      self.assertRegex(line, regex)

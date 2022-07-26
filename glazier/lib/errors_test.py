@@ -82,7 +82,7 @@ class GlazierErrorTest(parameterized.TestCase):
 
     err = errors.GlazierError(error_code=error_code, message=message)
     if exception_chain:
-      err = test_utils.RaiseFrom(*exception_chain, err)
+      err = test_utils.raise_from(*exception_chain, err)
 
     self.assertEqual(expected_str, str(err))
 
