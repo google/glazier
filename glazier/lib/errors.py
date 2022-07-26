@@ -91,14 +91,14 @@ class ErrorCode(enum.IntEnum):
   # Error when receiving BeyondCorp response.
   BEYONDCORP_RESPONSE_ERROR = 7021
 
-  # Error while removing task list. Was previously 4303.
-  TASK_LIST_REMOVE_ERROR = 7022
+  # Held to prevent reuse. Was previously TASK_LIST_REMOVE_ERROR (4303).
+  DEPRECATED_06 = 7022
 
-  # Error while building task list. Was previously 4302.
-  TASK_LIST_BUILD_ERROR = 7023
+  # Held to prevent reuse. Was previously TASK_LIST_BUILD_ERROR (4302).
+  DEPRECATED_07 = 7023
 
-  # Error while executing task list. Was previously 4304.
-  TASK_LIST_EXECUTE_ERROR = 7024
+  # Held to prevent reuse. Was previously TASK_LIST_EXECUTE_ERROR (4304).
+  DEPRECATED_08 = 7024
 
   # System is not compatible with an imaging policy.
   POLICY_VERIFICATION_ERROR = 7025
