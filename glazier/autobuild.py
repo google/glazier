@@ -28,7 +28,6 @@ from glazier.lib.config import runner
 
 from glazier.lib import buildinfo
 from glazier.lib import constants
-from glazier.lib import errors
 from glazier.lib import terminator
 
 FLAGS = flags.FLAGS
@@ -56,9 +55,7 @@ class AutoBuild(object):
       try:
         os.remove(location)
       except OSError as e:
-        terminator.log_and_exit(
-            'Unable to remove task list', self._build_info,
-            errors.ErrorCode.TASK_LIST_REMOVE_ERROR, e)
+        terminator.log_and_exit(self._build_info, e)
     return location
 
   def RunBuild(self):
@@ -75,26 +72,19 @@ class AutoBuild(object):
           b = builder.ConfigBuilder(self._build_info)
           b.Start(out_file=task_list, in_path=root_path)
         except builder.ConfigBuilderError as e:
-          terminator.log_and_exit(
-              'Failed to build the task list', self._build_info,
-              errors.ErrorCode.TASK_LIST_BUILD_ERROR, e)
+          terminator.log_and_exit(self._build_info, e)
 
       try:
         r = runner.ConfigRunner(self._build_info)
         r.Start(task_list=task_list)
       except runner.ConfigRunnerError as e:
-        terminator.log_and_exit(
-            'Failed to execute the task list', self._build_info,
-            errors.ErrorCode.TASK_LIST_EXECUTE_ERROR, e)
+        terminator.log_and_exit(self._build_info, e)
 
     except KeyboardInterrupt:
       logging.info('KeyboardInterrupt detected, exiting.')
       sys.exit(1)
-    except errors.GlazierError as e:
-      terminator.log_and_exit(str(e), self._build_info, e.error_code, e)
     except Exception as e:  # pylint: disable=broad-except
-      terminator.log_and_exit(
-          'Unknown Exception', self._build_info, errors.ErrorCode.DEFAULT, e)
+      terminator.log_and_exit(self._build_info, e)
 
 
 def main(unused_argv):

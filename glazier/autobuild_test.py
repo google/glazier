@@ -62,9 +62,7 @@ class AutobuildTest(absltest.TestCase):
     autobuild.FLAGS.preserve_tasks = False
     mock_os.remove.side_effect = OSError
     self.autobuild._SetupTaskList()
-    mock_log_and_exit.assert_called_with(
-        'Unable to remove task list', self.autobuild._build_info,
-        errors.ErrorCode.TASK_LIST_REMOVE_ERROR, mock.ANY)
+    mock_log_and_exit.assert_called_with(self.autobuild._build_info, mock.ANY)
 
   @mock.patch.object(autobuild.terminator, 'log_and_exit', autospec=True)
   @mock.patch.object(autobuild.title, 'set_title', autospec=True)
@@ -83,17 +81,13 @@ class AutobuildTest(absltest.TestCase):
     # ConfigBuilderError
     mock_configbuilder.side_effect = autobuild.builder.ConfigBuilderError
     self.autobuild.RunBuild()
-    mock_log_and_exit.assert_called_with(
-        'Failed to build the task list', self.autobuild._build_info,
-        errors.ErrorCode.TASK_LIST_BUILD_ERROR, mock.ANY)
+    mock_log_and_exit.assert_called_with(self.autobuild._build_info, mock.ANY)
 
     # ConfigRunnerError
     mock_configbuilder.side_effect = None
     mock_configrunner.side_effect = autobuild.runner.ConfigRunnerError
     self.autobuild.RunBuild()
-    mock_log_and_exit.assert_called_with(
-        'Failed to execute the task list', self.autobuild._build_info,
-        errors.ErrorCode.TASK_LIST_EXECUTE_ERROR, mock.ANY)
+    mock_log_and_exit.assert_called_with(self.autobuild._build_info, mock.ANY)
 
   @mock.patch.object(title, 'set_title', autospec=True)
   def test_keyboard_interrupt(self, mock_set_title):
@@ -106,7 +100,7 @@ class AutobuildTest(absltest.TestCase):
   @mock.patch.object(autobuild.terminator, 'log_and_exit', autospec=True)
   @mock.patch.object(title, 'set_title', autospec=True)
   def test_glazier_error(self, mock_set_title, mock_log_and_exit):
-    mock_set_title.side_effect = autobuild.errors.GlazierError
+    mock_set_title.side_effect = errors.GlazierError
     self.autobuild.RunBuild()
     self.assertTrue(mock_log_and_exit.called)
 
@@ -115,9 +109,7 @@ class AutobuildTest(absltest.TestCase):
   def test_main_exception(self, mock_set_title, mock_log_and_exit):
     mock_set_title.side_effect = Exception
     self.autobuild.RunBuild()
-    mock_log_and_exit.assert_called_with(
-        'Unknown Exception', self.autobuild._build_info,
-        errors.ErrorCode.DEFAULT, mock.ANY)
+    mock_log_and_exit.assert_called_with(self.autobuild._build_info, mock.ANY)
 
 
 if __name__ == '__main__':

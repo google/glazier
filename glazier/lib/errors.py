@@ -287,15 +287,4 @@ class GlazierError(Exception):
     super().__init__()
 
   def __str__(self):
-
-    s = f'{self.message} (Error Code: {self.error_code})'
-
-    # If this exception was raised from another root-cause exception, include
-    # the root-cause description in the description of this one.
-    if self.__cause__ is not None:
-      cause_message = (
-          self.__cause__.message if isinstance(self.__cause__, GlazierError)
-          else str(self.__cause__))
-      s = f'{s} (Cause: {cause_message})'
-
-    return s
+    return f'{self.message} (Error Code: {self.error_code})'

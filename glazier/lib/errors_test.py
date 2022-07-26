@@ -49,33 +49,13 @@ class GlazierErrorTest(parameterized.TestCase):
           'some error message (Error Code: 9999)'
       ),
       (
-          '_NoInitArgs_WithCause',
-          None, None, [Exception('inner message')],
-          'Unknown Exception (Error Code: 7000) (Cause: inner message)'
-      ),
-      (
-          '_ErrorCodeOnly_WithCause',
-          9999, None, [Exception('inner message')],
-          'Unknown Exception (Error Code: 9999) (Cause: inner message)'
-      ),
-      (
-          '_MessageOnly_WithCause',
-          None, 'some error message', [Exception('inner message')],
-          'some error message (Error Code: 7000) (Cause: inner message)'
-      ),
-      (
-          '_ErrorCodeAndMessage_WithCause',
-          9999, 'some error message', [Exception('inner message')],
-          'some error message (Error Code: 9999) (Cause: inner message)'
-      ),
-      (
           '_MultipleRaisesFrom',
           9999, 'outer message',
           [
               errors.GlazierError(error_code=1111, message='inner message 1'),
               errors.GlazierError(error_code=2222, message='inner message 2'),
           ],
-          'outer message (Error Code: 9999) (Cause: inner message 2)'
+          'outer message (Error Code: 9999)'
       ),
   )
   def test_str(self, error_code, message, exception_chain, expected_str):

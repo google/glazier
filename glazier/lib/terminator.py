@@ -17,7 +17,6 @@ import logging
 import os
 import sys
 import traceback
-from typing import Optional
 from glazier.lib import buildinfo
 from glazier.lib import logs
 from glazier.lib import winpe
@@ -26,10 +25,57 @@ from glazier.lib import constants
 from glazier.lib import errors
 
 
-def log_and_exit(msg: str,
-                 build_info: buildinfo.BuildInfo,
-                 code: int = errors.ErrorCode.DEFAULT,
-                 exception: Optional[Exception] = None,
+def _get_causal_chain(ex):
+  """Extracts the __cause__ lineage of the given Exception.
+
+  Args:
+    ex: The Exception whose __cause__ lineage we want.
+
+  Returns:
+    The lineage of Exceptions which led to the argument Exception, in order of
+    earliest-raised to latest-raised.
+
+  Raises:
+    ValueError: if no Exception is provided.
+  """
+  if ex is None:
+    raise ValueError('Exception argument cannot be None')
+
+  chain = [ex]
+  while chain[0].__cause__ is not None:
+    chain.insert(0, chain[0].__cause__)
+
+  return chain
+
+
+def _get_root_cause_exception(chain):
+  """Finds the earliest-raised GlazierError in the Exception chain.
+
+  If no GlazierError is found, defaults to the earliest Exception.
+
+  Args:
+    chain: List of Exceptions extracted from __cause__ relationships.
+
+  Returns:
+    The earliest GlazierError in the chain, or the earliest Exception if no
+    GlazierError is found.
+
+  Raises:
+    ValueError: if no list is provided.
+  """
+  if not chain:
+    raise ValueError('List argument cannot be empty or None')
+
+  # Filter all non-GlazierErrors.
+  glazier_errors = [e for e in chain if isinstance(e, errors.GlazierError)]
+
+  # Return the earliest GlazierError in the chain, if one exists. Otherwise,
+  # return the first Exception.
+  return glazier_errors[0] if glazier_errors else chain[0]
+
+
+def log_and_exit(build_info: buildinfo.BuildInfo,
+                 exception,
                  collect: bool = True):
   """Logs a user-facing error message and exits.
 
@@ -38,7 +84,7 @@ def log_and_exit(msg: str,
     - Logging the full traceback to the debug log
     - Constructing the user-facing failure string, consisting of:
       * The message to accompany the failure
-      * (Optional) The exception object, and if available, the file and line
+      * The exception object, and if available, the file and line
          number of the root exception
       * The user-facing help message containing where to look for logs and
          where to go for further assistance.
@@ -46,12 +92,11 @@ def log_and_exit(msg: str,
     - Exit Glazier with code 1
 
   Args:
-    msg: The error message to accompany the failure.
     build_info: The active BuildInfo class.
-    code: Error code to append to the failure message.
-    exception: The exception object.
+    exception: The Exception object.
     collect: Whether to collect log files.
   """
+  # Start by collecting logs, if specified.
   if collect:
     try:
       logs.Collect(os.path.join(build_info.CachePath(), r'\glazier_logs.zip'))
@@ -61,28 +106,37 @@ def log_and_exit(msg: str,
   # Log the full traceback to _BUILD_LOG to assist in troubleshooting
   logging.debug(traceback.format_exc())
 
-  string = f'{msg}\n\n'
+  # Start composing the detailed failure message to present to the user.
+  string = '\n\n\n***** IMAGING PROCESS FAILED *****\n\n'
 
-  if exception:
-    # Index 2 contains the traceback from the sys.exc_info() tuple
-    trace = sys.exc_info()[2]
-    if trace:
-      # Index -1 contains the traceback object of the root exception
-      trace_obj = traceback.extract_tb(trace)[-1]
-      # The trace object contains the full file path, grab just the file name
-      file = os.path.split(trace_obj.filename)[1]
-      lineno = trace_obj.lineno
+  # Identify the root cause GlazierError (or Exception).
+  chain = _get_causal_chain(exception)
+  root_cause_exception = _get_root_cause_exception(chain)
+  string += f'* Root Cause: {root_cause_exception}\n\n'
 
-      string += f'Exception: {file}:{lineno}] {exception}\n\n'
-    else:
-      string += f'Exception] {exception}\n\n'
+  # Print the filename and line number of the root cause if possible.
+  tb = root_cause_exception.__traceback__
+  if tb:
+    summary = traceback.extract_tb(tb)[-1]
+    location_file = os.path.split(summary.filename)[1]
+    location_line = summary.lineno
+    string += f'* Location: {location_file}:{location_line}\n\n'
 
+  # Print out the location of the logs.
   build_log = constants.SYS_BUILD_LOG
   if winpe.check_winpe():
     build_log = constants.WINPE_BUILD_LOG
+  string += f'* Logs: {build_log}\n\n'
 
-  string += (f'See {build_log} for more info. '
-             f'Need help? Visit {constants.HELP_URI}#{code}')
+  # If an originating GlazierError was identified, use the error code to point
+  # the user to the troubleshooting docs. Otherwise, point to the "default"
+  # troubleshooting docs.
+  string += f'* Troubleshooting: {constants.HELP_URI}#'
+  if isinstance(root_cause_exception, errors.GlazierError):
+    string += f'{root_cause_exception.error_code}\n\n'
+  else:
+    string += f'{errors.ErrorCode.DEFAULT}\n\n'
 
-  logging.critical(string)
+  # Print everything and bail.
+  logging.critical(string, exc_info=False)
   sys.exit(1)
