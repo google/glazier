@@ -140,7 +140,7 @@ class MultiCopyDirTest(parameterized.TestCase):
       file_system.MultiCopyDir(multicopydir_args, mock_build_info).Validate()
 
 
-class MultiCopyFileTest(absltest.TestCase):
+class MultiCopyFileTest(parameterized.TestCase):
 
   @mock.patch.object(file_util, 'Copy', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -158,18 +158,19 @@ class MultiCopyFileTest(absltest.TestCase):
     with self.assertRaises(file_system.ActionError):
       file_system.MultiCopyFile([r'/file1.txt'], mock_buildinfo).Run()
 
-  # TODO(b/237812617): Parameterize this test.
-  def test_validate(self):
-    cf = file_system.MultiCopyFile('String', None)
-    self.assertRaises(file_system.ValidationError, cf.Validate)
-    cf = file_system.MultiCopyFile(['String'], None)
-    self.assertRaises(file_system.ValidationError, cf.Validate)
-    cf = file_system.MultiCopyFile([[1, 2, 3]], None)
-    self.assertRaises(file_system.ValidationError, cf.Validate)
-    cf = file_system.MultiCopyFile([[1, '/tmp/dest.txt']], None)
-    self.assertRaises(file_system.ValidationError, cf.Validate)
-    cf = file_system.MultiCopyFile([['/tmp/src.txt', 2]], None)
-    self.assertRaises(file_system.ValidationError, cf.Validate)
+  @parameterized.named_parameters(
+      ('_invalid_type_1', 'String', None),
+      ('_invalid_type_2', ['String'], None),
+      ('_invalid_args_length', [[1, 2, 3]], None),
+      ('_invalid_type_3', [[1, '/tmp/dest.txt']], None),
+      ('_invalid_type_4', [['/tmp/src.txt', 2]], None),
+  )
+  def test_validation_error(self, action_args, build_info):
+    cf = file_system.MultiCopyFile(action_args, build_info)
+    with self.assertRaises(file_system.ValidationError):
+      cf.Validate()
+
+  def test_validation_success(self):
     cf = file_system.MultiCopyFile([['/tmp/src1.txt', '/tmp/dest1.txt'],
                                     ['/tmp/src2.txt', '/tmp/dest2.txt']], None)
     cf.Validate()
@@ -192,7 +193,7 @@ class CopyFileTest(absltest.TestCase):
       file_system.CopyFile([r'/file1.txt'], mock_buildinfo).Run()
 
 
-class MkDirTest(absltest.TestCase):
+class MkDirTest(parameterized.TestCase):
 
   @mock.patch.object(file_util, 'CreateDirectories', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -207,19 +208,20 @@ class MkDirTest(absltest.TestCase):
     with self.assertRaises(file_system.ActionError):
       file_system.MkDir([], mock_buildinfo).Run()
 
-  # TODO(b/237812617): Parameterize this test.
-  def test_validate(self):
+  @parameterized.named_parameters(
+      ('_invalid_type_1', 'String', None),
+      ('_invalid_args_length', ['/tmp/some/dir', '/tmp/some/other/dir'], None),
+      ('_invalid_type_2', [1], None),
+  )
+  def test_validation_error(self, action_args, build_info):
     with self.assertRaises(file_system.ValidationError):
-      file_system.MkDir('String', None).Validate()
-    with self.assertRaises(file_system.ValidationError):
-      file_system.MkDir(['/tmp/some/dir', '/tmp/some/other/dir'],
-                        None).Validate()
-    with self.assertRaises(file_system.ValidationError):
-      file_system.MkDir([1], None).Validate()
+      file_system.MkDir(action_args, build_info).Validate()
+
+  def test_validation_success(self):
     file_system.MkDir(['/tmp/some/dir'], None).Validate()
 
 
-class RmDirTest(absltest.TestCase):
+class RmDirTest(parameterized.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_success(self, mock_buildinfo):
@@ -235,15 +237,20 @@ class RmDirTest(absltest.TestCase):
     with self.assertRaises(file_system.ActionError):
       file_system.RmDir(['/missing'], mock_buildinfo).Run()
 
-  # TODO(b/237812617): Parameterize this test.
-  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def test_validate(self, mock_buildinfo):
+  @parameterized.named_parameters(
+      ('_invalid_args_length', [], None),
+      ('_invalid_arg_type', [12345], None),
+  )
+  def test_validation_error(self, action_args, build_info):
     with self.assertRaises(file_system.ValidationError):
-      file_system.RmDir([], mock_buildinfo).Validate()
-    with self.assertRaises(file_system.ValidationError):
-      file_system.RmDir([12345], mock_buildinfo).Validate()
-    file_system.RmDir([r'D:\Glazier'], mock_buildinfo).Validate()
-    file_system.RmDir([r'C:\Glazier', r'D:\Glazier'], mock_buildinfo).Validate()
+      file_system.RmDir(action_args, build_info).Validate()
+
+  @parameterized.named_parameters(
+      ('_single', [r'D:\Glazier'], None),
+      ('_multiple', [r'C:\Glazier', r'D:\Glazier'], None),
+  )
+  def test_validation_success(self, action_args, build_info):
+    file_system.RmDir(action_args, build_info).Validate()
 
 
 class SetupCacheTest(absltest.TestCase):
