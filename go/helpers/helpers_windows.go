@@ -110,7 +110,14 @@ func ExecWithVerify(path string, args []string, timeout *time.Duration, verifier
 
 func verify(path string, res ExecResult, verifier ExecVerifier) (ExecResult, error) {
 	if res.ExitErr != nil {
-		return res, res.ExitErr
+		if exiterr, ok := res.ExitErr.(*exec.ExitError); ok {
+			// if the exitcode was 0.. but ExitErr contains additional information, return the error.
+			if exiterr.ExitCode() == 0 {
+				return res, res.ExitErr
+			}
+		} else {
+			return res, res.ExitErr
+		}
 	}
 	codeOk := false
 	for _, c := range verifier.SuccessCodes {
