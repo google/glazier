@@ -11,12 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tests for glazier.lib.actions.timers."""
 
 from unittest import mock
 
 from absl.testing import absltest
+from absl.testing import parameterized
 from glazier.lib.actions import timers
 from glazier.lib.actions.base import ValidationError
 
@@ -27,7 +27,7 @@ VALUE_NAME = 'build_yaml'
 VALUE_DATA = '2019-11-11 13:33:37.133337'
 
 
-class TimersTest(absltest.TestCase):
+class TimersTest(parameterized.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(timers.registry, 'set_value', autospec=True)
@@ -39,8 +39,8 @@ class TimersTest(absltest.TestCase):
     mock_buildinfo.TimerSet.assert_called_with(VALUE_NAME)
     mock_set_value.assert_called_with(
         'TIMER_' + VALUE_NAME, VALUE_DATA, 'HKLM', KEY_PATH, log=False)
-    mock_info.assert_called_with(
-        'Set image timer: %s (%s)', VALUE_NAME, VALUE_DATA)
+    mock_info.assert_called_with('Set image timer: %s (%s)', VALUE_NAME,
+                                 VALUE_DATA)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(timers.registry, 'set_value', autospec=True)
@@ -51,19 +51,17 @@ class TimersTest(absltest.TestCase):
     with self.assertRaises(timers.ActionError):
       st.Run()
 
-  # TODO(b/237812617): Parameterize this test.
-  def test_set_timer_validate(self):
-    st = timers.SetTimer(VALUE_NAME, None)
+  @parameterized.named_parameters(
+      ('_invalid_arg_type_1', VALUE_NAME),
+      ('_invalid_args_length', [1, 2, 3]),
+      ('_invalid_arg_type_2', [1]),
+  )
+  def test_set_timer_validation_error(self, action_args):
     with self.assertRaises(ValidationError):
-      st.Validate()
-    st = timers.SetTimer([1, 2, 3], None)
-    with self.assertRaises(ValidationError):
-      st.Validate()
-    st = timers.SetTimer([1], None)
-    with self.assertRaises(ValidationError):
-      st.Validate()
-    st = timers.SetTimer([VALUE_NAME], None)
-    st.Validate()
+      timers.SetTimer(action_args, None).Validate()
+
+  def test_set_timer_validation_success(self):
+    timers.SetTimer([VALUE_NAME], None).Validate()
 
 
 if __name__ == '__main__':
