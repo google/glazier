@@ -17,11 +17,12 @@
 from unittest import mock
 
 from absl.testing import absltest
+from absl.testing import parameterized
 from glazier.lib import events
 from glazier.lib.actions import system
 
 
-class SystemTest(absltest.TestCase):
+class SystemTest(parameterized.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_reboot_pop(self, mock_buildinfo):
@@ -53,26 +54,23 @@ class SystemTest(absltest.TestCase):
     self.assertEqual(str(ex), 'unspecified')
     self.assertEqual(ex.pop_next, False)
 
-  # TODO(b/237812617): Parameterize this test.
-  def test_reboot_validate(self):
-    r = system.Reboot(True, None)
+  @parameterized.named_parameters(
+      ('_invalid_arg_type_1', True),
+      ('_invalid_arg_type_2', [30, 40]),
+      ('_invalid_arg_type_3', [30, 'reasons', 'True']),
+      ('_invalid_args_length', [1, 2, 3, 4]),
+  )
+  def test_reboot_validation_error(self, action_args):
     with self.assertRaises(system.ValidationError):
-      r.Validate()
-    r = system.Reboot([30, 40], None)
-    with self.assertRaises(system.ValidationError):
-      r.Validate()
-    r = system.Reboot([30, 'reasons', 'True'], None)
-    with self.assertRaises(system.ValidationError):
-      r.Validate()
-    r = system.Reboot([1, 2, 3, 4], None)
-    with self.assertRaises(system.ValidationError):
-      r.Validate()
-    r = system.Reboot([30, 'reasons', True], None)
-    r.Validate()
-    r = system.Reboot([30, 'reasons'], None)
-    r.Validate()
-    r = system.Reboot([30], None)
-    r.Validate()
+      system.Reboot(action_args, None).Validate()
+
+  @parameterized.named_parameters(
+      ('_all_args', [30, 'reasons', True]),
+      ('_no_pop_next', [30, 'reasons']),
+      ('_no_reason', [30]),
+  )
+  def test_reboot_validation_success(self, action_args):
+    system.Reboot(action_args, None).Validate()
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_shutdown_pop(self, mock_buildinfo):
@@ -104,26 +102,23 @@ class SystemTest(absltest.TestCase):
     self.assertEqual(str(ex), 'unspecified')
     self.assertEqual(ex.pop_next, False)
 
-  # TODO(b/237812617): Parameterize this test.
-  def test_shutdown_validate(self):
-    s = system.Shutdown(True, None)
+  @parameterized.named_parameters(
+      ('_invalid_arg_type_1', True),
+      ('_invalid_arg_type_2', [30, 40]),
+      ('_invalid_arg_type_3', [30, 'reasons', 'True']),
+      ('_invalid_args_length', [1, 2, 3, 4]),
+  )
+  def test_shutdown_validation_error(self, action_args):
     with self.assertRaises(system.ValidationError):
-      s.Validate()
-    s = system.Shutdown([30, 40], None)
-    with self.assertRaises(system.ValidationError):
-      s.Validate()
-    s = system.Shutdown([30, 'reasons', 'True'], None)
-    with self.assertRaises(system.ValidationError):
-      s.Validate()
-    s = system.Shutdown([1, 2, 3, 4], None)
-    with self.assertRaises(system.ValidationError):
-      s.Validate()
-    s = system.Shutdown([30, 'reasons', True], None)
-    s.Validate()
-    s = system.Shutdown([30, 'reasons'], None)
-    s.Validate()
-    s = system.Shutdown([10], None)
-    s.Validate()
+      system.Shutdown(action_args, None).Validate()
+
+  @parameterized.named_parameters(
+      ('_all_args', [30, 'reasons', True]),
+      ('_no_pop_next', [30, 'reasons']),
+      ('_no_reason', [10]),
+  )
+  def test_shutdown_validation_success(self, action_args):
+    system.Shutdown(action_args, None).Validate()
 
 if __name__ == '__main__':
   absltest.main()
