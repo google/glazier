@@ -11,26 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tests for glazier.lib.actions.updates."""
 
 from unittest import mock
 
 from absl.testing import absltest
+from absl.testing import parameterized
 from glazier.lib.actions import updates
 from glazier.lib.buildinfo import BuildInfo
 
 
-class UpdatesTest(absltest.TestCase):
+class UpdatesTest(parameterized.TestCase):
 
   @mock.patch.object(BuildInfo, 'ReleasePath')
   @mock.patch('glazier.lib.download.Download.VerifyShaHash', autospec=True)
   @mock.patch('glazier.lib.download.Download.DownloadFile', autospec=True)
   @mock.patch.object(updates.execute, 'execute_binary', autospec=True)
   @mock.patch.object(updates.file_util, 'CreateDirectories', autospec=True)
-  def test_update_msu(
-      self, mock_createdirectories, mock_execute_binary, mock_downloadfile,
-      mock_verifyshahash, mock_releasepath):
+  def test_update_msu(self, mock_createdirectories, mock_execute_binary,
+                      mock_downloadfile, mock_verifyshahash, mock_releasepath):
     bi = BuildInfo()
 
     # Setup
@@ -38,8 +37,12 @@ class UpdatesTest(absltest.TestCase):
     local = r'c:\KB2990941-v3-x64.msu'
     sha_256 = (
         'd1acbdd8652d6c78ce284bf511f3a7f5f776a0a91357aca060039a99c6a93a16')
-    conf = {'data': {'update': [[remote, local, sha_256]]},
-            'path': ['/autobuild']}
+    conf = {
+        'data': {
+            'update': [[remote, local, sha_256]]
+        },
+        'path': ['/autobuild']
+    }
     mock_releasepath.return_value = '/'
 
     # Success
@@ -73,34 +76,27 @@ class UpdatesTest(absltest.TestCase):
     with self.assertRaises(updates.ActionError):
       um.Run()
 
-  # TODO(b/237812617): Parameterize this test.
-  def test_update_msu_validate(self):
-    g = updates.UpdateMSU('String', None)
+  @parameterized.named_parameters(
+      ('_invalid_arg_type_1', 'String'),
+      ('_invalid_arg_type_2', [[1, 2, 3]]),
+      ('_invalid_arg_type_3', [[1, '/tmp/out/path']]),
+      ('_invalid_arg_type_4', [['/tmp/src.zip', 2]]),
+      ('_invalid_file_type',
+       [['https://glazier/bin/src.msu', '/tmp/out/src.zip']]),
+      ('_invalid_args_length',
+       [['https://glazier/bin/src.zip', '/tmp/out/src.zip', '12345', '67890']]),
+  )
+  def test_update_msu_validation_error(self, action_args):
     with self.assertRaises(updates.ValidationError):
-      g.Validate()
-    g = updates.UpdateMSU([[1, 2, 3]], None)
-    with self.assertRaises(updates.ValidationError):
-      g.Validate()
-    g = updates.UpdateMSU([[1, '/tmp/out/path']], None)
-    with self.assertRaises(updates.ValidationError):
-      g.Validate()
-    g = updates.UpdateMSU([['/tmp/src.zip', 2]], None)
-    with self.assertRaises(updates.ValidationError):
-      g.Validate()
-    g = updates.UpdateMSU(
-        [['https://glazier/bin/src.msu', '/tmp/out/src.zip']], None)
-    with self.assertRaises(updates.ValidationError):
-      g.Validate()
-    g = updates.UpdateMSU(
-        [['https://glazier/bin/src.msu', '/tmp/out/src.msu']], None)
-    g.Validate()
-    g = updates.UpdateMSU(
-        [['https://glazier/bin/src.msu', '/tmp/out/src.msu', '12345']], None)
-    g.Validate()
-    g = updates.UpdateMSU([['https://glazier/bin/src.zip', '/tmp/out/src.zip',
-                            '12345', '67890']], None)
-    with self.assertRaises(updates.ValidationError):
-      g.Validate()
+      updates.UpdateMSU(action_args, None).Validate()
+
+  @parameterized.named_parameters(
+      ('_no_hash', [['https://glazier/bin/src.msu', '/tmp/out/src.msu']]),
+      ('_all_args',
+       [['https://glazier/bin/src.msu', '/tmp/out/src.msu', '12345']]),
+  )
+  def test_update_msu_validation_success(self, action_args):
+    updates.UpdateMSU(action_args, None).Validate()
 
 
 if __name__ == '__main__':
