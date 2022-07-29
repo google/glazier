@@ -93,9 +93,13 @@ Once this exception is caught by `autobuild.py`, the following log message will
 be displayed:
 
 ```
-<Context> terminator.py:93] CRITICAL - You tried to divide 1 by 0 (Error Code: 7999) (Cause: division by zero)
+***** IMAGING PROCESS FAILED *****
 
-Exception <file.py>:<lineno>] division by zero
+* Root Cause: You tried to divide 1 by 0 (Error Code: 7999)
 
-See <LogFile> for more info. Need help? Visit https://glazier-failures.example.com#7999
+* Location: <file.py>:<lineno>
+
+* Logs: /Logs/glazier.log
+
+* Troubleshooting: https://glazier-failures.example.com#7999
 ```
