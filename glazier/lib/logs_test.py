@@ -18,12 +18,13 @@ from unittest import mock
 import zipfile
 
 from absl.testing import absltest
-from glazier.lib import constants
 from glazier.lib import file_util
 from glazier.lib import logs
 from glazier.lib import winpe
-
 from pyfakefs.fake_filesystem_unittest import Patcher
+
+from glazier.lib import constants
+
 
 TEST_ID = '1A19SEL90000R90DZN7A-1234567'
 

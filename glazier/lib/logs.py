@@ -20,10 +20,10 @@ import os
 import zipfile
 
 from glazier.lib import buildinfo
-from glazier.lib import constants
 from glazier.lib import file_util
 from glazier.lib import winpe
 
+from glazier.lib import constants
 from glazier.lib import errors
 
 
