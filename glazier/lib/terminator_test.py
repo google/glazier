@@ -16,7 +16,6 @@
 from unittest import mock
 
 from absl.testing import absltest
-from absl.testing import parameterized
 from glazier.lib import terminator
 from glazier.lib import test_utils
 from glazier.lib import winpe
@@ -42,54 +41,74 @@ GLAZIER_ERROR_4 = errors.GlazierError(
     error_code=444, message='GlazierError Four')
 
 
-class GetCausalChainTest(parameterized.TestCase):
+class GetGlazierErrorLineageTest(test_utils.GlazierTestCase):
 
   def test_missing_argument(self):
     with self.assertRaises(ValueError):
-      terminator._get_causal_chain(None)
+      terminator._get_glazier_error_lineage(None)
 
-  def test_single_exception(self):
-    exception = ZeroDivisionError('some error')
-    expected = [exception]
-    actual = terminator._get_causal_chain(exception)
-    self.assertEqual(expected, actual)
+  def test_get_single_exception(self):
 
-  def test_success(self):
+    raised = test_utils.raise_from(Exception('Exception One'))
+    expected = []
+    actual = terminator._get_glazier_error_lineage(raised)
 
-    # Create a ZeroDivisionError with some history.
+    self.assertListEqual(expected, actual)
+
+  def test_get_single_glazier_error(self):
+
+    glazier_error_1 = errors.GlazierError(
+        error_code=111, message='GlazierError One')
+    raised = test_utils.raise_from(glazier_error_1)
+    expected = [glazier_error_1]
+    actual = terminator._get_glazier_error_lineage(raised)
+
+    self.assertListEqual(expected, actual)
+
+  def test_get_all_glazier_error(self):
+
+    glazier_error_1 = errors.GlazierError(
+        error_code=111, message='GlazierError One')
+    glazier_error_2 = errors.GlazierError(
+        error_code=222, message='GlazierError Two')
+    glazier_error_3 = errors.GlazierError(
+        error_code=333, message='GlazierError Three')
+    glazier_error_4 = errors.GlazierError(
+        error_code=444, message='GlazierError Four')
+    raised = test_utils.raise_from(glazier_error_1, glazier_error_2,
+                                   glazier_error_3, glazier_error_4)
     expected = [
-        Exception('root'),
-        ValueError('intermediate'),
-        ZeroDivisionError('final')
+        glazier_error_1, glazier_error_2, glazier_error_3, glazier_error_4
     ]
-    exception = test_utils.raise_from(*expected)
-    self.assertIsInstance(exception, ZeroDivisionError)
+    actual = terminator._get_glazier_error_lineage(raised)
 
-    actual = terminator._get_causal_chain(exception)
-    self.assertEqual(expected, actual)
+    self.assertListEqual(expected, actual)
 
+  def test_get_no_glazier_errors(self):
 
-class GetRootCauseExceptionTest(parameterized.TestCase):
+    exception_1 = Exception('Exception One')
+    exception_2 = ValueError('ValueError Two')
+    exception_3 = ZeroDivisionError('ZeroDivisionError Three')
+    raised = test_utils.raise_from(exception_1, exception_2, exception_3)
+    expected = []
+    actual = terminator._get_glazier_error_lineage(raised)
 
-  def test_missing_argument(self):
-    with self.assertRaises(ValueError):
-      terminator._get_root_cause_exception(None)
+    self.assertListEqual(expected, actual)
 
-  @parameterized.named_parameters(
-      ('_single_exception', [EXCEPTION_1], EXCEPTION_1),
-      ('_single_glazier_error', [GLAZIER_ERROR_1], GLAZIER_ERROR_1),
-      ('_mixed_errors', [
-          EXCEPTION_1, EXCEPTION_2, GLAZIER_ERROR_3, GLAZIER_ERROR_4
-      ], GLAZIER_ERROR_3),
-      ('_all_glazier_errors', [
-          GLAZIER_ERROR_1, GLAZIER_ERROR_2, GLAZIER_ERROR_3, GLAZIER_ERROR_4
-      ], GLAZIER_ERROR_1),
-      ('_no_glazier_errors', [EXCEPTION_1, EXCEPTION_2, EXCEPTION_3
-                             ], EXCEPTION_1),
-  )
-  def test_get(self, exception, expected):
-    actual = terminator._get_root_cause_exception(exception)
-    self.assertEqual(expected, actual)
+  def test_get_mixed_errors(self):
+
+    exception_1 = Exception('Exception One')
+    exception_2 = ValueError('ValueError Two')
+    glazier_error_1 = errors.GlazierError(
+        error_code=333, message='GlazierError Three')
+    glazier_error_2 = errors.GlazierError(
+        error_code=444, message='GlazierError Four')
+    raised = test_utils.raise_from(exception_1, exception_2, glazier_error_1,
+                                   glazier_error_2)
+    expected = [glazier_error_1, glazier_error_2]
+    actual = terminator._get_glazier_error_lineage(raised)
+
+    self.assertListEqual(expected, actual)
 
 
 class LogAndExitTest(test_utils.GlazierTestCase):
@@ -99,10 +118,13 @@ class LogAndExitTest(test_utils.GlazierTestCase):
   def test_no_glazier_errors(self, mock_check_winpe, mock_logging):
 
     mock_check_winpe.return_value = True
-    exception = test_utils.raise_from(EXCEPTION_1, EXCEPTION_2, EXCEPTION_3)
+    exception_1 = Exception('Exception One')
+    exception_2 = ValueError('ValueError Two')
+    exception_3 = ZeroDivisionError('ZeroDivisionError Three')
+    raised = test_utils.raise_from(exception_1, exception_2, exception_3)
 
     with self.assertRaises(SystemExit):
-      terminator.log_and_exit(terminator.buildinfo.BuildInfo(), exception)
+      terminator.log_and_exit(terminator.buildinfo.BuildInfo(), raised)
 
     # Extract the logging.critical() message and split it up by newlines.
     critical_msg = mock_logging.critical.call_args[0][0]
@@ -110,10 +132,12 @@ class LogAndExitTest(test_utils.GlazierTestCase):
     # Verify that there's a line matching each of the given regexes.
     patterns = [
         r'.*IMAGING PROCESS FAILED.*',
-        r'.*Root Cause: Exception One.*',
-        r'.*Location: test_utils.py:[0-9]+.*',
-        r'.*Logs: .+',
+        r'.*Glazier encountered the following error\(s\) while imaging..*',
+        (r'.*Please consult the troubleshooting links for solutions..*'),
+        r'.*1. ZeroDivisionError Three.*',
         fr'.*Troubleshooting: {constants.HELP_URI}#7000.*',
+        r'.*Logs from the imaging process can be found at: .+',
+        r'.*[*]+.*',
     ]
     self.assert_lines_match_patterns(critical_msg.splitlines(), patterns)
 
@@ -134,11 +158,16 @@ class LogAndExitTest(test_utils.GlazierTestCase):
     # Verify that there's a line matching each of the given regexes.
     patterns = [
         r'.*IMAGING PROCESS FAILED.*',
-        r'.*Root Cause: GlazierError One \(Error Code: 111\).*',
-        r'.*Location: test_utils.py:[0-9]+.*',
-        r'.*Logs: .+',
+        r'.*Glazier encountered the following error\(s\) while imaging..*',
+        (r'.*Please consult the troubleshooting links for solutions..*'),
+        r'.*1. GlazierError One \(Error Code: 111\).*',
         fr'.*Troubleshooting: {constants.HELP_URI}#111.*',
+        r'.*2. GlazierError Two \(Error Code: 222\).*',
+        fr'.*Troubleshooting: {constants.HELP_URI}#222.*',
+        r'.*Logs from the imaging process can be found at: .+',
+        r'.*[*]+.*',
     ]
+    print(critical_msg)
     self.assert_lines_match_patterns(critical_msg.splitlines(), patterns)
 
   @mock.patch.object(terminator, 'logging', autospec=True)
@@ -158,10 +187,18 @@ class LogAndExitTest(test_utils.GlazierTestCase):
     # Verify that there's a line matching each of the given regexes.
     patterns = [
         r'.*IMAGING PROCESS FAILED.*',
-        r'.*Root Cause: GlazierError One \(Error Code: 111\).*',
-        r'.*Location: test_utils.py:[0-9]+.*',
-        r'.*Logs: .+',
+        r'.*Glazier encountered the following error\(s\) while imaging..*',
+        (r'.*Please consult the troubleshooting links for solutions..*'),
+        r'.*1. GlazierError One \(Error Code: 111\).*',
         fr'.*Troubleshooting: {constants.HELP_URI}#111.*',
+        r'.*2. GlazierError Two \(Error Code: 222\).*',
+        fr'.*Troubleshooting: {constants.HELP_URI}#222.*',
+        r'.*3. GlazierError Three \(Error Code: 333\).*',
+        fr'.*Troubleshooting: {constants.HELP_URI}#333.*',
+        r'.*4. GlazierError Four \(Error Code: 444\).*',
+        fr'.*Troubleshooting: {constants.HELP_URI}#444.*',
+        r'.*Logs from the imaging process can be found at: .+',
+        r'.*[*]+.*',
     ]
     self.assert_lines_match_patterns(critical_msg.splitlines(), patterns)
 
