@@ -15,7 +15,9 @@
 
 from unittest import mock
 
+from absl import flags
 from absl.testing import absltest
+from absl.testing import flagsaver
 from glazier.lib import title
 
 _PREFIX = 'Glazier'
@@ -24,46 +26,50 @@ _TEST_ID = '1A19SEL90000R90DZN7A-1234567'
 _RELEASE = '21.08.00'
 _STAGE = '42'
 
+FLAGS = flags.FLAGS
+
 
 class TitleTest(absltest.TestCase):
 
+  @flagsaver.flagsaver()
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
   @mock.patch.object(title.stage, 'get_active_stage', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_base_title_all(
-      self, mock_check_winpe, mock_get_active_stage, mock_release,
-      mock_imageid):
-
+  def test_base_title_all(self, mock_check_winpe, mock_get_active_stage,
+                          mock_release, mock_imageid):
     mock_check_winpe.return_value = True
     mock_imageid.return_value = _TEST_ID
     mock_get_active_stage.return_value = _STAGE
     mock_release.return_value = _RELEASE
-    title.constants.FLAGS.config_root_path = '/'
+    FLAGS.config_root_path = '/'
     self.assertEqual(
         title._base_title(),
         f'WinPE - Stage: {_STAGE} - {_RELEASE} - {_TEST_ID}')
 
+  @flagsaver.flagsaver()
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
   def test_base_title_wpe(self, mock_check_winpe, mock_release, mock_imageid):
     mock_check_winpe.return_value = True
-    title.constants.FLAGS.config_root_path = None
+    FLAGS.config_root_path = None
     mock_imageid.return_value = None
     mock_release.return_value = None
     self.assertEqual(title._base_title(), 'WinPE')
 
+  @flagsaver.flagsaver()
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
   def test_base_title_path(self, mock_check_winpe, mock_release, mock_imageid):
     mock_check_winpe.return_value = False
-    title.constants.FLAGS.config_root_path = '/some/directory'
+    FLAGS.config_root_path = '/some/directory'
     mock_imageid.return_value = None
     mock_release.return_value = None
     self.assertEqual(title._base_title(), 'some/directory')
 
+  @flagsaver.flagsaver()
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
@@ -71,9 +77,10 @@ class TitleTest(absltest.TestCase):
     mock_check_winpe.return_value = False
     mock_imageid.return_value = _TEST_ID
     mock_release.return_value = None
-    title.constants.FLAGS.config_root_path = None
+    FLAGS.config_root_path = None
     self.assertEqual(title._base_title(), _TEST_ID)
 
+  @flagsaver.flagsaver()
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
@@ -81,7 +88,7 @@ class TitleTest(absltest.TestCase):
     mock_check_winpe.return_value = False
     mock_imageid.return_value = None
     mock_release.return_value = None
-    title.constants.FLAGS.config_root_path = None
+    FLAGS.config_root_path = None
     self.assertEqual(title._base_title(), '')
 
   @mock.patch.object(title, '_base_title', autospec=True)
@@ -105,14 +112,14 @@ class TitleTest(absltest.TestCase):
     mock_base_title.return_value = _TEST_ID
     self.assertEqual(title._build_title(), f'{_PREFIX} [{_TEST_ID}]')
 
+  @flagsaver.flagsaver()
   @mock.patch.object(title.os, 'system', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_set_title_string(
-      self, mock_check_winpe, mock_release, mock_imageid, mock_system):
-
-    title.constants.FLAGS.config_root_path = '/'
+  def test_set_title_string(self, mock_check_winpe, mock_release, mock_imageid,
+                            mock_system):
+    FLAGS.config_root_path = '/'
     mock_check_winpe.return_value = False
     mock_imageid.return_value = _TEST_ID
     mock_release.return_value = None
@@ -120,30 +127,30 @@ class TitleTest(absltest.TestCase):
         title.set_title(_STRING), f'{_PREFIX} [{_STRING} - {_TEST_ID}]')
     mock_system.assert_called_with(f'title {_PREFIX} [{_STRING} - {_TEST_ID}]')
 
+  @flagsaver.flagsaver()
   @mock.patch.object(title.os, 'system', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
   @mock.patch.object(title.stage, 'get_active_stage', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_set_title_stage(
-      self, mock_check_winpe, mock_get_active_stage, mock_release, mock_imageid,
-      mock_system):
-
+  def test_set_title_stage(self, mock_check_winpe, mock_get_active_stage,
+                           mock_release, mock_imageid, mock_system):
     mock_check_winpe.return_value = False
     mock_imageid.return_value = None
     mock_get_active_stage.return_value = _STAGE
-    title.constants.FLAGS.config_root_path = '/'
+    FLAGS.config_root_path = '/'
     mock_release.return_value = None
     self.assertEqual(title.set_title(), f'{_PREFIX} [Stage: {_STAGE}]')
     mock_system.assert_called_with(f'title {_PREFIX} [Stage: {_STAGE}]')
 
+  @flagsaver.flagsaver()
   @mock.patch.object(title.os, 'system', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(title.buildinfo.BuildInfo, 'Release', autospec=True)
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
-  def test_set_title_release(
-      self, mock_check_winpe, mock_release, mock_imageid, mock_system):
-
+  def test_set_title_release(self, mock_check_winpe, mock_release, mock_imageid,
+                             mock_system):
+    FLAGS.config_root_path = '/'
     mock_check_winpe.return_value = False
     mock_imageid.return_value = None
     mock_release.return_value = _RELEASE
