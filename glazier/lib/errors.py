@@ -288,3 +288,30 @@ class GlazierError(Exception):
 
   def __str__(self):
     return f'{self.message} (Error Code: {self.error_code})'
+
+
+def get_glazier_error_lineage(ex):
+  """Extracts all GlazierErrors in the lineage of the given Exception.
+
+  Args:
+    ex: The Exception whose GlazierError lineage we want.
+
+  Returns:
+    The lineage of GlazierErrors which led to the argument Exception, in order
+    of earliest-raised to latest-raised.
+
+  Raises:
+    ValueError: if no Exception is provided.
+  """
+  if ex is None:
+    raise ValueError('Exception argument cannot be None')
+
+  glazier_errors = []
+  current_ex = ex
+
+  while current_ex is not None:
+    if isinstance(current_ex, GlazierError):
+      glazier_errors.insert(0, current_ex)
+    current_ex = current_ex.__cause__
+
+  return glazier_errors

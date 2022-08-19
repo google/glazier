@@ -114,5 +114,75 @@ class GlazierErrorTest(parameterized.TestCase):
       encountered_error_codes.add(err_obj.error_code)
 
 
+class GetGlazierErrorLineageTest(test_utils.GlazierTestCase):
+
+  def test_missing_argument(self):
+    with self.assertRaises(ValueError):
+      errors.get_glazier_error_lineage(None)
+
+  def test_get_single_exception(self):
+
+    raised = test_utils.raise_from(Exception('Exception One'))
+    expected = []
+    actual = errors.get_glazier_error_lineage(raised)
+
+    self.assertListEqual(expected, actual)
+
+  def test_get_single_glazier_error(self):
+
+    glazier_error_1 = errors.GlazierError(
+        error_code=111, message='GlazierError One')
+    raised = test_utils.raise_from(glazier_error_1)
+    expected = [glazier_error_1]
+    actual = errors.get_glazier_error_lineage(raised)
+
+    self.assertListEqual(expected, actual)
+
+  def test_get_all_glazier_error(self):
+
+    glazier_error_1 = errors.GlazierError(
+        error_code=111, message='GlazierError One')
+    glazier_error_2 = errors.GlazierError(
+        error_code=222, message='GlazierError Two')
+    glazier_error_3 = errors.GlazierError(
+        error_code=333, message='GlazierError Three')
+    glazier_error_4 = errors.GlazierError(
+        error_code=444, message='GlazierError Four')
+    raised = test_utils.raise_from(glazier_error_1, glazier_error_2,
+                                   glazier_error_3, glazier_error_4)
+    expected = [
+        glazier_error_1, glazier_error_2, glazier_error_3, glazier_error_4
+    ]
+    actual = errors.get_glazier_error_lineage(raised)
+
+    self.assertListEqual(expected, actual)
+
+  def test_get_no_glazier_errors(self):
+
+    exception_1 = Exception('Exception One')
+    exception_2 = ValueError('ValueError Two')
+    exception_3 = ZeroDivisionError('ZeroDivisionError Three')
+    raised = test_utils.raise_from(exception_1, exception_2, exception_3)
+    expected = []
+    actual = errors.get_glazier_error_lineage(raised)
+
+    self.assertListEqual(expected, actual)
+
+  def test_get_mixed_errors(self):
+
+    exception_1 = Exception('Exception One')
+    exception_2 = ValueError('ValueError Two')
+    glazier_error_1 = errors.GlazierError(
+        error_code=333, message='GlazierError Three')
+    glazier_error_2 = errors.GlazierError(
+        error_code=444, message='GlazierError Four')
+    raised = test_utils.raise_from(exception_1, exception_2, glazier_error_1,
+                                   glazier_error_2)
+    expected = [glazier_error_1, glazier_error_2]
+    actual = errors.get_glazier_error_lineage(raised)
+
+    self.assertListEqual(expected, actual)
+
+
 if __name__ == '__main__':
   absltest.main()

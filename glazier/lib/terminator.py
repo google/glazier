@@ -25,33 +25,6 @@ from glazier.lib import constants
 from glazier.lib import errors
 
 
-def _get_glazier_error_lineage(ex):
-  """Extracts all GlazierErrors in the lineage of the given Exception.
-
-  Args:
-    ex: The Exception whose GlazierError lineage we want.
-
-  Returns:
-    The lineage of GlazierErrors which led to the argument Exception, in order
-    of earliest-raised to latest-raised.
-
-  Raises:
-    ValueError: if no Exception is provided.
-  """
-  if ex is None:
-    raise ValueError('Exception argument cannot be None')
-
-  glazier_errors = []
-  current_ex = ex
-
-  while current_ex is not None:
-    if isinstance(current_ex, errors.GlazierError):
-      glazier_errors.insert(0, current_ex)
-    current_ex = current_ex.__cause__
-
-  return glazier_errors
-
-
 def log_and_exit(build_info: buildinfo.BuildInfo,
                  exception,
                  collect: bool = True):
@@ -90,7 +63,7 @@ def log_and_exit(build_info: buildinfo.BuildInfo,
   string += (
       '* Glazier encountered the following error(s) while imaging.\n'
       '  Please consult the troubleshooting links for solutions.\n\n')
-  glazier_errors = _get_glazier_error_lineage(exception)
+  glazier_errors = errors.get_glazier_error_lineage(exception)
 
   # If any GlazierErrors are at fault, print out the descriptive string
   # representation of each one, along with a link to the relevant
