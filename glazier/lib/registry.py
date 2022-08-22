@@ -31,26 +31,23 @@ class Error(errors.GlazierError):
 
 class RegistryWriteError(Error):
 
-  def __init__(self, name: str, value: Union[str, int], path: Optional[str]):
-    message = (
-        f'Failed to write to registry: '
-        f'(Name: {name}, Value: {value}, Path: {path})'
-    )
+  def __init__(self,
+               name: str,
+               value: Union[str, int],
+               path: Optional[str] = constants.REG_ROOT):
+    message = (f'Failed to write to registry: '
+               f'(Name: {name}, Value: {value}, Path: {path})')
     super().__init__(
-        error_code=errors.ErrorCode.REGISTRY_WRITE_ERROR,
-        message=message)
+        error_code=errors.ErrorCode.REGISTRY_WRITE_ERROR, message=message)
 
 
 class RegistryDeleteError(Error):
 
   def __init__(self, name: str, path: Optional[str]):
-    message = (
-        f'Failed to delete from registry: '
-        f'(Name: {name}, Path: {path})'
-    )
+    message = (f'Failed to delete from registry: '
+               f'(Name: {name}, Path: {path})')
     super().__init__(
-        error_code=errors.ErrorCode.REGISTRY_DELETE_ERROR,
-        message=message)
+        error_code=errors.ErrorCode.REGISTRY_DELETE_ERROR, message=message)
 
 
 def get_value(name: str,
@@ -64,8 +61,8 @@ def get_value(name: str,
     name: Registry value name.
     root: Registry root (HKCR\HKCU\HKLM\HKU). Defaults to HKLM.
     path: Registry key path. Defaults to constants.REG_ROOT.
-    use_64bit: True for 64 bit registry. False for 32 bit.
-    Defaults to constants.USE_REG_64.
+    use_64bit: True for 64 bit registry. False for 32 bit. Defaults to
+      constants.USE_REG_64.
     log: Log the registry operation to the standard logger. Defaults to True.
 
   Returns:
@@ -73,10 +70,7 @@ def get_value(name: str,
   """
   try:
     reg = registry.Registry(root_key=root)
-    value = reg.GetKeyValue(
-        key_path=path,
-        key_name=name,
-        use_64bit=use_64bit)
+    value = reg.GetKeyValue(key_path=path, key_name=name, use_64bit=use_64bit)
     if value:
       if log:
         logging.debug(r'Got registry value: %s:\%s\%s = %s.', root, path, name,
@@ -102,8 +96,8 @@ def set_value(name: str,
     root: Registry root (HKCR\HKCU\HKLM\HKU). Defaults to HKLM.
     path: Registry key path. Defaults to constants.REG_ROOT.
     reg_type: Registry value type (REG_DWORD\REG_SZ). Defaults to REG_SZ.
-    use_64bit: True for 64 bit registry. False for 32 bit.
-    Defaults to constants.USE_REG_64.
+    use_64bit: True for 64 bit registry. False for 32 bit. Defaults to
+      constants.USE_REG_64.
     log: Log the registry operation to the standard logger. Defaults to True.
   """
   try:
@@ -130,8 +124,8 @@ def get_values(path: str,
   Args:
     path: Registry key path to enumerate from.
     root: Registry root (HKCR\HKCU\HKLM\HKU). Defaults to HKLM.
-    use_64bit: True for 64 bit registry. False for 32 bit.
-    Defaults to constants.USE_REG_64.
+    use_64bit: True for 64 bit registry. False for 32 bit. Defaults to
+      constants.USE_REG_64.
     log: Log the registry operation to the standard logger. Defaults to True.
 
   Returns:
@@ -139,9 +133,7 @@ def get_values(path: str,
   """
   try:
     reg = registry.Registry(root_key=root)
-    values = reg.GetRegKeys(
-        key_path=path,
-        use_64bit=use_64bit)
+    values = reg.GetRegKeys(key_path=path, use_64bit=use_64bit)
     if values:
       if log:
         logging.debug(r'Registry keys under %s:\%s = %s.', root, path, values)
@@ -162,16 +154,13 @@ def remove_value(name: str,
     name: Registry value name.
     root: Registry root (HKCR\HKCU\HKLM\HKU). Defaults to HKLM.
     path: Registry key path. Defaults to constants.REG_ROOT.
-    use_64bit: True for 64 bit registry. False for 32 bit.
-    Defaults to constants.USE_REG_64.
+    use_64bit: True for 64 bit registry. False for 32 bit. Defaults to
+      constants.USE_REG_64.
     log: Log the registry operation to the standard logger. Defaults to True.
   """
   try:
     reg = registry.Registry(root_key=root)
-    reg.RemoveKeyValue(
-        key_path=path,
-        key_name=name,
-        use_64bit=use_64bit)
+    reg.RemoveKeyValue(key_path=path, key_name=name, use_64bit=use_64bit)
     if log:
       logging.debug(r'Removed registry key: %s:\%s\%s', root, path, name)
   except registry.RegistryError as e:
