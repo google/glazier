@@ -16,6 +16,8 @@
 import re
 from absl.testing import parameterized
 
+from glazier.lib import errors
+
 
 def raise_from(*exception_chain):
   """Collapses multiple Exceptions into a final Exception, using raise/from."""
@@ -39,6 +41,26 @@ def raise_from(*exception_chain):
   return previous_ex
 
 
+def _exception_validation_predicate(exception):
+  """Predicate for validating that raised Exceptions are properly formed.
+
+  Args:
+    exception: The Exception to validate.
+
+  Returns:
+    True if the Exception if properly formed, False otherwise.
+  """
+  # We shouldn't ever be raising a GlazierError subclass containing the DEFAULT
+  # error code, as this likely means that we have an incomplete subclass
+  # implementation somewhere.
+  glazier_errors = errors.get_glazier_error_lineage(exception)
+  for glazier_error in glazier_errors:
+    if glazier_error.error_code == errors.ErrorCode.DEFAULT:
+      return False
+
+  return True
+
+
 class GlazierTestCase(parameterized.TestCase):
   """General-purpose test case for Glazier unit tests."""
 
@@ -58,3 +80,7 @@ class GlazierTestCase(parameterized.TestCase):
     for line, pattern in zip(lines, patterns):
       regex = re.compile(pattern)
       self.assertRegex(line, regex)
+
+  def assert_raises_with_validation(self, expected_exception):
+    return self.assertRaisesWithPredicateMatch(expected_exception,
+                                               _exception_validation_predicate)
