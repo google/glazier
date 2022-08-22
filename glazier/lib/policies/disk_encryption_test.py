@@ -11,15 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tests for glazier.lib.policies.disk_encryption."""
 
 from absl.testing import absltest
+from glazier.lib import test_utils
 from glazier.lib.policies import disk_encryption
 import mock
 
 
-class DiskEncryptionTest(absltest.TestCase):
+class DiskEncryptionTest(test_utils.GlazierTestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_verify(self, mock_buildinfo):
@@ -32,7 +32,8 @@ class DiskEncryptionTest(absltest.TestCase):
     de._build_info.EncryptionLevel.return_value = 'tpm'
     de.Verify()
     de._build_info.TpmPresent.return_value = False
-    with self.assertRaises(disk_encryption.ImagingPolicyException):
+    with self.assert_raises_with_validation(
+        disk_encryption.ImagingPolicyException):
       de.Verify()
 
 

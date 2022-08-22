@@ -18,11 +18,12 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import file_util
+from glazier.lib import test_utils
 from glazier.lib.config import files
 from pyfakefs import fake_filesystem
 
 
-class FilesTest(absltest.TestCase):
+class FilesTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(FilesTest, self).setUp()
@@ -36,7 +37,7 @@ class FilesTest(absltest.TestCase):
     result = files._YamlReader('/tmp/foo/dump.txt')
     self.assertEqual(result[1], ['op2a', 'op2b'])
     self.assertEqual(result[3], {'op4a': 'op4b'})
-    with self.assertRaises(files.Error):
+    with self.assert_raises_with_validation(files.Error):
       files.Dump('/tmp', [])
 
   @mock.patch.object(files.download.Download, 'DownloadFileTemp', autospec=True)
@@ -54,7 +55,7 @@ class FilesTest(absltest.TestCase):
 
     # download error
     mock_downloadtempfile.side_effect = files.download.Error
-    with self.assertRaises(files.Error):
+    with self.assert_raises_with_validation(files.Error):
       files.Read(
           'https://glazier-server.example.com/unstable/dir/test-build.yaml')
 
@@ -70,7 +71,7 @@ class FilesTest(absltest.TestCase):
 
     # error handling
     mock_remove.side_effect = file_util.Error('test error')
-    with self.assertRaises(files.Error):
+    with self.assert_raises_with_validation(files.Error):
       files.Remove('/test/file/name.yaml', backup=False)
 
   @mock.patch.object(files.file_util, 'Move', autospec=True)
@@ -82,7 +83,7 @@ class FilesTest(absltest.TestCase):
 
     # error handling
     mock_move.side_effect = file_util.Error('test error')
-    with self.assertRaises(files.Error):
+    with self.assert_raises_with_validation(files.Error):
       files.Remove('/test/file/name.yaml', backup=True)
 
   def test_yaml_reader(self):

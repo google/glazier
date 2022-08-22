@@ -20,12 +20,14 @@ from absl.testing import absltest
 from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib import events
+from glazier.lib import test_utils
+from glazier.lib.config import files
 from glazier.lib.config import runner
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
 
 
-class ConfigRunnerTest(absltest.TestCase):
+class ConfigRunnerTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(ConfigRunnerTest, self).setUp()
@@ -76,7 +78,7 @@ class ConfigRunnerTest(absltest.TestCase):
     self.cr._PopTask([1, 2, 3])
     mock_dump.assert_called_with('/tmp/task_list.yaml', [2, 3], mode='w')
     mock_dump.side_effect = runner.files.Error
-    with self.assertRaises(runner.ConfigRunnerError):
+    with self.assert_raises_with_validation(runner.ConfigRunnerError):
       self.cr._PopTask([1, 2])
 
   @mock.patch.object(runner.files, 'Remove', autospec=True)
@@ -99,7 +101,7 @@ class ConfigRunnerTest(absltest.TestCase):
     }]
     event = events.RestartEvent('Some reason', timeout=25)
     mock_processaction.side_effect = event
-    with self.assertRaises(SystemExit):
+    with self.assert_raises_with_validation(SystemExit):
       self.cr._ProcessTasks(conf)
     mock_restart.assert_called_with(25, 'Some reason')
     self.assertTrue(mock_poptask.called)
@@ -109,7 +111,7 @@ class ConfigRunnerTest(absltest.TestCase):
     event = events.RestartEvent(
         'Some other reason', timeout=10, retry_on_restart=True)
     mock_processaction.side_effect = event
-    with self.assertRaises(SystemExit):
+    with self.assert_raises_with_validation(SystemExit):
       self.cr._ProcessTasks(conf)
     mock_restart.assert_called_with(10, 'Some other reason')
     self.assertFalse(mock_poptask.called)
@@ -118,7 +120,7 @@ class ConfigRunnerTest(absltest.TestCase):
     event = events.RestartEvent(
         'Some other reason', timeout=10, pop_next=True)
     mock_processaction.side_effect = event
-    with self.assertRaises(SystemExit):
+    with self.assert_raises_with_validation(SystemExit):
       self.cr._ProcessTasks(conf)
     mock_restart.assert_called_with(10, 'Some other reason')
     self.assertTrue(mock_poptask.called)
@@ -138,7 +140,7 @@ class ConfigRunnerTest(absltest.TestCase):
     }]
     event = events.ShutdownEvent('Some reason', timeout=25)
     mock_processaction.side_effect = event
-    with self.assertRaises(SystemExit):
+    with self.assert_raises_with_validation(SystemExit):
       self.cr._ProcessTasks(conf)
     mock_shutdown.assert_called_with(25, 'Some reason')
     self.assertTrue(mock_poptask.called)
@@ -148,7 +150,7 @@ class ConfigRunnerTest(absltest.TestCase):
     event = events.ShutdownEvent(
         'Some other reason', timeout=10, retry_on_restart=True)
     mock_processaction.side_effect = event
-    with self.assertRaises(SystemExit):
+    with self.assert_raises_with_validation(SystemExit):
       self.cr._ProcessTasks(conf)
     mock_shutdown.assert_called_with(10, 'Some other reason')
     self.assertFalse(mock_poptask.called)
@@ -157,7 +159,7 @@ class ConfigRunnerTest(absltest.TestCase):
     event = events.ShutdownEvent(
         'Some other reason', timeout=10, pop_next=True)
     mock_processaction.side_effect = event
-    with self.assertRaises(SystemExit):
+    with self.assert_raises_with_validation(SystemExit):
       self.cr._ProcessTasks(conf)
     mock_shutdown.assert_called_with(10, 'Some other reason')
     self.assertTrue(mock_poptask.called)
@@ -165,7 +167,7 @@ class ConfigRunnerTest(absltest.TestCase):
   @mock.patch.object(runner.base.actions, 'SetTimer', autospec=True)
   def test_process_with_action_error(self, mock_settimer):
     mock_settimer.side_effect = runner.base.actions.ActionError
-    with self.assertRaises(runner.ConfigRunnerError):
+    with self.assert_raises_with_validation(runner.ConfigRunnerError):
       self.cr._ProcessTasks(
           [{
               'data': {
@@ -177,7 +179,7 @@ class ConfigRunnerTest(absltest.TestCase):
       )
 
   def test_process_with_invalid_command(self):
-    with self.assertRaises(runner.ConfigRunnerError):
+    with self.assert_raises_with_validation(runner.ConfigRunnerError):
       self.cr._ProcessTasks(
           [{
               'data': {
@@ -190,8 +192,8 @@ class ConfigRunnerTest(absltest.TestCase):
 
   @mock.patch.object(runner.files, 'Read', autospec=True)
   def test_start_with_missing_file(self, mock_read):
-    mock_read.side_effect = runner.files.Error
-    with self.assertRaises(runner.ConfigRunnerError):
+    mock_read.side_effect = files.FileDownloadError('some_path')
+    with self.assert_raises_with_validation(runner.ConfigRunnerError):
       self.cr.Start('/tmp/path/missing.yaml')
 
   @mock.patch.object(runner.base.actions, 'SetTimer', autospec=True)
@@ -224,7 +226,7 @@ class ConfigRunnerTest(absltest.TestCase):
     mock_checkurl.assert_called_with(mock.ANY, 'http://www.example.com/', [200])
     # fail
     mock_checkurl.return_value = False
-    with self.assertRaises(runner.CheckUrlError):
+    with self.assert_raises_with_validation(runner.CheckUrlError):
       self.cr._ProcessTasks([])
 
 

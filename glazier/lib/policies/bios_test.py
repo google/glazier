@@ -17,10 +17,11 @@
 from unittest import mock
 from absl.testing import absltest
 from absl.testing import parameterized
+from glazier.lib import test_utils
 from glazier.lib.policies import bios
 
 
-class BIOSVersionTest(parameterized.TestCase):
+class BIOSVersionTest(test_utils.GlazierTestCase):
 
   @parameterized.named_parameters(
       ('exact_match', 'S07KT26A'),
@@ -32,7 +33,7 @@ class BIOSVersionTest(parameterized.TestCase):
     bv = bios.BIOSVersion(mock_buildinfo)
     bv._build_info.BIOSVersion.return_value = bios_version
     if bios_version < 'S07KT26A':
-      with self.assertRaises(bios.ImagingPolicyException):
+      with self.assert_raises_with_validation(bios.ImagingPolicyException):
         bv.Verify()
     else:
       self.assertIsNone(bv.Verify())

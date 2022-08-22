@@ -18,10 +18,11 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import buildinfo
+from glazier.lib import test_utils
 from glazier.lib.config import base
 
 
-class BaseTest(absltest.TestCase):
+class BaseTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(BaseTest, self).setUp()
@@ -38,12 +39,12 @@ class BaseTest(absltest.TestCase):
     self.assertTrue(mock_settimer.return_value.Run.called)
 
     # invalid command
-    with self.assertRaises(base.ConfigError):
+    with self.assert_raises_with_validation(base.ConfigError):
       self.cb._ProcessAction('BadSetTimer', ['Timer1'])
 
     # action error
     mock_settimer.side_effect = base.actions.ActionError
-    with self.assertRaises(base.ConfigError):
+    with self.assert_raises_with_validation(base.ConfigError):
       self.cb._ProcessAction('SetTimer', ['Timer1'])
 
 

@@ -18,10 +18,11 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.chooser import fields
+from glazier.lib import test_utils
 
 
 @mock.patch.object(fields, 'tk', autospec=True)
-class FieldsTest(absltest.TestCase):
+class FieldsTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(fields, 'tk', autospec=True)
   def setUp(self, tk):
@@ -43,7 +44,7 @@ class FieldsTest(absltest.TestCase):
     toggle.Value()
 
 
-class RadioMenuTest(absltest.TestCase):
+class RadioMenuTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(fields, 'tk', autospec=True)
   def setUp(self, tk):
@@ -65,7 +66,7 @@ class RadioMenuTest(absltest.TestCase):
     self.rm.button.configure.assert_called_with(text='en-us')
 
 
-class TimerTest(absltest.TestCase):
+class TimerTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(fields, 'tk', autospec=True)
   def setUp(self, tk):
@@ -88,7 +89,7 @@ class TimerTest(absltest.TestCase):
 
   def test_timeout(self):
     self.timer._counter = 0
-    with self.assertRaises(Exception):
+    with self.assert_raises_with_validation(Exception):
       self.timer.Countdown()
     self.assertFalse(self.root.after.called)
     self.assertTrue(self.root.quit.called)
