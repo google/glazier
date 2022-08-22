@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tests for glazier.lib.powershell."""
 
 from unittest import mock
@@ -21,13 +20,14 @@ from absl.testing import absltest
 from absl.testing import flagsaver
 
 from glazier.lib import powershell
+from glazier.lib import test_utils
 
 from pyfakefs import fake_filesystem
 
 FLAGS = flags.FLAGS
 
 
-class PowershellTest(absltest.TestCase):
+class PowershellTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(PowershellTest, self).setUp()
@@ -42,24 +42,27 @@ class PowershellTest(absltest.TestCase):
   def test_power_shell(self, mock_check_winpe):
     # WinPE
     mock_check_winpe.return_value = True
-    self.assertEqual(
-        powershell._Powershell(), powershell.constants.WINPE_POWERSHELL)
+    self.assertEqual(powershell._Powershell(),
+                     powershell.constants.WINPE_POWERSHELL)
 
     # Host
     mock_check_winpe.return_value = False
-    self.assertEqual(
-        powershell._Powershell(), powershell.constants.SYS_POWERSHELL)
+    self.assertEqual(powershell._Powershell(),
+                     powershell.constants.SYS_POWERSHELL)
 
   def test_launch_ps_op_error(self):
-    with self.assertRaises(powershell.UnsupportedParameterError):
+    with self.assert_raises_with_validation(
+        powershell.UnsupportedParameterError):
       self.ps._LaunchPs('-Something', ['Get-ChildItem'])
 
   @mock.patch.object(powershell, '_Powershell', autospec=True)
   @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
   def test_launch_ps_error(self, mock_execute_binary, mock_powershell):
     mock_powershell.return_value = powershell.constants.WINPE_POWERSHELL
-    mock_execute_binary.side_effect = powershell.execute.Error
-    with self.assertRaises(powershell.PowerShellExecutionError):
+    mock_execute_binary.side_effect = powershell.execute.ExecError(
+        'some_command')
+    with self.assert_raises_with_validation(
+        powershell.PowerShellExecutionError):
       self.ps._LaunchPs('-Command', ['Get-ChildItem'])
 
   @mock.patch.object(powershell, '_Powershell', autospec=True)
@@ -77,7 +80,7 @@ class PowershellTest(absltest.TestCase):
   def test_run_local(self, mock_execute_binary, mock_powershell):
     mock_powershell.return_value = powershell.constants.SYS_POWERSHELL
     args = ['-Arg1', '-Arg2']
-    with self.assertRaises(powershell.InvalidPathError):
+    with self.assert_raises_with_validation(powershell.InvalidPathError):
       self.ps.RunLocal('/resources/missing.ps1', args=args)
 
     self.ps.RunLocal(self.path, args=args)
@@ -86,10 +89,10 @@ class PowershellTest(absltest.TestCase):
         ['-NoProfile', '-NoLogo', '-File', self.path] + args, None, False, True)
 
   def test_run_local_validate(self):
-    with self.assertRaises(AssertionError):
+    with self.assert_raises_with_validation(AssertionError):
       self.ps.RunLocal(self.path, args='not a list')
 
-    with self.assertRaises(AssertionError):
+    with self.assert_raises_with_validation(AssertionError):
       self.ps.RunLocal(self.path, args=[], ok_result='0')
 
   @mock.patch.object(powershell, '_Powershell', autospec=True)
@@ -103,10 +106,10 @@ class PowershellTest(absltest.TestCase):
         None, False, True)
 
   def test_run_command_validate(self):
-    with self.assertRaises(AssertionError):
+    with self.assert_raises_with_validation(AssertionError):
       self.ps.RunCommand(self.path)
 
-    with self.assertRaises(AssertionError):
+    with self.assert_raises_with_validation(AssertionError):
       self.ps.RunCommand([self.path], ok_result='0')
 
   @flagsaver.flagsaver
@@ -116,21 +119,21 @@ class PowershellTest(absltest.TestCase):
     self.fs.create_file('/test/resources/bin/script.ps1')
     args = ['>>', 'out.txt']
     self.ps.RunResource('bin/script.ps1', args=args)
-    mock_runlocal.assert_called_with(
-        self.ps, '/test/resources/bin/script.ps1', args, None)
+    mock_runlocal.assert_called_with(self.ps, '/test/resources/bin/script.ps1',
+                                     args, None)
 
     # Not Found
-    with self.assertRaises(powershell.InvalidPathError):
+    with self.assert_raises_with_validation(powershell.InvalidPathError):
       self.ps.RunResource('missing.ps1', args)
 
   @flagsaver.flagsaver
   def test_run_resource_validate(self):
     FLAGS.resource_path = '/test/resources'
     self.fs.create_file('/test/resources/bin/script.ps1')
-    with self.assertRaises(AssertionError):
+    with self.assert_raises_with_validation(AssertionError):
       self.ps.RunResource('/bin/script.ps1', args='not a list')
 
-    with self.assertRaises(AssertionError):
+    with self.assert_raises_with_validation(AssertionError):
       self.ps.RunResource('/bin/script.ps1', args=[], ok_result='0')
 
   @mock.patch.object(powershell, '_Powershell', autospec=True)
@@ -140,9 +143,8 @@ class PowershellTest(absltest.TestCase):
     self.ps.SetExecutionPolicy(policy='RemoteSigned')
     mock_runcommand.assert_called_with(
         self.ps, ['Set-ExecutionPolicy', '-ExecutionPolicy', 'RemoteSigned'])
-    with self.assertRaisesRegex(
-        powershell.UnsupportedExecutionPolicyError,
-        'Unsupported execution policy.*'):
+    with self.assertRaisesRegex(powershell.UnsupportedExecutionPolicyError,
+                                'Unsupported execution policy.*'):
       self.ps.SetExecutionPolicy(policy='RandomPolicy')
 
   @mock.patch.object(powershell, '_Powershell', autospec=True)
@@ -152,7 +154,8 @@ class PowershellTest(absltest.TestCase):
     self.ps.StartShell()
     mock_execute_binary.assert_called_with(
         powershell.constants.SYS_POWERSHELL, ['-NoProfile', '-NoLogo'],
-        shell=False, log=True)
+        shell=False,
+        log=True)
 
   @mock.patch.object(powershell, '_Powershell', autospec=True)
   @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
@@ -162,7 +165,8 @@ class PowershellTest(absltest.TestCase):
     self.psshell.StartShell()
     mock_execute_binary.assert_called_with(
         powershell.constants.SYS_POWERSHELL, ['-NoProfile', '-NoLogo'],
-        shell=True, log=True)
+        shell=True,
+        log=True)
 
   @mock.patch.object(powershell, '_Powershell', autospec=True)
   @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
@@ -172,15 +176,19 @@ class PowershellTest(absltest.TestCase):
     self.pssilent.StartShell()
     mock_execute_binary.assert_called_with(
         powershell.constants.SYS_POWERSHELL, ['-NoProfile', '-NoLogo'],
-        shell=False, log=False)
+        shell=False,
+        log=False)
 
   @mock.patch.object(powershell, '_Powershell', autospec=True)
   @mock.patch.object(powershell.execute, 'execute_binary', autospec=True)
   def test_start_shell_error(self, mock_execute_binary, mock_powershell):
     mock_powershell.return_value = powershell.constants.WINPE_POWERSHELL
-    mock_execute_binary.side_effect = powershell.execute.Error
-    with self.assertRaises(powershell.PowerShellExecutionError):
+    mock_execute_binary.side_effect = powershell.execute.ExecError(
+        'some_command')
+    with self.assert_raises_with_validation(
+        powershell.PowerShellExecutionError):
       self.ps.StartShell()
+
 
 if __name__ == '__main__':
   absltest.main()

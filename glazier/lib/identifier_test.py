@@ -17,6 +17,7 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import identifier
+from glazier.lib import test_utils
 from pyfakefs import fake_filesystem
 
 from glazier.lib import constants
@@ -26,7 +27,7 @@ TEST_SERIAL = '1A19SEL90000R90DZN7A'
 TEST_ID = TEST_SERIAL + '-' + str(TEST_UUID)[:7]
 
 
-class IdentifierTest(absltest.TestCase):
+class IdentifierTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(IdentifierTest, self).setUp()
@@ -56,8 +57,9 @@ class IdentifierTest(absltest.TestCase):
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
   def test_set_reg_error(self, mock_set_value):
-    mock_set_value.side_effect = identifier.registry.Error
-    with self.assertRaises(identifier.Error):
+    mock_set_value.side_effect = identifier.registry.RegistryWriteError(
+        'some_name', 'some_value', 'some_path')
+    with self.assert_raises_with_validation(identifier.Error):
       identifier._set_id()
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
@@ -76,7 +78,7 @@ class IdentifierTest(absltest.TestCase):
         '/%s/build_info.yaml' % identifier.constants.SYS_CACHE,
         contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, image_num: 12345}}\n'
     )
-    with self.assertRaises(identifier.Error):
+    with self.assert_raises_with_validation(identifier.Error):
       identifier._check_file()
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
@@ -85,12 +87,13 @@ class IdentifierTest(absltest.TestCase):
         '/%s/build_info.yaml' % identifier.constants.SYS_CACHE,
         contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, image_id: 12345}}\n'
     )
-    mock_set_value.side_effect = identifier.registry.Error
-    with self.assertRaises(identifier.Error):
+    mock_set_value.side_effect = identifier.registry.RegistryWriteError(
+        'some_name', 'some_value', 'some_path')
+    with self.assert_raises_with_validation(identifier.Error):
       identifier._check_file()
 
   def test_check_file_no_file(self):
-    with self.assertRaises(identifier.Error):
+    with self.assert_raises_with_validation(identifier.Error):
       identifier._check_file()
 
   @mock.patch.object(identifier.registry, 'get_value', autospec=True)
@@ -103,7 +106,7 @@ class IdentifierTest(absltest.TestCase):
   def test_check_id_get_error(self, mock_check_winpe, mock_get_value):
     mock_check_winpe.return_value = False
     mock_get_value.side_effect = identifier.registry.Error
-    with self.assertRaises(identifier.Error):
+    with self.assert_raises_with_validation(identifier.Error):
       identifier.check_id()
 
   @mock.patch.object(identifier, '_set_id', autospec=True)
@@ -118,8 +121,8 @@ class IdentifierTest(absltest.TestCase):
   @mock.patch.object(identifier, '_check_file', autospec=True)
   @mock.patch.object(identifier.registry, 'get_value', autospec=True)
   @mock.patch.object(identifier.winpe, 'check_winpe', autospec=True)
-  def test_check_id_file(
-      self, mock_check_winpe, mock_get_value, mock_check_file):
+  def test_check_id_file(self, mock_check_winpe, mock_get_value,
+                         mock_check_file):
     mock_get_value.return_value = None
     mock_check_winpe.return_value = False
     mock_check_file.return_value = TEST_ID

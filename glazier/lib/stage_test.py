@@ -24,12 +24,12 @@ from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
 from glazier.lib import stage
-
+from glazier.lib import test_utils
 
 FLAGS = flags.FLAGS
 
 
-class StageTest(absltest.TestCase):
+class StageTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(stage.registry, 'set_value', autospec=True)
   def test_exit_stage(self, mock_set_value):
@@ -41,8 +41,10 @@ class StageTest(absltest.TestCase):
 
   @mock.patch.object(stage.registry, 'set_value', autospec=True)
   def test_exit_stage_invalid(self, mock_set_value):
-    mock_set_value.side_effect = stage.registry.Error
-    self.assertRaises(stage.ExitError, stage.exit_stage, 3)
+    mock_set_value.side_effect = stage.registry.RegistryWriteError(
+        'some_name', 'some_value', 'some_path')
+    with self.assert_raises_with_validation(stage.ExitError):
+      stage.exit_stage(3)
 
   @mock.patch.object(stage.registry, 'get_value', autospec=True)
   @mock.patch.object(stage, '_check_expiration', autospec=True)
@@ -53,37 +55,30 @@ class StageTest(absltest.TestCase):
     mock_check_expiration.assert_called_with(5)
 
   @mock.patch.object(stage.registry, 'get_value', autospec=True)
-  def test_get_active_stage_none(self, mock_get_value):
-    mock_get_value.side_effect = stage.registry.Error
-    self.assertIsNone(stage.get_active_stage())
-
-  @mock.patch.object(stage.registry, 'get_value', autospec=True)
   @mock.patch.object(stage, '_load_time', autospec=True)
   def test_get_active_time_with_end(self, mock_load_time, mock_get_value):
     mock_get_value.return_value = None
-    mock_load_time.side_effect = (
-        datetime.datetime(2019, 11, 6, 17, 38, 52, 0),
-        datetime.datetime(2019, 11, 6, 19, 18, 52, 0))
+    mock_load_time.side_effect = (datetime.datetime(2019, 11, 6, 17, 38, 52, 0),
+                                  datetime.datetime(2019, 11, 6, 19, 18, 52, 0))
     self.assertEqual(
         stage.get_active_time(3), datetime.timedelta(hours=1, minutes=40))
-    mock_load_time.assert_has_calls([
-        mock.call(3, 'Start'),
-        mock.call(3, 'End')
-    ])
+    mock_load_time.assert_has_calls(
+        [mock.call(3, 'Start'), mock.call(3, 'End')])
 
   @mock.patch.object(stage.registry, 'get_value', autospec=True)
   @mock.patch.object(stage, '_load_time', autospec=True)
   def test_get_active_time_no_start(self, mock_load_time, mock_get_value):
     mock_get_value.return_value = None
-    mock_load_time.side_effect = (
-        None, datetime.datetime(2019, 11, 6, 19, 18, 52, 0))
-    self.assertRaises(stage.InvalidStartTimeError, stage.get_active_time, 4)
+    mock_load_time.side_effect = (None,
+                                  datetime.datetime(2019, 11, 6, 19, 18, 52, 0))
+    with self.assert_raises_with_validation(stage.InvalidStartTimeError):
+      stage.get_active_time(4)
 
   @mock.patch.object(stage.registry, 'get_value', autospec=True)
   @mock.patch.object(stage, '_utc_now', autospec=True)
   @mock.patch.object(stage, '_load_time', autospec=True)
-  def test_get_active_time_no_end(
-      self, mock_load_time, mock_utc_now, mock_get_value):
+  def test_get_active_time_no_end(self, mock_load_time, mock_utc_now,
+                                  mock_get_value):
 
     start = datetime.datetime(2019, 10, 20, 19, 18, 12, 0)
     now = datetime.datetime(2019, 11, 6, 10, 45, 12, 0)
@@ -98,19 +93,19 @@ class StageTest(absltest.TestCase):
   @mock.patch.object(stage, 'get_active_stage', autospec=True)
   def test_get_status_complete(self, mock_get_active_stage, mock_get_start_end):
     mock_get_active_stage.return_value = 5
-    mock_get_start_end.return_value = (
-        datetime.datetime.now(), datetime.datetime.now())
+    mock_get_start_end.return_value = (datetime.datetime.now(),
+                                       datetime.datetime.now())
     self.assertEqual(stage.get_status(), 'Complete')
 
   @mock.patch.object(stage, '_get_start_end', autospec=True)
   @mock.patch.object(stage, '_check_expiration', autospec=True)
   @mock.patch.object(stage, 'get_active_stage', autospec=True)
-  def test_get_status_expired(
-      self, mock_get_active_stage, mock_check_expiration, mock_get_start_end):
+  def test_get_status_expired(self, mock_get_active_stage,
+                              mock_check_expiration, mock_get_start_end):
 
     mock_get_active_stage.return_value = 5
     mock_get_start_end.return_value = (datetime.datetime.now(), None)
-    mock_check_expiration.side_effect = stage.Error('Expired')
+    mock_check_expiration.side_effect = stage.ExpirationError('stage_id')
     self.assertEqual(stage.get_status(), 'Expired')
     self.assertTrue(mock_check_expiration.called)
 
@@ -124,8 +119,8 @@ class StageTest(absltest.TestCase):
   @mock.patch.object(stage, '_get_start_end', autospec=True)
   @mock.patch.object(stage, '_check_expiration', autospec=True)
   @mock.patch.object(stage, 'get_active_stage', autospec=True)
-  def test_get_status_running(
-      self, mock_get_active_stage, mock_check_expiration, mock_get_start_end):
+  def test_get_status_running(self, mock_get_active_stage,
+                              mock_check_expiration, mock_get_start_end):
 
     mock_get_active_stage.return_value = 5
     mock_get_start_end.return_value = (datetime.datetime.now(), None)
@@ -147,11 +142,6 @@ class StageTest(absltest.TestCase):
   @mock.patch.object(stage.registry, 'get_value', autospec=True)
   def test_load_time_parse_err(self, mock_get_value):
     mock_get_value.return_value = '12345'
-    self.assertIsNone(stage._load_time(1, 'End'))
-
-  @mock.patch.object(stage.registry, 'get_value', autospec=True)
-  def test_load_time_reg_err(self, mock_get_value):
-    mock_get_value.side_effect = stage.registry.Error
     self.assertIsNone(stage._load_time(1, 'End'))
 
   @mock.patch.object(stage.registry, 'set_value', autospec=True)
@@ -177,11 +167,14 @@ class StageTest(absltest.TestCase):
   @mock.patch.object(stage.registry, 'set_value', autospec=True)
   def test_set_stage_error(self, mock_set_value, mock_get_active_stage):
     mock_get_active_stage.return_value = None
-    mock_set_value.side_effect = stage.registry.Error
-    self.assertRaises(stage.UpdateError, stage.set_stage, 3)
+    mock_set_value.side_effect = stage.registry.RegistryWriteError(
+        'some_name', 'some_value', 'some_path')
+    with self.assert_raises_with_validation(stage.UpdateError):
+      stage.set_stage(3)
 
   def test_exit_stage_invalid_type(self):
-    self.assertRaises(stage.InvalidStageIdError, stage.set_stage, 'ABC')
+    with self.assert_raises_with_validation(stage.InvalidStageIdError):
+      stage.set_stage('ABC')
 
   @flagsaver.flagsaver
   @mock.patch.object(stage, 'get_active_time', autospec=True)
@@ -192,7 +185,8 @@ class StageTest(absltest.TestCase):
     FLAGS.stage_timeout_minutes = 120
     stage._check_expiration(3)
     FLAGS.stage_timeout_minutes = 60
-    self.assertRaises(stage.ExpirationError, stage._check_expiration, 3)
+    with self.assert_raises_with_validation(stage.ExpirationError):
+      stage._check_expiration(3)
     mock_get_active_stage.assert_called_with(stage_id=3)
 
 

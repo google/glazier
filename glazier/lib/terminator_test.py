@@ -53,7 +53,7 @@ class LogAndExitTest(test_utils.GlazierTestCase):
     exception_3 = ZeroDivisionError('ZeroDivisionError Three')
     raised = test_utils.raise_from(exception_1, exception_2, exception_3)
 
-    with self.assertRaises(SystemExit):
+    with self.assert_raises_with_validation(SystemExit):
       terminator.log_and_exit(terminator.buildinfo.BuildInfo(), raised)
 
     # Extract the logging.critical() message and split it up by newlines.
@@ -79,7 +79,7 @@ class LogAndExitTest(test_utils.GlazierTestCase):
     exception = test_utils.raise_from(EXCEPTION_1, EXCEPTION_2, GLAZIER_ERROR_1,
                                       GLAZIER_ERROR_2)
 
-    with self.assertRaises(SystemExit):
+    with self.assert_raises_with_validation(SystemExit):
       terminator.log_and_exit(terminator.buildinfo.BuildInfo(), exception)
 
     # Extract the logging.critical() message and split it up by newlines.
@@ -108,7 +108,7 @@ class LogAndExitTest(test_utils.GlazierTestCase):
     exception = test_utils.raise_from(GLAZIER_ERROR_1, GLAZIER_ERROR_2,
                                       GLAZIER_ERROR_3, GLAZIER_ERROR_4)
 
-    with self.assertRaises(SystemExit):
+    with self.assert_raises_with_validation(SystemExit):
       terminator.log_and_exit(terminator.buildinfo.BuildInfo(), exception)
 
     # Extract the logging.critical() message and split it up by newlines.

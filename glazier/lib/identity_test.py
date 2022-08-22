@@ -18,6 +18,7 @@ from unittest import mock
 from absl.testing import absltest
 
 from glazier.lib import identity
+from glazier.lib import test_utils
 
 from glazier.lib import constants
 
@@ -25,7 +26,7 @@ USERNAME = 'bert'
 HOSTNAME = 'earnie-pc'
 
 
-class RegUtilTest(absltest.TestCase):
+class RegUtilTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(identity.registry, 'get_value', autospec=True)
   def test_get_username(self, mock_get_value):
@@ -66,8 +67,9 @@ class RegUtilTest(absltest.TestCase):
 
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
   def test_set_username_error(self, mock_set_value):
-    mock_set_value.side_effect = identity.registry.Error
-    with self.assertRaises(identity.Error):
+    mock_set_value.side_effect = identity.registry.RegistryWriteError(
+        'some_name', 'some_value', 'some_path')
+    with self.assert_raises_with_validation(identity.Error):
       identity.set_username(USERNAME)
 
   @mock.patch.object(identity.registry, 'get_value', autospec=True)
@@ -100,8 +102,9 @@ class RegUtilTest(absltest.TestCase):
 
   @mock.patch.object(identity.registry, 'set_value', autospec=True)
   def test_set_hostname_error(self, mock_set_value):
-    mock_set_value.side_effect = identity.registry.Error
-    with self.assertRaises(identity.Error):
+    mock_set_value.side_effect = identity.registry.RegistryWriteError(
+        'some_name', 'some_value', 'some_path')
+    with self.assert_raises_with_validation(identity.Error):
       identity.set_hostname()
 
 

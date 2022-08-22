@@ -18,12 +18,13 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import execute
+from glazier.lib import test_utils
 from pyfakefs import fake_filesystem
 
 from glazier.lib import errors
 
 
-class ExecuteTest(absltest.TestCase):
+class ExecuteTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(ExecuteTest, self).setUp()
@@ -74,7 +75,7 @@ class ExecuteTest(absltest.TestCase):
     popen_instance = mock_popen.return_value
     popen_instance.returncode = 1337
     popen_instance.stdout = io.BytesIO(b'foo\nbar')
-    with self.assertRaises(execute.Error):
+    with self.assert_raises_with_validation(execute.Error):
       execute.execute_binary(self.binary, return_codes=[1338])
 
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)
@@ -89,7 +90,7 @@ class ExecuteTest(absltest.TestCase):
   def test_execute_binary_windows_error(self, mock_popen):
     execute.WindowsError = Exception
     mock_popen.side_effect = execute.WindowsError
-    with self.assertRaises(execute.Error):
+    with self.assert_raises_with_validation(execute.Error):
       execute.execute_binary(self.binary)
 
   @mock.patch.object(execute.logging, 'info', autospec=True)
@@ -132,7 +133,7 @@ class ExecuteTest(absltest.TestCase):
   def test_check_output_error(self, mock_check_output, mock_info):
     mock_check_output.side_effect = execute.subprocess.CalledProcessError(
         1, self.binary, b'output')
-    with self.assertRaises(execute.errors.GlazierError) as cm:
+    with self.assert_raises_with_validation(execute.errors.GlazierError) as cm:
       execute.check_output(self.binary, ['arg1', 'arg2'])
     self.assertEqual(cm.exception.error_code, errors.ErrorCode.EXECUTION_RETURN)
     self.assertIsNotNone(cm.exception)
@@ -143,7 +144,7 @@ class ExecuteTest(absltest.TestCase):
   def test_check_output_timeout(self, mock_check_output, mock_info):
     mock_check_output.side_effect = execute.subprocess.TimeoutExpired(
         self.binary, 300, b'output')
-    with self.assertRaises(execute.errors.GlazierError) as cm:
+    with self.assert_raises_with_validation(execute.errors.GlazierError) as cm:
       execute.check_output(self.binary, ['arg1', 'arg2'])
     self.assertEqual(
         cm.exception.error_code, errors.ErrorCode.EXECUTION_TIMEOUT)
