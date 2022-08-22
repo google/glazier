@@ -17,18 +17,19 @@ from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
+from glazier.lib import test_utils
 from glazier.lib.actions import drivers
 from glazier.lib.buildinfo import BuildInfo
 
 
-class DriversTest(parameterized.TestCase):
+class DriversTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(BuildInfo, 'ReleasePath')
   @mock.patch('glazier.lib.download.Download.VerifyShaHash', autospec=True)
   @mock.patch('glazier.lib.download.Download.DownloadFile', autospec=True)
   @mock.patch.object(drivers.execute, 'execute_binary', autospec=True)
   @mock.patch.object(drivers.file_util, 'CreateDirectories', autospec=True)
-  def test_driver_wim(self, mock_createdirectories, mock_execute_binaries,
+  def test_driver_wim(self, mock_createdirectories, mock_execute_binary,
                       mock_downloadfile, mock_verifyshahash, mock_releasepath):
 
     bi = BuildInfo()
@@ -56,7 +57,7 @@ class DriversTest(parameterized.TestCase):
         show_progress=True)
     mock_verifyshahash.assert_called_with(mock.ANY, local, sha_256)
     cache = drivers.constants.SYS_CACHE
-    mock_execute_binaries.assert_called_with(
+    mock_execute_binary.assert_called_with(
         f'{drivers.constants.WINPE_SYSTEM32}/dism.exe',
         ['/Unmount-Image', f'/MountDir:{cache}\\Drivers\\', '/Discard'],
         shell=True)
@@ -65,23 +66,25 @@ class DriversTest(parameterized.TestCase):
     # Invalid format
     conf['data']['driver'][0][1] = 'C:\\W54x-Win10-Storage.zip'
     dw = drivers.DriverWIM(conf['data']['driver'], bi)
-    with self.assertRaises(drivers.ActionError):
+    with self.assert_raises_with_validation(drivers.ActionError):
       dw.Run()
     conf['data']['driver'][0][1] = 'C:\\W54x-Win10-Storage.wim'
 
     # Mount Fail
-    mock_execute_binaries.side_effect = drivers.execute.Error
-    with self.assertRaises(drivers.ActionError):
+    mock_execute_binary.side_effect = drivers.execute.ExecError('some_command')
+    with self.assert_raises_with_validation(drivers.ActionError):
       dw.Run()
 
     # Dism Fail
-    mock_execute_binaries.side_effect = iter([0, drivers.execute.Error])
-    with self.assertRaises(drivers.ActionError):
+    mock_execute_binary.side_effect = iter(
+        [0, drivers.execute.ExecError('some_command')])
+    with self.assert_raises_with_validation(drivers.ActionError):
       dw.Run()
 
     # Unmount Fail
-    mock_execute_binaries.side_effect = iter([0, 0, drivers.execute.Error])
-    with self.assertRaises(drivers.ActionError):
+    mock_execute_binary.side_effect = iter(
+        [0, 0, drivers.execute.ExecError('some_command')])
+    with self.assert_raises_with_validation(drivers.ActionError):
       dw.Run()
 
   @parameterized.named_parameters(
@@ -97,7 +100,7 @@ class DriversTest(parameterized.TestCase):
   )
   def test_driver_wim_validation_error(self, action_args, build_info):
     g = drivers.DriverWIM(action_args, build_info)
-    with self.assertRaises(drivers.ValidationError):
+    with self.assert_raises_with_validation(drivers.ValidationError):
       g.Validate()
 
   @parameterized.named_parameters(

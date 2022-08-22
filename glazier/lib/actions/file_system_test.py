@@ -18,12 +18,13 @@ from unittest import mock
 from absl.testing import absltest
 from absl.testing import parameterized
 from glazier.lib import file_util
+from glazier.lib import test_utils
 from glazier.lib.actions import file_system
 
 from pyfakefs.fake_filesystem_unittest import Patcher
 
 
-class CopyDirTest(absltest.TestCase):
+class CopyDirTest(test_utils.GlazierTestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_success(self, mock_buildinfo):
@@ -54,19 +55,19 @@ class CopyDirTest(absltest.TestCase):
   def test_exception(self, mock_buildinfo):
     with Patcher() as patcher:
       patcher.fs.create_dir(r'/stage')
-      with self.assertRaises(file_system.ActionError):
+      with self.assert_raises_with_validation(file_system.ActionError):
         file_system.CopyDir([r'/stage', r'/stage'], mock_buildinfo).Run()
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_missing_args(self, mock_buildinfo):
     cd = file_system.CopyDir([r'/stage'], mock_buildinfo)
-    with self.assertRaises(file_system.ValidationError):
+    with self.assert_raises_with_validation(file_system.ValidationError):
       cd.Validate()
-    with self.assertRaises(file_system.ActionError):
+    with self.assert_raises_with_validation(file_system.ActionError):
       cd.Run()
 
 
-class MultiCopyDirTest(parameterized.TestCase):
+class MultiCopyDirTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(file_system.shutil, 'copytree', autospec=True)
   @mock.patch.object(file_system.shutil, 'rmtree', autospec=True)
@@ -109,7 +110,7 @@ class MultiCopyDirTest(parameterized.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_invalid_multi_args(self, mock_build_info):
-    with self.assertRaises(file_system.ActionError):
+    with self.assert_raises_with_validation(file_system.ActionError):
       copydir_args = [r'/src/dir/one/']
       file_system.MultiCopyDir([copydir_args], mock_build_info).Run()
 
@@ -135,12 +136,12 @@ class MultiCopyDirTest(parameterized.TestCase):
   )
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_validate_invalid_args(self, copydir_args, mock_build_info):
-    with self.assertRaises(file_system.ValidationError):
+    with self.assert_raises_with_validation(file_system.ValidationError):
       multicopydir_args = [copydir_args]
       file_system.MultiCopyDir(multicopydir_args, mock_build_info).Validate()
 
 
-class MultiCopyFileTest(parameterized.TestCase):
+class MultiCopyFileTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(file_util, 'Copy', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -155,7 +156,7 @@ class MultiCopyFileTest(parameterized.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_invalid_multi_args(self, mock_buildinfo):
-    with self.assertRaises(file_system.ActionError):
+    with self.assert_raises_with_validation(file_system.ActionError):
       file_system.MultiCopyFile([r'/file1.txt'], mock_buildinfo).Run()
 
   @parameterized.named_parameters(
@@ -167,7 +168,7 @@ class MultiCopyFileTest(parameterized.TestCase):
   )
   def test_validation_error(self, action_args, build_info):
     cf = file_system.MultiCopyFile(action_args, build_info)
-    with self.assertRaises(file_system.ValidationError):
+    with self.assert_raises_with_validation(file_system.ValidationError):
       cf.Validate()
 
   def test_validation_success(self):
@@ -176,7 +177,7 @@ class MultiCopyFileTest(parameterized.TestCase):
     cf.Validate()
 
 
-class CopyFileTest(absltest.TestCase):
+class CopyFileTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(file_util, 'Copy', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -184,16 +185,16 @@ class CopyFileTest(absltest.TestCase):
     src1 = r'/missing.txt'
     dst1 = r'/windows/glazier/glazier.log'
     mock_copy.side_effect = file_util.Error('error')
-    with self.assertRaises(file_system.ActionError):
+    with self.assert_raises_with_validation(file_system.ActionError):
       file_system.CopyFile([src1, dst1], mock_buildinfo).Run()
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_invalid_args(self, mock_buildinfo):
-    with self.assertRaises(file_system.ActionError):
+    with self.assert_raises_with_validation(file_system.ActionError):
       file_system.CopyFile([r'/file1.txt'], mock_buildinfo).Run()
 
 
-class MkDirTest(parameterized.TestCase):
+class MkDirTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(file_util, 'CreateDirectories', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -202,10 +203,10 @@ class MkDirTest(parameterized.TestCase):
     mock_createdirectories.assert_called_with('/stage/subdir1/subdir2')
     # bad path
     mock_createdirectories.side_effect = file_util.Error('error')
-    with self.assertRaises(file_system.ActionError):
+    with self.assert_raises_with_validation(file_system.ActionError):
       file_system.MkDir([r'/stage/file1.txt'], mock_buildinfo).Run()
     # bad args
-    with self.assertRaises(file_system.ActionError):
+    with self.assert_raises_with_validation(file_system.ActionError):
       file_system.MkDir([], mock_buildinfo).Run()
 
   @parameterized.named_parameters(
@@ -214,14 +215,14 @@ class MkDirTest(parameterized.TestCase):
       ('_invalid_type_2', [1], None),
   )
   def test_validation_error(self, action_args, build_info):
-    with self.assertRaises(file_system.ValidationError):
+    with self.assert_raises_with_validation(file_system.ValidationError):
       file_system.MkDir(action_args, build_info).Validate()
 
   def test_validation_success(self):
     file_system.MkDir(['/tmp/some/dir'], None).Validate()
 
 
-class RmDirTest(parameterized.TestCase):
+class RmDirTest(test_utils.GlazierTestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_success(self, mock_buildinfo):
@@ -234,7 +235,7 @@ class RmDirTest(parameterized.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_exception(self, mock_buildinfo):
-    with self.assertRaises(file_system.ActionError):
+    with self.assert_raises_with_validation(file_system.ActionError):
       file_system.RmDir(['/missing'], mock_buildinfo).Run()
 
   @parameterized.named_parameters(
@@ -242,7 +243,7 @@ class RmDirTest(parameterized.TestCase):
       ('_invalid_arg_type', [12345], None),
   )
   def test_validation_error(self, action_args, build_info):
-    with self.assertRaises(file_system.ValidationError):
+    with self.assert_raises_with_validation(file_system.ValidationError):
       file_system.RmDir(action_args, build_info).Validate()
 
   @parameterized.named_parameters(
@@ -253,7 +254,7 @@ class RmDirTest(parameterized.TestCase):
     file_system.RmDir(action_args, build_info).Validate()
 
 
-class SetupCacheTest(absltest.TestCase):
+class SetupCacheTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(file_util, 'CreateDirectories', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -264,7 +265,7 @@ class SetupCacheTest(absltest.TestCase):
 
   def test_validate(self):
     sc = file_system.SetupCache('String', None)
-    with self.assertRaises(file_system.ValidationError):
+    with self.assert_raises_with_validation(file_system.ValidationError):
       sc.Validate()
     sc = file_system.SetupCache([], None)
     sc.Validate()

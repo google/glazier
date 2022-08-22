@@ -17,6 +17,7 @@ from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
+from glazier.lib import test_utils
 from glazier.lib.actions import googet
 
 PKG = 'test_package_v1'
@@ -30,7 +31,7 @@ SLEEP = 1
 DEFAULT_SLEEP = 30
 
 
-class GooGetTest(parameterized.TestCase):
+class GooGetTest(test_utils.GlazierTestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(googet.googet, 'GooGetInstall', autospec=True)
@@ -131,8 +132,8 @@ class GooGetTest(parameterized.TestCase):
   @mock.patch.object(googet.googet, 'GooGetInstall', autospec=True)
   def test_install_error(self, action_args, mock_install, mock_build_info):
     gi = googet.GooGetInstall(action_args, mock_build_info)
-    mock_install.side_effect = googet.googet.Error
-    with self.assertRaises(googet.ActionError):
+    mock_install.side_effect = googet.googet.GooGetMissingPackageNameError
+    with self.assert_raises_with_validation(googet.ActionError):
       gi.Run()
 
   @parameterized.named_parameters(
@@ -152,7 +153,7 @@ class GooGetTest(parameterized.TestCase):
   )
   def test_validation_error(self, action_args, build_info):
     g = googet.GooGetInstall(action_args, build_info)
-    with self.assertRaises(googet.ValidationError):
+    with self.assert_raises_with_validation(googet.ValidationError):
       g.Validate()
 
 

@@ -18,6 +18,7 @@ from unittest import mock
 from absl.testing import absltest
 from absl.testing import parameterized
 from glazier.lib import constants
+from glazier.lib import test_utils
 from glazier.lib.actions import registry
 
 ROOT = 'HKLM'
@@ -29,7 +30,7 @@ USE_64 = constants.USE_REG_64
 ARGS = [ROOT, PATH, NAME, VALUE, TYPE]
 
 
-class RegistryTest(parameterized.TestCase):
+class RegistryTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(registry.registry, 'set_value', autospec=True)
   def test_add_success(self, mock_set_value):
@@ -38,9 +39,10 @@ class RegistryTest(parameterized.TestCase):
 
   @mock.patch.object(registry.registry, 'set_value', autospec=True)
   def test_add_error(self, mock_set_value):
-    mock_set_value.side_effect = registry.registry.Error
+    mock_set_value.side_effect = registry.registry.RegistryWriteError(
+        'some_name', 'some_value', 'some_path')
     ra = registry.RegAdd(ARGS, None)
-    with self.assertRaises(registry.ActionError):
+    with self.assert_raises_with_validation(registry.ActionError):
       ra.Run()
 
   @mock.patch.object(registry.registry, 'set_value', autospec=True)
@@ -56,7 +58,7 @@ class RegistryTest(parameterized.TestCase):
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_multi_add_error(self, action_args, mock_buildinfo):
     ra = registry.RegAdd(action_args, mock_buildinfo)
-    with self.assertRaises(registry.ActionError):
+    with self.assert_raises_with_validation(registry.ActionError):
       ra.Run()
 
   @mock.patch.object(registry.registry, 'remove_value', autospec=True)
@@ -66,9 +68,10 @@ class RegistryTest(parameterized.TestCase):
 
   @mock.patch.object(registry.registry, 'remove_value', autospec=True)
   def test_del_error(self, mock_remove_value):
-    mock_remove_value.side_effect = registry.registry.Error
+    mock_remove_value.side_effect = registry.registry.RegistryDeleteError(
+        'some_name', 'some_path')
     rd = registry.RegDel([ROOT, PATH, NAME], None)
-    with self.assertRaises(registry.ActionError):
+    with self.assert_raises_with_validation(registry.ActionError):
       rd.Run()
 
   @mock.patch.object(registry.registry, 'remove_value', autospec=True)
@@ -82,7 +85,7 @@ class RegistryTest(parameterized.TestCase):
   )
   def test_multi_del_error(self, action_args):
     rd = registry.MultiRegDel(action_args, None)
-    with self.assertRaises(registry.ActionError):
+    with self.assert_raises_with_validation(registry.ActionError):
       rd.Run()
 
   @parameterized.named_parameters(
@@ -95,7 +98,7 @@ class RegistryTest(parameterized.TestCase):
   )
   def test_add_validation_error(self, action_args):
     r = registry.RegAdd(action_args, None)
-    with self.assertRaises(registry.ValidationError):
+    with self.assert_raises_with_validation(registry.ValidationError):
       r.Validate()
 
   def test_add_validation_success(self):
@@ -113,7 +116,7 @@ class RegistryTest(parameterized.TestCase):
   )
   def test_del_validation_error(self, action_args):
     r = registry.RegDel(action_args, None)
-    with self.assertRaises(registry.ValidationError):
+    with self.assert_raises_with_validation(registry.ValidationError):
       r.Validate()
 
   def test_del_validation_success(self):
