@@ -18,7 +18,7 @@ import sys
 from glazier.lib import constants
 from glazier.lib import events
 from glazier.lib import power
-from glazier.lib.config import base
+from glazier.lib.config import base as config_base
 from glazier.lib.config import files
 
 from glazier.lib import download
@@ -54,7 +54,7 @@ class CheckUrlError(Error):
         message=f'Failed to verify url [{url}]')
 
 
-class ConfigRunner(base.ConfigBase):
+class ConfigRunner(config_base.ConfigBase):
   """Executes all steps from the installation task list."""
 
   def Start(self, task_list):
@@ -103,7 +103,7 @@ class ConfigRunner(base.ConfigBase):
         else:
           try:
             self._ProcessAction(element, entry[element])
-          except base.ConfigError as e:
+          except config_base.Error as e:
             raise ConfigRunnerError() from e
           except events.RestartEvent as e:
             if e.task_list_path:

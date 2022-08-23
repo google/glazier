@@ -271,6 +271,9 @@ class ErrorCode(enum.IntEnum):
   # Error while validating a Glazier command.
   VALIDATION_ERROR = 7081
 
+  # Error while processing a config file.
+  CONFIG_ERROR = 7082
+
 
 class GlazierError(Exception):
   """Base error for all other Glazier errors."""

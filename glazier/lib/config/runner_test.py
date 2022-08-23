@@ -20,6 +20,7 @@ from absl.testing import absltest
 from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib import events
+from glazier.lib.config import base
 from glazier.lib.config import runner
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_filesystem_shutil
@@ -40,7 +41,7 @@ class ConfigRunnerTest(absltest.TestCase):
     self.cr._task_list_path = '/tmp/task_list.yaml'
 
   @mock.patch.object(runner.files, 'Remove', autospec=True)
-  @mock.patch.object(runner.base.actions, 'pull', autospec=True)
+  @mock.patch.object(base.actions, 'pull', autospec=True)
   @mock.patch.object(runner.files, 'Dump', autospec=True)
   def test_iteration(self, mock_dump, mock_pull, mock_remove):
     conf = [{
@@ -162,9 +163,9 @@ class ConfigRunnerTest(absltest.TestCase):
     mock_shutdown.assert_called_with(10, 'Some other reason')
     self.assertTrue(mock_poptask.called)
 
-  @mock.patch.object(runner.base.actions, 'SetTimer', autospec=True)
+  @mock.patch.object(base.actions, 'SetTimer', autospec=True)
   def test_process_with_action_error(self, mock_settimer):
-    mock_settimer.side_effect = runner.base.actions.ActionError
+    mock_settimer.side_effect = base.actions.ActionError
     with self.assertRaises(runner.ConfigRunnerError):
       self.cr._ProcessTasks(
           [{
@@ -194,7 +195,7 @@ class ConfigRunnerTest(absltest.TestCase):
     with self.assertRaises(runner.ConfigRunnerError):
       self.cr.Start('/tmp/path/missing.yaml')
 
-  @mock.patch.object(runner.base.actions, 'SetTimer', autospec=True)
+  @mock.patch.object(base.actions, 'SetTimer', autospec=True)
   @mock.patch.object(runner.files, 'Read', autospec=True)
   @mock.patch.object(runner.files, 'Remove', autospec=True)
   @mock.patch.object(runner.files, 'Dump', autospec=True)

@@ -22,8 +22,16 @@ from glazier.lib import actions
 from glazier.lib import errors
 
 
-class ConfigError(errors.GlazierError):
+class Error(errors.GlazierError):
   pass
+
+
+class ConfigError(Error):
+
+  def __init__(self, message: str):
+    super().__init__(
+        error_code=errors.ErrorCode.CONFIG_ERROR,
+        message=message)
 
 
 class ConfigBase(object):
@@ -58,7 +66,6 @@ class ConfigBase(object):
       ConfigError: The action is either undefined, or failed to execute.
     """
     try:
-      a = self._GetAction(action, params)
-      a.Run()
+      self._GetAction(action, params).Run()
     except actions.ActionError as e:
-      raise ConfigError() from e
+      raise ConfigError('Error while running configured action') from e
