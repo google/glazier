@@ -356,6 +356,25 @@ Make a directory.
 MkDir: ['C:\Glazier_Cache']
 ```
 
+### PrintFromFile
+
+Print text from a file.
+
+#### Arguments
+
+*   Format: List
+    *   Arg1[str]: Path to the file.
+    *   Arg2[bool]: Whether or not to continue when the file doesn't exist.
+
+#### Examples
+
+```yaml
+PrintFromFile: ['c:\windows\temp\logo.txt']
+
+# Continue even when the file doesn't exist (ignore errors)
+PrintFromFile: ['c:\windows\temp\logo.txt', True]
+```
+
 ### PSCommand/MultiPSCommand
 
 Run a PowerShell command.

@@ -20,6 +20,7 @@ from __future__ import absolute_import
 
 from glazier.lib import events
 from glazier.lib.actions import abort
+from glazier.lib.actions import art
 from glazier.lib.actions import base
 from glazier.lib.actions import disk
 from glazier.lib.actions import domain
@@ -58,6 +59,7 @@ MultiCopyDir = file_system.MultiCopyDir
 MultiCopyFile = file_system.MultiCopyFile
 PSScript = powershell.PSScript
 MultiPSScript = powershell.MultiPSScript
+PrintFromFile = art.PrintFromFile
 PSCommand = powershell.PSCommand
 MultiPSCommand = powershell.MultiPSCommand
 Reboot = system.Reboot
