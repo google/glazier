@@ -700,8 +700,16 @@ Directory domain without direct line of sight to a domain controller.
         *   Default: 5
     *   Arg2[bool]: Whether to attempt an unattended domain join. (Optional)
         *   Default: True
-    *   Arg3[bool]: Whether to fall back to user authn after unsuccessful unattended attempt(s). (Optional)
+    *   Arg3[bool]: Whether to fall back to user authn after unsuccessful
+        unattended attempt(s). (Optional)
         *   Default: True
+    *   Arg4[str]: Whether to request a Splice name generator. (Optional)
+        *   Default: ''
+    *   Arg5[list[str]]: Identifiers for locating host certificates. If
+        specified, Splice CLI will try to leverage a host certificate for
+        request encryption. If not specified, the CLI will use -generate_cert.
+        Format is [cert container, cert issuer] as strings. (Optional)
+        *   Default: None
 
 #### Examples
 
@@ -714,6 +722,10 @@ SpliceDomainJoin: [3, True, False]
 
 # Don't attempt unattend with 5 retry attemps.
 SpliceDomainJoin: [5, False]
+
+# Attempt unattend, without fallback, using the Prefix name generator.
+# Encryption using a host certificate with identity container "my-container" and issuer "my-issuer".
+SpliceDomainJoin: [2, True, False, 'Prefix', ['my-container', 'my-issuer']]
 ```
 
 ### StartStage

@@ -14,6 +14,8 @@
 
 """Actions to run Splice domain join during the image."""
 
+from typing import List, Optional
+
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import ValidationError
@@ -23,6 +25,11 @@ from glazier.lib import splice
 class SpliceDomainJoin(BaseAction):
   """Join a machine to the domain via Splice."""
 
+  def _parse_cert_ident(self, cert_args: List[str]) -> splice.CertID:
+    if len(cert_args) < 2:
+      raise ActionError('invalid cert_args length')
+    return splice.CertID(container=cert_args[0], issuer=cert_args[1])
+
   def Run(self):
     self._splice = splice.Splice()
 
@@ -30,6 +37,7 @@ class SpliceDomainJoin(BaseAction):
     unattended: bool
     fallback: bool
     generator: str
+    cert_id: Optional[splice.CertID] = None
 
     if self._args:
       max_retries = int(self._args[0])
@@ -47,15 +55,20 @@ class SpliceDomainJoin(BaseAction):
       generator = str(self._args[3])
     else:
       generator = ''
+    if len(self._args) > 4:
+      cert_id = self._parse_cert_ident(self._args[4])
     try:
-      self._splice.domain_join(max_retries, unattended, fallback, generator)
+      self._splice.domain_join(max_retries, unattended, fallback, generator,
+                               cert_id)
     except splice.Error as e:
       raise ActionError() from e
 
   def Validate(self):
     self._TypeValidator(self._args, list)
-    if not 0 <= len(self._args) <= 4:
+    if not 0 <= len(self._args) <= 5:
       raise ValidationError(f'Invalid args length: {len(self._args)}')
-    expected_types = (int, bool, bool, str)
+    expected_types = (int, bool, bool, str, list)
     for arg, expected in zip(self._args, expected_types):
       self._TypeValidator(arg, expected)
+    if len(self._args) > 4:
+      self._ListOfStringsValidator(self._args[4], length=2)

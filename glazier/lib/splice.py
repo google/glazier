@@ -16,6 +16,7 @@
 import logging
 import os
 import time
+from typing import List, Optional
 
 from glazier.lib import execute
 from glazier.lib import identity
@@ -44,13 +45,19 @@ class DomainJoinError(Error):
         message=f'Failed to join domain after {attempts} attempt(s).')
 
 
+class CertID(object):
+
+  def __init__(self, container: Optional[str], issuer: Optional[str]):
+    self.container = container
+    self.issuer = issuer
+
+
 class Splice(object):
   """Define several functions to join a machine to the domain via Splice."""
 
   def __init__(self):
     self.splice_binary = fr"{os.environ['ProgramFiles']}\Splice\cli.exe"
     self.splice_server = 'splice.example.com'
-    self.cert_container = 'example_container'
     self.splice_generator = ''
 
   def _get_hostname(self) -> str:
@@ -85,41 +92,44 @@ class Splice(object):
       except identity.Error as e:
         raise IdentityError('username') from e
 
-    return fr'{constants.DOMAIN_NAME}\{username}'
+    return f'{constants.DOMAIN_NAME}\\{username}'
 
-  def _splice_unattended(self):
-    """Call splice binary in unattended mode."""
-    args = [
-        '-cert_issuer=client', f'-cert_container={self.cert_container}',
-        f'-server={self.splice_server}',
-        '-really_join=true', '-unattended=true'
-    ]
+  def _build_cli_args(self, cert_identifier: Optional[CertID]) -> List[str]:
+    """Build the args list to be passed to cli.exe."""
+    args = [f'-server={self.splice_server}', '-really_join=true']
+    if cert_identifier is not None:
+      args += [
+          f'-cert_issuer={cert_identifier.issuer}',
+          f'-cert_container={cert_identifier.container}',
+      ]
+    else:
+      args.append('-generate_cert')
+
     if self.splice_generator:
       args.append(f'-generator_id={self.splice_generator}')
     else:
       args.append(f'-name={self._get_hostname()}')
 
+    return args
+
+  def _splice_unattended(self, cert_identifier: Optional[CertID]):
+    """Call splice binary in unattended mode."""
+    args = self._build_cli_args(cert_identifier)
+    args.append('-unattended=true')
     execute.execute_binary(self.splice_binary, args, shell=True)
 
-  def _splice_user(self):
+  def _splice_user(self, cert_identifier: Optional[CertID]):
     """Call splice binary in user auth mode."""
-    args = [
-        '-cert_issuer=client', f'-cert_container={self.cert_container}',
-        f'-server={self.splice_server}', '-really_join=true',
-        f'-user_name={self._get_username()}'
-    ]
-    if self.splice_generator:
-      args.append(f'-generator_id={self.splice_generator}')
-    else:
-      args.append(f'-name={self._get_hostname()}')
-
+    args = self._build_cli_args(cert_identifier)
+    args.append(f'-user_name={self._get_username()}')
     execute.execute_binary(self.splice_binary, args, shell=True)
 
   def domain_join(self,
                   max_retries: int = 5,
                   unattended: bool = True,
                   fallback: bool = True,
-                  generator: str = ''):
+                  generator: str = '',
+                  cert_identifier: Optional[CertID] = None):
     """Execute the Splice CLI with defined flags.
 
     Args:
@@ -131,11 +141,12 @@ class Splice(object):
         credentials.
       generator: If specified call the splice binary with the specified hostname
         generator rather than using the current device identity.
+      cert_identifier: If specified, Splice will attempt to locate and use a
+        matching host certificate as part of the join request.
 
     Raises:
       Error: Domain join failed.
     """
-
     attempts = 0
     sleep = 30
 
@@ -145,11 +156,11 @@ class Splice(object):
       attempts += 1
       try:
         if unattended:
-          self._splice_unattended()
+          self._splice_unattended(cert_identifier)
         else:
-          self._splice_user()
+          self._splice_user(cert_identifier)
       except execute.Error as e:
-        if max_retries < 0 or attempts < max_retries:  # pytype: disable=unsupported-operands
+        if max_retries < 0 or attempts < max_retries:
           logging.warning(
               'Domain join attempt %d of %d failed. Retrying in %d second(s).',
               attempts, max_retries, sleep)
@@ -172,9 +183,9 @@ class Splice(object):
     while True:
       attempts += 1
       try:
-        self._splice_user()
+        self._splice_user(cert_identifier)
       except execute.Error as e:
-        if max_retries < 0 or attempts < max_retries:  # pytype: disable=unsupported-operands
+        if max_retries < 0 or attempts < max_retries:
           logging.warning(
               'Domain join attempt %d of %d failed. Retrying in %d second(s).',
               attempts, max_retries, sleep)
@@ -182,6 +193,6 @@ class Splice(object):
         else:
           raise DomainJoinError(attempts) from e
       else:
-        logging.info(
-            'Fallback domain join succeeded after %d attempt(s).', attempts)
+        logging.info('Fallback domain join succeeded after %d attempt(s).',
+                     attempts)
         return

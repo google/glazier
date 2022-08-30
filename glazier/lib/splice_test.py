@@ -16,6 +16,8 @@
 from unittest import mock
 
 from absl.testing import absltest
+from glazier.lib import execute
+from glazier.lib import identity
 from glazier.lib import splice
 from pyfakefs import fake_filesystem
 
@@ -32,45 +34,44 @@ class SpliceTest(absltest.TestCase):
     splice.open = fake_filesystem.FakeFileOpen(self.fs)
     splice.os.environ['ProgramFiles'] = r'C:\Program Files'
     self.splice = splice.Splice()
-    self.error = splice.execute.Error
+    self.error = execute.Error
 
-  @mock.patch.object(splice.identity, 'get_hostname', autospec=True)
+  @mock.patch.object(identity, 'get_hostname', autospec=True)
   def test_get_hostname_exists(self, mock_get_hostname):
     mock_get_hostname.return_value = _HOSTNAME
-    self.assertEqual(
-        self.splice._get_hostname(), splice.identity.get_hostname())
+    self.assertEqual(self.splice._get_hostname(), identity.get_hostname())
 
-  @mock.patch.object(splice.identity, 'set_hostname', autospec=True)
+  @mock.patch.object(identity, 'set_hostname', autospec=True)
   def test_get_hostname_error(self, mock_set_hostname):
-    mock_set_hostname.side_effect = splice.identity.Error
+    mock_set_hostname.side_effect = identity.Error
     with self.assertRaises(splice.Error):
       self.splice._get_hostname()
 
-  @mock.patch.object(splice.identity, 'set_username', autospec=True)
-  @mock.patch.object(splice.identity, 'get_username', autospec=True)
+  @mock.patch.object(identity, 'set_username', autospec=True)
+  @mock.patch.object(identity, 'get_username', autospec=True)
   def test_get_username_none(self, mock_get_username, mock_set_username):
     mock_get_username.return_value = None
     mock_set_username.return_value = _USERNAME
     self.assertEqual(
         self.splice._get_username(),
-        fr'{splice.constants.DOMAIN_NAME}\{splice.identity.set_username()}')
+        f'{splice.constants.DOMAIN_NAME}\\{identity.set_username()}')
     self.assertTrue(mock_get_username.called)
     self.assertTrue(mock_set_username.called)
 
-  @mock.patch.object(splice.identity, 'get_username', autospec=True)
+  @mock.patch.object(identity, 'get_username', autospec=True)
   def test_get_username_exists(self, mock_get_username):
     mock_get_username.return_value = _USERNAME
     self.assertEqual(
         self.splice._get_username(),
-        fr'{splice.constants.DOMAIN_NAME}\{splice.identity.get_username()}')
+        f'{splice.constants.DOMAIN_NAME}\\{identity.get_username()}')
 
-  @mock.patch.object(splice.identity, 'set_username', autospec=True)
+  @mock.patch.object(identity, 'set_username', autospec=True)
   def test_get_username_error(self, mock_set_username):
-    mock_set_username.side_effect = splice.identity.Error
+    mock_set_username.side_effect = identity.Error
     with self.assertRaises(splice.Error):
       self.splice._get_username()
 
-  @mock.patch.object(splice.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(execute, 'execute_binary', autospec=True)
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
   @mock.patch.object(splice.Splice, '_get_username', autospec=True)
   @mock.patch.object(splice.logging, 'info', autospec=True)
@@ -87,7 +88,7 @@ class SpliceTest(absltest.TestCase):
         'Domain join succeeded after %d attempt(s).', 1)
 
   @mock.patch.object(splice.time, 'sleep', autospec=True)
-  @mock.patch.object(splice.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(execute, 'execute_binary', autospec=True)
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
   @mock.patch.object(splice.Splice, '_get_username', autospec=True)
   @mock.patch.object(splice, 'logging', autospec=True)
@@ -107,33 +108,31 @@ class SpliceTest(absltest.TestCase):
         'Domain join succeeded after %d attempt(s).', 2)
     self.assertTrue(mock_sleep.called)
 
-  @mock.patch.object(splice.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(execute, 'execute_binary', autospec=True)
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
   @mock.patch.object(splice.Splice, '_get_username', autospec=True)
   def test_user_domain_join_execute_error(
       self, mock_get_username, mock_get_hostname, mock_execute_binary):
-
     self.fs.CreateFile(self.splice.splice_binary)
     mock_get_hostname.return_value = 'foo'
     mock_get_username.return_value = 'bar'
     mock_execute_binary.side_effect = self.error
     with self.assertRaises(splice.Error):
-      self.splice.domain_join(unattended=False, fallback=False)
+      self.splice.domain_join(unattended=False, fallback=False, max_retries=1)
 
-  @mock.patch.object(splice.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(execute, 'execute_binary', autospec=True)
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
   @mock.patch.object(splice.Splice, '_get_username', autospec=True)
   def test_unattended_domain_join_execute_error(
       self, mock_get_username, mock_get_hostname, mock_execute_binary):
-
     self.fs.CreateFile(self.splice.splice_binary)
     mock_get_hostname.return_value = 'foo'
     mock_get_username.return_value = 'bar'
     mock_execute_binary.side_effect = self.error
     with self.assertRaises(splice.Error):
-      self.splice.domain_join(unattended=True, fallback=False)
+      self.splice.domain_join(unattended=True, fallback=False, max_retries=1)
 
-  @mock.patch.object(splice.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(execute, 'execute_binary', autospec=True)
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
   @mock.patch.object(splice.Splice, '_get_username', autospec=True)
   @mock.patch.object(splice, 'logging', autospec=True)
@@ -151,7 +150,7 @@ class SpliceTest(absltest.TestCase):
     mock_logging.info.assert_called_with(
         'Fallback domain join succeeded after %d attempt(s).', 1)
 
-  @mock.patch.object(splice.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(execute, 'execute_binary', autospec=True)
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
   @mock.patch.object(splice.logging, 'info', autospec=True)
   def test_unattended_domain_join_success(
@@ -164,25 +163,25 @@ class SpliceTest(absltest.TestCase):
     mock_info.assert_called_with(
         'Domain join succeeded after %d attempt(s).', 1)
 
-  @mock.patch.object(splice.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(execute, 'execute_binary', autospec=True)
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
   def test_domain_join_empty_generator(
       self, mock_get_hostname, mock_execute_binary):
-
     self.fs.CreateFile(self.splice.splice_binary)
     mock_get_hostname.return_value = 'foo'
     mock_execute_binary.return_value = 0
     self.splice.domain_join()
     args = [
-        '-cert_issuer=client', f'-cert_container={self.splice.cert_container}',
         f'-server={self.splice.splice_server}',
-        '-really_join=true', '-unattended=true',
-        f'-name={self.splice._get_hostname()}'
+        '-really_join=true',
+        '-generate_cert',
+        f'-name={self.splice._get_hostname()}',
+        '-unattended=true',
     ]
     mock_execute_binary.assert_called_with(
         self.splice.splice_binary, args, shell=True)
 
-  @mock.patch.object(splice.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(execute, 'execute_binary', autospec=True)
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
   def test_domain_join_generator(self, mock_get_hostname, mock_execute_binary):
     self.fs.CreateFile(self.splice.splice_binary)
@@ -190,9 +189,30 @@ class SpliceTest(absltest.TestCase):
     mock_execute_binary.return_value = 0
     self.splice.domain_join(generator='baz')
     args = [
-        '-cert_issuer=client', f'-cert_container={self.splice.cert_container}',
         f'-server={self.splice.splice_server}',
-        '-really_join=true', '-unattended=true', '-generator_id=baz'
+        '-really_join=true',
+        '-generate_cert',
+        '-generator_id=baz',
+        '-unattended=true',
+    ]
+    mock_execute_binary.assert_called_with(
+        self.splice.splice_binary, args, shell=True)
+
+  @mock.patch.object(execute, 'execute_binary', autospec=True)
+  @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
+  def test_domain_join_cert(self, mock_get_hostname, mock_execute_binary):
+    self.fs.CreateFile(self.splice.splice_binary)
+    mock_get_hostname.return_value = 'foo'
+    mock_execute_binary.return_value = 0
+    cid = splice.CertID(container='example_container', issuer='client')
+    self.splice.domain_join(generator='baz', cert_identifier=cid)
+    args = [
+        f'-server={self.splice.splice_server}',
+        '-really_join=true',
+        '-cert_issuer=client',
+        '-cert_container=example_container',
+        '-generator_id=baz',
+        '-unattended=true',
     ]
     mock_execute_binary.assert_called_with(
         self.splice.splice_binary, args, shell=True)
