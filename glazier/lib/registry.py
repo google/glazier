@@ -13,12 +13,8 @@
 # limitations under the License.
 """Wrapper library for gwinpy.registry functions."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import logging
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Dict
 
 from glazier.lib import constants
 from glazier.lib import errors
@@ -138,6 +134,38 @@ def get_values(path: str,
       if log:
         logging.debug(r'Registry keys under %s:\%s = %s.', root, path, values)
       return values
+  except registry.RegistryError as e:
+    logging.warning(str(e))
+    return None
+
+
+def get_keys_and_values(path: str,
+                        root: Optional[str] = 'HKLM',
+                        use_64bit: Optional[bool] = constants.USE_REG_64,
+                        log: Optional[bool] = True) -> Optional[Dict[str, str]]:
+  r"""Gets a dict of registry keys and values.
+
+  Args:
+    path: Registry key path to enumerate from.
+    root: Registry root (HKCR\HKCU\HKLM\HKU). Defaults to HKLM.
+    use_64bit: True for 64 bit registry. False for 32 bit. Defaults to
+      constants.USE_REG_64.
+    log: Log the registry operation to the standard logger. Defaults to True.
+
+  Returns:
+    The registry keys and values as a Dict of strings or None.
+  """
+  keys_and_values = {}
+  try:
+    reg = registry.Registry(root_key=root)
+    result = reg.GetRegKeysAndValues(key_path=path, use_64bit=use_64bit)
+    if result:
+      if log:
+        logging.debug(r'Registry keys under %s:\%s...', root, path)
+        for k, v, _ in result:
+          logging.debug('%s = %s', k, v)
+          keys_and_values[k] = v
+      return keys_and_values
   except registry.RegistryError as e:
     logging.warning(str(e))
     return None
