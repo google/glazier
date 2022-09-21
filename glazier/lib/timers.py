@@ -14,20 +14,35 @@
 
 """Store points in time to be used for metrics."""
 
-import typing
+import datetime
+import logging
 from typing import Dict, Optional
 
 from glazier.lib import gtime
+from glazier.lib import registry
 
-if typing.TYPE_CHECKING:
-  import datetime
+from glazier.lib import constants
+from glazier.lib import errors
+
+TIMERS_PATH = fr'{constants.REG_ROOT}\Timers'
+
+
+class Error(errors.GlazierError):
+  pass
+
+
+class SetTimerError(Error):
+
+  def __init__(self,
+               name: str,
+               value: str):
+    message = (f'Failed to set Glazier timer: [{name} = {value}]')
+    super().__init__(
+        error_code=errors.ErrorCode.SET_TIMER_ERROR, message=message)
 
 
 class Timers(object):
   """Store named time elements."""
-
-  def __init__(self):
-    self._time_store = {}
 
   def Get(self, name: str) -> Optional['datetime.datetime']:
     """Get the stored value of a single timer.
@@ -38,28 +53,37 @@ class Timers(object):
     Returns:
       A specific named datetime value if stored, or None
     """
-    if name in self._time_store:
-      return self._time_store[name]
-    return None
+    timer = registry.get_value(f'TIMER_{name}', path=TIMERS_PATH)
+    return datetime.datetime.strptime(timer, '%Y-%m-%d %H:%M:%S.%f%z')
 
-  def GetAll(self) -> Dict[str, 'datetime.datetime']:
+  def GetAll(self) -> Optional[Dict[str, 'datetime.datetime']]:
     """Get the dictionary of all stored timers.
 
     Returns:
       A dictionary of all stored timer names and values.
     """
-    return self._time_store
+    timers_dict = {}
+    timers = registry.get_keys_and_values(path=TIMERS_PATH)
 
-  def Set(self, name: str, at_time: Optional['datetime.datetime'] = None):
+    if not timers:
+      return None
+
+    for k, v in timers.items():
+      timers_dict[k] = datetime.datetime.strptime(v, '%Y-%m-%d %H:%M:%S.%f%z')
+    return timers_dict
+
+  def Set(self, name: str) -> None:
     """Set a timer at a specific time.
 
     Defaults to the current time in UTC.
 
     Args:
       name: Name of the timer being set.
-      at_time: A predetermined time value to store.
     """
-    if at_time:
-      self._time_store[name] = at_time
-    else:
-      self._time_store[name] = gtime.now()
+    value_name = f'TIMER_{name}'
+    value_data = str(gtime.now())
+    try:
+      registry.set_value(value_name, value_data, 'HKLM', TIMERS_PATH, log=False)
+      logging.info('Set image timer: %s (%s)', name, value_data)
+    except registry.Error as e:
+      raise SetTimerError(value_name, value_data) from e

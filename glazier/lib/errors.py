@@ -274,6 +274,9 @@ class ErrorCode(enum.IntEnum):
   # Error while processing a config file.
   CONFIG_ERROR = 7082
 
+  # Error while setting an imaging timer.
+  SET_TIMER_ERROR = 7083
+
 
 class GlazierError(Exception):
   """Base error for all other Glazier errors."""

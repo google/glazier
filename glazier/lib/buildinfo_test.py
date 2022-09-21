@@ -23,6 +23,7 @@ from absl.testing import absltest
 from absl.testing import flagsaver
 
 from glazier.lib import buildinfo
+from glazier.lib import timers
 from pyfakefs import fake_filesystem
 import yaml
 
@@ -637,14 +638,17 @@ class BuildInfoTest(absltest.TestCase):
     # default
     self.assertEqual(self.buildinfo.EncryptionLevel(), 'tpm')
 
-  def test_serialize(self):
+  @mock.patch.object(timers.Timers, 'GetAll', autospec=True)
+  def test_serialize(self, mock_get_all):
     mock_b = mock.Mock(spec_set=self.buildinfo)
     mock_b._chooser_responses = {
         'USER_choice_one': 'value1',
         'USER_choice_two': 'value2'
     }
-    mock_b._timers.GetAll.return_value = {
-        'timer_1': datetime.datetime.utcnow()
+    mock_get_all.return_value = {
+        'TIMER_timer_1':
+            datetime.datetime.now(
+                tz=datetime.timezone(datetime.timedelta(hours=6)))
     }
     mock_b.Serialize = buildinfo.BuildInfo.Serialize.__get__(mock_b)
     mock_b.Serialize('/build_info.yaml')
@@ -655,14 +659,6 @@ class BuildInfoTest(absltest.TestCase):
     self.assertIn('USER_choice_two', parsed['BUILD'])
     self.assertIn('TIMER_timer_1', parsed['BUILD'])
     self.assertEqual(parsed['BUILD']['USER_choice_two'], 'value2')
-
-  @mock.patch.object(buildinfo.timers.gtime, 'now', autospec=True)
-  def test_timers(self, mock_now):
-    now = datetime.datetime.utcnow()
-    mock_now.return_value = now
-    self.buildinfo.TimerSet('test_timer_1')
-    self.assertIsNone(self.buildinfo.TimerGet('test_timer_2'))
-    self.assertEqual(self.buildinfo.TimerGet('test_timer_1'), now)
 
   @mock.patch.object(
       buildinfo.hw_info.HWInfo, 'VideoControllers', autospec=True)

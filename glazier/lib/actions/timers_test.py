@@ -13,55 +13,58 @@
 # limitations under the License.
 """Tests for glazier.lib.actions.timers."""
 
+import datetime
 from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
-from glazier.lib.actions import timers
+from glazier.lib import buildinfo
+from glazier.lib import timers
+from glazier.lib.actions import timers as timers_action
 from glazier.lib.actions.base import ValidationError
 
 from glazier.lib import constants
 
-KEY_PATH = r'{0}\{1}'.format(constants.REG_ROOT, 'Timers')
-VALUE_NAME = 'build_yaml'
-VALUE_DATA = '2019-11-11 13:33:37.133337'
+_KEY_PATH = fr'{constants.REG_ROOT}\Timers'
+_VALUE_NAME = 'build_yaml'
+_VALUE_DATA = str(datetime.datetime.now(tz=datetime.timezone.utc))
 
 
 class TimersTest(parameterized.TestCase):
 
-  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  @mock.patch.object(timers.registry, 'set_value', autospec=True)
-  @mock.patch.object(timers.logging, 'info', autospec=True)
-  def test_set_timer(self, mock_info, mock_set_value, mock_buildinfo):
-    mock_buildinfo.TimerGet.return_value = VALUE_DATA
-    st = timers.SetTimer([VALUE_NAME], mock_buildinfo)
-    st.Run()
-    mock_buildinfo.TimerSet.assert_called_with(VALUE_NAME)
-    mock_set_value.assert_called_with(
-        'TIMER_' + VALUE_NAME, VALUE_DATA, 'HKLM', KEY_PATH, log=False)
-    mock_info.assert_called_with('Set image timer: %s (%s)', VALUE_NAME,
-                                 VALUE_DATA)
+  def setUp(self):
+    super(TimersTest, self).setUp()
+    self.timers = timers.Timers()
+    self._build_info = buildinfo.BuildInfo()
 
-  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  @mock.patch.object(timers.registry, 'set_value', autospec=True)
-  def test_set_timer_error(self, mock_set_value, mock_buildinfo):
-    mock_buildinfo.TimerGet.return_value = VALUE_DATA
-    mock_set_value.side_effect = timers.registry.Error
-    st = timers.SetTimer([VALUE_NAME], mock_buildinfo)
-    with self.assertRaises(timers.ActionError):
+  @mock.patch.object(timers.Timers, 'Set', autospec=True)
+  @mock.patch.object(timers.Timers, 'Get', autospec=True)
+  def test_set_timer(self, mock_timers_get, mock_timers_set):
+    mock_timers_get.return_value = _VALUE_DATA
+    st = timers_action.SetTimer([_VALUE_NAME], self._build_info)
+    st.Run()
+    mock_timers_set.assert_called_with(mock.ANY, _VALUE_NAME)
+
+  @mock.patch.object(timers.Timers, 'Set', autospec=True)
+  @mock.patch.object(timers.Timers, 'Get', autospec=True)
+  def test_set_timer_error(self, mock_timers_get, mock_timers_set):
+    mock_timers_get.return_value = _VALUE_DATA
+    mock_timers_set.side_effect = timers.Error
+    st = timers_action.SetTimer([_VALUE_NAME], self._build_info)
+    with self.assertRaises(timers_action.ActionError):
       st.Run()
 
   @parameterized.named_parameters(
-      ('_invalid_arg_type_1', VALUE_NAME),
+      ('_invalid_arg_type_1', _VALUE_NAME),
       ('_invalid_args_length', [1, 2, 3]),
       ('_invalid_arg_type_2', [1]),
   )
   def test_set_timer_validation_error(self, action_args):
     with self.assertRaises(ValidationError):
-      timers.SetTimer(action_args, None).Validate()
+      timers_action.SetTimer(action_args, None).Validate()
 
   def test_set_timer_validation_success(self):
-    timers.SetTimer([VALUE_NAME], None).Validate()
+    timers_action.SetTimer([_VALUE_NAME], None).Validate()
 
 
 if __name__ == '__main__':

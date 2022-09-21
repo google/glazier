@@ -107,7 +107,6 @@ class BuildInfo(object):
     self._hw_info = None
     self._net_info = None
     self._release_info = None
-    self._timers = timers.Timers()
     self._tpm_info = None
     self._version_info = None
 
@@ -589,15 +588,20 @@ class BuildInfo(object):
             'is_virtual': str(self.IsVirtual()),
         }
     }
+
     # chooser data
     user_data = self._chooser_responses
     if user_data:
       for key in user_data:
         build_data['BUILD'][key] = str(user_data[key])
+
     # timers
-    t = self._timers.GetAll()
-    for key in t:
-      build_data['BUILD']['TIMER_%s' % key] = str(t[key])
+    t = timers.Timers().GetAll()
+    if not t:
+      return
+    for k, v in t.items():
+      build_data['BUILD'][k] = str(v)
+
     with open(to_file, 'w') as handle:
       yaml.dump(build_data, handle)
 
@@ -708,12 +712,6 @@ class BuildInfo(object):
       return 2
     logging.debug('Model %s is not recognized as supported.', model)
     return 0
-
-  def TimerGet(self, name: str):
-    return self._timers.Get(name)
-
-  def TimerSet(self, name: str):
-    self._timers.Set(name)
 
   def _TpmInfo(self) -> tpm_info.TpmInfo:
     if not self._tpm_info:
