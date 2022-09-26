@@ -24,12 +24,14 @@ from glazier.lib.buildinfo import BuildInfo
 class UpdatesTest(parameterized.TestCase):
 
   @mock.patch.object(BuildInfo, 'ReleasePath')
+  @mock.patch.object(BuildInfo, 'Branch')
   @mock.patch('glazier.lib.download.Download.VerifyShaHash', autospec=True)
   @mock.patch('glazier.lib.download.Download.DownloadFile', autospec=True)
   @mock.patch.object(updates.execute, 'execute_binary', autospec=True)
   @mock.patch.object(updates.file_util, 'CreateDirectories', autospec=True)
   def test_update_msu(self, mock_createdirectories, mock_execute_binary,
-                      mock_downloadfile, mock_verifyshahash, mock_releasepath):
+                      mock_downloadfile, mock_verifyshahash, mock_branch,
+                      mock_releasepath):
     bi = BuildInfo()
 
     # Setup
@@ -43,6 +45,7 @@ class UpdatesTest(parameterized.TestCase):
         },
         'path': ['/autobuild']
     }
+    mock_branch.return_value = 'stable'
     mock_releasepath.return_value = '/'
 
     # Success

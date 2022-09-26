@@ -59,37 +59,28 @@ class PathsTest(absltest.TestCase):
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
-  def test_transform(self, mock_binarypath, mock_releasepath):
-    # pylint: disable=line-too-long
+  @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
+  def test_transform(self, mock_branch, mock_binarypath, mock_releasepath):
     mock_releasepath.return_value = 'https://glazier'
     mock_binarypath.return_value = 'https://glazier/bin/'
+    mock_branch.return_value = 'stable'
 
-    result = download.Transform(r'sccm.x86_64.1.00.1337\#13371337.exe',
+    # Test '#' replacement
+    result = download.Transform(r'#\#My-Script.ps1', self.buildinfo)
+    self.assertEqual(result, r'https://glazier/#My-Script.ps1')
+
+    # Test '@' replacement
+    result = download.Transform(r'@install/\@1.0.0/installer.exe',
                                 self.buildinfo)
-    self.assertEqual(result, 'sccm.x86_64.1.00.1337#13371337.exe')
+    self.assertEqual(result, 'https://glazier/bin/install/@1.0.0/installer.exe')
 
+    # Test '%' replacement
     result = download.Transform(
-        r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File #My-Script.ps1 -Verbose',
+        r'@path/to/binary/%/\%googlechromestandaloneenterprise64.msi',
         self.buildinfo)
     self.assertEqual(
         result,
-        r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File https://glazier/My-Script.ps1 -Verbose'
-    )
-
-    result = download.Transform(
-        r'@Corp/install/1.0.0/installer.exe sccm.x86_64.1.00.1337\@13371337.exe',
-        self.buildinfo)
-    self.assertEqual(
-        result,
-        'https://glazier/bin/Corp/install/1.0.0/installer.exe sccm.x86_64.1.00.1337@13371337.exe'
-    )
-
-    result = download.Transform(
-        r'C:\Windows\System32\msiexec.exe /i @Google/Chrome/1.3.3.7/googlechromestandaloneenterprise64.msi /qb /norestart',
-        self.buildinfo)
-    self.assertEqual(
-        result,
-        r'C:\Windows\System32\msiexec.exe /i https://glazier/bin/Google/Chrome/1.3.3.7/googlechromestandaloneenterprise64.msi /qb /norestart'
+        r'https://glazier/bin/path/to/binary/stable/%googlechromestandaloneenterprise64.msi'
     )
 
     result = download.Transform('nothing _ here', self.buildinfo)

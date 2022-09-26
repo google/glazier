@@ -24,12 +24,14 @@ from glazier.lib.buildinfo import BuildInfo
 class DriversTest(parameterized.TestCase):
 
   @mock.patch.object(BuildInfo, 'ReleasePath')
+  @mock.patch.object(BuildInfo, 'Branch')
   @mock.patch('glazier.lib.download.Download.VerifyShaHash', autospec=True)
   @mock.patch('glazier.lib.download.Download.DownloadFile', autospec=True)
   @mock.patch.object(drivers.execute, 'execute_binary', autospec=True)
   @mock.patch.object(drivers.file_util, 'CreateDirectories', autospec=True)
   def test_driver_wim(self, mock_createdirectories, mock_execute_binaries,
-                      mock_downloadfile, mock_verifyshahash, mock_releasepath):
+                      mock_downloadfile, mock_verifyshahash, mock_branch,
+                      mock_releasepath):
 
     bi = BuildInfo()
 
@@ -44,6 +46,7 @@ class DriversTest(parameterized.TestCase):
         },
         'path': ['/autobuild']
     }
+    mock_branch.return_value = 'stable'
     mock_releasepath.return_value = '/'
 
     # Success

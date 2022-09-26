@@ -125,9 +125,11 @@ class FilesTest(parameterized.TestCase):
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
-  def test_get_from_bin(
-      self, mock_downloadfile, mock_binarypath, mock_releasepath):
+  def test_get_from_bin(self, mock_downloadfile, mock_branch, mock_binarypath,
+                        mock_releasepath):
+    mock_branch.return_value = 'stable'
     mock_releasepath.return_value = 'https://glazier-server.example.com/'
     mock_binarypath.return_value = 'https://glazier-server.example.com/bin/'
     test_sha256 = (
@@ -145,9 +147,11 @@ class FilesTest(parameterized.TestCase):
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
-  def test_get_from_conf(
-      self, mock_downloadfile, mock_binarypath, mock_releasepath):
+  def test_get_from_conf(self, mock_downloadfile, mock_branch, mock_binarypath,
+                         mock_releasepath):
+    mock_branch.return_value = 'stable'
     mock_releasepath.return_value = 'https://glazier-server.example.com/'
     mock_binarypath.return_value = 'https://glazier-server.example.com/bin/'
     mock_downloadfile.return_value = True
@@ -161,9 +165,11 @@ class FilesTest(parameterized.TestCase):
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
-  def test_get_from_untagged(
-      self, mock_downloadfile, mock_binarypath, mock_releasepath):
+  def test_get_from_untagged(self, mock_downloadfile, mock_branch,
+                             mock_binarypath, mock_releasepath):
+    mock_branch.return_value = 'stable'
     mock_releasepath.return_value = 'https://glazier-server.example.com/'
     mock_binarypath.return_value = 'https://glazier-server.example.com/bin/'
     mock_downloadfile.return_value = True
@@ -177,9 +183,11 @@ class FilesTest(parameterized.TestCase):
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
-  def test_get_from_local(
-      self, mock_downloadfile, mock_binarypath, mock_releasepath):
+  def test_get_from_local(self, mock_downloadfile, mock_branch, mock_binarypath,
+                          mock_releasepath):
+    mock_branch.return_value = 'stable'
     mock_releasepath.return_value = 'C:/glazier/conf'
     mock_binarypath.return_value = 'https://glazier-server.example.com/bin/'
     mock_downloadfile.return_value = True
@@ -192,8 +200,11 @@ class FilesTest(parameterized.TestCase):
         show_progress=True)
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
-  def test_get_download_err(self, mock_downloadfile, mock_releasepath):
+  def test_get_download_err(self, mock_downloadfile, mock_branch,
+                            mock_releasepath):
+    mock_branch.return_value = 'stable'
     mock_releasepath.return_value = 'https://glazier-server.example.com/'
     remote = '@glazier/1.0/autobuild.par'
     local = r'/tmp/autobuild.par'
@@ -202,8 +213,11 @@ class FilesTest(parameterized.TestCase):
       files.Get([[remote, local]], buildinfo.BuildInfo()).Run()
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
-  def test_get_mkdir_err(self, mock_downloadfile, mock_releasepath):
+  def test_get_mkdir_err(self, mock_downloadfile, mock_branch,
+                         mock_releasepath):
+    mock_branch.return_value = 'stable'
     mock_releasepath.return_value = 'https://glazier-server.example.com/'
     remote = '@glazier/1.0/autobuild.par'
     self.filesystem.create_file('/directory')
@@ -212,8 +226,11 @@ class FilesTest(parameterized.TestCase):
       files.Get([[remote, '/directory/file.txt']], buildinfo.BuildInfo()).Run()
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
-  def test_get_relative_path(self, mock_downloadfile, mock_releasepath):
+  def test_get_relative_path(self, mock_downloadfile, mock_branch,
+                             mock_releasepath):
+    mock_branch.return_value = 'stable'
     mock_releasepath.return_value = 'https://glazier-server.example.com/'
     self.filesystem.create_file(
         r'/tmp/autobuild.par.sha256',
@@ -229,10 +246,12 @@ class FilesTest(parameterized.TestCase):
         show_progress=True)
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
   @mock.patch.object(files.download.Download, 'VerifyShaHash', autospec=True)
-  def test_get_hash_match(
-      self, mock_verifyshahash, mock_downloadfile, mock_releasepath):
+  def test_get_hash_match(self, mock_verifyshahash, mock_downloadfile,
+                          mock_branch, mock_releasepath):
+    mock_branch.return_value = 'stable'
     mock_releasepath.return_value = 'https://glazier-server.example.com/'
     local = r'/tmp/autobuild.par'
     test_sha256 = (
@@ -246,10 +265,12 @@ class FilesTest(parameterized.TestCase):
     mock_verifyshahash.assert_called_with(mock.ANY, local, test_sha256)
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
   @mock.patch.object(files.download.Download, 'VerifyShaHash', autospec=True)
-  def test_get_hash_mismatch(
-      self, mock_verifyshahash, mock_downloadfile, mock_releasepath):
+  def test_get_hash_mismatch(self, mock_verifyshahash, mock_downloadfile,
+                             mock_branch, mock_releasepath):
+    mock_branch.return_value = 'stable'
     mock_releasepath.return_value = 'https://glazier-server.example.com/'
     test_sha256 = (
         '58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800')
@@ -263,10 +284,12 @@ class FilesTest(parameterized.TestCase):
           buildinfo.BuildInfo()).Run()
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
   @mock.patch.object(files.download.Download, 'VerifyShaHash', autospec=True)
-  def test_get_no_hash(
-      self, mock_verifyshahash, mock_downloadfile, mock_releasepath):
+  def test_get_no_hash(self, mock_verifyshahash, mock_downloadfile, mock_branch,
+                       mock_releasepath):
+    mock_branch.return_value = 'stable'
     mock_releasepath.return_value = 'https://glazier-server.example.com/'
     test_sha256 = (
         '58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800')

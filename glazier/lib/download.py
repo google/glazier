@@ -150,6 +150,8 @@ def Transform(string: str, build_info) -> str:
     @: A reference to the binary storage root.
     \#: Escaped # character - replaced by # in string
     \@: Escaped @ character - replaced by @ in string
+    %: A reference to the active release branch.
+    \%: Escaped % character - replaced by % in string
 
   Args:
     string: The configuration string to be transformed.
@@ -162,6 +164,8 @@ def Transform(string: str, build_info) -> str:
   string = re.sub(r'\\#', '#', string)
   string = re.sub(r'(?<!\\)@', str(build_info.BinaryPath()), string)
   string = re.sub(r'\\@', '@', string)
+  string = re.sub(r'(?<!\\)%', str(build_info.Branch()), string)
+  string = re.sub(r'\\%', '%', string)
   return string
 
 
