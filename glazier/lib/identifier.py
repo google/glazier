@@ -37,8 +37,7 @@ class RegistryWriteError(Error):
                name: str,
                value: Union[str, int],
                path: Optional[str] = constants.REG_ROOT):
-    message = (f'Failed to write to registry: '
-               f'(Name: {name}, Value: {value}, Path: {path})')
+    message = (fr'Failed to write to registry: [{path}\{name} = {value}]')
     super().__init__(
         error_code=errors.ErrorCode.REGISTRY_WRITE_ERROR, message=message)
 

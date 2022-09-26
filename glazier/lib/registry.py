@@ -31,8 +31,7 @@ class RegistryWriteError(Error):
                name: str,
                value: Union[str, int],
                path: Optional[str] = constants.REG_ROOT):
-    message = (f'Failed to write to registry: '
-               f'(Name: {name}, Value: {value}, Path: {path})')
+    message = (fr'Failed to write to registry: [{path}\{name} = {value}]')
     super().__init__(
         error_code=errors.ErrorCode.REGISTRY_WRITE_ERROR, message=message)
 
@@ -40,8 +39,7 @@ class RegistryWriteError(Error):
 class RegistryDeleteError(Error):
 
   def __init__(self, name: str, path: Optional[str]):
-    message = (f'Failed to delete from registry: '
-               f'(Name: {name}, Path: {path})')
+    message = (fr'Failed to delete registry key: [{path}\{name}]')
     super().__init__(
         error_code=errors.ErrorCode.REGISTRY_DELETE_ERROR, message=message)
 
