@@ -387,6 +387,9 @@ class BaseDownloader(object):
     self._save_location = save_location
     if IsRemote(url):
       if self._beyondcorp.CheckBeyondCorp():
+        # Avoid edge cases where the binary server was not stripped earlier
+        if FLAGS.binary_server in url:
+          url = url.replace(f'{FLAGS.binary_server}/', '')
         url = self._SetUrl(url)
       file_stream = self._OpenStream(url)
       self._StreamToDisk(file_stream, show_progress)
