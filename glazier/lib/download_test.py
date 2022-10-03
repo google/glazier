@@ -18,6 +18,7 @@ from unittest import mock
 
 from absl import flags
 from absl.testing import absltest
+from absl.testing import parameterized
 from glazier.lib import beyondcorp
 from glazier.lib import buildinfo
 from glazier.lib import download
@@ -32,7 +33,10 @@ branch=stable
 
 FLAGS = flags.FLAGS
 SLEEP = 20
-TEST_URL = 'https://www.example.com/build.yaml'
+_TEST_URI = 'https://www.example.com'
+_TEST_URI_YAML = f'{_TEST_URI}/build.yaml'
+_CONFIG_SERVER = _TEST_URI
+_BINARY_SERVER = f'{_TEST_URI}/bin'
 
 
 class HelperTests(absltest.TestCase):
@@ -103,7 +107,7 @@ class PathsTest(absltest.TestCase):
     self.assertEqual(result, '/tmp/sub/dir/other/another/file.txt')
 
 
-class DownloadTest(absltest.TestCase):
+class DownloadTest(parameterized.TestCase):
 
   def patch_constant(self, module, constant_name, new_value):
     patcher = mock.patch.object(module, constant_name, new_value)
@@ -142,7 +146,7 @@ class DownloadTest(absltest.TestCase):
 
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
-    url = TEST_URL
+    url = _TEST_URI_YAML
     httperr = download.urllib.error.HTTPError('Error', None, None, None, None)
     urlerr = download.urllib.error.URLError('Error')
     mock_check_winpe.return_value = False
@@ -173,7 +177,7 @@ class DownloadTest(absltest.TestCase):
 
     mock_urlopen.side_effect = self.failing_url_open
     with self.assertRaises(download.Error):
-      self._dl._OpenStream(TEST_URL)
+      self._dl._OpenStream(_TEST_URI_YAML)
 
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
@@ -184,10 +188,10 @@ class DownloadTest(absltest.TestCase):
 
     # match
     mock_urlopen.side_effect = iter([file_stream])
-    self.assertTrue(self._dl.CheckUrl(TEST_URL, status_codes=[200]))
+    self.assertTrue(self._dl.CheckUrl(_TEST_URI_YAML, status_codes=[200]))
     # miss
     mock_urlopen.side_effect = iter([file_stream])
-    self.assertFalse(self._dl.CheckUrl(TEST_URL, status_codes=[201]))
+    self.assertFalse(self._dl.CheckUrl(_TEST_URI_YAML, status_codes=[201]))
 
   @mock.patch.object(file_util, 'Copy', autospec=True)
   def test_download_file_local(self, mock_copy):
@@ -212,7 +216,7 @@ class DownloadTest(absltest.TestCase):
       mock_streamtodisk):
 
     mock_checkbeyondcorp.return_value = False
-    url = TEST_URL
+    url = _TEST_URI_YAML
     path = r'C:\Windows\Temp\tmpblahblah'
     mock_namedtemporaryfile.return_value.name = path
     self._dl.DownloadFileTemp(url)
@@ -229,6 +233,43 @@ class DownloadTest(absltest.TestCase):
     mock_streamtodisk.assert_called_with(
         self._dl, mock_openstream.return_value, False)
 
+  @parameterized.named_parameters(
+      ('standard_binary_server', True, _BINARY_SERVER, ''),
+      ('standard_config_server', True, '', _CONFIG_SERVER),
+      ('standard_neither', True, '', ''),
+      ('standard_both', True, _BINARY_SERVER, _CONFIG_SERVER),
+      ('beyond_corp_binary_server', True, _BINARY_SERVER, ''),
+      ('beyond_corp_config_server', True, '', _CONFIG_SERVER),
+      ('beyond_corp_neither', True, '', ''),
+      ('beyond_corp_both', True, _BINARY_SERVER, _CONFIG_SERVER),
+  )
+  @mock.patch.object(beyondcorp.BeyondCorp, 'GetSignedUrl', autospec=True)
+  def test_set_url(self, use_signed_url, binary_server, config_server,
+                   mock_get_signed_url):
+    FLAGS.use_signed_url = use_signed_url
+    FLAGS.binary_server = binary_server
+    FLAGS.config_server = config_server
+    uri = _TEST_URI_YAML
+    if not FLAGS.use_signed_url:
+      self.assertFalse(mock_get_signed_url.called)
+      self.assertEqual(self._dl._SetUrl(uri), uri)
+      return
+
+    self._dl._SetUrl(uri)
+    if uri.startswith(FLAGS.binary_server):
+      uri = uri.replace(f'{FLAGS.binary_server}/', '')
+    if uri.startswith(FLAGS.config_server):
+      uri = uri.replace(f'{FLAGS.config_server}/', '')
+    mock_get_signed_url.assert_called_with(mock.ANY, uri)
+
+  @mock.patch.object(beyondcorp.BeyondCorp, 'GetSignedUrl', autospec=True)
+  def test_set_url_error(self, mock_get_signed_url):
+    FLAGS.use_signed_url = True
+    mock_get_signed_url.side_effect = beyondcorp.Error
+    with self.assertRaises(download.SignedUrlError):
+      self._dl._SetUrl(_TEST_URI_YAML)
+    self.assertTrue(mock_get_signed_url.called)
+
   @mock.patch.object(download.BaseDownloader, '_StoreDebugInfo', autospec=True)
   def test_stream_to_disk(self, mock_storedebuginfo):
 
@@ -239,7 +280,7 @@ class DownloadTest(absltest.TestCase):
     download.CHUNK_BYTE_SIZE = 5
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
-    file_stream.geturl.return_value = TEST_URL
+    file_stream.geturl.return_value = _TEST_URI_YAML
     file_stream.headers.get = lambda x: {'Content-Length': '25'}[x]
     file_stream.read = http_stream.read
 

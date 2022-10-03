@@ -447,10 +447,13 @@ class BaseDownloader(object):
     """
     if not FLAGS.use_signed_url:
       return url
-    config_server = '%s%s' % (FLAGS.config_server, '/')
+
     try:
-      return self._beyondcorp.GetSignedUrl(
-          url[url.startswith(config_server) and len(config_server):])
+      if url.startswith(FLAGS.binary_server):
+        url = url.replace(f'{FLAGS.binary_server}/', '')
+      if url.startswith(FLAGS.config_server):
+        url = url.replace(f'{FLAGS.config_server}/', '')
+      return self._beyondcorp.GetSignedUrl(url)
     except beyondcorp.Error as e:
       raise SignedUrlError(url) from e
 
