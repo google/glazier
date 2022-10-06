@@ -21,13 +21,14 @@ from unittest import mock
 from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
-
 from glazier.lib import buildinfo
 from glazier.lib import timers
+from glazier.lib.config import files
 from pyfakefs import fake_filesystem
 import yaml
 
 from gwinpy.wmi.hw_info import DeviceId
+
 
 FLAGS = flags.FLAGS
 
@@ -462,7 +463,7 @@ class BuildInfoTest(absltest.TestCase):
     ints = self.buildinfo.NetInterfaces(False)
     mock_netinfo.assert_called_with(poll=True, active_only=False)
 
-  @mock.patch.object(buildinfo.files, 'Read', autospec=True)
+  @mock.patch.object(files, 'Read', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   def test_release(self, mock_branch, mock_read):
 
@@ -477,11 +478,11 @@ class BuildInfoTest(absltest.TestCase):
     self.buildinfo.Release.cache_clear()
 
     # read error
-    mock_read.side_effect = buildinfo.files.Error
+    mock_read.side_effect = files.Error
     with self.assertRaises(buildinfo.Error):
       self.buildinfo.Release()
 
-  @mock.patch.object(buildinfo.files, 'Read', autospec=True)
+  @mock.patch.object(files, 'Read', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   def test_release_info(self, mock_branch, mock_read):
 
@@ -492,11 +493,11 @@ class BuildInfoTest(absltest.TestCase):
         'https://glazier-server.example.com/testing/release-info.yaml')
 
     # read error
-    mock_read.side_effect = buildinfo.files.Error
+    mock_read.side_effect = files.Error
     with self.assertRaises(buildinfo.Error):
       self.buildinfo._ReleaseInfo()
 
-  @mock.patch.object(buildinfo.files, 'Read', autospec=True)
+  @mock.patch.object(files, 'Read', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'ComputerOs', autospec=True)
   def test_release_path(self, mock_computeros, mock_read):
 
@@ -552,7 +553,7 @@ class BuildInfoTest(absltest.TestCase):
     self.assertTrue(self.buildinfo._StringPinner([True], [True]))
     self.assertTrue(self.buildinfo._StringPinner([False], [False]))
 
-  @mock.patch.object(buildinfo.files, 'Read', autospec=True)
+  @mock.patch.object(files, 'Read', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
   def test_supported_models(self, unused_releasepath, mock_read):
     mock_read.return_value = yaml.safe_load(_RELEASE_INFO)
@@ -606,10 +607,24 @@ class BuildInfoTest(absltest.TestCase):
     self.buildinfo.TpmPresent.cache_clear()
     self.assertFalse(self.buildinfo.TpmPresent())
 
-  @mock.patch.object(buildinfo.files, 'Read', autospec=True)
+  @mock.patch.object(files, 'Read', autospec=True)
   def test_winpe_version(self, mock_read):
     mock_read.return_value = yaml.safe_load(_VERSION_INFO)
     self.assertEqual(type(self.buildinfo.WinpeVersion()), int)
+    mock_read.assert_called_with(f'{FLAGS.config_server}/version-info.yaml')
+
+  @mock.patch.object(files, 'Read', autospec=True)
+  def test_winpe_version_fallback(self, mock_read):
+    mock_read.side_effect = files.Error
+    self.buildinfo.ConfigServer(set_to='https://glazier-server-1.example.com')
+
+    with self.assertRaises(buildinfo.YamlFileError):
+      self.buildinfo.WinpeVersion()
+
+    mock_read.assert_has_calls([
+        mock.call('https://glazier-server-1.example.com/version-info.yaml'),
+        mock.call(f'{FLAGS.config_server}/version-info.yaml'),
+    ])
 
   @mock.patch.object(buildinfo.BuildInfo, 'ComputerModel', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'IsVirtual', autospec=True)

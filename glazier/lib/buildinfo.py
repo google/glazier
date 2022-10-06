@@ -253,13 +253,26 @@ class BuildInfo(object):
     return self._active_conf_path
 
   def _VersionInfo(self):
+    """Obtain version information from either cache or the version-info file.
+
+    Returns:
+      The current version information.
+
+    Raises:
+      YamlFileError: Failed to read YAML file.
+    """
     if not self._version_info:
-      info_file = '%s/%s' % (self.ConfigServer().rstrip('/'),
-                             'version-info.yaml')
       try:
-        self._version_info = files.Read(info_file)
-      except files.Error as e:
-        raise YamlFileError(info_file) from e
+        self._version_info = files.Read(
+            f"{self.ConfigServer().rstrip('/')}/version-info.yaml")
+      except files.Error:
+        # Fallback to using FLAG to avoid edge case where the config server
+        # written to the task list is unavailable.
+        info_file = f"{FLAGS.config_server.rstrip('/')}/version-info.yaml"
+        try:
+          self._version_info = files.Read(info_file)
+        except files.Error as e:
+          raise YamlFileError(info_file) from e
     return self._version_info
 
   #
