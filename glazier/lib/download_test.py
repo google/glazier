@@ -23,6 +23,7 @@ from glazier.lib import beyondcorp
 from glazier.lib import buildinfo
 from glazier.lib import download
 from glazier.lib import file_util
+from glazier.lib import test_utils
 from pyfakefs import fake_filesystem
 
 _TEST_INI = """
@@ -39,7 +40,7 @@ _CONFIG_SERVER = _TEST_URI
 _BINARY_SERVER = f'{_TEST_URI}/bin'
 
 
-class HelperTests(absltest.TestCase):
+class HelperTests(test_utils.GlazierTestCase):
 
   def test_is_remote(self):
     self.assertTrue(download.IsRemote('http://glazier.example.com'))
@@ -55,7 +56,7 @@ class HelperTests(absltest.TestCase):
     self.assertFalse(download.IsLocal(r'String with C:\glazier in it.'))
 
 
-class PathsTest(absltest.TestCase):
+class PathsTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(PathsTest, self).setUp()
@@ -107,7 +108,7 @@ class PathsTest(absltest.TestCase):
     self.assertEqual(result, '/tmp/sub/dir/other/another/file.txt')
 
 
-class DownloadTest(parameterized.TestCase):
+class DownloadTest(test_utils.GlazierTestCase):
 
   def patch_constant(self, module, constant_name, new_value):
     patcher = mock.patch.object(module, constant_name, new_value)
@@ -164,7 +165,7 @@ class DownloadTest(parameterized.TestCase):
     # 404
     file_stream.getcode.return_value = 404
     mock_urlopen.side_effect = iter([httperr, file_stream])
-    with self.assertRaises(download.Error):
+    with self.assert_raises_with_validation(download.Error):
       self._dl._OpenStream(url)
 
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
@@ -176,7 +177,7 @@ class DownloadTest(parameterized.TestCase):
     mock_check_winpe.return_value = False
 
     mock_urlopen.side_effect = self.failing_url_open
-    with self.assertRaises(download.Error):
+    with self.assert_raises_with_validation(download.Error):
       self._dl._OpenStream(_TEST_URI_YAML)
 
   @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
@@ -203,7 +204,7 @@ class DownloadTest(parameterized.TestCase):
   @mock.patch.object(file_util, 'Copy', autospec=True)
   def test_download_file_copy_except(self, mock_copy):
     mock_copy.side_effect = file_util.Error('copy error')
-    with self.assertRaises(download.Error):
+    with self.assert_raises_with_validation(download.Error):
       self._dl.DownloadFile(
           url='c:/glazier/conf/test.ps1', save_location='c:/windows/test.ps1')
 
@@ -320,28 +321,28 @@ class DownloadTest(parameterized.TestCase):
       # HTTP Header returned nothing (NoneType)
       http_stream.seek(0)
       report.reset_mock()
-      with self.assertRaises(download.Error):
+      with self.assert_raises_with_validation(download.Error):
         self._dl._StreamToDisk(None)
 
     # IOError
     http_stream.seek(0)
     self.filesystem.create_dir(r'C:\Windows')
     self._dl._save_location = r'C:\Windows'
-    with self.assertRaises(download.Error):
+    with self.assert_raises_with_validation(download.Error):
       self._dl._StreamToDisk(file_stream)
 
     # File Size
     http_stream.seek(0)
     file_stream.headers.get = lambda x: {'Content-Length': '100000'}[x]
     self._dl._save_location = r'C:\download.txt'
-    with self.assertRaises(download.Error):
+    with self.assert_raises_with_validation(download.Error):
       self._dl._StreamToDisk(file_stream)
 
     # Socket Error
     http_stream.seek(0)
     file_stream.headers.get = lambda x: {'Content-Length': '25'}[x]
     file_stream.read = mock.Mock(side_effect=download.socket.error('SocketErr'))
-    with self.assertRaises(download.Error):
+    with self.assert_raises_with_validation(download.Error):
       self._dl._StreamToDisk(file_stream)
     mock_storedebuginfo.assert_called_with(self._dl, file_stream, 'SocketErr')
 
@@ -349,14 +350,14 @@ class DownloadTest(parameterized.TestCase):
     http_stream.seek(0)
     file_stream.headers.get = lambda x: {'Content-Length': '100000'}[x]
     self._dl._save_location = r'C:\download.txt'
-    with self.assertRaises(download.Error):
+    with self.assert_raises_with_validation(download.Error):
       self._dl._StreamToDisk(file_stream)
 
   @mock.patch.object(download.BaseDownloader, '_StoreDebugInfo', autospec=True)
   def test_validate(self, mock_storedebuginfo):
     file_stream = mock.Mock()
     self._dl._save_location = r'C:\missing.txt'
-    with self.assertRaises(download.Error):
+    with self.assert_raises_with_validation(download.Error):
       self._dl._Validate(file_stream, 200)
     mock_storedebuginfo.assert_called_with(self._dl, file_stream)
 

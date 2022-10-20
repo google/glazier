@@ -18,10 +18,11 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import resources
+from glazier.lib import test_utils
 from pyfakefs import fake_filesystem
 
 
-class ResourcesTest(absltest.TestCase):
+class ResourcesTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(ResourcesTest, self).setUp()
@@ -33,7 +34,7 @@ class ResourcesTest(absltest.TestCase):
   def test_get_resource_file_name(self):
 
     r = resources.Resources('/test')
-    with self.assertRaises(resources.FileNotFound):
+    with self.assert_raises_with_validation(resources.FileNotFound):
       r.GetResourceFileName('missing.txt')
     self.assertEqual(r.GetResourceFileName('file.txt'), '/test/file.txt')
 

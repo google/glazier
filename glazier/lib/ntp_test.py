@@ -22,9 +22,10 @@ from absl.testing import absltest
 from glazier.lib import constants
 from glazier.lib import execute
 from glazier.lib import ntp
+from glazier.lib import test_utils
 
 
-class NtpTest(absltest.TestCase):
+class NtpTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(ntp.time, 'sleep', autospec=True)
   @mock.patch.object(execute, 'execute_binary', autospec=True)
@@ -39,7 +40,7 @@ class NtpTest(absltest.TestCase):
     eb.return_value = True
 
     # Too Few Retries
-    with self.assertRaises(ntp.NoNtpResponseError):
+    with self.assert_raises_with_validation(ntp.NoNtpResponseError):
       ntp.SyncClockToNtp()
     sleep.assert_has_calls([mock.call(30), mock.call(30)])
 
@@ -57,12 +58,12 @@ class NtpTest(absltest.TestCase):
 
     # Socket Error
     request.side_effect = ntp.socket.gaierror
-    with self.assertRaises(ntp.NoNtpResponseError):
+    with self.assert_raises_with_validation(ntp.NoNtpResponseError):
       ntp.SyncClockToNtp()
 
     # NTP lib error
     request.side_effect = ntp.ntplib.NTPException
-    with self.assertRaises(ntp.NoNtpResponseError):
+    with self.assert_raises_with_validation(ntp.NoNtpResponseError):
       ntp.SyncClockToNtp()
 
 

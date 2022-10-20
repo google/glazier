@@ -19,11 +19,12 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import registry
+from glazier.lib import test_utils
 from gwinpy.registry import registry as gwinpy_registry
 from glazier.lib import constants
 
 
-class RegistryTest(absltest.TestCase):
+class RegistryTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(RegistryTest, self).setUp()
@@ -119,7 +120,7 @@ class RegistryTest(absltest.TestCase):
   def test_set_value_error(self, mock_registry):
     mock_registry.return_value.SetKeyValue.side_effect = (
         gwinpy_registry.RegistryError)
-    with self.assertRaises(registry.Error):
+    with self.assert_raises_with_validation(registry.Error):
       registry.set_value(self.name, self.value)
 
   @mock.patch.object(gwinpy_registry, 'Registry', autospec=True)
@@ -153,7 +154,7 @@ class RegistryTest(absltest.TestCase):
   def test_remove_value_error(self, mock_registry):
     mock_registry.return_value.RemoveKeyValue.side_effect = (
         gwinpy_registry.RegistryError)
-    with self.assertRaises(registry.Error):
+    with self.assert_raises_with_validation(registry.Error):
       registry.remove_value(self.name)
 
   @mock.patch.object(gwinpy_registry, 'Registry', autospec=True)

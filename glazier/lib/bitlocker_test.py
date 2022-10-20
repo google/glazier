@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tests for glazier.lib.bitlocker."""
 
 from unittest import mock
@@ -20,11 +19,12 @@ from absl.testing import absltest
 from glazier.lib import bitlocker
 from glazier.lib import execute
 from glazier.lib import powershell
+from glazier.lib import test_utils
 
 from glazier.lib import constants
 
 
-class BitlockerTest(absltest.TestCase):
+class BitlockerTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(
       bitlocker.powershell.PowerShell, 'RunCommand', autospec=True)
@@ -42,8 +42,8 @@ class BitlockerTest(absltest.TestCase):
             'C:', '-RecoveryPasswordProtector', '>NUL'
         ])
     ])
-    mock_runcommand.side_effect = powershell.Error
-    with self.assertRaises(bitlocker.BitlockerEnableTpmError):
+    mock_runcommand.side_effect = powershell.PowerShellExecutionError
+    with self.assert_raises_with_validation(bitlocker.BitlockerEnableTpmError):
       bit.Enable()
 
   @mock.patch.object(execute, 'execute_binary', autospec=True)
@@ -57,13 +57,15 @@ class BitlockerTest(absltest.TestCase):
             '>NUL'
         ],
         shell=True)
-    mock_execute_binary.side_effect = execute.Error
-    with self.assertRaises(bitlocker.BitlockerActivationFailedError):
+    mock_execute_binary.side_effect = execute.ExecError('some_command')
+    with self.assert_raises_with_validation(
+        bitlocker.BitlockerActivationFailedError):
       bit.Enable()
 
   def test_enable_unknown_mode(self):
     bit = bitlocker.Bitlocker(mode='unsupported')
-    with self.assertRaises(bitlocker.BitlockerUnknownModeError):
+    with self.assert_raises_with_validation(
+        bitlocker.BitlockerUnknownModeError):
       bit.Enable()
 
 

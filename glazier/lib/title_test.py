@@ -18,6 +18,7 @@ from unittest import mock
 from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
+from glazier.lib import test_utils
 from glazier.lib import title
 
 _PREFIX = 'Glazier'
@@ -29,7 +30,7 @@ _STAGE = '42'
 FLAGS = flags.FLAGS
 
 
-class TitleTest(absltest.TestCase):
+class TitleTest(test_utils.GlazierTestCase):
 
   @flagsaver.flagsaver()
   @mock.patch.object(title.buildinfo.BuildInfo, 'ImageID', autospec=True)
@@ -176,7 +177,7 @@ class TitleTest(absltest.TestCase):
   def test_set_title_error(self, mock_build_title, mock_system):
     mock_build_title.return_value = _PREFIX
     mock_system.side_effect = OSError
-    with self.assertRaises(title.Error):
+    with self.assert_raises_with_validation(title.Error):
       title.set_title()
 
 if __name__ == '__main__':

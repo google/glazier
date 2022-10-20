@@ -22,6 +22,7 @@ from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
 from glazier.lib import buildinfo
+from glazier.lib import test_utils
 from glazier.lib import timers
 from glazier.lib.config import files
 from pyfakefs import fake_filesystem
@@ -69,7 +70,7 @@ class _REGEXP(object):
     return '<REGEXP(%s)>' % self._regexp.pattern
 
 
-class BuildInfoTest(absltest.TestCase):
+class BuildInfoTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(BuildInfoTest, self).setUp()
@@ -244,7 +245,7 @@ class BuildInfoTest(absltest.TestCase):
       self.assertFalse(self.buildinfo.BuildPinMatch('os_code', ['']))
 
     # Invalid pin
-    with self.assertRaises(buildinfo.Error):
+    with self.assert_raises_with_validation(buildinfo.Error):
       self.buildinfo.BuildPinMatch('no_existo', ['invalid pin value'])
 
   def test_build_user_pin_match(self):
@@ -303,7 +304,7 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(result, 'Google Inc.')
     self.buildinfo.ComputerManufacturer.cache_clear()
     mock_manufacturer.return_value = None
-    with self.assertRaises(buildinfo.Error):
+    with self.assert_raises_with_validation(buildinfo.Error):
       self.buildinfo.ComputerManufacturer()
 
   @mock.patch.object(
@@ -319,7 +320,7 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(result, '2537CE2')
     self.buildinfo.ComputerModel.cache_clear()
     mock_model.return_value = None
-    with self.assertRaises(buildinfo.Error):
+    with self.assert_raises_with_validation(buildinfo.Error):
       self.buildinfo.ComputerModel()
 
   @flagsaver.flagsaver
@@ -444,7 +445,7 @@ class BuildInfoTest(absltest.TestCase):
     self.assertEqual(self.buildinfo.OsCode(), 'win2012r2-x64-se')
     mock_computeros.return_value = 'win2000-x64-se'
     self.buildinfo.OsCode.cache_clear()
-    with self.assertRaises(buildinfo.Error):
+    with self.assert_raises_with_validation(buildinfo.Error):
       self.buildinfo.OsCode()
 
   @mock.patch.object(buildinfo.net_info, 'NetInfo', autospec=True)
@@ -478,8 +479,8 @@ class BuildInfoTest(absltest.TestCase):
     self.buildinfo.Release.cache_clear()
 
     # read error
-    mock_read.side_effect = files.Error
-    with self.assertRaises(buildinfo.Error):
+    mock_read.side_effect = buildinfo.files.FileReadError('some_path')
+    with self.assert_raises_with_validation(buildinfo.Error):
       self.buildinfo.Release()
 
   @mock.patch.object(files, 'Read', autospec=True)
@@ -493,8 +494,8 @@ class BuildInfoTest(absltest.TestCase):
         'https://glazier-server.example.com/testing/release-info.yaml')
 
     # read error
-    mock_read.side_effect = files.Error
-    with self.assertRaises(buildinfo.Error):
+    mock_read.side_effect = buildinfo.files.FileReadError('some_path')
+    with self.assert_raises_with_validation(buildinfo.Error):
       self.buildinfo._ReleaseInfo()
 
   @mock.patch.object(files, 'Read', autospec=True)
@@ -513,13 +514,13 @@ class BuildInfoTest(absltest.TestCase):
 
     # no os
     mock_computeros.return_value = None
-    with self.assertRaises(buildinfo.Error):
+    with self.assert_raises_with_validation(buildinfo.Error):
       self.buildinfo.ReleasePath()
     self.buildinfo.ComputerOs.cache_clear()
 
     # invalid os
     mock_computeros.return_value = 'invalid-os-string'
-    with self.assertRaises(buildinfo.Error):
+    with self.assert_raises_with_validation(buildinfo.Error):
       self.buildinfo.ReleasePath()
 
   def test_active_config_path(self):

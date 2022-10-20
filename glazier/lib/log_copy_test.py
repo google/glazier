@@ -21,12 +21,13 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import log_copy
+from glazier.lib import test_utils
 from glazier.lib import winpe
 
 from glazier.lib import constants
 
 
-class LogCopyTest(absltest.TestCase):
+class LogCopyTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(winpe, 'check_winpe', autospec=True)
   @mock.patch.object(log_copy.logging, 'FileHandler', autospec=True)
@@ -53,12 +54,6 @@ class LogCopyTest(absltest.TestCase):
     result = lc._GetLogFileName()
     self.assertEqual(result, r'l:\WORKSTATION1-W-' + out_date + '.log')
     mock_get_value.assert_called_with('name', path=constants.REG_ROOT)
-
-  @mock.patch.object(log_copy.registry, 'get_value', autospec=True)
-  def test_get_log_file_name_error(self, mock_get_value):
-    mock_get_value.side_effect = log_copy.registry.Error
-    with self.assertRaises(log_copy.LogCopyError):
-      self.lc._GetLogFileName()
 
   @mock.patch.object(log_copy.LogCopy, '_EventLogUpload', autospec=True)
   def test_event_log_copy(self, mock_eventlogupload):
@@ -96,13 +91,13 @@ class LogCopyTest(absltest.TestCase):
 
     # map error
     mock_mapdrive.return_value = None
-    with self.assertRaises(log_copy.LogCopyError):
+    with self.assert_raises_with_validation(log_copy.LogCopyError):
       self.lc.ShareCopy(self.log_file, log_host)
 
     # copy error
     mock_mapdrive.return_value = True
     mock_copy.side_effect = shutil.Error()
-    with self.assertRaises(log_copy.LogCopyError):
+    with self.assert_raises_with_validation(log_copy.LogCopyError):
       self.lc.ShareCopy(self.log_file, log_host)
 
 

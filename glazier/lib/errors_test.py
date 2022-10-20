@@ -25,7 +25,7 @@ from glazier.lib import test_utils
 ErrorCode = errors.ErrorCode
 
 
-class GlazierErrorTest(parameterized.TestCase):
+class GlazierErrorTest(test_utils.GlazierTestCase):
 
   @parameterized.named_parameters(
       (
