@@ -17,13 +17,14 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import buildinfo
+from glazier.lib import test_utils
 from glazier.lib.config import builder
 from glazier.lib.config import files
 
 from glazier.lib import actions
 
 
-class ConfigBuilderTest(absltest.TestCase):
+class ConfigBuilderTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(ConfigBuilderTest, self).setUp()
@@ -71,8 +72,8 @@ class ConfigBuilderTest(absltest.TestCase):
     self.assertFalse(self.cb._MatchPin(pins))
 
     # Error
-    mock_buildpinmatch.side_effect = buildinfo.Error
-    with self.assertRaises(builder.SysInfoError):
+    mock_buildpinmatch.side_effect = buildinfo.IllegalPinError('some_pin')
+    with self.assert_raises_with_validation(builder.SysInfoError):
       self.cb._MatchPin(pins)
 
   @mock.patch.object(builder.ConfigBuilder, '_ProcessAction', autospec=True)
@@ -111,7 +112,7 @@ class ConfigBuilderTest(absltest.TestCase):
         }]
     }
     mock_storecontrols.side_effect = iter([actions.ServerChangeEvent('test')])
-    with self.assertRaises(actions.ServerChangeEvent):
+    with self.assert_raises_with_validation(actions.ServerChangeEvent):
       self.cb._Start('/task/path/', 'list.yaml')
     self.assertEqual(self.cb._task_list[0]['data']['SetTimer'],
                      ['start_/task/path_list.yaml'])

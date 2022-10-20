@@ -11,15 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tests for glazier.lib.policies.device_model."""
 
 from unittest import mock
 from absl.testing import absltest
+from glazier.lib import test_utils
 from glazier.lib.policies import device_model
 
 
-class DeviceModelTest(absltest.TestCase):
+class DeviceModelTest(test_utils.GlazierTestCase):
 
   @mock.patch('builtins.input', autospec=True)
   @mock.patch('builtins.print', autospec=True)
@@ -36,25 +36,27 @@ class DeviceModelTest(absltest.TestCase):
     dm._build_info.ComputerModel.return_value = 'Test Workstation'
     dm._build_info.SupportTier.return_value = 2
     self.assertTrue(dm.Verify())
-    mock_print.assert_called_with(
-        device_model.DeviceModel.PARTIAL_NOTICE % 'Test Workstation')
+    mock_print.assert_called_with(device_model.DeviceModel.PARTIAL_NOTICE %
+                                  'Test Workstation')
 
     # Unsupported: Continue
     mock_input.return_value = 'Y'
     dm._build_info.SupportTier.return_value = 0
     self.assertTrue(dm.Verify())
-    mock_print.assert_called_with(
-        device_model.DeviceModel.UNSUPPORTED_NOTICE % 'Test Workstation')
+    mock_print.assert_called_with(device_model.DeviceModel.UNSUPPORTED_NOTICE %
+                                  'Test Workstation')
 
     # Unsupported: Abort
     mock_input.return_value = 'n'
-    with self.assertRaises(device_model.ImagingPolicyException):
+    with self.assert_raises_with_validation(
+        device_model.ImagingPolicyException):
       dm.Verify()
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_banned_platform(self, mock_buildinfo):
     bp = device_model.BannedPlatform(mock_buildinfo)
-    with self.assertRaises(device_model.ImagingPolicyException):
+    with self.assert_raises_with_validation(
+        device_model.ImagingPolicyException):
       bp.Verify()
 
 

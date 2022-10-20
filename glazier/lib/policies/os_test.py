@@ -15,16 +15,18 @@
 """Tests for glazier.lib.policies.os."""
 
 from absl.testing import absltest
+from glazier.lib import test_utils
 from glazier.lib.policies import os
+
 import mock
 
 
-class OsTest(absltest.TestCase):
+class OsTest(test_utils.GlazierTestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_unsupported_os(self, mock_buildinfo):
     o = os.UnsupportedOs(mock_buildinfo)
-    with self.assertRaises(os.ImagingPolicyException):
+    with self.assert_raises_with_validation(os.ImagingPolicyException):
       o.Verify()
 
 

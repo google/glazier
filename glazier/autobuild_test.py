@@ -19,6 +19,7 @@ from unittest import mock
 from absl.testing import absltest
 from glazier import autobuild
 from glazier.lib import buildinfo
+from glazier.lib import test_utils
 from glazier.lib import title
 from glazier.lib import winpe
 from pyfakefs import fake_filesystem
@@ -26,7 +27,7 @@ from pyfakefs import fake_filesystem
 from glazier.lib import errors
 
 
-class AutobuildTest(absltest.TestCase):
+class AutobuildTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(autobuild, 'logs', autospec=True)
   def setUp(self, logs):
