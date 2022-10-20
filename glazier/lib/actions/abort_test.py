@@ -18,15 +18,17 @@ from unittest import mock
 from absl.testing import absltest
 from absl.testing import parameterized
 
+from glazier.lib import test_utils
 from glazier.lib.actions import abort
 
 
-class AbortTest(parameterized.TestCase):
+class AbortTest(test_utils.GlazierTestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_abort(self, mock_buildinfo):
     ab = abort.Abort(['abort message'], mock_buildinfo)
-    self.assertRaises(abort.ActionError, ab.Run)
+    with self.assert_raises_with_validation(abort.ActionError):
+      ab.Run()
 
   @parameterized.named_parameters(
       ('_invalid_argument_type_str', 'abort message', None),
@@ -35,7 +37,7 @@ class AbortTest(parameterized.TestCase):
   )
   def test_abort_validation_error(self, action_args, build_info):
     ab = abort.Abort(action_args, build_info)
-    with self.assertRaises(abort.ValidationError):
+    with self.assert_raises_with_validation(abort.ValidationError):
       ab.Validate()
 
   def test_abort_validation_success(self):
@@ -52,7 +54,7 @@ class AbortTest(parameterized.TestCase):
                              mock_buildinfo):
     warn = abort.Warn(['warning message'], mock_buildinfo)
     mock_prompt.return_value = prompt_return_value
-    with self.assertRaises(abort.ActionError):
+    with self.assert_raises_with_validation(abort.ActionError):
       warn.Run()
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -69,7 +71,7 @@ class AbortTest(parameterized.TestCase):
   )
   def test_warn_validation_error(self, action_args, build_info):
     warn = abort.Warn(action_args, build_info)
-    with self.assertRaises(abort.ValidationError):
+    with self.assert_raises_with_validation(abort.ValidationError):
       warn.Validate()
 
   def test_warn_validation_success(self):

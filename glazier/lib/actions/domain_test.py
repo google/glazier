@@ -18,10 +18,11 @@ from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
+from glazier.lib import test_utils
 from glazier.lib.actions import domain
 
 
-class DomainTest(parameterized.TestCase):
+class DomainTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(domain.domain_join, 'DomainJoin', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -42,7 +43,7 @@ class DomainTest(parameterized.TestCase):
     # error
     mock_domainjoin.return_value.JoinDomain.side_effect = (
         domain.domain_join.DomainJoinError('join failed'))
-    with self.assertRaises(domain.ActionError):
+    with self.assert_raises_with_validation(domain.ActionError):
       dj.Run()
 
   @parameterized.named_parameters(
@@ -53,7 +54,7 @@ class DomainTest(parameterized.TestCase):
   )
   def test_domain_join_validation_failure(self, join_args, build_info):
     dj = domain.DomainJoin(join_args, build_info)
-    with self.assertRaises(domain.ValidationError):
+    with self.assert_raises_with_validation(domain.ValidationError):
       dj.Validate()
 
   def test_domain_join_validation_success(self):

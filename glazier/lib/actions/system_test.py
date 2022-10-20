@@ -19,15 +19,16 @@ from unittest import mock
 from absl.testing import absltest
 from absl.testing import parameterized
 from glazier.lib import events
+from glazier.lib import test_utils
 from glazier.lib.actions import system
 
 
-class SystemTest(parameterized.TestCase):
+class SystemTest(test_utils.GlazierTestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_reboot_pop(self, mock_buildinfo):
     r = system.Reboot([30, 'reboot for reasons', True], mock_buildinfo)
-    with self.assertRaises(events.RestartEvent) as evt:
+    with self.assert_raises_with_validation(events.RestartEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '30')
@@ -37,7 +38,7 @@ class SystemTest(parameterized.TestCase):
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_reboot_reason(self, mock_buildinfo):
     r = system.Reboot([30, 'reboot for reasons'], mock_buildinfo)
-    with self.assertRaises(events.RestartEvent) as evt:
+    with self.assert_raises_with_validation(events.RestartEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '30')
@@ -47,7 +48,7 @@ class SystemTest(parameterized.TestCase):
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_reboot_timeout(self, mock_buildinfo):
     r = system.Reboot([10], mock_buildinfo)
-    with self.assertRaises(events.RestartEvent) as evt:
+    with self.assert_raises_with_validation(events.RestartEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '10')
@@ -61,7 +62,7 @@ class SystemTest(parameterized.TestCase):
       ('_invalid_args_length', [1, 2, 3, 4]),
   )
   def test_reboot_validation_error(self, action_args):
-    with self.assertRaises(system.ValidationError):
+    with self.assert_raises_with_validation(system.ValidationError):
       system.Reboot(action_args, None).Validate()
 
   @parameterized.named_parameters(
@@ -75,7 +76,7 @@ class SystemTest(parameterized.TestCase):
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_shutdown_pop(self, mock_buildinfo):
     r = system.Shutdown([15, 'shutdown for reasons', True], mock_buildinfo)
-    with self.assertRaises(events.ShutdownEvent) as evt:
+    with self.assert_raises_with_validation(events.ShutdownEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '15')
@@ -85,7 +86,7 @@ class SystemTest(parameterized.TestCase):
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_shutdown_reason(self, mock_buildinfo):
     r = system.Shutdown([15, 'shutdown for reasons'], mock_buildinfo)
-    with self.assertRaises(events.ShutdownEvent) as evt:
+    with self.assert_raises_with_validation(events.ShutdownEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '15')
@@ -95,7 +96,7 @@ class SystemTest(parameterized.TestCase):
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_shutdown_timeout(self, mock_buildinfo):
     r = system.Shutdown([1], mock_buildinfo)
-    with self.assertRaises(events.ShutdownEvent) as evt:
+    with self.assert_raises_with_validation(events.ShutdownEvent) as evt:
       r.Run()
     ex = evt.exception
     self.assertEqual(ex.timeout, '1')
@@ -109,7 +110,7 @@ class SystemTest(parameterized.TestCase):
       ('_invalid_args_length', [1, 2, 3, 4]),
   )
   def test_shutdown_validation_error(self, action_args):
-    with self.assertRaises(system.ValidationError):
+    with self.assert_raises_with_validation(system.ValidationError):
       system.Shutdown(action_args, None).Validate()
 
   @parameterized.named_parameters(

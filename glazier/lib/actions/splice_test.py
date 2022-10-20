@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tests for glazier.lib.actions.splice."""
 
 import os
@@ -21,11 +20,12 @@ from absl.testing import absltest
 
 from glazier.lib import buildinfo
 from glazier.lib import splice as splice_lib
+from glazier.lib import test_utils
 from glazier.lib.actions import splice
 from glazier.lib.actions.splice import ValidationError
 
 
-class SpliceDomainJoinTest(absltest.TestCase):
+class SpliceDomainJoinTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(SpliceDomainJoinTest, self).setUp()
@@ -34,63 +34,59 @@ class SpliceDomainJoinTest(absltest.TestCase):
 
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
   @mock.patch.object(splice_lib.Splice, 'domain_join', autospec=True)
-  def test_default(self, dj, bi):
+  def test_default(self, mock_domain_join, bi):
     self._splice = splice.SpliceDomainJoin([], bi)
     self._splice.Run()
-    dj.assert_called_with(mock.ANY, 5, True, True, '', None)
+    mock_domain_join.assert_called_with(mock.ANY, 5, True, True, '', None)
 
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
   @mock.patch.object(splice_lib.Splice, 'domain_join', autospec=True)
-  def test_custom(self, dj, bi):
-    self._splice = splice.SpliceDomainJoin([1, False, False, 'baz'], bi)
+  def test_custom(self, mock_domain_join, mock_buildinfo):
+    self._splice = splice.SpliceDomainJoin([1, False, False, 'baz'],
+                                           mock_buildinfo)
     self._splice.Run()
-    dj.assert_called_with(mock.ANY, 1, False, False, 'baz', None)
+    mock_domain_join.assert_called_with(mock.ANY, 1, False, False, 'baz', None)
 
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
-  @mock.patch.object(splice_lib.Splice, 'domain_join', autospec=True)
-  @mock.patch.object(
-      splice.SpliceDomainJoin, '_parse_cert_ident', autospec=True)
-  def test_cert_id_ok(self, parse, dj, bi):
-    self._splice = splice.SpliceDomainJoin(
-        [1, False, False, 'baz', ['container', 'issuer']], bi)
-    cid = splice_lib.CertID(container='container', issuer='issuer')
-    parse.return_value = cid
-    self._splice.Run()
-    dj.assert_called_with(mock.ANY, 1, False, False, 'baz', cid)
-
-  @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
-  def test_cert_id_err(self, bi):
+  def test_cert_id_err(self, mock_buildinfo):
     self._splice = splice.SpliceDomainJoin([1, False, False, 'baz', [12345]],
-                                           bi)
+                                           mock_buildinfo)
     self.assertRaises(splice.ActionError, self._splice.Run)
 
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
   @mock.patch.object(splice_lib.Splice, 'domain_join', autospec=True)
-  def test_default_error(self, dj, bi):
-    self._splice = splice.SpliceDomainJoin([], bi)
-    dj.side_effect = splice_lib.Error
+  def test_default_error(self, mock_domain_join, mock_buildinfo):
+    self._splice = splice.SpliceDomainJoin([], mock_buildinfo)
+    mock_domain_join.side_effect = splice_lib.Error
     self.assertRaises(splice.ActionError, self._splice.Run)
 
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
-  def test_validate_retry(self, bi):
-    self._splice = splice.SpliceDomainJoin(['a', False, False], bi)
-    self.assertRaises(ValidationError, self._splice.Validate)
+  def test_validate_retry(self, mock_buildinfo):
+    self._splice = splice.SpliceDomainJoin(['a', False, False], mock_buildinfo)
+    with self.assert_raises_with_validation(ValidationError):
+      self._splice.Validate()
 
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
-  def test_validate_unattended(self, bi):
-    self._splice = splice.SpliceDomainJoin([5, 'paradox', False], bi)
-    self.assertRaises(ValidationError, self._splice.Validate)
+  def test_validate_unattended(self, mock_buildinfo):
+    self._splice = splice.SpliceDomainJoin([5, 'paradox', False],
+                                           mock_buildinfo)
+    with self.assert_raises_with_validation(ValidationError):
+      self._splice.Validate()
 
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
-  def test_validate_fallback(self, bi):
-    self._splice = splice.SpliceDomainJoin([5, False, 'glazier'], bi)
-    self.assertRaises(ValidationError, self._splice.Validate)
+  def test_validate_fallback(self, mock_buildinfo):
+    self._splice = splice.SpliceDomainJoin([5, False, 'glazier'],
+                                           mock_buildinfo)
+    with self.assert_raises_with_validation(ValidationError):
+      self._splice.Validate()
 
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
-  def test_validate_num_args(self, bi):
+  def test_validate_num_args(self, mock_buildinfo):
     self._splice = splice.SpliceDomainJoin([5, False, False, 'baz', 'too many'],
-                                           bi)
-    self.assertRaises(ValidationError, self._splice.Validate)
+                                           mock_buildinfo)
+    with self.assert_raises_with_validation(ValidationError):
+      self._splice.Validate()
+
 
 if __name__ == '__main__':
   absltest.main()

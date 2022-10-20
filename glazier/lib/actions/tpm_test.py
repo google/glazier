@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tests for glazier.lib.actions.tpm."""
 
 from unittest import mock
@@ -19,10 +18,11 @@ from unittest import mock
 from absl.testing import absltest
 from absl.testing import parameterized
 from glazier.lib import bitlocker
+from glazier.lib import test_utils
 from glazier.lib.actions import tpm
 
 
-class TpmTest(parameterized.TestCase):
+class TpmTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(tpm.bitlocker, 'Bitlocker', autospec=True)
   def test_bitlocker_enable(self, mock_bitlocker):
@@ -30,8 +30,9 @@ class TpmTest(parameterized.TestCase):
     b.Run()
     mock_bitlocker.assert_called_with('ps_tpm')
     self.assertTrue(mock_bitlocker.return_value.Enable.called)
-    mock_bitlocker.return_value.Enable.side_effect = bitlocker.Error
-    with self.assertRaises(tpm.ActionError):
+    side_effect = bitlocker.BitlockerActivationFailedError()
+    mock_bitlocker.return_value.Enable.side_effect = side_effect
+    with self.assert_raises_with_validation(tpm.ActionError):
       b.Run()
 
   @parameterized.named_parameters(
@@ -42,7 +43,7 @@ class TpmTest(parameterized.TestCase):
   )
   def test_bitlocker_enable_failure(self, enable_args, build_info):
     b = tpm.BitlockerEnable(enable_args, build_info)
-    with self.assertRaises(tpm.ValidationError):
+    with self.assert_raises_with_validation(tpm.ValidationError):
       b.Validate()
 
   def test_bitlocker_enable_success(self):

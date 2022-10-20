@@ -19,8 +19,10 @@ from unittest import mock
 from absl.testing import absltest
 from absl.testing import parameterized
 from glazier.lib import buildinfo
+from glazier.lib import test_utils
 from glazier.lib import timers
 from glazier.lib.actions import timers as timers_action
+from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import ValidationError
 
 from glazier.lib import constants
@@ -30,7 +32,7 @@ _VALUE_NAME = 'build_yaml'
 _VALUE_DATA = str(datetime.datetime.now(tz=datetime.timezone.utc))
 
 
-class TimersTest(parameterized.TestCase):
+class TimersTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(TimersTest, self).setUp()
@@ -49,9 +51,9 @@ class TimersTest(parameterized.TestCase):
   @mock.patch.object(timers.Timers, 'Get', autospec=True)
   def test_set_timer_error(self, mock_timers_get, mock_timers_set):
     mock_timers_get.return_value = _VALUE_DATA
-    mock_timers_set.side_effect = timers.Error
+    mock_timers_set.side_effect = timers.SetTimerError('name', 'value')
     st = timers_action.SetTimer([_VALUE_NAME], self._build_info)
-    with self.assertRaises(timers_action.ActionError):
+    with self.assert_raises_with_validation(ActionError):
       st.Run()
 
   @parameterized.named_parameters(
@@ -60,7 +62,7 @@ class TimersTest(parameterized.TestCase):
       ('_invalid_arg_type_2', [1]),
   )
   def test_set_timer_validation_error(self, action_args):
-    with self.assertRaises(ValidationError):
+    with self.assert_raises_with_validation(ValidationError):
       timers_action.SetTimer(action_args, None).Validate()
 
   def test_set_timer_validation_success(self):

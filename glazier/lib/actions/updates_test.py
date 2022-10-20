@@ -17,11 +17,12 @@ from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
+from glazier.lib import test_utils
 from glazier.lib.actions import updates
 from glazier.lib.buildinfo import BuildInfo
 
 
-class UpdatesTest(parameterized.TestCase):
+class UpdatesTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(BuildInfo, 'ReleasePath')
   @mock.patch.object(BuildInfo, 'Branch')
@@ -70,13 +71,13 @@ class UpdatesTest(parameterized.TestCase):
     # Invalid format
     conf['data']['update'][0][1] = 'C:\\Windows6.1-KB2990941-v3-x64.cab'
     um = updates.UpdateMSU(conf['data']['update'], bi)
-    with self.assertRaises(updates.ActionError):
+    with self.assert_raises_with_validation(updates.ActionError):
       um.Run()
     conf['data']['update'][0][1] = 'C:\\Windows6.1-KB2990941-v3-x64.msu'
 
     # Dism Fail
-    mock_execute_binary.side_effect = updates.execute.Error
-    with self.assertRaises(updates.ActionError):
+    mock_execute_binary.side_effect = updates.execute.ExecError('some_command')
+    with self.assert_raises_with_validation(updates.ActionError):
       um.Run()
 
   @parameterized.named_parameters(
@@ -90,7 +91,7 @@ class UpdatesTest(parameterized.TestCase):
        [['https://glazier/bin/src.zip', '/tmp/out/src.zip', '12345', '67890']]),
   )
   def test_update_msu_validation_error(self, action_args):
-    with self.assertRaises(updates.ValidationError):
+    with self.assert_raises_with_validation(updates.ValidationError):
       updates.UpdateMSU(action_args, None).Validate()
 
   @parameterized.named_parameters(
