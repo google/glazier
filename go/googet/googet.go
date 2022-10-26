@@ -56,6 +56,7 @@ func call(args []string, conf *Config) error {
 	}
 
 	res, err := funcExec(conf.GooGetExe, args, &conf.ExecConfig)
+	logger.Infof("Executing: %s %v", conf.GooGetExe, args)
 	if err != nil {
 		logger.Errorf("googet stdout: %v", string(res.Stdout))
 		logger.Errorf("googet stderr: %v", string(res.Stderr))
