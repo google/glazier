@@ -57,9 +57,16 @@ func call(args []string, conf *Config) error {
 
 	res, err := funcExec(conf.GooGetExe, args, &conf.ExecConfig)
 	logger.Infof("Executing: %s %v", conf.GooGetExe, args)
+
+	if res.Stdout != nil {
+		logger.Infof("GooGet stdout: %v", string(res.Stdout))
+	}
+
+	if res.Stderr != nil {
+		logger.Errorf("GooGet stderr: %v", string(res.Stderr))
+	}
+
 	if err != nil {
-		logger.Errorf("googet stdout: %v", string(res.Stdout))
-		logger.Errorf("googet stderr: %v", string(res.Stderr))
 		if errors.Is(err, helpers.ErrTimeout) {
 			return fmt.Errorf("execution timed out after %v", conf.ExecConfig.Timeout)
 		}
