@@ -1,6 +1,6 @@
 # Glazier Configuration Layout & Branches
 
-<!--* freshness: { owner: 'winops-imaging' reviewed: '2021-10-19' } *-->
+<!--* freshness: { owner: 'winops-imaging' reviewed: '2022-11-03' } *-->
 
 This page discusses how Glazier's configuration files are laid out at the
 distribution point (web server).
@@ -56,17 +56,17 @@ configuration to be isolated inside of the separate branches.
 value pairs made up of the host's operating system name paired with the name of
 a branch.
 
-In this example, starting the build with `--glazier_spec_os=windows7-qa` will
+In this example, starting the build with `--glazier_spec_os=windows10-qa` will
 load the config from the *testing_branch/* directory.
 
 Example `version-info.yaml`:
 
 ```
 versions:
-  windows7: 'stable_branch'
-  windows7-qa: 'testing_branch'
   windows10: 'stable_branch'
   windows10-qa: 'testing_branch'
+  windows11: 'stable_branch'
+  windows11-qa: 'testing_branch'
 ```
 
 ### branch/release-id.yaml
@@ -104,14 +104,14 @@ supported_models:
       Windows Tier 2 Device,  # Testing
     ]
 os_codes:
-  windows7-qa:
-    code: win7
-  windows7-stable:
-    code: win7
   windows10-qa:
     code: win10
   windows10-stable:
     code: win10
+  windows11-qa:
+    code: win11
+  windows11-stable:
+    code: win11
 ```
 
 #### supported_models
@@ -130,18 +130,18 @@ feature allows the config files to use a generalized name for a given operating
 system, when otherwise the same operating system might have multiple names.
 
 In the example above, we have separate branches for QA
-(`--glazier_spec_os=windows7-qa`) and stable
-(`--glazier_spec_os=windows7-stable`). These are both Windows 7, and we want
-Glazier to attempt to process the Windows 7 configuration in both cases. Rather
-than having to apply both names, we generalize both to the code name *win7*. In
+(`--glazier_spec_os=windows10-qa`) and stable
+(`--glazier_spec_os=windows10-stable`). These are both Windows 10, and we want
+Glazier to attempt to process the Windows 10 configuration in both cases. Rather
+than having to apply both names, we generalize both to the code name *win10*. In
 the config files, we can then do this:
 
 ```
   - pin:
-      'os_code': ['win7']
+      'os_code': ['win10']
     Execute:
       - [some_installer.exe]
 ```
 
 Both branches QA and stable will then treat this command as belonging to the
-Windows 7 install.
+Windows 10 install.
