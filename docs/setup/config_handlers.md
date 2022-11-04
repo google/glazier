@@ -1,6 +1,6 @@
 # Glazier Configuration Handlers
 
-<!--* freshness: { owner: 'winops-imaging' reviewed: '2021-10-19' } *-->
+<!--* freshness: { owner: 'winops-imaging' reviewed: '2022-11-04' } *-->
 
 The Glazier configuration handling libraries are responsible for taking the
 configuration language as input, determining which commands apply to the current
