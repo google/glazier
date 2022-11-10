@@ -280,6 +280,9 @@ class BaseDownloader(object):
       DownloadFailedError: The resource was unreachable or failed to return with
         the expected code.
     """
+    if status_codes:
+      logging.info('Expected status code(s): %s', status_codes)
+
     try:
       if winpe.check_winpe():
         file_stream = urllib.request.urlopen(url, cafile=self._ca_cert_file)
@@ -360,6 +363,8 @@ class BaseDownloader(object):
     Returns:
       True if accessing the file produced one of status_codes.
     """
+    logging.info('Checking URL: %s', url)
+
     try:
       self._OpenStream(url, status_codes=status_codes)
       return True
@@ -384,6 +389,8 @@ class BaseDownloader(object):
     Raises:
       LocalCopyError: failure writing file to the save_location
     """
+    logging.info('Downloading file: %s', url)
+
     self._save_location = save_location
     if IsRemote(url):
       if self._beyondcorp.CheckBeyondCorp():
@@ -406,6 +413,8 @@ class BaseDownloader(object):
     Returns:
       A string containing a path to the temporary file.
     """
+    logging.info('Downloading temp file: %s', url)
+
     destination = tempfile.NamedTemporaryFile()
     self._save_location = destination.name
     destination.close()

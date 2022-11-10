@@ -17,6 +17,7 @@ import sys
 
 from glazier.lib import constants
 from glazier.lib import events
+from glazier.lib import logs
 from glazier.lib import power
 from glazier.lib.config import base as config_base
 from glazier.lib.config import files
@@ -24,6 +25,8 @@ from glazier.lib.config import files
 from glazier.lib import download
 from glazier.lib import errors
 from glazier.lib import policies
+
+logging = logs.logging
 
 
 class Error(errors.GlazierError):
@@ -86,6 +89,7 @@ class ConfigRunner(config_base.ConfigBase):
       ConfigRunnerError: error encountered while running a task.
     """
     if constants.FLAGS.verify_urls:
+      logging.info('Verifying %d URL(s)', len(constants.FLAGS.verify_urls))
       dl = download.Download()
       for url in constants.FLAGS.verify_urls:
         if not dl.CheckUrl(url, [200]):
