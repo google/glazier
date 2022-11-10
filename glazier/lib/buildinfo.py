@@ -515,6 +515,15 @@ class BuildInfo(object):
     return self._HWInfo().IsLaptop()
 
   @functools.lru_cache()
+  def IsOnBattery(self) -> bool:
+    """Whether or not this machine is on battery right now.
+
+    Returns:
+      true if on battery, else false
+    """
+    return self._HWInfo().IsOnBattery()
+
+  @functools.lru_cache()
   def IsVirtual(self) -> bool:
     """Whether or not this build is in a virtual environment.
 

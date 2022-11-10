@@ -412,6 +412,14 @@ class BuildInfoTest(test_utils.GlazierTestCase):
     mock_islaptop.return_value = False
     self.assertFalse(self.buildinfo.IsLaptop())
 
+  @mock.patch.object(buildinfo.hw_info.HWInfo, 'IsOnBattery', autospec=True)
+  def test_is_on_battery(self, mock_isonbattery):
+    mock_isonbattery.return_value = True
+    self.assertTrue(self.buildinfo.IsOnBattery())
+    self.buildinfo.IsOnBattery.cache_clear()
+    mock_isonbattery.return_value = False
+    self.assertFalse(self.buildinfo.IsOnBattery())
+
   @mock.patch.object(
       buildinfo.hw_info.HWInfo, 'IsVirtualMachine', autospec=True)
   def test_is_virtual(self, mock_isvirtualmachine):
