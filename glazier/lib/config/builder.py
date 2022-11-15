@@ -128,13 +128,11 @@ class ConfigBuilder(base.ConfigBase):
       raise ConfigBuilderError() from e
     timer_start = 'start_{}_{}'.format(conf_path.rstrip('/'), conf_file)
     active_path = copy.deepcopy(self._build_info.ActiveConfigPath())
-    config_server = copy.deepcopy(self._build_info.ConfigServer())
     self._task_list.append({
         'path': active_path,
         'data': {
             'SetTimer': [timer_start]
-        },
-        'server': config_server
+        }
     })
     controls = yaml_config['controls']
     try:
@@ -148,8 +146,7 @@ class ConfigBuilder(base.ConfigBase):
           'path': active_path,
           'data': {
               'SetTimer': [timer_stop]
-          },
-          'server': config_server
+          }
       })
     self._build_info.ActiveConfigPath(pop=True)
 
@@ -212,8 +209,7 @@ class ConfigBuilder(base.ConfigBase):
         else:
           self._task_list.append({
               'path': copy.deepcopy(self._build_info.ActiveConfigPath()),
-              'data': {element: control[element]},
-              'server': copy.deepcopy(self._build_info.ConfigServer())
+              'data': {element: control[element]}
           })
       else:
         raise UnknownActionError(str(element))

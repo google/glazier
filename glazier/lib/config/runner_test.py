@@ -50,20 +50,17 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
         'data': {
             'pull': 'val1'
         },
-        'path': ['/path1'],
-        'server': 'https://glazier.example.com'
+        'path': ['/path1']
     }, {
         'data': {
             'pull': 'val2'
         },
-        'path': ['/path2'],
-        'server': 'https://glazier.example.com'
+        'path': ['/path2']
     }, {
         'data': {
             'pull': 'val3'
         },
-        'path': ['/path3'],
-        'server': 'https://glazier.example.com'
+        'path': ['/path3']
     }]
     self.cr._ProcessTasks(conf)
     mock_dump.assert_has_calls([
@@ -97,8 +94,7 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
         'data': {
             'Shutdown': ['25', 'Reason']
         },
-        'path': ['path1'],
-        'server': 'https://glazier.example.com'
+        'path': ['path1']
     }]
     event = events.RestartEvent('Some reason', timeout=25)
     mock_processaction.side_effect = event
@@ -136,8 +132,7 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
         'data': {
             'Restart': ['25', 'Reason']
         },
-        'path': ['path1'],
-        'server': 'https://glazier.example.com'
+        'path': ['path1']
     }]
     event = events.ShutdownEvent('Some reason', timeout=25)
     mock_processaction.side_effect = event
@@ -174,8 +169,7 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
               'data': {
                   'SetTimer': ['Timer1']
               },
-              'path': ['/autobuild'],
-              'server': 'https://glazier.example.com'
+              'path': ['/autobuild']
           }]
       )
 
@@ -186,8 +180,7 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
               'data': {
                   'BadSetTimer': ['Timer1']
               },
-              'path': ['/autobuild'],
-              'server': 'https://glazier.example.com'
+              'path': ['/autobuild']
           }]
       )
 
@@ -208,8 +201,7 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
         'data': {
             'SetTimer': ['TestTimer']
         },
-        'path': ['/autobuild'],
-        'server': 'https://glazier.example.com'
+        'path': ['/autobuild']
     }]
     self.cr.Start('/tmp/path/tasks.yaml')
     mock_read.assert_called_with('/tmp/path/tasks.yaml')

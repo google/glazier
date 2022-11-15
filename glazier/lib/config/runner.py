@@ -98,7 +98,6 @@ class ConfigRunner(config_base.ConfigBase):
 
     while tasks:
       self._build_info.ActiveConfigPath(set_to=tasks[0]['path'])
-      self._build_info.ConfigServer(set_to=tasks[0]['server'])
       entry = tasks[0]['data']
       for element in entry:
         if element == 'policy':
