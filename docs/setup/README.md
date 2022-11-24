@@ -1,6 +1,6 @@
 # Glazier Setup Overview
 
-<!--* freshness: { owner: 'winops-imaing' reviewed: '2021-11-02' } *-->
+<!--* freshness: { owner: '@tseknet' reviewed: '2022-11-24' } *-->
 
 If you're new to Glazier, the [About Glazier](about.md) document will give a
 high-level overview of what Glazier is and how it works.
@@ -101,11 +101,12 @@ One way to accomplish this would be to:
 ## Distribution Point
 
 Glazier requires a web-based repository of binary and image files to be
-available over HTTP(S). You can use any web server or platform that suits your
-needs.
+available over HTTP(S). Configuration files can be served over this same
+web-based repository, or a local directory. You can use any web server or
+platform that suits your needs.
 
-Inside the root of your web host, create two directories: the config root and
-the binary root.
+Inside the root of your web host/local filesystem, create two directories: the
+config root and the binary root.
 
 ### Config Root
 

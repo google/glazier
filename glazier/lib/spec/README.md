@@ -1,6 +1,6 @@
 # Glazier Installer Host Specification
 
-<!--* freshness: { owner: 'winops-imaging' reviewed: '2021-10-19' } *-->
+<!--* freshness: { owner: '@tseknet' reviewed: '2022-11-24' } *-->
 
 The spec module contains libraries for determining the desired host
 specification:

@@ -1,6 +1,6 @@
 # Creating New Actions
 
-<!--* freshness: { owner: 'winops-imaging' reviewed: '2021-10-19' } *-->
+<!--* freshness: { owner: '@tseknet' reviewed: '2022-11-24' } *-->
 
 Glazier's Actions are the core of the system's configuration language. Glazier
 ships with some [existing actions](../actions.md), but for more custom
@@ -22,7 +22,7 @@ All actions receive two parameters, as defined by BaseAction: `args` and
 
     *   An example of the Get action with its args, as written in a config:
 
-        ```
+        ```yaml
         Get:
             - ['windows10.wim', 'c:\base.wim', '4b5b6bf0e59dadb4663ad9b4110bf0794ba24c344291f30d47467d177feb4776']
         ```
@@ -41,7 +41,7 @@ configs.
 Import `BaseAction` and create a new Python class decended from it. The name of
 the class will be the name of the command we use in new configs.
 
-```
+```python
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 
@@ -73,7 +73,7 @@ it should abort the installation until things are fixed.
 Once your action class has been defined, open *glazier/lib/actions/\_\_init\_\_.py*. Add
 a new line declaring the name of your class to export it to the config handler.
 
-```
+```python
 FancyAction = fancy.FancyAction
 ```
 
@@ -91,11 +91,11 @@ list, we know a mistake has been made and the config is broken.
 
 An example validator for Get:
 
-```
-  def Validate(self):
-    self._TypeValidator(self._args, list)
-    for arg in self._args:
-      self._ListOfStringsValidator(arg, 2, 3)
+```python
+def Validate(self):
+  self._TypeValidator(self._args, list)
+  for arg in self._args:
+    self._ListOfStringsValidator(arg, 2, 3)
 ```
 
 The `Validate` function should raise `ValidationError` if it finds a problem
@@ -113,7 +113,7 @@ Once we have the config YAML, testing validity of the entire config is as simple
 as looping through each element, verifying that a corresponding Action exists,
 and calling its `Validate` function.
 
-```
+```python
 from glazier.lib import actions
 
 ...
