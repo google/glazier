@@ -153,15 +153,21 @@ class GooGetInstall(object):
       GooGetMissingPackageNameError: If the GooGet package is not specified.
       GooGetCommandFailedError: If execution of googet.exe fails for any reason.
     """
-    if not kwargs['path']:
+    if kwargs['path']:
+      # Assumes you want GooGet's root in the same path as the binary
+      root_path = os.path.dirname(kwargs['path'])
+    else:
       kwargs['path'] = os.path.join(self._GooGet(), 'googet.exe')
+      root_path = self._GooGet()
+
     if not os.path.exists(kwargs['path']):
       raise GooGetBinaryNotFoundError(kwargs['path'])
+
     if not pkg:
       raise GooGetMissingPackageNameError()
 
-    # Pass --root as GOOGETROOT environmental variable may not exist
-    root = '--root=' + self._GooGet()
+    # Pass -root as GOOGETROOT environmental variable may not exist
+    root = '-root=' + root_path
 
     cmd = ['-noconfirm', root, 'install']
 

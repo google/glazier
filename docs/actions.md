@@ -288,6 +288,8 @@ Supports multiple packages via nested list structure.
             *   If the % character is used in ArgB, it will be replaced for the
                 current build branch, taken from glazier/lib/buildinfo.
         *   ArgC[str]: googet.exe location (Optional)
+            * If specified, the path to googet.exe is also used for the `-root`
+              flag when launching GooGet.
         *   ArgD[int]: Installation retry attemps (optional, defaults to 5)
         *   ArgE[int]: Installation retry sleep interval in seconds (optional,
             defaults to 30)

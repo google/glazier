@@ -14,6 +14,7 @@
 
 """Tests for glazier.lib.googet."""
 
+import os
 import time
 from unittest import mock
 
@@ -60,23 +61,19 @@ class GooGetTest(absltest.TestCase):
 
     # Command called successfully
     self.install.LaunchGooGet(
-        pkg, retries, sleep_dur, self.buildinfo, path=path, flags=[
-            (
-                'http://example.com/team-unstable, '
+        pkg,
+        retries,
+        sleep_dur,
+        self.buildinfo,
+        path=path,
+        flags=[('http://example.com/team-unstable, '
                 'http://example.co.uk/secure-unstable, '
-                'https://example.jp/unstable/'
-            ),
-            '-reinstall', 'whatever'
-        ])
+                'https://example.jp/unstable/'), '-reinstall', 'whatever'])
     cmd = [
-        '-noconfirm', f'--root={constants.SYS_GOOGETROOT}', 'install',
-        '-sources',
-        (
-            'http://example.com/team-unstable, '
-            'http://example.co.uk/secure-unstable, '
-            'https://example.jp/unstable/'
-        ),
-        '-reinstall', 'whatever'
+        '-noconfirm', f'-root={os.path.dirname(path)}', 'install', '-sources',
+        ('http://example.com/team-unstable, '
+         'http://example.co.uk/secure-unstable, '
+         'https://example.jp/unstable/'), '-reinstall', 'whatever'
     ]
     cmd.extend([pkg])
     mock_execute_binary.assert_called_with(path, cmd)
@@ -85,14 +82,15 @@ class GooGetTest(absltest.TestCase):
     self.install.LaunchGooGet(
         pkg, retries, sleep_dur, self.buildinfo, path=path, flags=self.flags)
     cmd = [
-        '-noconfirm', f'--root={constants.SYS_GOOGETROOT}', 'install',
+        '-noconfirm',
+        f'-root={os.path.dirname(path)}',
+        'install',
         '-sources',
-        (
-            'http://example.com/team-example, '
-            'http://example.co.uk/secure-example%, '
-            'http://example.jp/example%'
-        ),
-        'whatever', '-reinstall'
+        ('http://example.com/team-example, '
+         'http://example.co.uk/secure-example%, '
+         'http://example.jp/example%'),
+        'whatever',
+        '-reinstall',
     ]
     cmd.extend([pkg])
     mock_execute_binary.assert_called_with(path, cmd)
@@ -100,7 +98,7 @@ class GooGetTest(absltest.TestCase):
     # Only pkg
     self.install.LaunchGooGet(
         pkg, retries, sleep_dur, self.buildinfo, path=None, flags=None)
-    cmd = ['-noconfirm', f'--root={constants.SYS_GOOGETROOT}', 'install']
+    cmd = ['-noconfirm', f'-root={constants.SYS_GOOGETROOT}', 'install']
     cmd.extend([pkg])
     mock_execute_binary.assert_called_with(path, cmd)
 
@@ -108,14 +106,11 @@ class GooGetTest(absltest.TestCase):
     self.install.LaunchGooGet(
         pkg, retries, sleep_dur, self.buildinfo, path=None, flags=self.flags)
     cmd = [
-        '-noconfirm', f'--root={constants.SYS_GOOGETROOT}', 'install',
+        '-noconfirm', f'-root={constants.SYS_GOOGETROOT}', 'install',
         '-sources',
-        (
-            'http://example.com/team-example, '
-            'http://example.co.uk/secure-example%, '
-            'http://example.jp/example%'
-        ),
-        'whatever', '-reinstall'
+        ('http://example.com/team-example, '
+         'http://example.co.uk/secure-example%, '
+         'http://example.jp/example%'), 'whatever', '-reinstall'
     ]
     cmd.extend([pkg])
     mock_execute_binary.assert_called_with(path, cmd)
@@ -123,7 +118,7 @@ class GooGetTest(absltest.TestCase):
     # No flags
     self.install.LaunchGooGet(
         pkg, retries, sleep_dur, self.buildinfo, path=path, flags=None)
-    cmd = ['-noconfirm', f'--root={constants.SYS_GOOGETROOT}', 'install']
+    cmd = ['-noconfirm', f'-root={constants.SYS_GOOGETROOT}', 'install']
     cmd.extend([pkg])
     mock_execute_binary.assert_called_with(path, cmd)
 
@@ -171,7 +166,7 @@ class GooGetTest(absltest.TestCase):
     # Root flag passed
     with self.assertRaisesRegex(
         googet.Error, 'Root flag detected, remove flag to continue.'):
-      self.install._AddFlags(self.flags + ['--root'], branch)
+      self.install._AddFlags(self.flags + ['-root'], branch)
 
     # Sources keyword detected
     with self.assertRaisesRegex(
