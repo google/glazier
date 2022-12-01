@@ -136,7 +136,7 @@ class GooGetTest(absltest.TestCase):
           '', retries, sleep_dur, self.buildinfo, path=path, flags=self.flags)
 
     # Non zero return value
-    mock_execute_binary.side_effect = googet.execute.Error
+    mock_execute_binary.side_effect = googet.execute.ExecError('some_command')
     with self.assertRaisesRegex(
         googet.Error,
         'GooGet command failed after ' + str(retries) + ' attempts'):
