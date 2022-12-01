@@ -98,6 +98,16 @@ func Install(pkg, sources string, reinstall bool, conf *Config) error {
 	return call(cmd, conf)
 }
 
+// Clean cleans the Googet cache directory.
+func Clean(conf *Config) error {
+	if conf == nil {
+		conf = NewConfig()
+	}
+
+	cmd := []string{"-noconfirm", "clean"}
+	return call(cmd, conf)
+}
+
 // Package represents a GooGet package.
 type Package struct {
 	Name    string
