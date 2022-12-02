@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Constants and Flags used by the Glazier imaging code."""
+"""Constants used by the Glazier imaging code."""
 
 import os
 # do not remove: internal placeholder 1
-from absl import flags
 
 BUILD_LOG_FILE = 'glazier.log'
 REG_ROOT = r'SOFTWARE\Glazier'
@@ -57,26 +56,3 @@ WINPE_GOOGETROOT = os.path.join(WINPE_ROOT, os.sep, 'ProgramData', 'GooGet')
 USB_VOLUME_LABEL = 'BEYONDCORP'
 HELP_URI = 'https://glazier-failures.example.com'
 USE_REG_64 = True
-
-## Flags
-
-FLAGS = flags.FLAGS
-flags.DEFINE_string('binary_root_path', '/bin', 'Path to the binary storage.')
-flags.DEFINE_string('binary_server', '', 'Root URL for binary build files.')
-flags.DEFINE_boolean('config_branches', True,
-                     'The configuration repository uses branched paths.')
-flags.DEFINE_string('config_root_path', 'config',
-                    'Path to the root of the configuration directory.')
-flags.DEFINE_string('config_server', 'https://glazier-server.example.com',
-                    'Root URL for configuration build data.')
-
-flags.DEFINE_enum('environment', 'Host', ['Host', 'WinPE'],
-                  'The running host environment.')
-flags.DEFINE_string('ntp_server', 'time.google.com',
-                    'Server to use for synchronizing the local system time.')
-flags.DEFINE_list(
-    'verify_urls',
-    [
-        'https://www.catalog.update.microsoft.com/Home.aspx',
-    ],
-    'Comma-separated list of URLs to verify are reachable at start')

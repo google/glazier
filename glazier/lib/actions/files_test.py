@@ -16,6 +16,7 @@
 from unittest import mock
 
 from absl.testing import absltest
+from absl.testing import flagsaver
 from absl.testing import parameterized
 from glazier.lib import buildinfo
 from glazier.lib import cache
@@ -120,15 +121,15 @@ class FilesTest(test_utils.GlazierTestCase):
     with self.assert_raises_with_validation(files.ValidationError):
       e.Validate()
 
+  # @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
+  @flagsaver.flagsaver(binary_path='https://glazier-server.example.com/bin/')
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
-  @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
   @mock.patch.object(files.download.Download, 'DownloadFile', autospec=True)
-  def test_get_from_bin(self, mock_downloadfile, mock_branch, mock_binarypath,
-                        mock_releasepath):
+  def test_get_from_bin(self, mock_downloadfile, mock_branch, mock_releasepath):
     mock_branch.return_value = 'stable'
     mock_releasepath.return_value = 'https://glazier-server.example.com/'
-    mock_binarypath.return_value = 'https://glazier-server.example.com/bin/'
+    # mock_binarypath.return_value = 'https://glazier-server.example.com/bin/'
     test_sha256 = (
         '58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800')
     self.filesystem.create_file(

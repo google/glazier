@@ -18,10 +18,10 @@ import datetime
 import re
 from unittest import mock
 
-from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
 from glazier.lib import buildinfo
+from glazier.lib import flags
 from glazier.lib import test_utils
 from glazier.lib import timers
 from glazier.lib.config import files
@@ -118,63 +118,6 @@ class BuildInfoTest(test_utils.GlazierTestCase):
     self.assertEqual(self.buildinfo._chooser_responses['USER_system_locale'],
                      'en-us')
     self.assertTrue(self.buildinfo._chooser_responses['USER_core_ps_shell'])
-
-  @flagsaver.flagsaver
-  def test_binary_server_from_flag(self):
-    FLAGS.binary_server = 'https://glazier-server.example.com'
-    self.assertEqual(self.buildinfo.BinaryServer(),
-                     'https://glazier-server.example.com')
-
-  def test_binary_server_changes(self):
-    r = self.buildinfo.BinaryServer(
-        set_to='https://glazier-server-1.example.com')
-    self.assertEqual(r, 'https://glazier-server-1.example.com')
-    # remains the same
-    self.assertEqual(self.buildinfo.BinaryServer(),
-                     'https://glazier-server-1.example.com')
-    # changes
-    r = self.buildinfo.BinaryServer(
-        set_to='https://glazier-server-2.example.com/')
-    self.assertEqual(r, 'https://glazier-server-2.example.com')
-    # remains the same
-    self.assertEqual(self.buildinfo.BinaryServer(),
-                     'https://glazier-server-2.example.com')
-
-  @flagsaver.flagsaver
-  def test_binary_server_fallback(self):
-    FLAGS.config_server = 'https://glazier-server-3.example.com'
-    self.assertEqual(self.buildinfo.BinaryServer(),
-                     'https://glazier-server-3.example.com')
-
-  @mock.patch.object(buildinfo.BuildInfo, 'BinaryPath', autospec=True)
-  def test_config_path(self, mock_bin):
-    mock_bin.return_value = 'https://glazier-server.example.com/bin/'
-    self.assertEqual(self.buildinfo.BinaryPath(), mock_bin.return_value)
-
-  @flagsaver.flagsaver
-  def test_config_server_from_flag(self):
-    FLAGS.config_server = 'https://glazier-server.example.com'
-    self.assertEqual(self.buildinfo.ConfigServer(),
-                     'https://glazier-server.example.com')
-
-  def test_config_server_changes(self):
-    r = self.buildinfo.ConfigServer(
-        set_to='https://glazier-server-1.example.com')
-    self.assertEqual(r, 'https://glazier-server-1.example.com')
-    # remains the same
-    self.assertEqual(self.buildinfo.ConfigServer(),
-                     'https://glazier-server-1.example.com')
-    # changes
-    r = self.buildinfo.ConfigServer(
-        set_to='https://glazier-server-2.example.com/')
-    self.assertEqual(r, 'https://glazier-server-2.example.com')
-    # remains the same
-    self.assertEqual(self.buildinfo.ConfigServer(),
-                     'https://glazier-server-2.example.com')
-
-  def test_config_server(self):
-    return_value = 'https://glazier-server.example.com'
-    self.assertEqual(self.buildinfo.ConfigServer(), return_value)
 
   @mock.patch.object(buildinfo.identifier, 'check_id', autospec=True)
   def test_image_id(self, mock_check_id):
@@ -625,7 +568,7 @@ class BuildInfoTest(test_utils.GlazierTestCase):
   @mock.patch.object(files, 'Read', autospec=True)
   def test_winpe_version_fallback(self, mock_read):
     mock_read.side_effect = files.Error
-    self.buildinfo.ConfigServer(set_to='https://glazier-server-1.example.com')
+    flags.GetConfigServerFlag(set_to='https://glazier-server-1.example.com')
 
     with self.assertRaises(buildinfo.YamlFileError):
       self.buildinfo.WinpeVersion()

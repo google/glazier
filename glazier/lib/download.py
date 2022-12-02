@@ -33,10 +33,10 @@ import typing
 from typing import List, Optional
 import urllib.request
 
-from absl import flags
 import backoff
 from glazier.lib import beyondcorp
 from glazier.lib import file_util
+from glazier.lib import flags
 from glazier.lib import winpe
 
 from glazier.lib import errors
@@ -162,7 +162,7 @@ def Transform(string: str, build_info) -> str:
   """
   string = re.sub(r'(?<!\\)#', PathCompile(build_info) + '/', string)
   string = re.sub(r'\\#', '#', string)
-  string = re.sub(r'(?<!\\)@', str(build_info.BinaryPath()), string)
+  string = re.sub(r'(?<!\\)@', str(flags.GetBinaryPathFlag()), string)
   string = re.sub(r'\\@', '@', string)
   string = re.sub(r'(?<!\\)%', str(build_info.Branch()), string)
   string = re.sub(r'\\%', '%', string)

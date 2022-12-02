@@ -22,7 +22,7 @@ import os
 from typing import Optional
 
 from glazier.lib import buildinfo
-from glazier.lib import constants
+from glazier.lib import flags
 from glazier.lib import stage
 from glazier.lib import winpe
 
@@ -55,9 +55,9 @@ def _base_title() -> Optional[str]:
 
   if winpe.check_winpe():
     base.append('WinPE')
-  if constants.FLAGS.config_root_path:
+  if flags.FLAGS.config_root_path:
     # Existence of the constant must be checked before strip to avoid null error
-    path = constants.FLAGS.config_root_path.strip('/')
+    path = flags.FLAGS.config_root_path.strip('/')
     if path:
       base.append(path)
   if getstage:

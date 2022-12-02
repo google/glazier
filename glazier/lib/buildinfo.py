@@ -19,8 +19,8 @@ import time
 from typing import Any, Dict, List, Optional
 
 # do not remove: internal placeholder 1
-from absl import flags
 from glazier.lib import beyondcorp
+from glazier.lib import flags
 from glazier.lib import identifier
 from glazier.lib import registry
 from glazier.lib import timers
@@ -37,10 +37,6 @@ from gwinpy.wmi import tpm_info
 
 
 FLAGS = flags.FLAGS
-flags.DEFINE_enum(
-    'glazier_spec', 'flag', list(spec.SPEC_OPTS.keys()),
-    ('Which host specification module to use for determining host features '
-     'like Hostname and OS.'))
 
 
 class Error(errors.GlazierError):
@@ -100,10 +96,8 @@ class BuildInfo(object):
 
   def __init__(self):
     self._active_conf_path = []
-    self._binary_server = ''
     self._chooser_pending = []
     self._chooser_responses = {}
-    self._glazier_server = ''
     self._hw_info = None
     self._net_info = None
     self._release_info = None
@@ -136,50 +130,6 @@ class BuildInfo(object):
   #
   # Image Configuration Functions
   #
-
-  def BinaryPath(self) -> str:
-    """Determines the path to the folder containing all binaries for build.
-
-    Returns:
-      The versioned base path to the current build as a string.
-    """
-    server = self.BinaryServer() or ''
-    path = FLAGS.binary_root_path.strip('/')
-    path = '%s/%s/' % (server, path)
-    return path
-
-  def BinaryServer(self, set_to: str = '') -> str:
-    """Get (or set) the binary server address.
-
-    Args:
-      set_to: Update the internal server address.
-
-    Returns:
-      The binary server without any trailing slashes.
-    """
-    if set_to:
-      self._binary_server = set_to
-    if not self._binary_server:
-      if FLAGS.binary_server:
-        self._binary_server = FLAGS.binary_server
-      else:  # backward compatibility
-        self._binary_server = self.ConfigServer()
-    return self._binary_server.rstrip('/')
-
-  def ConfigServer(self, set_to: str = '') -> str:
-    """Get (or set) the config server address.
-
-    Args:
-      set_to: Update the internal server address.
-
-    Returns:
-      The config server without any trailing slashes.
-    """
-    if set_to:
-      self._glazier_server = set_to
-    if not self._glazier_server:
-      self._glazier_server = FLAGS.config_server
-    return self._glazier_server.rstrip('/')
 
   @functools.lru_cache()
   def ImageID(self) -> str:
@@ -222,7 +172,7 @@ class BuildInfo(object):
     Returns:
       The versioned base path to the current build as a string.
     """
-    path = self.ConfigServer() or ''
+    path = flags.GetConfigServerFlag() or ''
     if FLAGS.config_branches and self.Branch():
       path += '/%s' % str(self.Branch())
     path += '/'
@@ -264,7 +214,7 @@ class BuildInfo(object):
     if not self._version_info:
       try:
         self._version_info = files.Read(
-            f"{self.ConfigServer().rstrip('/')}/version-info.yaml")
+            f"{flags.GetConfigServerFlag().rstrip('/')}/version-info.yaml")
       except files.Error:
         # Fallback to using FLAG to avoid edge case where the config server
         # written to the task list is unavailable.
@@ -589,7 +539,7 @@ class BuildInfo(object):
         'BUILD': {
             'bios_version': str(self.BIOSVersion()),
             'beyond_corp': str(self.BeyondCorp()),
-            'Binary Path': str(self.BinaryPath()),
+            'Binary Path': str(flags.GetBinaryPathFlag()),
             'branch': str(self.Branch()),
             'build_timestamp': str(time.strftime('%m/%d/%Y %H:%M:%S')),
             'Chassis': str(self._HWInfo().ChassisType()),
