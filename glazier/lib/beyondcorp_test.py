@@ -13,24 +13,41 @@
 # limitations under the License.
 """Tests for glazier.lib.beyondcorp."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import json
+import os
 from unittest import mock
 
+from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
 from glazier.lib import beyondcorp
+from glazier.lib import constants
 from glazier.lib import registry
 from glazier.lib import test_utils
+from glazier.lib import winpe
 from requests.models import Response
 
-_TEST_SEED = '{"Seed": {"Seed": "seed_contents"}, "Signature": "Signature"}'
+
 _TEST_WIM = 'test_wim'
 _TEST_WIM_HASH = b'xxaroj1bgT5sObhJ0HwOtqpn+Nx0gO/Wz5wATtYK7Tk='
+_TEST_WIM_PATH = r'D:\sources\boot.wim'
 DECODED_HASH = _TEST_WIM_HASH.decode('utf-8')
+
+# self.seed_src = '/tmp/oci/seed.json'
+# self.seed_dst = 'resources/seed.json'
+_TEST_SEED = ("""
+{
+  "Hash": "%s",
+  "Mac": ["00:00:00:00:00:00"],
+  "Path": "unstable/test.yaml",
+  "Seed": {
+        "Seed": "SPROUT"
+    },
+  "Signature": "AUTOGRAPH"
+}
+""" % DECODED_HASH).replace('\n', '').replace('  ', '')
+
+FLAGS = flags.FLAGS
 
 
 def _create_sign_response(code, status, wim_hash):
@@ -53,8 +70,12 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
     self.addCleanup(mock_wmi.stop)
     self.mock_wmi = mock_wmi.start()
 
-    self.seed_path = self.create_tempfile(
-        file_path='seed.json', content=_TEST_SEED)
+    oci_dir = self.create_tempdir(name='oci')
+    oci_dir.create_file(file_path='seed.json', content=_TEST_SEED)
+    self.seed_src = os.path.join(oci_dir.full_path, 'seed.json')
+    resources_dir = self.create_tempdir(name='resources')
+    resources_dir.create_file(file_path='seed.json', content=_TEST_SEED)
+    self.seed_dst = os.path.join(resources_dir.full_path, 'seed.json')
     self.wim_path = self.create_tempfile(
         file_path='boot.wim', content=_TEST_WIM)
 
@@ -68,14 +89,24 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
     super(BeyondCorpTest, self).tearDown()
     flagsaver.restore_flag_values(self.__saved_flags)
 
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
+  def test_seed_path_sys(self, mock_check_winpe):
+    mock_check_winpe.return_value = False
+    self.assertEqual(self.beyondcorp._SeedPath(), constants.SYS_SEED_FILE)
+
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
+  def test_seed_path_winpe(self, mock_check_winpe):
+    mock_check_winpe.return_value = True
+    self.assertEqual(self.beyondcorp._SeedPath(), constants.WINPE_SEED_FILE)
+
   def test_get_signed_url_disabled(self):
     with self.assert_raises_with_validation(
         beyondcorp.BeyondCorpSignedUrlRequestError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
-  def test_get_signed_url_path_and_endpoint_none(self):
-    beyondcorp.FLAGS.use_signed_url = True
-    beyondcorp.FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
+  def test_get_signed_url_endpoint_none(self):
+    FLAGS.use_signed_url = True
+    FLAGS.sign_endpoint = None
     with self.assert_raises_with_validation(
         beyondcorp.BeyondCorpSignedUrlRequestError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
@@ -86,13 +117,16 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
         beyondcorp.BeyondCorpSignedUrlRequestError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
+  @mock.patch.object(beyondcorp.BeyondCorp, '_WriteSeedFile', autospec=True)
+  @mock.patch.object(beyondcorp.BeyondCorp, '_SeedPath', autospec=True)
   @mock.patch.object(
       beyondcorp.BeyondCorp, '_GetBootWimFilePath', autospec=True)
   @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
   @mock.patch.object(beyondcorp.hw_info.HWInfo, 'MacAddresses', autospec=True)
   @mock.patch.object(beyondcorp.requests, 'post', autospec=True)
   def test_get_signed_url_success(self, mock_post, mock_macaddresses,
-                                  mock_getdisk, mock_getbootwimfilepath):
+                                  mock_getdisk, mock_getbootwimfilepath,
+                                  mock_seed_path, mock_write_seed_file):
 
     mock_getdisk.return_value = 'D'
     mock_getbootwimfilepath.return_value = self.wim_path
@@ -100,26 +134,23 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
     mock_post.return_value = _create_sign_response(200, 'Success', DECODED_HASH)
     beyondcorp.FLAGS.use_signed_url = True
     beyondcorp.FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
-    beyondcorp.FLAGS.seed_path = self.seed_path
+    beyondcorp.FLAGS.seed_path = self.seed_src
+    mock_seed_path.return_value = self.seed_dst
 
     sign = self.beyondcorp.GetSignedUrl('unstable/test.yaml')
-    mock_post.assert_called_once_with(
-        'https://sign-endpoint/sign',
-        data='{"Hash": "%s",'
-        '"Mac": ["00:00:00:00:00:00"],'
-        '"Path": "unstable/test.yaml",'
-        '"Seed": {"Seed": "seed_contents"},'
-        '"Signature": "Signature"'
-        '}' % _TEST_WIM_HASH.decode('utf-8'))
+    mock_post.assert_called_once_with(FLAGS.sign_endpoint, data=_TEST_SEED)
     self.assertEqual(sign, _TEST_WIM_HASH.decode('utf-8'))
+    self.assertFalse(mock_write_seed_file.called)
 
+  @mock.patch.object(beyondcorp.BeyondCorp, '_SeedPath', autospec=True)
   @mock.patch.object(
       beyondcorp.BeyondCorp, '_GetBootWimFilePath', autospec=True)
   @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
   @mock.patch.object(beyondcorp.hw_info.HWInfo, 'MacAddresses', autospec=True)
   @mock.patch.object(beyondcorp.requests, 'post', autospec=True)
   def test_get_signed_url_failure(self, mock_post, mock_macaddresses,
-                                  mock_getdisk, mock_getbootwimfilepath):
+                                  mock_getdisk, mock_getbootwimfilepath,
+                                  mock_seed_path):
 
     mock_getdisk.return_value = 'D'
     mock_getbootwimfilepath.return_value = self.wim_path
@@ -127,7 +158,8 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
     mock_post.return_value = _create_sign_response(200, 'Success', DECODED_HASH)
     beyondcorp.FLAGS.use_signed_url = True
     beyondcorp.FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
-    beyondcorp.FLAGS.seed_path = self.seed_path
+    beyondcorp.FLAGS.seed_path = self.seed_src
+    mock_seed_path.return_value = self.seed_dst
 
     mock_post.return_value = _create_sign_response(400, 'Success', DECODED_HASH)
     with self.assert_raises_with_validation(
@@ -150,6 +182,7 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
         beyondcorp.BeyondCorpSignedUrlResponseError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
+  @mock.patch.object(beyondcorp.BeyondCorp, '_SeedPath', autospec=True)
   @mock.patch.object(
       beyondcorp.BeyondCorp, '_GetBootWimFilePath', autospec=True)
   @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
@@ -157,7 +190,8 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
   @mock.patch.object(beyondcorp.requests, 'post', autospec=True)
   def test_get_signed_url_connection_error(self, mock_post, mock_macaddresses,
                                            mock_getdisk,
-                                           mock_getbootwimfilepath):
+                                           mock_getbootwimfilepath,
+                                           mock_seed_path):
 
     mock_getdisk.return_value = 'D'
     mock_getbootwimfilepath.return_value = self.wim_path
@@ -165,33 +199,31 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
     mock_post.return_value = _create_sign_response(200, 'Success', DECODED_HASH)
     beyondcorp.FLAGS.use_signed_url = True
     beyondcorp.FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
-    beyondcorp.FLAGS.seed_path = self.seed_path
+    beyondcorp.FLAGS.seed_path = self.seed_src
+    mock_seed_path.return_value = self.seed_dst
 
     mock_post.side_effect = beyondcorp.requests.exceptions.ConnectionError
     with self.assert_raises_with_validation(beyondcorp.BeyondCorpGiveUpError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
   def test_read_file(self):
-    beyondcorp.FLAGS.seed_path = self.seed_path
-    seed = self.beyondcorp._ReadFile()
-    self.assertEqual(
-        seed,
-        json.loads('{"Seed": {"Seed": "seed_contents"},'
-                   '"Signature": "Signature"}'))
+    FLAGS.seed_path = self.seed_dst
+    seed = self.beyondcorp._ReadFile(FLAGS.seed_path)
+    self.assertEqual(seed, json.loads(_TEST_SEED))
 
     with self.assert_raises_with_validation(beyondcorp.BeyondCorpSeedFileError):
-      beyondcorp.FLAGS.seed_path = r'C:\bad_seed.json'
-      self.beyondcorp._ReadFile()
+      FLAGS.seed_path = r'C:\bad_seed.json'
+      self.beyondcorp._ReadFile(FLAGS.seed_path)
 
   @mock.patch.object(registry, 'set_value', autospec=True)
   def test_check_beyond_corp_signed_url_success(self, mock_set_value):
-    beyondcorp.FLAGS.use_signed_url = True
+    FLAGS.use_signed_url = True
     mock_set_value.assert_called_with = ('beyond_corp', 'True')
     self.assertTrue(self.beyondcorp.CheckBeyondCorp())
 
   @mock.patch.object(registry, 'get_value', autospec=True)
   def test_check_beyond_corp_no_signed_url_get_true(self, mock_get_value):
-    beyondcorp.FLAGS.use_signed_url = False
+    FLAGS.use_signed_url = False
     mock_get_value.return_value = 'True'
     self.assertTrue(self.beyondcorp.CheckBeyondCorp())
 
@@ -200,7 +232,7 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
   def test_check_beyond_corp_no_signed_url_get_false_set_false(
       self, mock_get_value, mock_set_value):
 
-    beyondcorp.FLAGS.use_signed_url = False
+    FLAGS.use_signed_url = False
     mock_get_value.return_value = 'False'
     self.assertFalse(self.beyondcorp.CheckBeyondCorp())
     mock_set_value.assert_called_with = ('beyond_corp', 'False')
@@ -210,27 +242,26 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
   def test_check_beyond_corp_no_signed_url_get_none_set_false(
       self, mock_get_value, mock_set_value):
 
-    beyondcorp.FLAGS.use_signed_url = False
+    FLAGS.use_signed_url = False
     mock_get_value.return_value = None
     self.assertFalse(self.beyondcorp.CheckBeyondCorp())
     mock_set_value.assert_called_with = ('beyond_corp', 'False')
 
   def test_get_disk_success(self):
     self.mock_wmi.return_value.Query.return_value = [mock.Mock(Name='D')]
-    self.assertEqual(
-        self.beyondcorp._GetDisk(beyondcorp.constants.USB_VOLUME_LABEL), 'D')
+    self.assertEqual(self.beyondcorp._GetDisk(constants.USB_VOLUME_LABEL), 'D')
 
   def test_get_disk_none(self):
     self.mock_wmi.return_value.Query.return_value = [mock.Mock(Name=None)]
     with self.assert_raises_with_validation(
         beyondcorp.BeyondCorpDriveLetterError):
-      self.beyondcorp._GetDisk(beyondcorp.constants.USB_VOLUME_LABEL)
+      self.beyondcorp._GetDisk(constants.USB_VOLUME_LABEL)
 
   def test_get_disk_error(self):
     self.mock_wmi.return_value.Query.side_effect = beyondcorp.wmi_query.WmiError
     with self.assert_raises_with_validation(
         beyondcorp.BeyondCorpDriveLetterError):
-      self.beyondcorp._GetDisk(beyondcorp.constants.USB_VOLUME_LABEL)
+      self.beyondcorp._GetDisk(constants.USB_VOLUME_LABEL)
 
 
 if __name__ == '__main__':

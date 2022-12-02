@@ -23,10 +23,12 @@ import functools
 import hashlib
 import json
 import logging
+import os
 
 from absl import flags
 import backoff
 from glazier.lib import registry
+from glazier.lib import winpe
 import requests
 
 from glazier.lib import constants
@@ -63,10 +65,10 @@ class BeyondCorpGiveUpError(Error):
 
 class BeyondCorpSeedFileError(Error):
 
-  def __init__(self):
+  def __init__(self, file_path: str):
     super().__init__(
         error_code=errors.ErrorCode.BEYONDCORP_SEED_FILE_MISSING,
-        message='BeyondCorp seed file not found')
+        message=f'BeyondCorp seed file not found: {file_path}')
 
 
 class BeyondCorpDriveLetterError(Error):
@@ -113,17 +115,32 @@ def BackoffGiveupHandler(details):
 class BeyondCorp(object):
   """Defines functions needed to retrieve a signed URL."""
 
-  def _ReadFile(self):
-    """Reads the seed file and returns a json blob.
+  @functools.lru_cache()
+  def _SeedPath(self) -> str:
+    """Determines the seed file path.
 
     Returns:
-      contents of the file.
+      path: Full path to the seed file.
+    """
+    path = constants.SYS_SEED_FILE
+    if winpe.check_winpe():
+      path = constants.WINPE_SEED_FILE
+    return path
+
+  def _ReadFile(self, file_path: str) -> dict[str, str]:
+    """Reads the seed file and returns a json blob.
+
+    Args:
+      file_path: Path of the json file to read.
+
+    Returns:
+      Contents of the file.
     """
     try:
-      with open(FLAGS.seed_path) as p:
+      with open(file_path) as p:
         return json.load(p)
     except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
-      raise BeyondCorpSeedFileError() from e
+      raise BeyondCorpSeedFileError(file_path) from e
 
   @functools.lru_cache()
   def CheckBeyondCorp(self) -> bool:
@@ -197,6 +214,38 @@ class BeyondCorp(object):
 
     return drive_letter
 
+  def _WriteSeedFile(self) -> None:
+    """Writes seed.json to disk, leveraging data from multiple sources."""
+    hwinfo = hw_info.HWInfo()
+    drive_letter = self._GetDisk(constants.USB_VOLUME_LABEL).strip(':')
+
+    path = ''
+    if FLAGS.seed_path:
+      path = FLAGS.seed_path
+    else:
+      path = os.path.join(f'{drive_letter}:', os.sep, 'oci', 'seed.json')
+
+    data = self._ReadFile(path)
+    data = {
+        'Mac': hwinfo.MacAddresses(),
+        'Seed': data['Seed'],
+        'Signature': data['Signature'],
+        'Hash': self._GetHash(self._GetBootWimFilePath()).decode('utf-8')
+    }
+
+    with open(self._SeedPath(), 'w') as f:
+      json.dump(
+          data,
+          f,
+          ensure_ascii=True,
+          sort_keys=True,
+          indent=2,
+          separators=(',', ': '))
+
+    # Intentionally format bold/green, as it's an actionable log message
+    logging.info(
+        '\x1b[32m\033[1mIt is now safe to unplug your USB device.\x1b[0m')
+
   def _GetBootWimFilePath(self) -> str:
     """Primarily exists for easier unit testing."""
     drive_letter = self._GetDisk(constants.USB_VOLUME_LABEL).strip(':')
@@ -226,27 +275,23 @@ class BeyondCorp(object):
       raise BeyondCorpSignedUrlRequestError(
           'use_signed_url flag not configured.')
 
-    if FLAGS.sign_endpoint is None or FLAGS.seed_path is None:
+    if not FLAGS.sign_endpoint:
       raise BeyondCorpSignedUrlRequestError(
-          'sign_endpoint and seed_path cannot be None when using Signed URL.')
+          'sign_endpoint flag not configured.')
 
-    hwinfo = hw_info.HWInfo()
-    boot_wim_file_path = self._GetBootWimFilePath()
+    if not os.path.exists(self._SeedPath()):
+      self._WriteSeedFile()
 
-    data = self._ReadFile()
+    json_data = self._ReadFile(self._SeedPath())
     data = {
-        'Path':
-            relative_path,
-        'Mac':
-            hwinfo.MacAddresses(),
-        'Seed':
-            data['Seed'],
-        'Signature':
-            data['Signature'],
-        'Hash':
-            self._GetHash(boot_wim_file_path).decode('utf-8')
+        'Path': relative_path,
+        'Mac': json_data['Mac'],
+        'Seed': json_data['Seed'],
+        'Signature': json_data['Signature'],
+        'Hash': json_data['Hash']
     }
 
+    # Format JSON as a string for the signed_url request
     req = json.dumps(
         data,
         ensure_ascii=True,
