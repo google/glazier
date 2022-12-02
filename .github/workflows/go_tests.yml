@@ -5,15 +5,15 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Install Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: 1.18
+          go-version: 1.18.x
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Download Dependencies
-        run: go get -v -t -d ./...
+      - name: Run vet
+        run: go vet ./...
 
       - name: Test
         run: go test -v ./...
