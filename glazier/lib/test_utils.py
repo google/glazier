@@ -13,7 +13,9 @@
 # limitations under the License.
 """Utility code for use with tests."""
 
+import os
 import re
+from unittest import mock
 from absl.testing import parameterized
 
 from glazier.lib import errors
@@ -84,3 +86,31 @@ class GlazierTestCase(parameterized.TestCase):
   def assert_raises_with_validation(self, expected_exception):
     return self.assertRaisesWithPredicateMatch(expected_exception,
                                                _exception_validation_predicate)
+
+  def assert_path_exists(self, file_path):
+    self.assertTrue(os.path.exists(file_path))
+
+  def assert_path_does_not_exist(self, file_path):
+    self.assertFalse(os.path.exists(file_path))
+
+  def assert_file_contents(self, file_path, contents):
+    self.assert_path_exists(file_path)
+    with open(file_path, 'r') as f:
+      self.assertEqual(contents, f.read())
+
+  def patch(self, target, attribute, **kwargs):
+    patcher = mock.patch.object(target, attribute, **kwargs)
+    self.addCleanup(patcher.stop)
+    return patcher.start()
+
+  def patch_constant(self, module, key, value):
+    patcher = mock.patch.dict(module.__dict__, values={key: value})
+    self.addCleanup(patcher.stop)
+    return patcher.start()
+
+  def patch_constant_file_path(self, module, key, file_name=None, content=None):
+    temp_dir = self.create_tempdir()
+    temp_file_path = temp_dir.create_file(
+        file_path=file_name, content=content).full_path
+    self.patch_constant(module, key, temp_file_path)
+    return temp_file_path
