@@ -23,8 +23,6 @@ from glazier.lib import stage
 from glazier.lib import test_utils
 from glazier.lib.actions import installer
 
-from pyfakefs import fake_filesystem
-
 from glazier.lib import constants
 
 
@@ -133,16 +131,17 @@ class InstallerTest(test_utils.GlazierTestCase):
   @mock.patch.object(installer.registry, 'set_value', autospec=True)
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
   def test_build_info_save(self, mock_buildinfo, mock_set_value):
-    fs = fake_filesystem.FakeFilesystem()
-    installer.open = fake_filesystem.FakeFileOpen(fs)
-    installer.os = fake_filesystem.FakeOsModule(fs)
+
     timer_root = r'{0}\{1}'.format(constants.REG_ROOT, 'Timers')
-    fs.create_file(
-        '{}/build_info.yaml'.format(constants.SYS_CACHE),
-        contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, opt 3: 12345}}\n'
+    temp_cache_dir = self.create_tempdir()
+    self.patch_constant(constants, 'SYS_CACHE', temp_cache_dir.full_path)
+    temp_cache_dir.create_file(
+        file_path='build_info.yaml',
+        content='{BUILD: {opt 1: true, TIMER_opt 2: some value, opt 3: 12345}}\n'
     )
     s = installer.BuildInfoSave(None, mock_buildinfo)
     s.Run()
+
     mock_set_value.assert_has_calls(
         [
             mock.call('opt 1', True, 'HKLM', constants.REG_ROOT),

@@ -19,7 +19,6 @@ from unittest import mock
 from absl.testing import absltest
 from glazier.lib import test_utils
 from glazier.lib.actions import sysprep
-from pyfakefs import fake_filesystem
 
 
 UNATTEND_XML = r"""<?xml version='1.0' encoding='utf-8'?>
@@ -58,21 +57,16 @@ UNATTEND_XML = r"""<?xml version='1.0' encoding='utf-8'?>
 
 class SysprepTest(test_utils.GlazierTestCase):
 
-  def setUp(self):
-    super(SysprepTest, self).setUp()
-    fs = fake_filesystem.FakeFilesystem()
-    fs.create_dir('/windows/panther')
-    fs.create_file('/windows/panther/unattend.xml', contents=UNATTEND_XML)
-    self.fake_open = fake_filesystem.FakeFileOpen(fs)
-    sysprep.os = fake_filesystem.FakeOsModule(fs)
-    sysprep.open = self.fake_open
-
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_set_unattend_time_zone_edit_unattend(self, mock_buildinfo):
+
+    unattend_path = self.create_tempfile(
+        file_path='unattend.xml', content=UNATTEND_XML).full_path
+
     st = sysprep.SetUnattendTimeZone([], mock_buildinfo)
-    st._EditUnattend(
-        'Yakutsk Standard Time', unattend_path='/windows/panther/unattend.xml')
-    with self.fake_open('/windows/panther/unattend.xml') as handle:
+    st._EditUnattend('Yakutsk Standard Time', unattend_path=unattend_path)
+
+    with open(unattend_path) as handle:
       result = [line.strip() for line in handle.readlines()]
       self.assertIn('<TimeZone>Yakutsk Standard Time</TimeZone>', result)
 

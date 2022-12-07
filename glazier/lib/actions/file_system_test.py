@@ -13,6 +13,7 @@
 # limitations under the License.
 """Tests for glazier.lib.actions.file_system."""
 
+import os
 from unittest import mock
 
 from absl.testing import absltest
@@ -21,46 +22,51 @@ from glazier.lib import file_util
 from glazier.lib import test_utils
 from glazier.lib.actions import file_system
 
-from pyfakefs.fake_filesystem_unittest import Patcher
-
 
 class CopyDirTest(test_utils.GlazierTestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_success(self, mock_buildinfo):
-    with Patcher() as patcher:
-      patcher.fs.create_dir(r'/stage')
-      patcher.fs.create_file(r'/stage/file1.txt', contents='file1')
-      patcher.fs.create_file(r'/stage/file2.txt', contents='file2')
-      cd = file_system.CopyDir([r'/stage', r'/root/copied'], mock_buildinfo)
-      cd.Validate()
-      cd.Run()
-      self.assertTrue(patcher.fs.exists(r'/root/copied/file1.txt'))
-      self.assertTrue(patcher.fs.exists(r'/root/copied/file2.txt'))
+
+    src_dir = self.create_tempdir(name='src')
+    src_dir.create_file(file_path='file1.txt', content='file1')
+    src_dir.create_file(file_path='file2.txt', content='file2')
+    dst_dir = os.path.join(src_dir.full_path, 'dst')
+
+    cd = file_system.CopyDir([src_dir.full_path, dst_dir], mock_buildinfo)
+    cd.Validate()
+    cd.Run()
+
+    self.assert_path_exists(os.path.join(dst_dir, 'file1.txt'))
+    self.assert_path_exists(os.path.join(dst_dir, 'file2.txt'))
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_copy_with_remove(self, mock_buildinfo):
-    with Patcher() as patcher:
-      patcher.fs.create_dir(r'/stage')
-      patcher.fs.create_file(r'/stage/file1.txt', contents='file1')
-      patcher.fs.create_file(r'/stage/file2.txt', contents='file2')
-      cd = file_system.CopyDir(
-          [r'/stage', r'/root/copied', True], mock_buildinfo)
-      cd.Validate()
-      cd.Run()
-      self.assertTrue(patcher.fs.exists(r'/root/copied/file1.txt'))
-      self.assertTrue(patcher.fs.exists(r'/root/copied/file2.txt'))
+
+    src_dir = self.create_tempdir(name='src')
+    src_dir.create_file(file_path='file1.txt', content='file1')
+    src_dir.create_file(file_path='file2.txt', content='file2')
+    dst_dir = os.path.join(src_dir.full_path, 'dst')
+
+    cd = file_system.CopyDir([src_dir.full_path, dst_dir, True], mock_buildinfo)
+    cd.Validate()
+    cd.Run()
+
+    self.assert_path_exists(os.path.join(dst_dir, 'file1.txt'))
+    self.assert_path_exists(os.path.join(dst_dir, 'file2.txt'))
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_exception(self, mock_buildinfo):
-    with Patcher() as patcher:
-      patcher.fs.create_dir(r'/stage')
-      with self.assert_raises_with_validation(file_system.ActionError):
-        file_system.CopyDir([r'/stage', r'/stage'], mock_buildinfo).Run()
+    temp_dir = self.create_tempdir().full_path
+    with self.assert_raises_with_validation(file_system.ActionError):
+      file_system.CopyDir([temp_dir, temp_dir], mock_buildinfo).Run()
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_missing_args(self, mock_buildinfo):
-    cd = file_system.CopyDir([r'/stage'], mock_buildinfo)
+
+    temp_dir = self.create_tempdir().full_path
+    cd = file_system.CopyDir([temp_dir], mock_buildinfo)
+
     with self.assert_raises_with_validation(file_system.ValidationError):
       cd.Validate()
     with self.assert_raises_with_validation(file_system.ActionError):
@@ -71,25 +77,29 @@ class MultiCopyDirTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(file_system.shutil, 'copytree', autospec=True)
   @mock.patch.object(file_system.shutil, 'rmtree', autospec=True)
-  @mock.patch.object(file_system.os.path, 'exists', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def test_success(
-      self, mock_build_info, mock_exists, mock_rmtree, mock_copytree):
+  def test_success(self, mock_build_info, mock_rmtree, mock_copytree):
+
+    # Create a list of (src, dst) tuples of temp directories.
+    temp_dirs = [(self.create_tempdir(name='src_%d' % i).full_path,
+                  self.create_tempdir(name='dst_%d' % i).full_path)
+                 for i in range(1, 7)]
 
     # exists=True, remove_existing=True
-    copydir_args1 = [r'/src/dir/one/', r'/dst/dir/one/', True]
+    copydir_args1 = [temp_dirs[0][0], temp_dirs[0][1], True]
     # exists=True, remove_existing=False
-    copydir_args2 = [r'/src/dir/two/', r'/dst/dir/two/', False]
+    copydir_args2 = [temp_dirs[1][0], temp_dirs[1][1], False]
     # exists=True, remove_existing=None
-    copydir_args3 = [r'/src/dir/three/', r'/dst/dir/three/']
+    copydir_args3 = [temp_dirs[2][0], temp_dirs[2][1]]
     # exists=False, remove_existing=True
-    copydir_args4 = [r'/src/dir/four/', r'/dst/dir/four/', True]
+    copydir_args4 = [temp_dirs[3][0], temp_dirs[3][1], True]
     # exists=False, remove_existing=False
-    copydir_args5 = [r'/src/dir/five/', r'/dst/dir/five/', False]
+    copydir_args5 = [temp_dirs[4][0], temp_dirs[4][1], False]
     # exists=False, remove_existing=None
-    copydir_args6 = [r'/src/dir/six/', r'/dst/dir/six/']
+    copydir_args6 = [temp_dirs[5][0], temp_dirs[5][1]]
 
-    mock_exists.side_effect = [True] * 3 + [False] * 3
+    mock_exists = self.patch(
+        file_system.os.path, 'exists', side_effect=[True] * 3 + [False] * 3)
 
     multicopydir_args = [
         copydir_args1, copydir_args2, copydir_args3, copydir_args4,
@@ -98,14 +108,14 @@ class MultiCopyDirTest(test_utils.GlazierTestCase):
         multicopydir_args, mock_build_info).Run()
 
     self.assertEqual(mock_exists.call_count, 6)
-    mock_rmtree.assert_called_once_with(r'/dst/dir/one/')
+    self.assertEqual(len(temp_dirs * 2) + 1, mock_rmtree.call_count)
     mock_copytree.assert_has_calls([
-        mock.call(r'/src/dir/one/', r'/dst/dir/one/'),
-        mock.call(r'/src/dir/two/', r'/dst/dir/two/'),
-        mock.call(r'/src/dir/three/', r'/dst/dir/three/'),
-        mock.call(r'/src/dir/four/', r'/dst/dir/four/'),
-        mock.call(r'/src/dir/five/', r'/dst/dir/five/'),
-        mock.call(r'/src/dir/six/', r'/dst/dir/six/'),
+        mock.call(temp_dirs[0][0], temp_dirs[0][1]),
+        mock.call(temp_dirs[1][0], temp_dirs[1][1]),
+        mock.call(temp_dirs[2][0], temp_dirs[2][1]),
+        mock.call(temp_dirs[3][0], temp_dirs[3][1]),
+        mock.call(temp_dirs[4][0], temp_dirs[4][1]),
+        mock.call(temp_dirs[5][0], temp_dirs[5][1]),
     ])
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -114,15 +124,22 @@ class MultiCopyDirTest(test_utils.GlazierTestCase):
       copydir_args = [r'/src/dir/one/']
       file_system.MultiCopyDir([copydir_args], mock_build_info).Run()
 
-  # NOTE: Reverse decoration is intentional, due to @parameterized and @mock.
-  @parameterized.parameters(
-      ([r'/src/dir/one/', r'/dst/dir/one/', True],),
-      ([r'/src/dir/two/', r'/dst/dir/two/', False],),
-      ([r'/src/dir/three/', r'/dst/dir/three/'],),
-  )
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
-  def test_validate_valid_args(self, copydir_args, mock_build_info):
-    multicopydir_args = [copydir_args]
+  def test_validate_valid_args(self, mock_build_info):
+    multicopydir_args = [
+        [
+            self.create_tempdir(name='src_1').full_path,
+            self.create_tempdir(name='dst_1').full_path, True
+        ],
+        [
+            self.create_tempdir(name='src_2').full_path,
+            self.create_tempdir(name='dst_2').full_path, False
+        ],
+        [
+            self.create_tempdir(name='src_3').full_path,
+            self.create_tempdir(name='dst_3').full_path
+        ],
+    ]
     file_system.MultiCopyDir(multicopydir_args, mock_build_info).Validate()
 
   # NOTE: Reverse decoration is intentional, due to @parameterized and @mock.
@@ -146,10 +163,12 @@ class MultiCopyFileTest(test_utils.GlazierTestCase):
   @mock.patch.object(file_util, 'Copy', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_success(self, mock_buildinfo, mock_copy):
-    src1 = r'/stage/file1.txt'
-    dst1 = r'/windows/glazier/glazier.log'
-    src2 = r'/stage/file2.txt'
-    dst2 = r'/windows/glazier/other.log'
+
+    src1 = self.create_tempfile(file_path='file1.txt').full_path
+    dst1 = self.create_tempfile(file_path='glazier.log').full_path
+    src2 = self.create_tempfile(file_path='file2.txt').full_path
+    dst2 = self.create_tempfile(file_path='other.log').full_path
+
     file_system.MultiCopyFile(
         [[src1, dst1], [src2, dst2]], mock_buildinfo).Run()
     mock_copy.assert_has_calls([mock.call(src1, dst1), mock.call(src2, dst2)])
@@ -182,9 +201,11 @@ class CopyFileTest(test_utils.GlazierTestCase):
   @mock.patch.object(file_util, 'Copy', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_error(self, mock_buildinfo, mock_copy):
+
     src1 = r'/missing.txt'
     dst1 = r'/windows/glazier/glazier.log'
     mock_copy.side_effect = file_util.Error('error')
+
     with self.assert_raises_with_validation(file_system.ActionError):
       file_system.CopyFile([src1, dst1], mock_buildinfo).Run()
 
@@ -199,12 +220,15 @@ class MkDirTest(test_utils.GlazierTestCase):
   @mock.patch.object(file_util, 'CreateDirectories', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_success(self, mock_buildinfo, mock_createdirectories):
+
     file_system.MkDir(['/stage/subdir1/subdir2'], mock_buildinfo).Run()
     mock_createdirectories.assert_called_with('/stage/subdir1/subdir2')
+
     # bad path
     mock_createdirectories.side_effect = file_util.Error('error')
     with self.assert_raises_with_validation(file_system.ActionError):
       file_system.MkDir([r'/stage/file1.txt'], mock_buildinfo).Run()
+
     # bad args
     with self.assert_raises_with_validation(file_system.ActionError):
       file_system.MkDir([], mock_buildinfo).Run()
@@ -226,12 +250,18 @@ class RmDirTest(test_utils.GlazierTestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_success(self, mock_buildinfo):
-    with Patcher() as patcher:
-      patcher.fs.create_dir(r'/test1')
-      patcher.fs.create_dir(r'/test2')
-      self.assertTrue(patcher.fs.exists('/test2'))
-      file_system.RmDir(['/test1', '/test2'], mock_buildinfo).Run()
-      self.assertFalse(patcher.fs.exists('/test2'))
+
+    # with Patcher() as patcher:
+    # patcher.fs.create_dir(r'/test1')
+    temp_dir_1 = self.create_tempdir(name='test1').full_path
+    # patcher.fs.create_dir(r'/test2')
+    temp_dir_2 = self.create_tempdir(name='test2').full_path
+    # self.assertTrue(patcher.fs.exists('/test2'))
+    self.assert_path_exists(temp_dir_2)
+
+    file_system.RmDir([temp_dir_1, temp_dir_2], mock_buildinfo).Run()
+    # self.assertFalse(patcher.fs.exists('/test2'))
+    self.assert_path_does_not_exist(temp_dir_2)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_exception(self, mock_buildinfo):

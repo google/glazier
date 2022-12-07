@@ -13,6 +13,7 @@
 # limitations under the License.
 """Tests for glazier.lib.actions.files."""
 
+import os
 from unittest import mock
 
 from absl.testing import absltest
@@ -23,18 +24,11 @@ from glazier.lib import events
 from glazier.lib import test_utils
 from glazier.lib.actions import files
 
-from pyfakefs import fake_filesystem
-from pyfakefs import fake_filesystem_shutil
-
 
 class FilesTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(FilesTest, self).setUp()
-    self.filesystem = fake_filesystem.FakeFilesystem()
-    files.open = fake_filesystem.FakeFileOpen(self.filesystem)
-    files.file_util.shutil = fake_filesystem_shutil.FakeShutilModule(
-        self.filesystem)
     files.WindowsError = Exception
 
   # TODO(b/152894756): Split into separate tests.
@@ -129,10 +123,10 @@ class FilesTest(test_utils.GlazierTestCase):
     mock_branch.return_value = 'stable'
     mock_releasepath.return_value = 'https://glazier-server.example.com/'
     mock_binarypath.return_value = 'https://glazier-server.example.com/bin/'
-    test_sha256 = (
-        '58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800')
-    self.filesystem.create_file(
-        r'/tmp/autobuild.par.sha256', contents=test_sha256)
+    self.create_tempfile(
+        file_path='autobuild.par.sha256',
+        content='58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800'
+    )
     mock_downloadfile.return_value = True
     files.Get([['@glazier/1.0/autobuild.par', '/tmp/autobuild.par']],
               buildinfo.BuildInfo()).Run()
@@ -217,10 +211,11 @@ class FilesTest(test_utils.GlazierTestCase):
     mock_branch.return_value = 'stable'
     mock_releasepath.return_value = 'https://glazier-server.example.com/'
     remote = '@glazier/1.0/autobuild.par'
-    self.filesystem.create_file('/directory')
+    temp_dir = self.create_tempdir().full_path
     mock_downloadfile.side_effect = files.download.Error('Error')
     with self.assert_raises_with_validation(files.ActionError):
-      files.Get([[remote, '/directory/file.txt']], buildinfo.BuildInfo()).Run()
+      temp_path = os.path.join(temp_dir, 'file.txt')
+      files.Get([[remote, temp_path]], buildinfo.BuildInfo()).Run()
 
   @mock.patch.object(buildinfo.BuildInfo, 'ReleasePath', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'Branch', autospec=True)
@@ -229,9 +224,9 @@ class FilesTest(test_utils.GlazierTestCase):
                              mock_releasepath):
     mock_branch.return_value = 'stable'
     mock_releasepath.return_value = 'https://glazier-server.example.com/'
-    self.filesystem.create_file(
-        r'/tmp/autobuild.par.sha256',
-        contents='58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800'
+    self.create_tempfile(
+        file_path='autobuild.par.sha256',
+        content='58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800'
     )
     mock_downloadfile.return_value = True
     files.Get([['autobuild.bat', '/tmp/autobuild.bat']],
@@ -253,8 +248,7 @@ class FilesTest(test_utils.GlazierTestCase):
     local = r'/tmp/autobuild.par'
     test_sha256 = (
         '58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800')
-    self.filesystem.create_file(
-        r'/tmp/autobuild.par.sha256', contents=test_sha256)
+    self.create_tempfile(file_path='autobuild.par.sha256', content=test_sha256)
     mock_downloadfile.return_value = True
     mock_verifyshahash.return_value = True
     files.Get([['@glazier/1.0/autobuild.par', local, test_sha256]],
@@ -271,8 +265,7 @@ class FilesTest(test_utils.GlazierTestCase):
     mock_releasepath.return_value = 'https://glazier-server.example.com/'
     test_sha256 = (
         '58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800')
-    self.filesystem.create_file(
-        r'/tmp/autobuild.par.sha256', contents=test_sha256)
+    self.create_tempfile(file_path='autobuild.par.sha256', content=test_sha256)
     mock_downloadfile.return_value = True
     mock_verifyshahash.return_value = False
     with self.assert_raises_with_validation(files.ActionError):
@@ -288,10 +281,10 @@ class FilesTest(test_utils.GlazierTestCase):
                        mock_releasepath):
     mock_branch.return_value = 'stable'
     mock_releasepath.return_value = 'https://glazier-server.example.com/'
-    test_sha256 = (
-        '58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800')
-    self.filesystem.create_file(
-        r'/tmp/autobuild.par.sha256', contents=test_sha256)
+    self.create_tempfile(
+        file_path='autobuild.par.sha256',
+        content='58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae800'
+    )
     mock_downloadfile.return_value = True
     files.Get([['@glazier/1.0/autobuild.par', r'/tmp/autobuild.par', '']],
               buildinfo.BuildInfo()).Run()

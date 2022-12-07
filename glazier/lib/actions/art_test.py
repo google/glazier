@@ -18,9 +18,7 @@ from unittest import mock
 from absl.testing import absltest
 from absl.testing import parameterized
 from glazier.lib.actions import art
-from pyfakefs import fake_filesystem
 
-_TEST_PATH = r'/test/test.ascii'
 _TEST_CONTENT = r"""
   / ____| |         (_)
  | |  __| | __ _ _____  ___ _ __
@@ -34,16 +32,13 @@ class PrintFromFileTest(parameterized.TestCase):
   def setUp(self):
 
     super(PrintFromFileTest, self).setUp()
-    self.filesystem = fake_filesystem.FakeFilesystem()
-    self.filesystem.create_dir(r'/test')
-    self.filesystem.create_file(_TEST_PATH, contents=_TEST_CONTENT)
-    art.os = fake_filesystem.FakeOsModule(self.filesystem)
-    art.open = fake_filesystem.FakeFileOpen(self.filesystem)
+    self.test_path = self.create_tempfile(
+        file_path='test.ascii', content=_TEST_CONTENT).full_path
 
   @mock.patch('builtins.print', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_print_from_file(self, mock_buildinfo, mock_print):
-    art.PrintFromFile([_TEST_PATH], mock_buildinfo).Run()
+    art.PrintFromFile([self.test_path], mock_buildinfo).Run()
     mock_print.assert_called_once_with(_TEST_CONTENT)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
@@ -59,7 +54,7 @@ class PrintFromFileTest(parameterized.TestCase):
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_get_content(self, mock_buildinfo):
-    content = art.PrintFromFile._get_content(mock_buildinfo, _TEST_PATH)
+    content = art.PrintFromFile._get_content(mock_buildinfo, self.test_path)
     self.assertEqual(content, _TEST_CONTENT)
 
   @parameterized.named_parameters(
@@ -73,7 +68,7 @@ class PrintFromFileTest(parameterized.TestCase):
       pff.Validate()
 
   def test_print_from_file_validation_success(self):
-    pff = art.PrintFromFile([_TEST_PATH], None)
+    pff = art.PrintFromFile([self.test_path], None)
     pff.Validate()
 
 
