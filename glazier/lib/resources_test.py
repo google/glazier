@@ -15,34 +15,39 @@
 """Tests for glazier.lib.resources."""
 
 from unittest import mock
+from absl import flags
 
 from absl.testing import absltest
 from glazier.lib import resources
 from glazier.lib import test_utils
-from pyfakefs import fake_filesystem
+
+FLAGS = flags.FLAGS
 
 
 class ResourcesTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(ResourcesTest, self).setUp()
-    self.fs = fake_filesystem.FakeFilesystem()
-    resources.os = fake_filesystem.FakeOsModule(self.fs)
-    self.fs.create_file('/test/file.txt')
-    self.fs.create_file('/test2/resources/file.txt')
+
+    self.temp_dir = self.create_tempdir()
+    FLAGS.resource_path = self.temp_dir.full_path
+    self.temp_path_1 = self.temp_dir.create_file('test/file.txt').full_path
+    self.temp_path_2 = self.temp_dir.create_file(
+        'test2/resources/file.txt').full_path
 
   def test_get_resource_file_name(self):
 
-    r = resources.Resources('/test')
+    r = resources.Resources(resource_dir=self.temp_dir.full_path)
     with self.assert_raises_with_validation(resources.FileNotFound):
       r.GetResourceFileName('missing.txt')
-    self.assertEqual(r.GetResourceFileName('file.txt'), '/test/file.txt')
+
+    self.assertEqual(r.GetResourceFileName('test/file.txt'), self.temp_path_1)
 
     with mock.patch.object(resources.os.path, 'dirname') as dirname:
       dirname.return_value = '/test2'
       r = resources.Resources()
       self.assertEqual(
-          r.GetResourceFileName('file.txt'), '/test2/resources/file.txt')
+          r.GetResourceFileName('/test2/resources/file.txt'), self.temp_path_2)
 
 
 if __name__ == '__main__':

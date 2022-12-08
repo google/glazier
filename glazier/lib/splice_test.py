@@ -20,7 +20,6 @@ from glazier.lib import execute
 from glazier.lib import identity
 from glazier.lib import splice
 from glazier.lib import test_utils
-from pyfakefs import fake_filesystem
 
 _USERNAME = 'bert'
 _HOSTNAME = 'earnie-pc'
@@ -30,9 +29,7 @@ class SpliceTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(SpliceTest, self).setUp()
-    self.fs = fake_filesystem.FakeFilesystem()
-    splice.os = fake_filesystem.FakeOsModule(self.fs)
-    splice.open = fake_filesystem.FakeFileOpen(self.fs)
+
     splice.os.environ['ProgramFiles'] = r'C:\Program Files'
     self.splice = splice.Splice()
     self.error = execute.Error
@@ -81,7 +78,7 @@ class SpliceTest(test_utils.GlazierTestCase):
   def test_user_domain_join_success(self, mock_info, mock_get_username,
                                     mock_get_hostname, mock_execute_binary):
 
-    self.fs.CreateFile(self.splice.splice_binary)
+    self.create_tempfile(file_path=self.splice.splice_binary)
     mock_get_hostname.return_value = 'foo'
     mock_get_username.return_value = 'bar'
     mock_execute_binary.return_value = 0
@@ -99,7 +96,7 @@ class SpliceTest(test_utils.GlazierTestCase):
                                             mock_get_hostname,
                                             mock_execute_binary, mock_sleep):
 
-    self.fs.CreateFile(self.splice.splice_binary)
+    self.create_tempfile(file_path=self.splice.splice_binary)
     mock_get_hostname.return_value = 'foo'
     mock_get_username.return_value = 'bar'
     mock_execute_binary.side_effect = iter(
@@ -117,7 +114,7 @@ class SpliceTest(test_utils.GlazierTestCase):
   @mock.patch.object(splice.Splice, '_get_username', autospec=True)
   def test_user_domain_join_execute_error(
       self, mock_get_username, mock_get_hostname, mock_execute_binary):
-    self.fs.CreateFile(self.splice.splice_binary)
+    self.create_tempfile(file_path=self.splice.splice_binary)
     mock_get_hostname.return_value = 'foo'
     mock_get_username.return_value = 'bar'
     mock_execute_binary.side_effect = execute.ExecError('some_command')
@@ -129,7 +126,7 @@ class SpliceTest(test_utils.GlazierTestCase):
   @mock.patch.object(splice.Splice, '_get_username', autospec=True)
   def test_unattended_domain_join_execute_error(
       self, mock_get_username, mock_get_hostname, mock_execute_binary):
-    self.fs.CreateFile(self.splice.splice_binary)
+    self.create_tempfile(file_path=self.splice.splice_binary)
     mock_get_hostname.return_value = 'foo'
     mock_get_username.return_value = 'bar'
     mock_execute_binary.side_effect = execute.ExecError('some_command')
@@ -145,7 +142,7 @@ class SpliceTest(test_utils.GlazierTestCase):
                                                    mock_get_hostname,
                                                    mock_execute_binary):
 
-    self.fs.CreateFile(self.splice.splice_binary)
+    self.create_tempfile(file_path=self.splice.splice_binary)
     mock_get_hostname.return_value = 'foo'
     mock_get_username.return_value = 'bar'
     mock_execute_binary.side_effect = iter(
@@ -162,7 +159,7 @@ class SpliceTest(test_utils.GlazierTestCase):
   def test_unattended_domain_join_success(self, mock_info, mock_get_hostname,
                                           mock_execute_binary):
 
-    self.fs.CreateFile(self.splice.splice_binary)
+    self.create_tempfile(file_path=self.splice.splice_binary)
     mock_get_hostname.return_value = 'foo'
     mock_execute_binary.return_value = 0
     self.splice.domain_join()
@@ -173,7 +170,7 @@ class SpliceTest(test_utils.GlazierTestCase):
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
   def test_domain_join_empty_generator(
       self, mock_get_hostname, mock_execute_binary):
-    self.fs.CreateFile(self.splice.splice_binary)
+    self.create_tempfile(file_path=self.splice.splice_binary)
     mock_get_hostname.return_value = 'foo'
     mock_execute_binary.return_value = 0
     self.splice.domain_join()
@@ -190,7 +187,7 @@ class SpliceTest(test_utils.GlazierTestCase):
   @mock.patch.object(execute, 'execute_binary', autospec=True)
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
   def test_domain_join_generator(self, mock_get_hostname, mock_execute_binary):
-    self.fs.CreateFile(self.splice.splice_binary)
+    self.create_tempfile(file_path=self.splice.splice_binary)
     mock_get_hostname.return_value = 'foo'
     mock_execute_binary.return_value = 0
     self.splice.domain_join(generator='baz')
@@ -207,7 +204,7 @@ class SpliceTest(test_utils.GlazierTestCase):
   @mock.patch.object(execute, 'execute_binary', autospec=True)
   @mock.patch.object(splice.Splice, '_get_hostname', autospec=True)
   def test_domain_join_cert(self, mock_get_hostname, mock_execute_binary):
-    self.fs.CreateFile(self.splice.splice_binary)
+    self.create_tempfile(file_path=self.splice.splice_binary)
     mock_get_hostname.return_value = 'foo'
     mock_execute_binary.return_value = 0
     cid = splice.CertID(container='example_container', issuer='client')

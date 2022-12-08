@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for glazier.lib.logs."""
 
-import os
 from unittest import mock
 import zipfile
 
@@ -22,37 +21,40 @@ from glazier.lib import file_util
 from glazier.lib import logs
 from glazier.lib import test_utils
 from glazier.lib import winpe
-from pyfakefs.fake_filesystem_unittest import Patcher
 
 from glazier.lib import constants
-
 
 TEST_ID = '1A19SEL90000R90DZN7A-1234567'
 
 
 class LoggingTest(test_utils.GlazierTestCase):
 
+  def setUp(self):
+    super(LoggingTest, self).setUp()
+
+    self.syslog_dir = self.create_tempdir()
+    self.patch_constant(constants, 'SYS_LOGS_PATH', self.syslog_dir.full_path)
+
   @mock.patch.object(winpe, 'check_winpe', autospec=True)
   def test_collect(self, mock_check_winpe):
     mock_check_winpe.return_value = False
-    with Patcher() as patcher:
-      files = [
-          os.path.join(constants.SYS_LOGS_PATH, 'log1.log'),
-          os.path.join(constants.SYS_LOGS_PATH, 'log2.log'),
-      ]
-      patcher.fs.create_dir(constants.SYS_LOGS_PATH)
-      patcher.fs.create_file(files[0], contents='log1 content')
-      patcher.fs.create_file(files[1], contents='log2 content')
-      logs.Collect(r'C:\glazier.zip')
-      with zipfile.ZipFile(r'C:\glazier.zip', 'r') as out:
-        with out.open(files[1].lstrip('/')) as f2:
-          self.assertEqual(f2.read(), b'log2 content')
+
+    files = [
+        self.syslog_dir.create_file(
+            file_path='log1.log', content='log1 content').full_path,
+        self.syslog_dir.create_file(
+            file_path='log2.log', content='log2 content').full_path,
+    ]
+    zip_path = self.create_tempfile(file_path='glazier.zip').full_path
+    logs.Collect(zip_path)
+
+    with zipfile.ZipFile(zip_path, 'r') as out:
+      with out.open(files[1].lstrip('/')) as f2:
+        self.assertEqual(f2.read(), b'log2 content')
 
   def test_collect_io_err(self):
-    with Patcher() as patcher:
-      patcher.fs.create_dir(constants.SYS_LOGS_PATH)
-      with self.assert_raises_with_validation(logs.LogCollectionError):
-        logs.Collect(constants.SYS_LOGS_PATH)
+    with self.assert_raises_with_validation(logs.LogCollectionError):
+      logs.Collect(constants.SYS_LOGS_PATH)
 
   @mock.patch.object(zipfile.ZipFile, 'write', autospec=True)
   @mock.patch.object(winpe, 'check_winpe', autospec=True)
@@ -60,11 +62,9 @@ class LoggingTest(test_utils.GlazierTestCase):
     mock_check_winpe.return_value = False
     mock_write.side_effect = ValueError(
         'ZIP does not support timestamps before 1980')
-    with Patcher() as patcher:
-      patcher.fs.create_dir(constants.SYS_LOGS_PATH)
-      patcher.fs.create_file(os.path.join(constants.SYS_LOGS_PATH, 'log1.log'))
-      with self.assert_raises_with_validation(logs.LogCollectionError):
-        logs.Collect(r'C:\glazier.zip')
+    self.syslog_dir.create_file(file_path='log1.log')
+    with self.assert_raises_with_validation(logs.LogCollectionError):
+      logs.Collect(r'C:\glazier.zip')
 
   @mock.patch.object(winpe, 'check_winpe', autospec=True)
   def test_get_logs_path(self, mock_check_winpe):
@@ -84,6 +84,7 @@ class LoggingTest(test_utils.GlazierTestCase):
   def test_setup(
       self, mock_filehandler, mock_check_winpe, mock_imageid,
       mock_createdirectories):
+
     mock_imageid.return_value = TEST_ID
     mock_check_winpe.return_value = False
     logs.Setup()
@@ -99,13 +100,13 @@ class LoggingTest(test_utils.GlazierTestCase):
   def test_setup_error(
       self, mock_filehandler, mock_check_winpe, mock_imageid,
       mock_createdirectories):
+
     mock_imageid.return_value = TEST_ID
     mock_check_winpe.return_value = False
     mock_filehandler.side_effect = IOError
     with self.assert_raises_with_validation(logs.LogOpenError):
       logs.Setup()
     self.assertTrue(mock_createdirectories.called)
-
 
 if __name__ == '__main__':
   absltest.main()

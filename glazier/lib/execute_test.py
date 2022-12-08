@@ -19,7 +19,6 @@ from unittest import mock
 from absl.testing import absltest
 from glazier.lib import execute
 from glazier.lib import test_utils
-from pyfakefs import fake_filesystem
 
 from glazier.lib import errors
 
@@ -28,11 +27,7 @@ class ExecuteTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(ExecuteTest, self).setUp()
-    self.fs = fake_filesystem.FakeFilesystem()
-    execute.os = fake_filesystem.FakeOsModule(self.fs)
-    execute.open = fake_filesystem.FakeFileOpen(self.fs)
     self.binary = r'C:\foo.exe'
-    self.fs.create_file(self.binary)
 
   @mock.patch.object(execute.logging, 'info', autospec=True)
   @mock.patch.object(execute.subprocess, 'Popen', autospec=True)

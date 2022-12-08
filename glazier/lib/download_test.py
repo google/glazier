@@ -24,7 +24,6 @@ from glazier.lib import buildinfo
 from glazier.lib import download
 from glazier.lib import file_util
 from glazier.lib import test_utils
-from pyfakefs import fake_filesystem
 
 _TEST_INI = """
 [BUILD]
@@ -123,11 +122,8 @@ class DownloadTest(test_utils.GlazierTestCase):
     super(DownloadTest, self).setUp()
     self._dl = download.BaseDownloader()
 
-    # filesystem
-    self.filesystem = fake_filesystem.FakeFilesystem()
-    self.filesystem.create_file(r'C:\input.ini', contents=_TEST_INI)
-    download.os = fake_filesystem.FakeOsModule(self.filesystem)
-    download.open = fake_filesystem.FakeFileOpen(self.filesystem)
+    self.input_ini_path = self.create_tempfile(
+        file_path='input.ini', content=_TEST_INI)
 
     # Very important, unless you want tests that fail indefinitely to backoff
     # for 10 minutes.
@@ -158,8 +154,7 @@ class DownloadTest(test_utils.GlazierTestCase):
     self.assertEqual(res, file_stream)
 
     # Invalid URL
-    with self.assertRaisesRegex(
-        download.Error, 'Invalid remote server URL*'):
+    with self.assertRaisesRegex(download.Error, 'Invalid remote server URL*'):
       self._dl._OpenStream('not_a_real_url')
 
     # 404
@@ -198,8 +193,8 @@ class DownloadTest(test_utils.GlazierTestCase):
   def test_download_file_local(self, mock_copy):
     self._dl.DownloadFile(
         url='c:/glazier/conf/test.ps1', save_location='c:/windows/test.ps1')
-    mock_copy.assert_called_with(
-        'c:/glazier/conf/test.ps1', 'c:/windows/test.ps1')
+    mock_copy.assert_called_with('c:/glazier/conf/test.ps1',
+                                 'c:/windows/test.ps1')
 
   @mock.patch.object(file_util, 'Copy', autospec=True)
   def test_download_file_copy_except(self, mock_copy):
@@ -212,9 +207,9 @@ class DownloadTest(test_utils.GlazierTestCase):
   @mock.patch.object(download.BaseDownloader, '_OpenStream', autospec=True)
   @mock.patch.object(download.tempfile, 'NamedTemporaryFile', autospec=True)
   @mock.patch.object(beyondcorp.BeyondCorp, 'CheckBeyondCorp', autospec=True)
-  def test_download_file_temp(
-      self, mock_checkbeyondcorp, mock_namedtemporaryfile, mock_openstream,
-      mock_streamtodisk):
+  def test_download_file_temp(self, mock_checkbeyondcorp,
+                              mock_namedtemporaryfile, mock_openstream,
+                              mock_streamtodisk):
 
     mock_checkbeyondcorp.return_value = False
     url = _TEST_URI_YAML
@@ -222,17 +217,17 @@ class DownloadTest(test_utils.GlazierTestCase):
     mock_namedtemporaryfile.return_value.name = path
     self._dl.DownloadFileTemp(url)
     mock_openstream.assert_called_with(self._dl, url)
-    mock_streamtodisk.assert_called_with(
-        self._dl, mock_openstream.return_value, False)
+    mock_streamtodisk.assert_called_with(self._dl, mock_openstream.return_value,
+                                         False)
     self.assertEqual(self._dl._save_location, path)
     self._dl.DownloadFileTemp(url, show_progress=True)
     mock_openstream.assert_called_with(self._dl, url)
-    mock_streamtodisk.assert_called_with(
-        self._dl, mock_openstream.return_value, True)
+    mock_streamtodisk.assert_called_with(self._dl, mock_openstream.return_value,
+                                         True)
     self._dl.DownloadFileTemp(url, show_progress=False)
     mock_openstream.assert_called_with(self._dl, url)
-    mock_streamtodisk.assert_called_with(
-        self._dl, mock_openstream.return_value, False)
+    mock_streamtodisk.assert_called_with(self._dl, mock_openstream.return_value,
+                                         False)
 
   @parameterized.named_parameters(
       ('standard_binary_server', True, _BINARY_SERVER, ''),
@@ -286,7 +281,7 @@ class DownloadTest(test_utils.GlazierTestCase):
     file_stream.read = http_stream.read
 
     # success
-    self._dl._save_location = r'C:\download.txt'
+    self._dl._save_location = self.create_tempfile(file_path='download.txt')
     self._dl._StreamToDisk(file_stream)
 
     # Progress
@@ -326,15 +321,15 @@ class DownloadTest(test_utils.GlazierTestCase):
 
     # IOError
     http_stream.seek(0)
-    self.filesystem.create_dir(r'C:\Windows')
-    self._dl._save_location = r'C:\Windows'
+    temp_dir = self.create_tempdir()
+    self._dl._save_location = temp_dir
     with self.assert_raises_with_validation(download.Error):
       self._dl._StreamToDisk(file_stream)
 
     # File Size
     http_stream.seek(0)
     file_stream.headers.get = lambda x: {'Content-Length': '100000'}[x]
-    self._dl._save_location = r'C:\download.txt'
+    self._dl._save_location = self.create_tempfile(file_path='download.txt')
     with self.assert_raises_with_validation(download.Error):
       self._dl._StreamToDisk(file_stream)
 
@@ -349,7 +344,7 @@ class DownloadTest(test_utils.GlazierTestCase):
     # Retries
     http_stream.seek(0)
     file_stream.headers.get = lambda x: {'Content-Length': '100000'}[x]
-    self._dl._save_location = r'C:\download.txt'
+    self._dl._save_location = self.create_tempfile(file_path='download.txt')
     with self.assert_raises_with_validation(download.Error):
       self._dl._StreamToDisk(file_stream)
 
@@ -365,18 +360,18 @@ class DownloadTest(test_utils.GlazierTestCase):
     test_sha256 = (
         '58157BF41CE54731C0577F801035D47EC20ED16A954F10C29359B8ADEDCAE800')
     # sha256
-    result = self._dl.VerifyShaHash(r'C:\input.ini', test_sha256)
+    result = self._dl.VerifyShaHash(self.input_ini_path, test_sha256)
     self.assertTrue(result)
     # missing source
     result = self._dl.VerifyShaHash(r'C:\missing.ini', test_sha256)
     self.assertFalse(result)
     # missing hash
-    result = self._dl.VerifyShaHash(r'C:\input.ini', '')
+    result = self._dl.VerifyShaHash(self.input_ini_path, '')
     self.assertFalse(result)
     # mismatch hash
     test_sha256 = (
         '58157bf41ce54731c0577f801035d47ec20ed16a954f10c29359b8adedcae801')
-    result = self._dl.VerifyShaHash(r'C:\input.ini', test_sha256)
+    result = self._dl.VerifyShaHash(self.input_ini_path, test_sha256)
     self.assertFalse(result)
 
 

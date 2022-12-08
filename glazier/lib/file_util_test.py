@@ -14,47 +14,57 @@
 
 """Tests for glazier.lib.file_util."""
 
+import os
+from unittest import mock
 from absl.testing import absltest
 
 from glazier.lib import file_util
 from glazier.lib import test_utils
 
-from pyfakefs.fake_filesystem_unittest import Patcher
-
 
 class FileUtilTest(test_utils.GlazierTestCase):
 
   def test_copy(self):
-    with Patcher() as patcher:
-      patcher.fs.create_dir(r'/stage')
-      patcher.fs.create_file(r'/stage/file1.txt', contents='file1')
-      patcher.fs.create_file(r'/stage/file2.txt', contents='file2')
-      src1 = r'/stage/file1.txt'
-      dst1 = r'/windows/glazier/glazier.log'
-      file_util.Copy(src1, dst1)
-      self.assertTrue(patcher.fs.exists(r'/windows/glazier/glazier.log'))
+
+    src1 = self.create_tempfile(file_path='file1.txt', content='file1')
+    self.create_tempfile(file_path='file2.txt', content='file2')
+    dst1 = self.create_tempfile(file_path='glazier.log')
+    file_util.Copy(src1, dst1)
+
+    self.assertTrue(os.path.exists(dst1))
+    with open(dst1) as f:
+      self.assertEqual('file1', f.read())
 
   def test_copy_bad_path(self):
-    with Patcher():
-      src1 = r'/missing.txt'
-      dst1 = r'/windows/glazier/glazier.log'
-      with self.assert_raises_with_validation(file_util.FileCopyError):
-        file_util.Copy(src1, dst1)
+    src1 = r'/missing.txt'
+    dst1 = self.create_tempfile(file_path='glazier.log')
+    with self.assert_raises_with_validation(file_util.FileCopyError):
+      file_util.Copy(src1, dst1)
 
-  def test_create_directories(self):
-    with Patcher() as patcher:
-      patcher.fs.create_file('/test')
-      with self.assert_raises_with_validation(file_util.DirectoryCreationError):
-        file_util.CreateDirectories('/test/file.txt')
-      file_util.CreateDirectories('/tmp/test/path/file.log')
-      self.assertTrue(patcher.fs.exists('/tmp/test/path'))
+  @mock.patch.object(os, 'makedirs')
+  @mock.patch.object(os.path, 'isdir')
+  def test_create_directories_error(self, mock_isdir, mock_makedirs):
+
+    mock_isdir.return_value = False
+    mock_makedirs.side_effect = OSError
+
+    with self.assert_raises_with_validation(file_util.DirectoryCreationError):
+      file_util.CreateDirectories('/some/path/to/file.txt')
+
+  @mock.patch.object(os, 'makedirs')
+  @mock.patch.object(os.path, 'isdir')
+  def test_create_directories_success(self, mock_isdir, mock_makedirs):
+
+    mock_isdir.return_value = False
+    file_util.CreateDirectories('/some/path/to/file.txt')
+
+    self.assertTrue(mock_makedirs.called)
 
   def test_remove(self):
-    with Patcher() as patcher:
-      patcher.fs.create_file('/test/file.txt')
-      file_util.Remove('/test/file.txt')
-      self.assertFalse(patcher.fs.exists('/test/file.txt'))
-      file_util.Remove('/test/file2.txt')  # should succeed silently
+    temp_file = self.create_tempfile(file_path='file.txt')
+    file_util.Remove(temp_file)
+    self.assertFalse(os.path.exists(temp_file))
+    file_util.Remove('/test/file2.txt')  # should succeed silently
 
 
 if __name__ == '__main__':

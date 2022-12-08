@@ -25,12 +25,10 @@ from absl.testing import flagsaver
 from glazier.lib import beyondcorp
 from glazier.lib import registry
 from glazier.lib import test_utils
-from pyfakefs import fake_filesystem
 from requests.models import Response
 
 _TEST_SEED = '{"Seed": {"Seed": "seed_contents"}, "Signature": "Signature"}'
 _TEST_WIM = 'test_wim'
-_TEST_WIM_PATH = r'D:\sources\boot.wim'
 _TEST_WIM_HASH = b'xxaroj1bgT5sObhJ0HwOtqpn+Nx0gO/Wz5wATtYK7Tk='
 DECODED_HASH = _TEST_WIM_HASH.decode('utf-8')
 
@@ -44,26 +42,22 @@ def _create_sign_response(code, status, wim_hash):
   return sign_resp
 
 
-class BeyondcorpTest(test_utils.GlazierTestCase):
-
-  def patch_constant(self, module, constant_name, new_value):
-    patcher = mock.patch.object(module, constant_name, new_value)
-    self.addCleanup(patcher.stop)
-    return patcher.start()
+class BeyondCorpTest(test_utils.GlazierTestCase):
 
   def setUp(self):
 
-    super(BeyondcorpTest, self).setUp()
+    super(BeyondCorpTest, self).setUp()
     self.__saved_flags = flagsaver.save_flag_values()
     mock_wmi = mock.patch.object(
         beyondcorp.wmi_query, 'WMIQuery', autospec=True)
     self.addCleanup(mock_wmi.stop)
     self.mock_wmi = mock_wmi.start()
-    self.filesystem = fake_filesystem.FakeFilesystem()
-    self.filesystem.create_file(r'C:\seed.json', contents=_TEST_SEED)
-    self.filesystem.create_file(_TEST_WIM_PATH, contents=_TEST_WIM)
-    beyondcorp.os = fake_filesystem.FakeOsModule(self.filesystem)
-    beyondcorp.open = fake_filesystem.FakeFileOpen(self.filesystem)
+
+    self.seed_path = self.create_tempfile(
+        file_path='seed.json', content=_TEST_SEED)
+    self.wim_path = self.create_tempfile(
+        file_path='boot.wim', content=_TEST_WIM)
+
     self.beyondcorp = beyondcorp.BeyondCorp()
 
     # Very important, unless you want tests that fail indefinitely to backoff
@@ -71,7 +65,7 @@ class BeyondcorpTest(test_utils.GlazierTestCase):
     self.patch_constant(beyondcorp, 'BACKOFF_MAX_TIME', 20)  # in seconds
 
   def tearDown(self):
-    super(BeyondcorpTest, self).tearDown()
+    super(BeyondCorpTest, self).tearDown()
     flagsaver.restore_flag_values(self.__saved_flags)
 
   def test_get_signed_url_disabled(self):
@@ -92,18 +86,21 @@ class BeyondcorpTest(test_utils.GlazierTestCase):
         beyondcorp.BeyondCorpSignedUrlRequestError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
+  @mock.patch.object(
+      beyondcorp.BeyondCorp, '_GetBootWimFilePath', autospec=True)
   @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
   @mock.patch.object(beyondcorp.hw_info.HWInfo, 'MacAddresses', autospec=True)
   @mock.patch.object(beyondcorp.requests, 'post', autospec=True)
   def test_get_signed_url_success(self, mock_post, mock_macaddresses,
-                                  mock_getdisk):
+                                  mock_getdisk, mock_getbootwimfilepath):
 
     mock_getdisk.return_value = 'D'
+    mock_getbootwimfilepath.return_value = self.wim_path
     mock_macaddresses.return_value = ['00:00:00:00:00:00']
     mock_post.return_value = _create_sign_response(200, 'Success', DECODED_HASH)
     beyondcorp.FLAGS.use_signed_url = True
     beyondcorp.FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
-    beyondcorp.FLAGS.seed_path = r'C:\seed.json'
+    beyondcorp.FLAGS.seed_path = self.seed_path
 
     sign = self.beyondcorp.GetSignedUrl('unstable/test.yaml')
     mock_post.assert_called_once_with(
@@ -116,18 +113,21 @@ class BeyondcorpTest(test_utils.GlazierTestCase):
         '}' % _TEST_WIM_HASH.decode('utf-8'))
     self.assertEqual(sign, _TEST_WIM_HASH.decode('utf-8'))
 
+  @mock.patch.object(
+      beyondcorp.BeyondCorp, '_GetBootWimFilePath', autospec=True)
   @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
   @mock.patch.object(beyondcorp.hw_info.HWInfo, 'MacAddresses', autospec=True)
   @mock.patch.object(beyondcorp.requests, 'post', autospec=True)
   def test_get_signed_url_failure(self, mock_post, mock_macaddresses,
-                                  mock_getdisk):
+                                  mock_getdisk, mock_getbootwimfilepath):
 
     mock_getdisk.return_value = 'D'
+    mock_getbootwimfilepath.return_value = self.wim_path
     mock_macaddresses.return_value = ['00:00:00:00:00:00']
     mock_post.return_value = _create_sign_response(200, 'Success', DECODED_HASH)
     beyondcorp.FLAGS.use_signed_url = True
     beyondcorp.FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
-    beyondcorp.FLAGS.seed_path = r'C:\seed.json'
+    beyondcorp.FLAGS.seed_path = self.seed_path
 
     mock_post.return_value = _create_sign_response(400, 'Success', DECODED_HASH)
     with self.assert_raises_with_validation(
@@ -150,25 +150,29 @@ class BeyondcorpTest(test_utils.GlazierTestCase):
         beyondcorp.BeyondCorpSignedUrlResponseError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
+  @mock.patch.object(
+      beyondcorp.BeyondCorp, '_GetBootWimFilePath', autospec=True)
   @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
   @mock.patch.object(beyondcorp.hw_info.HWInfo, 'MacAddresses', autospec=True)
   @mock.patch.object(beyondcorp.requests, 'post', autospec=True)
   def test_get_signed_url_connection_error(self, mock_post, mock_macaddresses,
-                                           mock_getdisk):
+                                           mock_getdisk,
+                                           mock_getbootwimfilepath):
 
     mock_getdisk.return_value = 'D'
+    mock_getbootwimfilepath.return_value = self.wim_path
     mock_macaddresses.return_value = ['00:00:00:00:00:00']
     mock_post.return_value = _create_sign_response(200, 'Success', DECODED_HASH)
     beyondcorp.FLAGS.use_signed_url = True
     beyondcorp.FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
-    beyondcorp.FLAGS.seed_path = r'C:\seed.json'
+    beyondcorp.FLAGS.seed_path = self.seed_path
 
     mock_post.side_effect = beyondcorp.requests.exceptions.ConnectionError
     with self.assert_raises_with_validation(beyondcorp.BeyondCorpGiveUpError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
   def test_read_file(self):
-    beyondcorp.FLAGS.seed_path = r'C:\seed.json'
+    beyondcorp.FLAGS.seed_path = self.seed_path
     seed = self.beyondcorp._ReadFile()
     self.assertEqual(
         seed,

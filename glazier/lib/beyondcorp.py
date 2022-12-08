@@ -197,6 +197,11 @@ class BeyondCorp(object):
 
     return drive_letter
 
+  def _GetBootWimFilePath(self) -> str:
+    """Primarily exists for easier unit testing."""
+    drive_letter = self._GetDisk(constants.USB_VOLUME_LABEL).strip(':')
+    return fr'{drive_letter}:\sources\boot.wim'
+
   @backoff.on_exception(
       backoff.expo,
       requests.exceptions.ConnectionError,
@@ -226,7 +231,7 @@ class BeyondCorp(object):
           'sign_endpoint and seed_path cannot be None when using Signed URL.')
 
     hwinfo = hw_info.HWInfo()
-    drive_letter = self._GetDisk(constants.USB_VOLUME_LABEL).strip(':')
+    boot_wim_file_path = self._GetBootWimFilePath()
 
     data = self._ReadFile()
     data = {
@@ -239,7 +244,7 @@ class BeyondCorp(object):
         'Signature':
             data['Signature'],
         'Hash':
-            self._GetHash(fr'{drive_letter}:\sources\boot.wim').decode('utf-8')
+            self._GetHash(boot_wim_file_path).decode('utf-8')
     }
 
     req = json.dumps(

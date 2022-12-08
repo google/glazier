@@ -13,12 +13,12 @@
 # limitations under the License.
 """Tests for glazier.lib.winpe."""
 
+import os
 from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import identifier
 from glazier.lib import test_utils
-from pyfakefs import fake_filesystem
 
 from glazier.lib import constants
 
@@ -35,9 +35,9 @@ class IdentifierTest(test_utils.GlazierTestCase):
         identifier.hw_info.wmi_query, 'WMIQuery', autospec=True)
     self.addCleanup(mock_wmi.stop)
     mock_wmi.start()
-    self.fs = fake_filesystem.FakeFilesystem()
-    identifier.open = fake_filesystem.FakeFileOpen(self.fs)
-    identifier.os = fake_filesystem.FakeOsModule(self.fs)
+
+    temp_dir = self.create_tempdir().full_path
+    self.patch_constant(identifier.constants, 'SYS_CACHE', temp_dir)
 
   @mock.patch.object(identifier.hw_info.HWInfo, 'BiosSerial', autospec=True)
   @mock.patch.object(identifier.uuid, 'uuid4', autospec=True)
@@ -64,9 +64,10 @@ class IdentifierTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
   def test_check_file(self, mock_set_value):
-    self.fs.create_file(
-        '/%s/build_info.yaml' % identifier.constants.SYS_CACHE,
-        contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, image_id: 12345}}\n'
+    self.create_tempfile(
+        file_path=os.path.join(identifier.constants.SYS_CACHE,
+                               'build_info.yaml'),
+        content='{BUILD: {opt 1: true, TIMER_opt 2: some value, image_id: 12345}}\n'
     )
     identifier._check_file()
     mock_set_value.assert_called_with(
@@ -74,18 +75,20 @@ class IdentifierTest(test_utils.GlazierTestCase):
     self.assertEqual(identifier._check_file(), 12345)
 
   def test_check_file_no_id(self):
-    self.fs.create_file(
-        '/%s/build_info.yaml' % identifier.constants.SYS_CACHE,
-        contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, image_num: 12345}}\n'
+    self.create_tempfile(
+        file_path=os.path.join(identifier.constants.SYS_CACHE,
+                               'build_info.yaml'),
+        content='{BUILD: {opt 1: true, TIMER_opt 2: some value, image_num: 12345}}\n'
     )
     with self.assert_raises_with_validation(identifier.Error):
       identifier._check_file()
 
   @mock.patch.object(identifier.registry, 'set_value', autospec=True)
   def test_check_file_reg_error(self, mock_set_value):
-    self.fs.create_file(
-        '/%s/build_info.yaml' % identifier.constants.SYS_CACHE,
-        contents='{BUILD: {opt 1: true, TIMER_opt 2: some value, image_id: 12345}}\n'
+    self.create_tempfile(
+        file_path=os.path.join(identifier.constants.SYS_CACHE,
+                               'build_info.yaml'),
+        content='{BUILD: {opt 1: true, TIMER_opt 2: some value, image_id: 12345}}\n'
     )
     mock_set_value.side_effect = identifier.registry.RegistryWriteError(
         'some_name', 'some_value', 'some_path')

@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tests for glazier.lib.buildinfo."""
 
 import datetime
@@ -25,11 +24,9 @@ from glazier.lib import buildinfo
 from glazier.lib import test_utils
 from glazier.lib import timers
 from glazier.lib.config import files
-from pyfakefs import fake_filesystem
 import yaml
 
 from gwinpy.wmi.hw_info import DeviceId
-
 
 FLAGS = flags.FLAGS
 
@@ -74,12 +71,6 @@ class BuildInfoTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(BuildInfoTest, self).setUp()
-
-    # fake filesystem
-    self.filesystem = fake_filesystem.FakeFilesystem()
-    self.filesystem.create_dir('/dev')
-    buildinfo.os = fake_filesystem.FakeOsModule(self.filesystem)
-    buildinfo.open = fake_filesystem.FakeFileOpen(self.filesystem)
 
     # setup
     mock_wmi = mock.patch.object(
@@ -200,18 +191,18 @@ class BuildInfoTest(test_utils.GlazierTestCase):
                                        ['!HP Z620 Workstation']))
       # Inverse exclude (second)
       self.assertFalse(
-          self.buildinfo.BuildPinMatch('computer_model', [
-              '!HP Z840 Workstation', '!HP Z620 Workstation'
-          ]))
+          self.buildinfo.BuildPinMatch(
+              'computer_model',
+              ['!HP Z840 Workstation', '!HP Z620 Workstation']))
       # Inverse include
       self.assertTrue(
           self.buildinfo.BuildPinMatch('computer_model',
                                        ['!VMWare Virtual Platform']))
       # Inverse include (second)
       self.assertTrue(
-          self.buildinfo.BuildPinMatch('computer_model', [
-              '!HP Z640 Workstation', '!HP Z840 Workstation'
-          ]))
+          self.buildinfo.BuildPinMatch(
+              'computer_model',
+              ['!HP Z640 Workstation', '!HP Z840 Workstation']))
       # Substrings
       self.assertTrue(
           self.buildinfo.BuildPinMatch('computer_model',
@@ -274,14 +265,13 @@ class BuildInfoTest(test_utils.GlazierTestCase):
   @mock.patch.object(buildinfo.registry, 'get_values', autospec=True)
   def test_installed_software(self, mock_get_values):
     mock_get_values.return_value = [
-        'Mozilla FireFox', 'Google Chrome', 'Microsoft Edge']
+        'Mozilla FireFox', 'Google Chrome', 'Microsoft Edge'
+    ]
 
     self.assertTrue(
         self.buildinfo.BuildPinMatch('is_installed', ['Google Chrome']))
-    self.assertTrue(
-        self.buildinfo.BuildPinMatch('is_installed', ['!Safari']))
-    self.assertFalse(
-        self.buildinfo.BuildPinMatch('is_installed', ['Chrome']))
+    self.assertTrue(self.buildinfo.BuildPinMatch('is_installed', ['!Safari']))
+    self.assertFalse(self.buildinfo.BuildPinMatch('is_installed', ['Chrome']))
     self.assertFalse(
         self.buildinfo.BuildPinMatch('is_installed', ['!Google Chrome']))
 
@@ -382,21 +372,16 @@ class BuildInfoTest(test_utils.GlazierTestCase):
   def test_device_id_pinning(self):
     local_ids = ['11-22-33-44', 'AA-BB-CC-DD', 'AA-BB-CC-DD']
     self.assertTrue(
-        self.buildinfo._StringPinner(
-            local_ids, ['AA-BB-CC-DD'], loose=True))
+        self.buildinfo._StringPinner(local_ids, ['AA-BB-CC-DD'], loose=True))
     self.assertTrue(
-        self.buildinfo._StringPinner(
-            local_ids, ['AA-BB-CC'], loose=True))
+        self.buildinfo._StringPinner(local_ids, ['AA-BB-CC'], loose=True))
     self.assertTrue(
-        self.buildinfo._StringPinner(
-            local_ids, ['AA-BB'], loose=True))
+        self.buildinfo._StringPinner(local_ids, ['AA-BB'], loose=True))
     self.assertTrue(self.buildinfo._StringPinner(local_ids, ['AA'], loose=True))
     self.assertFalse(
-        self.buildinfo._StringPinner(
-            local_ids, ['DD-CC-BB-AA'], loose=True))
+        self.buildinfo._StringPinner(local_ids, ['DD-CC-BB-AA'], loose=True))
     self.assertFalse(
-        self.buildinfo._StringPinner(
-            local_ids, ['BB-CC'], loose=True))
+        self.buildinfo._StringPinner(local_ids, ['BB-CC'], loose=True))
 
   @mock.patch.object(buildinfo.hw_info, 'HWInfo', autospec=True)
   def test_hw_info(self, mock_hwinfo):
@@ -459,12 +444,9 @@ class BuildInfoTest(test_utils.GlazierTestCase):
   @mock.patch.object(buildinfo.net_info, 'NetInfo', autospec=True)
   def test_net_interfaces(self, mock_netinfo):
     mock_netinfo.return_value.Interfaces.return_value = [
-        mock.Mock(
-            description='d1', mac_address='11:22:33:44:55'),
-        mock.Mock(
-            description='d2', mac_address='AA:BB:CC:DD:EE'),
-        mock.Mock(
-            description='d3', mac_address='AA:22:CC:44:EE'),
+        mock.Mock(description='d1', mac_address='11:22:33:44:55'),
+        mock.Mock(description='d2', mac_address='AA:BB:CC:DD:EE'),
+        mock.Mock(description='d3', mac_address='AA:22:CC:44:EE'),
     ]
     ints = self.buildinfo.NetInterfaces()
     self.assertEqual(ints[1].description, 'd2')
@@ -639,8 +621,8 @@ class BuildInfoTest(test_utils.GlazierTestCase):
   @mock.patch.object(buildinfo.BuildInfo, 'IsVirtual', autospec=True)
   @mock.patch.object(buildinfo.BuildInfo, 'TpmPresent', autospec=True)
   @mock.patch.object(buildinfo.logging, 'info', autospec=True)
-  def test_encryption_level(
-      self, mock_info, mock_tpmpresent, mock_isvirtual, mock_computermodel):
+  def test_encryption_level(self, mock_info, mock_tpmpresent, mock_isvirtual,
+                            mock_computermodel):
 
     mock_computermodel.return_value = 'HP Z440 Workstation'
     mock_tpmpresent.return_value = False
@@ -648,8 +630,7 @@ class BuildInfoTest(test_utils.GlazierTestCase):
 
     # virtual machine
     self.assertEqual(self.buildinfo.EncryptionLevel(), 'none')
-    mock_info.assert_called_with(
-        _REGEXP('^Virtual machine type .*'), mock.ANY)
+    mock_info.assert_called_with(_REGEXP('^Virtual machine type .*'), mock.ANY)
     mock_isvirtual.return_value = False
     self.buildinfo.EncryptionLevel.cache_clear()
 
@@ -664,8 +645,9 @@ class BuildInfoTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(timers.Timers, 'GetAll', autospec=True)
   def test_serialize(self, mock_get_all):
-    mock_b = mock.Mock(spec_set=self.buildinfo)
-    mock_b._chooser_responses = {
+
+    mock_buildinfo = mock.Mock(spec_set=self.buildinfo)
+    mock_buildinfo._chooser_responses = {
         'USER_choice_one': 'value1',
         'USER_choice_two': 'value2'
     }
@@ -674,9 +656,12 @@ class BuildInfoTest(test_utils.GlazierTestCase):
             datetime.datetime.now(
                 tz=datetime.timezone(datetime.timedelta(hours=6)))
     }
-    mock_b.Serialize = buildinfo.BuildInfo.Serialize.__get__(mock_b)
-    mock_b.Serialize('/build_info.yaml')
-    parsed = yaml.safe_load(buildinfo.open('/build_info.yaml'))
+    mock_buildinfo.Serialize = buildinfo.BuildInfo.Serialize.__get__(
+        mock_buildinfo)
+    yaml_path = self.create_tempfile(file_path='build_info.yaml')
+    mock_buildinfo.Serialize(yaml_path)
+    parsed = yaml.safe_load(open(yaml_path))
+
     self.assertIn('branch', parsed['BUILD'])
     self.assertIn('Model', parsed['BUILD'])
     self.assertIn('SerialNumber', parsed['BUILD'])

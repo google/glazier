@@ -23,11 +23,10 @@ from absl.testing import absltest
 from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib import googet
+from glazier.lib import test_utils
 
-from pyfakefs import fake_filesystem
 
-
-class GooGetTest(absltest.TestCase):
+class GooGetTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(GooGetTest, self).setUp()
@@ -43,7 +42,11 @@ class GooGetTest(absltest.TestCase):
   def test_launch_goo_get(
       self, unused_sleep, mock_branch, mock_execute_binary, mock_check_winpe):
 
-    path = googet.os.path.join(constants.SYS_GOOGETROOT, 'googet.exe')
+    path = self.create_tempfile(file_path='googet.exe').full_path
+
+    temp_dir = os.path.dirname(path)
+    self.patch_constant(constants, 'SYS_GOOGETROOT', temp_dir)
+
     pkg = 'test_package_v1'
     retries = 5
     sleep_dur = 30
@@ -51,11 +54,6 @@ class GooGetTest(absltest.TestCase):
 
     # Use hosts paths
     mock_check_winpe.return_value = False
-
-    # Filesystem
-    self.filesystem = fake_filesystem.FakeFilesystem()
-    googet.os = fake_filesystem.FakeOsModule(self.filesystem)
-    self.filesystem.create_file(path)
 
     mock_execute_binary.return_value = 0
 

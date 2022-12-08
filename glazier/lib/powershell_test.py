@@ -22,8 +22,6 @@ from absl.testing import flagsaver
 from glazier.lib import powershell
 from glazier.lib import test_utils
 
-from pyfakefs import fake_filesystem
-
 FLAGS = flags.FLAGS
 
 
@@ -31,11 +29,8 @@ class PowershellTest(test_utils.GlazierTestCase):
 
   def setUp(self):
     super(PowershellTest, self).setUp()
-    self.fs = fake_filesystem.FakeFilesystem()
-    powershell.os = fake_filesystem.FakeOsModule(self.fs)
-    powershell.resources.os = fake_filesystem.FakeOsModule(self.fs)
-    self.path = '/resources/bin/script.ps1'
-    self.fs.create_file(self.path)
+
+    self.path = self.create_tempfile(file_path='script.ps1')
     self.ps = powershell.PowerShell()
 
   @mock.patch.object(powershell.winpe, 'check_winpe', autospec=True)
@@ -115,12 +110,12 @@ class PowershellTest(test_utils.GlazierTestCase):
   @flagsaver.flagsaver
   @mock.patch.object(powershell.PowerShell, 'RunLocal', autospec=True)
   def test_run_resource(self, mock_runlocal):
-    FLAGS.resource_path = '/test/resources'
-    self.fs.create_file('/test/resources/bin/script.ps1')
+    resource_dir = self.create_tempdir()
+    FLAGS.resource_path = resource_dir.full_path
+    script_path = resource_dir.create_file(file_path='bin/script.ps1').full_path
     args = ['>>', 'out.txt']
     self.ps.RunResource('bin/script.ps1', args=args)
-    mock_runlocal.assert_called_with(self.ps, '/test/resources/bin/script.ps1',
-                                     args, None)
+    mock_runlocal.assert_called_with(self.ps, script_path, args, None)
 
     # Not Found
     with self.assert_raises_with_validation(powershell.InvalidPathError):
@@ -128,13 +123,16 @@ class PowershellTest(test_utils.GlazierTestCase):
 
   @flagsaver.flagsaver
   def test_run_resource_validate(self):
-    FLAGS.resource_path = '/test/resources'
-    self.fs.create_file('/test/resources/bin/script.ps1')
-    with self.assert_raises_with_validation(AssertionError):
-      self.ps.RunResource('/bin/script.ps1', args='not a list')
+
+    resource_dir = self.create_tempdir()
+    FLAGS.resource_path = resource_dir.full_path
+    resource_dir.create_file(file_path='bin/script.ps1')
 
     with self.assert_raises_with_validation(AssertionError):
-      self.ps.RunResource('/bin/script.ps1', args=[], ok_result='0')
+      self.ps.RunResource('bin/script.ps1', args='not a list')
+
+    with self.assert_raises_with_validation(AssertionError):
+      self.ps.RunResource('bin/script.ps1', args=[], ok_result='0')
 
   @mock.patch.object(powershell, '_Powershell', autospec=True)
   @mock.patch.object(powershell.PowerShell, 'RunCommand', autospec=True)

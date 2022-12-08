@@ -20,7 +20,6 @@ from unittest import mock
 from absl.testing import absltest
 from glazier.lib import cache
 from glazier.lib import test_utils
-from pyfakefs import fake_filesystem
 
 
 class CacheTest(test_utils.GlazierTestCase):
@@ -28,12 +27,6 @@ class CacheTest(test_utils.GlazierTestCase):
   def setUp(self):
     super(CacheTest, self).setUp()
     self.cache = cache.Cache()
-    fs = fake_filesystem.FakeFilesystem()
-    fs.create_dir(r'C:\Directory')
-    os_module = fake_filesystem.FakeOsModule(fs)
-    self.mock_open = fake_filesystem.FakeFileOpen(fs)
-    cache.os = os_module
-    cache.open = self.mock_open
 
   def fake_transform(self, string, unused_info):
     if '#' in string:
