@@ -18,7 +18,6 @@ from unittest import mock
 
 from absl.testing import absltest
 from glazier.chooser import chooser
-from pyfakefs import fake_filesystem
 
 _TEST_CONF = [{
     'name':
@@ -118,10 +117,6 @@ class ChooserTest(absltest.TestCase):
     v3.Value.return_value = 'value3'
     self.ui.fields = {'field1': v1, 'field2': v2, 'field3': v3}
 
-    self.fs = fake_filesystem.FakeFilesystem()
-    chooser.resources.os = fake_filesystem.FakeOsModule(self.fs)
-    self.fs.create_file('/resources/logo.gif')
-
   @mock.patch.object(chooser.fields, 'Timer', autospec=True)
   def test_display(self, mock_timer):
     self.ui.timer = mock_timer.return_value
@@ -131,12 +126,14 @@ class ChooserTest(absltest.TestCase):
   @mock.patch.object(chooser, 'tk', autospec=True)
   @mock.patch.object(chooser.resources.Resources, 'GetResourceFileName')
   def test_gui_footer(self, mock_getresourcefilename, mock_tk, mock_timer):
-    logo = r'C:\Glazier\resources\logo.gif'
-    mock_getresourcefilename.return_value = logo
+
+    logo_file_path = self.create_tempfile('logo.gif')
+    mock_getresourcefilename.return_value = logo_file_path
     self.ui._GuiFooter()
+
     mock_getresourcefilename.assert_called_with('logo.gif')
     mock_timer.assert_called_with(self.ui.root)
-    mock_tk.PhotoImage.assert_called_with(file=logo)
+    mock_tk.PhotoImage.assert_called_with(file=logo_file_path)
 
   def test_gui_header(self):
     self.ui._GuiHeader()
