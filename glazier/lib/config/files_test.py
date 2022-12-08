@@ -20,16 +20,9 @@ from absl.testing import absltest
 from glazier.lib import file_util
 from glazier.lib import test_utils
 from glazier.lib.config import files
-from pyfakefs import fake_filesystem
 
 
 class FilesTest(test_utils.GlazierTestCase):
-
-  def setUp(self):
-    super(FilesTest, self).setUp()
-    self.filesystem = fake_filesystem.FakeFilesystem()
-    files.open = fake_filesystem.FakeFileOpen(self.filesystem)
-    files.file_util.os = fake_filesystem.FakeOsModule(self.filesystem)
 
   def test_dump(self):
     op_list = ['op1', ['op2a', 'op2b'], 'op3', {'op4a': 'op4b'}]
@@ -43,9 +36,12 @@ class FilesTest(test_utils.GlazierTestCase):
   @mock.patch.object(files.download.Download, 'DownloadFileTemp', autospec=True)
   def test_read(self, mock_downloadtempfile):
 
-    self.filesystem.create_file('/tmp/downloaded1.yaml', contents='data: set1')
-    self.filesystem.create_file('/tmp/downloaded2.yaml', contents='data: set2')
-    mock_downloadtempfile.return_value = '/tmp/downloaded1.yaml'
+    temp_file_1 = self.create_tempfile(
+        file_path='downloaded1.yaml', content='data: set1').full_path
+    temp_file_2 = self.create_tempfile(
+        file_path='downloaded2.yaml', content='data: set2').full_path
+    mock_downloadtempfile.return_value = temp_file_1
+
     result = files.Read(
         'https://glazier-server.example.com/unstable/dir/test-build.yaml')
     mock_downloadtempfile.assert_called_with(
@@ -60,7 +56,7 @@ class FilesTest(test_utils.GlazierTestCase):
           'https://glazier-server.example.com/unstable/dir/test-build.yaml')
 
     # local
-    result = files.Read('/tmp/downloaded2.yaml')
+    result = files.Read(temp_file_2)
     self.assertEqual(result['data'], 'set2')
 
   @mock.patch.object(files.file_util, 'Remove', autospec=True)
@@ -87,9 +83,9 @@ class FilesTest(test_utils.GlazierTestCase):
       files.Remove('/test/file/name.yaml', backup=True)
 
   def test_yaml_reader(self):
-    self.filesystem.create_file(
-        '/foo/bar/baz.txt', contents='- item4\n- item5\n- item6')
-    result = files._YamlReader('/foo/bar/baz.txt')
+    temp_file = self.create_tempfile(
+        file_path='baz.txt', content='- item4\n- item5\n- item6').full_path
+    result = files._YamlReader(temp_file)
     self.assertEqual(result[1], 'item5')
 
 

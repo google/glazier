@@ -24,23 +24,20 @@ from glazier.lib import test_utils
 from glazier.lib.config import base
 from glazier.lib.config import files
 from glazier.lib.config import runner
-from pyfakefs import fake_filesystem
-from pyfakefs import fake_filesystem_shutil
 
 
 class ConfigRunnerTest(test_utils.GlazierTestCase):
 
   def setUp(self):
+
     super(ConfigRunnerTest, self).setUp()
     self.buildinfo = buildinfo.BuildInfo()
     constants.FLAGS.verify_urls = None
-    # filesystem
-    self.filesystem = fake_filesystem.FakeFilesystem()
-    runner.os = fake_filesystem.FakeOsModule(self.filesystem)
-    runner.open = fake_filesystem.FakeFileOpen(self.filesystem)
-    runner.shutil = fake_filesystem_shutil.FakeShutilModule(self.filesystem)
+
     self.cr = runner.ConfigRunner(self.buildinfo)
-    self.cr._task_list_path = '/tmp/task_list.yaml'
+    self.task_list_path = self.create_tempfile(
+        file_path='task_list.yaml').full_path
+    self.cr._task_list_path = self.task_list_path
 
   @mock.patch.object(runner.files, 'Remove', autospec=True)
   @mock.patch.object(base.actions, 'pull', autospec=True)
@@ -74,7 +71,7 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
   @mock.patch.object(runner.files, 'Dump', autospec=True)
   def test_pop_task(self, mock_dump):
     self.cr._PopTask([1, 2, 3])
-    mock_dump.assert_called_with('/tmp/task_list.yaml', [2, 3], mode='w')
+    mock_dump.assert_called_with(self.task_list_path, [2, 3], mode='w')
     mock_dump.side_effect = runner.files.FileRemoveError('/some/file/path')
     with self.assert_raises_with_validation(runner.ConfigRunnerError):
       self.cr._PopTask([1, 2])
@@ -83,8 +80,8 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
   @mock.patch.object(runner.files, 'Dump', autospec=True)
   def test_pop_last_task(self, mock_dump, mock_remove):
     self.cr._PopTask([1])
-    mock_dump.assert_called_with('/tmp/task_list.yaml', [], mode='w')
-    mock_remove.assert_called_with('/tmp/task_list.yaml')
+    mock_dump.assert_called_with(self.task_list_path, [], mode='w')
+    mock_remove.assert_called_with(self.task_list_path)
 
   @mock.patch.object(runner.power, 'Restart', autospec=True)
   @mock.patch.object(runner.ConfigRunner, '_ProcessAction', autospec=True)
