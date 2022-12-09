@@ -22,7 +22,6 @@ from glazier.lib import buildinfo
 from glazier.lib import test_utils
 from glazier.lib import title
 from glazier.lib import winpe
-from pyfakefs import fake_filesystem
 
 from glazier.lib import errors
 
@@ -34,8 +33,6 @@ class AutobuildTest(test_utils.GlazierTestCase):
     super(AutobuildTest, self).setUp()
     self.autobuild = autobuild.AutoBuild()
     autobuild.logging = logs.logging
-    self.filesystem = fake_filesystem.FakeFilesystem()
-    autobuild.os = fake_filesystem.FakeOsModule(self.filesystem)
 
   @mock.patch.object(winpe, 'check_winpe', autospec=True)
   def test_setup_task_list(self, mock_check_winpe):
@@ -47,7 +44,7 @@ class AutobuildTest(test_utils.GlazierTestCase):
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
 
     # WinPE
-    self.filesystem.create_file(autobuild.constants.WINPE_TASK_LIST)
+    self.patch_constant_file_path(autobuild.constants, 'WINPE_TASK_LIST')
     mock_check_winpe.return_value = True
     tasklist = autobuild.constants.WINPE_TASK_LIST
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
@@ -59,7 +56,7 @@ class AutobuildTest(test_utils.GlazierTestCase):
   @mock.patch.object(autobuild.terminator, 'log_and_exit', autospec=True)
   @mock.patch.object(autobuild, 'os', autospec=True)
   def test_setup_task_list_error(self, mock_os, mock_log_and_exit):
-    self.filesystem.create_file(autobuild.constants.SYS_TASK_LIST)
+    self.patch_constant_file_path(autobuild.constants, 'SYS_TASK_LIST')
     autobuild.FLAGS.preserve_tasks = False
     mock_os.remove.side_effect = OSError
     self.autobuild._SetupTaskList()

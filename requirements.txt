@@ -2,7 +2,6 @@ absl-py
 backoff
 mock
 ntplib
-pyfakefs==4.7.0
 PyYAML
 requests
 six

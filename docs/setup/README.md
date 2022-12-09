@@ -23,7 +23,6 @@ of their respective owners and not the Glazier developers.
 
 For tests:
 
-*   fakefs: https://pypi.python.org/pypi/pyfakefs
 *   mock: https://pypi.python.org/pypi/mock
 
 ### Resources
