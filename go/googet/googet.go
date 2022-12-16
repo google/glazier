@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/logger"
+	"github.com/google/deck"
 	"github.com/google/glazier/go/helpers"
 )
 
@@ -56,10 +56,10 @@ func call(args []string, conf *Config) error {
 	}
 
 	res, err := funcExec(conf.GooGetExe, args, &conf.ExecConfig)
-	logger.Infof("Executing: %s %v", conf.GooGetExe, args)
+	deck.Infof("Executing: %s %v", conf.GooGetExe, args)
 	if err != nil {
-		logger.Errorf("googet stdout: %v", string(res.Stdout))
-		logger.Errorf("googet stderr: %v", string(res.Stderr))
+		deck.Errorf("googet stdout: %v", string(res.Stdout))
+		deck.Errorf("googet stderr: %v", string(res.Stderr))
 		if errors.Is(err, helpers.ErrTimeout) {
 			return fmt.Errorf("execution timed out after %v", conf.ExecConfig.Timeout)
 		}
@@ -134,7 +134,7 @@ func Installed(initial string, conf *Config) ([]Package, error) {
 		}
 		dat := strings.Fields(r)
 		if len(dat) < 2 {
-			logger.Errorf("unable to parse googet output %v", r)
+			deck.Errorf("unable to parse googet output %v", r)
 			continue
 		}
 		p = append(p, Package{
@@ -176,7 +176,7 @@ func ListRepos(conf *Config) ([]Repo, error) {
 		}
 		dat := strings.SplitN(r, ":", 2)
 		if len(dat) < 2 {
-			logger.Errorf("unable to parse googet output %v", r)
+			deck.Errorf("unable to parse googet output %v", r)
 			continue
 		}
 		repos = append(repos, Repo{

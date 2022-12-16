@@ -17,7 +17,7 @@ package storage
 import (
 	"fmt"
 
-	"github.com/google/logger"
+	"github.com/google/deck"
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
 )
@@ -222,7 +222,7 @@ func (v *Volume) Query() error {
 			return fmt.Errorf("oleutil.GetProperty(%s): %w", p[0].(string), err)
 		}
 		if err := assignVariant(prop.Value(), p[1]); err != nil {
-			logger.Warningf("assignVariant(%s): %v", p[0].(string), err)
+			deck.Warningf("assignVariant(%s): %v", p[0].(string), err)
 		}
 	}
 	return nil
@@ -267,10 +267,12 @@ func (s *VolumeSet) Close() {
 // Close() must be called on the resulting VolumeSet to ensure all volumes are released.
 //
 // Get all volumes:
-//		svc.GetVolumes("")
+//
+//	svc.GetVolumes("")
 //
 // To get specific volumes, provide a valid WMI query filter string, for example:
-//		svc.GetVolumes("WHERE DriveLetter=D")
+//
+//	svc.GetVolumes("WHERE DriveLetter=D")
 func (svc Service) GetVolumes(filter string) (VolumeSet, error) {
 	vset := VolumeSet{}
 	query := "SELECT * FROM MSFT_Volume"
@@ -278,7 +280,7 @@ func (svc Service) GetVolumes(filter string) (VolumeSet, error) {
 		query = fmt.Sprintf("%s %s", query, filter)
 	}
 
-	logger.V(1).Info(query)
+	deck.InfoA(query).With(deck.V(1)).Go()
 	raw, err := oleutil.CallMethod(svc.wmiSvc, "ExecQuery", query)
 	if err != nil {
 		return vset, fmt.Errorf("ExecQuery(%s): %w", query, err)

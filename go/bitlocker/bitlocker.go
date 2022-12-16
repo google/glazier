@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build windows
 // +build windows
 
 // Package bitlocker provides functionality for managing Bitlocker.
@@ -20,8 +21,8 @@ package bitlocker
 import (
 	"fmt"
 
+	"github.com/google/deck"
 	"github.com/scjalliance/comshim"
-	"github.com/google/logger"
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
 	"github.com/iamacarpet/go-win64api"
@@ -42,10 +43,10 @@ func BackupToAD() error {
 	volIDs := []string{}
 	for _, i := range infos {
 		if i.ConversionStatus != 1 {
-			logger.Warningf("Skipping volume %s due to conversion status (%d).", i.DriveLetter, i.ConversionStatus)
+			deck.Warningf("Skipping volume %s due to conversion status (%d).", i.DriveLetter, i.ConversionStatus)
 			continue
 		}
-		logger.Infof("Backing up Bitlocker recovery password for drive %q.", i.DriveLetter)
+		deck.Infof("Backing up Bitlocker recovery password for drive %q.", i.DriveLetter)
 		volIDs = append(volIDs, i.PersistentVolumeID)
 	}
 	return funcBackup(volIDs)

@@ -21,7 +21,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/google/logger"
+	"github.com/google/deck"
 	"github.com/google/glazier/go/helpers"
 )
 
@@ -36,12 +36,12 @@ func ResetDB(restart bool) error {
 		return fmt.Errorf("Cannot delete OSquery database because it was not found: %s", dbPath)
 	}
 
-	logger.Info("Stopping osquery service.")
+	deck.Info("Stopping osquery service.")
 	if err := Stop(); err != nil {
 		return err
 	}
 
-	logger.Infof("Database found, deleting current database: %s", dbPath)
+	deck.Infof("Database found, deleting current database: %s", dbPath)
 	if err := os.RemoveAll(dbPath); err != nil {
 		return fmt.Errorf("Failed to delete the OSquery database: %w", err)
 	}

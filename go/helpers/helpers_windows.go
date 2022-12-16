@@ -30,16 +30,15 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/google/deck"
 	"golang.org/x/sys/windows/registry"
 	"golang.org/x/sys/windows/svc/mgr"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows"
-	"github.com/google/logger"
 	"github.com/iamacarpet/go-win64api"
 )
 
 var (
-
 	// Test helpers
 	fnExec        = execute
 	fnProcessList = winapi.ProcessList
@@ -70,11 +69,11 @@ func Exec(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 		if res, err = fnExec(path, args, conf); err == nil {
 			break
 		}
-		logger.Warningf("%s did not complete successfully: %v", path, err)
+		deck.Warningf("%s did not complete successfully: %v", path, err)
 		if attempt == conf.RetryCount {
 			break
 		}
-		logger.Infof("retrying in %v", conf.RetryInterval)
+		deck.Infof("retrying in %v", conf.RetryInterval)
 		fnSleep(*conf.RetryInterval)
 	}
 	return res, err
@@ -184,7 +183,7 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 
 	start := time.Now()
 	// Start command asynchronously
-	logger.V(2).Infof("Executing: %v \n", cmd.Args)
+	deck.InfofA("Executing: %v \n", cmd.Args).With(deck.V(2)).Go()
 	if err := cmd.Start(); err != nil {
 		return result, fmt.Errorf("cmd.Start: %w", err)
 	}
@@ -347,7 +346,7 @@ func stopService(s *mgr.Service) error {
 	}
 	retry := 0
 	for stat.State != svc.Stopped {
-		logger.Infof("Waiting for service %q to stop.", s.Name)
+		deck.Infof("Waiting for service %q to stop.", s.Name)
 		time.Sleep(5 * time.Second)
 		retry++
 		if retry > 12 {
@@ -396,7 +395,7 @@ loop:
 			}
 			for _, p := range procs {
 				if matcher.MatchString(p.Executable) {
-					logger.Warningf("Process %s still running; waiting for exit.", p.Executable)
+					deck.Warningf("Process %s still running; waiting for exit.", p.Executable)
 					goto loop
 				}
 			}

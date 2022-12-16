@@ -25,8 +25,8 @@ import (
 	"syscall"
 	"unsafe"
 
+	"github.com/google/deck"
 	"golang.org/x/sys/windows"
-	"github.com/google/logger"
 	"github.com/google/glazier/go/helpers"
 )
 
@@ -101,7 +101,8 @@ func (s Session) AddPackage(
 // May return the error windows.ERROR_SUCCESS_REBOOT_REQUIRED if a reboot is required to complete the operation.
 //
 // Example, disabling a feature:
-//   s.DisableFeature("SMB1Protocol", "", nil, nil)
+//
+//	s.DisableFeature("SMB1Protocol", "", nil, nil)
 //
 // Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dismdisablefeature-function
 func (s Session) DisableFeature(
@@ -120,7 +121,8 @@ func (s Session) DisableFeature(
 // May return the error windows.ERROR_SUCCESS_REBOOT_REQUIRED if a reboot is required to complete the operation.
 //
 // Example, enabling a feature, including all dependencies:
-//   s.EnableFeature("SMB1Protocol", "", nil, true, nil, nil)
+//
+//	s.EnableFeature("SMB1Protocol", "", nil, true, nil, nil)
 //
 // Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dismenablefeature-function
 func (s Session) EnableFeature(
@@ -169,13 +171,13 @@ func (s Session) Close() error {
 func (s Session) checkError(err error) error {
 	if err == DISMAPI_S_RELOAD_IMAGE_SESSION_REQUIRED {
 		if err := DismCloseSession(*s.Handle); err != nil {
-			logger.Warningf("Closing session before reloading failed: %s", err.Error())
+			deck.Warningf("Closing session before reloading failed: %s", err.Error())
 		}
 
 		if err := DismOpenSession(helpers.StringToPtrOrNil(s.imagePath), helpers.StringToPtrOrNil(s.optWindowsDir), helpers.StringToPtrOrNil(s.optSystemDrive), s.Handle); err != nil {
 			return fmt.Errorf("reloading session: %w", err)
 		}
-		logger.Infof("Reloaded image session as requested by DISM API")
+		deck.Infof("Reloaded image session as requested by DISM API")
 
 		return nil
 	}
@@ -201,7 +203,8 @@ const (
 // Don't forget to call Close() on the returned Session object.
 //
 // Example, modifying the online image:
-//		dism.OpenSession(dism.DISM_ONLINE_IMAGE, "", "", dism.DismLogErrorsWarningsInfo, "", "")
+//
+//	dism.OpenSession(dism.DISM_ONLINE_IMAGE, "", "", dism.DismLogErrorsWarningsInfo, "", "")
 //
 // Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/disminitialize-function
 // Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism/dismopensession-function

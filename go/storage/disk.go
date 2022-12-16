@@ -19,7 +19,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/google/logger"
+	"github.com/google/deck"
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
 )
@@ -155,7 +155,8 @@ type Disk struct {
 // Clear wipes a disk and all its contents.
 //
 // Example:
-//		d.Clear(true, true, true)
+//
+//	d.Clear(true, true, true)
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/clear-msft-disk
 func (d *Disk) Clear(removeData, removeOEM, zeroDisk bool) (ExtendedStatus, error) {
@@ -251,10 +252,12 @@ var GptTypes = struct {
 // If successful, the partition is returned as a new Partition object. The new Partition must be Closed().
 //
 // Creating a GPT Basic Data partition, 100000000b size, drive letter "e:":
-//		d.CreatePartition(100000000, false, 0, 0, "e", false, nil, &storage.GptTypes.BasicData, false, false)
+//
+//	d.CreatePartition(100000000, false, 0, 0, "e", false, nil, &storage.GptTypes.BasicData, false, false)
 //
 // Creating an MBR FAT32 partition, full available space, marked active, with auto-assigned drive letter:
-// 		CreatePartition(0, true, 0, 0, "", true, &storage.MbrTypes.FAT32, nil, false, true)
+//
+//	CreatePartition(0, true, 0, 0, "", true, &storage.MbrTypes.FAT32, nil, false, true)
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/createpartition-msft-disk
 func (d *Disk) CreatePartition(size uint64, useMaximumSize bool, offset uint64, alignment int, driveLetter string, assignDriveLetter bool,
@@ -341,7 +344,8 @@ const (
 // Initialize initializes a new disk.
 //
 // Example:
-//		d.Initialize(storage.GptStyle)
+//
+//	d.Initialize(storage.GptStyle)
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/initialize-msft-disk
 func (d *Disk) Initialize(style PartitionStyle) (ExtendedStatus, error) {
@@ -360,7 +364,8 @@ func (d *Disk) Initialize(style PartitionStyle) (ExtendedStatus, error) {
 // Offline takes the disk offline.
 //
 // Example:
-//		d.Offline()
+//
+//	d.Offline()
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-disk-offline
 func (d *Disk) Offline() (ExtendedStatus, error) {
@@ -379,7 +384,8 @@ func (d *Disk) Offline() (ExtendedStatus, error) {
 // Online brings the disk online.
 //
 // Example:
-//		d.Online()
+//
+//	d.Online()
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-disk-online
 func (d *Disk) Online() (ExtendedStatus, error) {
@@ -398,7 +404,8 @@ func (d *Disk) Online() (ExtendedStatus, error) {
 // Refresh refreshes the cached disk layout information.
 //
 // Example:
-//		d.Refresh()
+//
+//	d.Refresh()
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-disk-refresh
 func (d *Disk) Refresh() (ExtendedStatus, error) {
@@ -512,7 +519,7 @@ func (d *Disk) Query() error {
 			return fmt.Errorf("oleutil.GetProperty(%s): %w", p[0].(string), err)
 		}
 		if err := assignVariant(prop.Value(), p[1]); err != nil {
-			logger.Warningf("assignVariant(%s): %v", p[0].(string), err)
+			deck.Warningf("assignVariant(%s): %v", p[0].(string), err)
 		}
 	}
 	return nil
@@ -574,11 +581,13 @@ func assignVariant(value interface{}, dest interface{}) error {
 // Close() must be called on the resulting DiskSet to ensure all disks are released.
 //
 // Get all disks:
-//		svc.GetDisks("")
+//
+//	svc.GetDisks("")
 //
 // To get specific disks, provide a valid WMI query filter string, for example:
-//		svc.GetDisks("WHERE Number=1")
-//		svc.GetDisks("WHERE IsSystem=True")
+//
+//	svc.GetDisks("WHERE Number=1")
+//	svc.GetDisks("WHERE IsSystem=True")
 func (svc Service) GetDisks(filter string) (DiskSet, error) {
 	dset := DiskSet{}
 	query := "SELECT * FROM MSFT_DISK"

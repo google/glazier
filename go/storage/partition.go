@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/google/logger"
+	"github.com/google/deck"
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
 )
@@ -102,7 +102,8 @@ func (p *Partition) Delete() (ExtendedStatus, error) {
 // Offline takes the partition offline.
 //
 // Example:
-//		p.Offline()
+//
+//	p.Offline()
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-partition-offline
 func (p *Partition) Offline() (ExtendedStatus, error) {
@@ -121,7 +122,8 @@ func (p *Partition) Offline() (ExtendedStatus, error) {
 // Online brings the partition online by mounting the associated volume (if one exists).
 //
 // Example:
-//		p.Online()
+//
+//	p.Online()
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-partition-online
 func (p *Partition) Online() (ExtendedStatus, error) {
@@ -140,10 +142,12 @@ func (p *Partition) Online() (ExtendedStatus, error) {
 // AddAccessPath adds a mount path or drive letter assignment to the partition.
 //
 // Example: assign a Drive letter with D:
-//		p.AddAccessPath("D:", false)
+//
+//	p.AddAccessPath("D:", false)
 //
 // Example: Automatically assign the next available Drive Letter:
-//		p.AddAccessPath("", true)
+//
+//	p.AddAccessPath("", true)
 //
 // Note: You cannot specify both a valid drive letter and auto assignment as true together.
 //
@@ -170,7 +174,8 @@ func (p *Partition) AddAccessPath(accessPath string, autoAssign bool) (ExtendedS
 // RemoveAccessPath removes the access path from the partition.
 //
 // Example: Remove the driveLetter of D: from a partition
-//		p.RemoveAccessPath("D:")
+//
+//	p.RemoveAccessPath("D:")
 //
 // Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/removeaccesspath-msft-partition
 func (p *Partition) RemoveAccessPath(accessPath string) (ExtendedStatus, error) {
@@ -254,7 +259,7 @@ func (p *Partition) Query() error {
 			return fmt.Errorf("oleutil.GetProperty(%s): %w", prop[0].(string), err)
 		}
 		if err := assignVariant(val.Value(), prop[1]); err != nil {
-			logger.Warningf("assignVariant(%s): %v", prop[0].(string), err)
+			deck.Warningf("assignVariant(%s): %v", prop[0].(string), err)
 		}
 	}
 	return nil
@@ -328,10 +333,12 @@ func (p *Partition) GetSupportedSize() (PartitionSupportedSize, ExtendedStatus, 
 // Close() must be called on the resulting PartitionSet to ensure all disks are released.
 //
 // Get all partitions:
-//		svc.GetPartitions("")
+//
+//	svc.GetPartitions("")
 //
 // To get specific partitions, provide a valid WMI query filter string, for example:
-//		svc.GetPartitions("WHERE DiskNumber=1")
+//
+//	svc.GetPartitions("WHERE DiskNumber=1")
 func (svc *Service) GetPartitions(filter string) (PartitionSet, error) {
 	parts := PartitionSet{}
 	query := "SELECT * FROM MSFT_Partition"
