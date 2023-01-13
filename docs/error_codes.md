@@ -1,6 +1,6 @@
 # Error Codes
 
-<!--* freshness: { owner: '@tseknet' reviewed: '2022-01-05' } *-->
+<!--* freshness: { owner: '@tseknet' reviewed: '2023-01-13' } *-->
 
 The question of how to implement error codes has already been answered a
 plethora of ways. An example is how Microsoft uses BSOD codes to identify fatal
@@ -95,11 +95,11 @@ be displayed:
 ```
 ***** IMAGING PROCESS FAILED *****
 
-* Root Cause: You tried to divide 1 by 0 (Error Code: 7999)
+* Glazier encountered the following error(s) while imaging.
+  Please consult the troubleshooting links for solutions.
 
-* Location: <file.py>:<lineno>
+  1. You tried to divide 1 by 0 (Error Code: 7999)
+     Troubleshooting: http://glazier-failures.example.com#7999
 
-* Logs: /Logs/glazier.log
-
-* Troubleshooting: https://glazier-failures.example.com#7999
+* Logs from the imaging process can be found at: /Logs/glazier.log
 ```

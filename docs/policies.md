@@ -1,6 +1,6 @@
 # Glazier Installer Policies
 
-<!--* freshness: { owner: '@tseknet' reviewed: '2022-01-17' } *-->
+<!--* freshness: { owner: '@tseknet' reviewed: '2023-01-13' } *-->
 
 Policy modules determine whether or not Autobuild should be allowed to proceed
 with an installation.
