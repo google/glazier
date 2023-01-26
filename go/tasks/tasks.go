@@ -95,13 +95,14 @@ func TaskExists(name string) (bool, error) {
 // Set common defaults for name and user to reduce the amount of required args.
 //
 // Example taskmaster.Trigger that creates a new task on startup with a two minute delay:
-// taskmaster.BootTrigger{
-//   TaskTrigger: taskmaster.TaskTrigger{
-// 		 Enabled: true,
-// 		 ID:      "startup",
-// 	 },
-// 	 Delay: period.NewHMS(0, 2, 0),
-// },
+//
+//	taskmaster.BootTrigger{
+//	  TaskTrigger: taskmaster.TaskTrigger{
+//			 Enabled: true,
+//			 ID:      "startup",
+//		 },
+//		 Delay: period.NewHMS(0, 2, 0),
+//	},
 func Create(id, path, args, name, user string, trigger taskmaster.Trigger) error {
 	svc, err := taskmaster.Connect()
 	if err != nil {
@@ -152,6 +153,28 @@ func Delete(name string) error {
 	for _, t := range tasks {
 		if strings.EqualFold(t.Name, name) {
 			return svc.DeleteTask(t.Path)
+		}
+	}
+	return ErrTaskNotFound
+}
+
+// Start attempts to start a scheduled task. This helper does not follow the running task or wait
+// for execution to complete.
+func Start(name string) error {
+	svc, err := taskmaster.Connect()
+	if err != nil {
+		return err
+	}
+	defer svc.Disconnect()
+	tasks, err := svc.GetRegisteredTasks()
+	if err != nil {
+		return err
+	}
+	defer tasks.Release()
+	for _, t := range tasks {
+		if strings.EqualFold(t.Name, name) {
+			_, err := t.Run()
+			return err
 		}
 	}
 	return ErrTaskNotFound
