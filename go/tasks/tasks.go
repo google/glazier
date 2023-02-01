@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/capnspacehook/taskmaster"
 )
@@ -30,6 +31,15 @@ var (
 	// is not registered in the Windows Task Scheduler
 	ErrNotRegistered = errors.New("scheduled task is not registered")
 )
+
+// TaskInfo describes a registered task using data from taskmaster.RegisteredTask.
+type TaskInfo struct {
+	Name           string
+	State          taskmaster.TaskState
+	LastTaskResult taskmaster.TaskResult
+	NextRunTime    time.Time
+	LastRunTime    time.Time
+}
 
 func setEnabled(name string, enabled bool) error {
 	svc, err := taskmaster.Connect()
@@ -52,6 +62,43 @@ func setEnabled(name string, enabled bool) error {
 		}
 	}
 	return ErrTaskNotFound
+}
+
+// names must start with "\"
+func formatName(name string) string {
+	if !strings.HasPrefix(name, `\`) {
+		name = `\` + name
+	}
+	return name
+}
+
+func getTask(name string) (TaskInfo, error) {
+	task := TaskInfo{}
+	svc, err := taskmaster.Connect()
+	if err != nil {
+		return task, fmt.Errorf("taskmaster.Connect: %w", err)
+	}
+	defer svc.Disconnect()
+
+	tmTask, err := svc.GetRegisteredTask(name)
+	if err != nil {
+		return task, fmt.Errorf("svc.GetRegisteredTask: %w", err)
+	}
+	defer tmTask.Release()
+	// Convert the svctask info to a helpers struct so we can release TaskMaster handles.
+	task.Name = tmTask.Name
+	task.State = tmTask.State
+	task.LastTaskResult = tmTask.LastTaskResult
+	task.NextRunTime = tmTask.NextRunTime
+	task.LastRunTime = tmTask.LastRunTime
+
+	return task, nil
+}
+
+// Fetch fetches a scheduled tasks state.
+func Fetch(name string) (TaskInfo, error) {
+	name = formatName(name)
+	return getTask(name)
 }
 
 // Disable disables a scheduled task.
