@@ -38,6 +38,7 @@ type ExecResult struct {
 type ExecError struct {
 	errmsg     string
 	procresult ExecResult
+	wraps      error
 }
 
 // ExecConfig provides flexible execution configuration.
@@ -84,6 +85,8 @@ var (
 func (e ExecError) Error() string {
 	return e.errmsg
 }
+
+func (e ExecError) Unwrap() error { return e.wraps }
 
 // Result returns any information that could be captured from the subprocess that was executed.
 func (e ExecError) Result() ExecResult {

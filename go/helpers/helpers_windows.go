@@ -205,9 +205,10 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 
 	// when the execution times out return a timeout error
 	if conf.Timeout != nil && !timer.Stop() {
-		return result, &ExecError{
+		return result, ExecError{
 			errmsg:     ErrTimeout.Error(),
 			procresult: result,
+			wraps:      ErrTimeout,
 		}
 	}
 
