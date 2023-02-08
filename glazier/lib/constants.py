@@ -77,6 +77,7 @@ flags.DEFINE_string('ntp_server', 'time.google.com',
 flags.DEFINE_list(
     'verify_urls',
     [
-        'https://www.catalog.update.microsoft.com/Home.aspx',
+        'https://www.microsoft.com',
     ],
-    'Comma-separated list of URLs to verify are reachable at start')
+    'Comma-separated list of URLs to verify are reachable at start',
+)
