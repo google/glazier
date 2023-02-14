@@ -281,7 +281,7 @@ class BaseDownloader(object):
         the expected code.
     """
     if status_codes:
-      logging.info('Expected status code(s): %s', status_codes)
+      logging.debug('Expected status code(s): %s', status_codes)
 
     try:
       if winpe.check_winpe():
