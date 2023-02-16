@@ -339,6 +339,18 @@ class BuildInfoTest(test_utils.GlazierTestCase):
     FLAGS.glazier_spec_lab = ''
     self.assertFalse(self.buildinfo.Lab())
 
+  @flagsaver.flagsaver
+  def test_cpl_spec_flags_true(self):
+    FLAGS.glazier_spec = 'flag'
+    FLAGS.glazier_spec_cpl = 'True'
+    self.assertTrue(self.buildinfo.Cpl())
+
+  @flagsaver.flagsaver
+  def test_cpl_spec_flags_false(self):
+    FLAGS.glazier_spec = 'flag'
+    FLAGS.glazier_spec_cpl = ''
+    self.assertFalse(self.buildinfo.Cpl())
+
   @mock.patch.object(
       buildinfo.beyondcorp.BeyondCorp, 'CheckBeyondCorp', autospec=True)
   @flagsaver.flagsaver

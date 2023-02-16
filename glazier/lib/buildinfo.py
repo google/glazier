@@ -331,6 +331,7 @@ class BuildInfo(object):
         'os_code': self.OsCode,
         'beyond_corp': self.BeyondCorp,
         'lab': self.Lab,
+        'cpl': self.Cpl,
         'is_installed': self.InstalledSoftware,
         'image_type': self.ImageType,
     }
@@ -565,6 +566,17 @@ class BuildInfo(object):
     return False
 
   @functools.lru_cache()
+  def Cpl(self) -> bool:
+    """Get state of cpl pin.
+
+    Returns:
+      Boolean state of cpl pin.
+    """
+    if spec.GetModule().GetCpl().lower() == 'true':
+      return True
+    return False
+
+  @functools.lru_cache()
   def OsCode(self) -> str:
     """Return the OS code associated with this build.
 
@@ -599,6 +611,7 @@ class BuildInfo(object):
             'isLaptop': str(self.IsLaptop()),
             'image_id': str(self.ImageID()),
             'lab': str(self.Lab()),
+            'CPL': str(self.Cpl()),
             'Manufacturer': str(self.ComputerManufacturer()),
             'Model': str(self.ComputerModel()),
             'OS': str(self.ComputerOs()),
