@@ -502,7 +502,7 @@ class BaseDownloader(object):
       on_giveup=BackoffGiveupHandler)
   def _GetFileStreamSize(self, file_stream: 'http.client.HTTPResponse'):
     url = file_stream.geturl()
-    total_size = int(file_stream.headers.get('Content-Length').strip())
+    total_size = int(file_stream.headers.get('Content-Length').strip())  # pytype: disable=attribute-error  # re-none
     return (url, total_size)
 
   def _StreamToDisk(self,
