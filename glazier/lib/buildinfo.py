@@ -582,10 +582,13 @@ class BuildInfo(object):
         return os_codes[os]['code']
     raise UnknownOsCodeError(os)
 
-  def Serialize(self, to_file):
-    """Dumps internal data to a file for later reference."""
+  def GetBuildInfo(self) -> Dict[str, Any]:
+    """Gathers all build info data.
 
-    build_data = {
+    Returns:
+      Dict of build info data.
+    """
+    return {
         'BUILD': {
             'bios_version': str(self.BIOSVersion()),
             'beyond_corp': str(self.BeyondCorp()),
@@ -610,6 +613,11 @@ class BuildInfo(object):
             'is_virtual': str(self.IsVirtual()),
         }
     }
+
+  def Serialize(self, to_file):
+    """Dumps internal data to a file for later reference."""
+
+    build_data = self.GetBuildInfo()
 
     # chooser data
     user_data = self._chooser_responses
