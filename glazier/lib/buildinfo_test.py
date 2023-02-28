@@ -643,6 +643,39 @@ class BuildInfoTest(test_utils.GlazierTestCase):
     # default
     self.assertEqual(self.buildinfo.EncryptionLevel(), 'tpm')
 
+  def test_getBuildInfo(self):
+    mock_buildinfo = mock.Mock(spec_set=self.buildinfo)
+    mock_buildinfo.GetBuildInfo = buildinfo.BuildInfo.GetBuildInfo.__get__(
+        mock_buildinfo
+    )
+    bi = mock_buildinfo.GetBuildInfo()
+
+    for f in [
+        'bios_version',
+        'beyond_corp',
+        'Binary Path',
+        'branch',
+        'build_timestamp',
+        'Chassis',
+        'Name',
+        'encryption_type',
+        'FQDN',
+        'isLaptop',
+        'image_id',
+        'lab',
+        'Manufacturer',
+        'Model',
+        'OS',
+        'release',
+        'Release Path',
+        'SerialNumber',
+        'Support Tier',
+        'tpm_present',
+        'is_virtual',
+    ]:
+      self.assertIn(f, bi['BUILD'])
+      self.assertIsInstance(bi['BUILD'][f], str)
+
   @mock.patch.object(timers.Timers, 'GetAll', autospec=True)
   def test_serialize(self, mock_get_all):
 
@@ -657,6 +690,8 @@ class BuildInfoTest(test_utils.GlazierTestCase):
                 tz=datetime.timezone(datetime.timedelta(hours=6)))
     }
     mock_buildinfo.Serialize = buildinfo.BuildInfo.Serialize.__get__(
+        mock_buildinfo)
+    mock_buildinfo.GetBuildInfo = buildinfo.BuildInfo.GetBuildInfo.__get__(
         mock_buildinfo)
     yaml_path = self.create_tempfile(file_path='build_info.yaml')
     mock_buildinfo.Serialize(yaml_path)
