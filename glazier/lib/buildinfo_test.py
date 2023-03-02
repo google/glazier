@@ -174,6 +174,7 @@ class BuildInfoTest(test_utils.GlazierTestCase):
     self.assertEqual(result, '1A19SEL90000R90DZN7A-1234567')
 
   def test_build_pin_match(self):
+    # ComputerModel
     with mock.patch.object(
         buildinfo.BuildInfo, 'ComputerModel', autospec=True) as mock_model:
       mock_model.return_value = 'HP Z620 Workstation'
@@ -207,6 +208,36 @@ class BuildInfoTest(test_utils.GlazierTestCase):
       self.assertTrue(
           self.buildinfo.BuildPinMatch('computer_model',
                                        ['hp Z840', 'hp Z620']))
+
+    # ComputerName
+    with mock.patch.object(
+        buildinfo.BuildInfo, 'ComputerName', autospec=True) as mock_name:
+      mock_name.return_value = 'foo-bar-yahtzee'
+      # Direct include
+      self.assertTrue(
+          self.buildinfo.BuildPinMatch(
+              'computer_name', ['foo-bar-yahtzee', 'foo-bar-bingo']))
+      # Direct exclude
+      self.assertFalse(
+          self.buildinfo.BuildPinMatch(
+              'computer_name', ['foo-bar-bingo', 'foo-bar-sorry']))
+      # Inverse exclude
+      self.assertFalse(
+          self.buildinfo.BuildPinMatch('computer_name', ['!foo-bar-yahtzee']))
+      # Inverse exclude (second)
+      self.assertFalse(
+          self.buildinfo.BuildPinMatch(
+              'computer_name', ['!foo-bar-bingo', '!foo-bar-yahtzee']))
+      # Inverse include
+      self.assertTrue(
+          self.buildinfo.BuildPinMatch('computer_name', ['!foo-bar-bingo']))
+      # Inverse include (second)
+      self.assertTrue(
+          self.buildinfo.BuildPinMatch(
+              'computer_name', ['!foo-bar-bingo', '!foo-bar-sorry']))
+      # Substring
+      self.assertTrue(
+          self.buildinfo.BuildPinMatch('computer_name', ['FOO-BAR']))
 
     # Device Ids
     with mock.patch.object(

@@ -288,6 +288,7 @@ class BuildInfo(object):
 
     Special cases:
       computer_model: Permits partial string matching.
+      computer_name: Permits partial string matching.
       device_id:  Performs a many:many matching, as it's comparing against a
         list of all known internal hardware ids instead of just one string.
       USER_*: USER_ pins are dynamic, based on options offered by the chooser.
@@ -315,7 +316,7 @@ class BuildInfo(object):
       raise IllegalPinError(pin_name)
 
     loose = False
-    if pin_name in ['computer_model', 'device_id']:
+    if pin_name in ['computer_model', 'computer_name', 'device_id']:
       loose = True
     values = known_pins[pin_name]()
     values = values if isinstance(values, list) else [values]
@@ -324,6 +325,7 @@ class BuildInfo(object):
   def GetExportedPins(self) -> Dict[str, Any]:
     return {
         'computer_model': self.ComputerModel,
+        'computer_name': self.ComputerName,
         'device_id': self.DeviceIds,
         'encryption_type': self.EncryptionLevel,
         'graphics': self.VideoControllersByName,
