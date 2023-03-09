@@ -77,7 +77,7 @@ flags.DEFINE_string('ntp_server', 'time.google.com',
 flags.DEFINE_list(
     'verify_urls',
     [
-        'https://www.microsoft.com',
+        'https://dns.google',
     ],
     'Comma-separated list of URLs to verify are reachable at start',
 )
