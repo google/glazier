@@ -203,7 +203,7 @@ class BuildInfo(object):
     except files.Error as e:
       raise YamlFileError(rel_id_file) from e
     if data and 'release_id' in data:
-      return data['release_id']
+      return data['release_id']  # pytype: disable=unsupported-operands  # always-use-return-annotations
     return None
 
   def _ReleaseInfo(self):

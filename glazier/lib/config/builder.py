@@ -134,11 +134,11 @@ class ConfigBuilder(base.ConfigBase):
             'SetTimer': [timer_start]
         }
     })
-    controls = yaml_config['controls']
+    controls = yaml_config['controls']  # pytype: disable=unsupported-operands  # always-use-return-annotations
     try:
       for control in controls:
         if 'pin' not in control or self._MatchPin(control['pin']):
-          self._StoreControls(control, yaml_config.get('templates'))
+          self._StoreControls(control, yaml_config.get('templates'))  # pytype: disable=attribute-error  # always-use-return-annotations
     finally:
       # close out any timers before raising a server change
       timer_stop = 'stop_{}_{}'.format(conf_path.rstrip('/'), conf_file)
