@@ -27,6 +27,7 @@ func TestInstall(t *testing.T) {
 		pkg       string
 		sources   string
 		reinstall bool
+		dbOnly    bool
 		wantArg   []string
 		wantErr   error
 	}{
@@ -34,14 +35,24 @@ func TestInstall(t *testing.T) {
 			pkg:       "pkg-one",
 			sources:   "http://repo/manifest/url",
 			reinstall: false,
-			wantArg:   []string{"-noconfirm", "install", "--sources", "http://repo/manifest/url", "pkg-one"},
+			dbOnly:    false,
+			wantArg:   []string{"-noconfirm", "install", "-sources", "http://repo/manifest/url", "pkg-one"},
 			wantErr:   nil,
 		},
 		{
 			pkg:       "pkg-two",
 			sources:   "",
 			reinstall: true,
-			wantArg:   []string{"-noconfirm", "install", "--reinstall", "pkg-two"},
+			dbOnly:    false,
+			wantArg:   []string{"-noconfirm", "install", "-reinstall", "pkg-two"},
+			wantErr:   nil,
+		},
+		{
+			pkg:       "pkg-three",
+			sources:   "",
+			reinstall: false,
+			dbOnly:    true,
+			wantArg:   []string{"-noconfirm", "install", "-db_only", "pkg-three"},
 			wantErr:   nil,
 		},
 	}
@@ -51,7 +62,7 @@ func TestInstall(t *testing.T) {
 			a = args
 			return helpers.ExecResult{}, nil
 		}
-		err := Install(tt.pkg, tt.sources, tt.reinstall, nil)
+		err := Install(tt.pkg, tt.sources, tt.reinstall, tt.dbOnly, nil)
 		if !cmp.Equal(a, tt.wantArg) {
 			t.Errorf("Install(%s) produced unexpected differences (-want +got): %s", tt.pkg, cmp.Diff(tt.wantArg, a))
 		}
