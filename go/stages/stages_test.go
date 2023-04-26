@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -248,5 +248,40 @@ func TestRetreiveTimesNoKey(t *testing.T) {
 	err := s.RetreiveTimes(testStageRoot, "3")
 	if err != nil {
 		t.Errorf("%s(): raised unexpected error %v", testID, err)
+	}
+}
+
+func TestSetStage(t *testing.T) {
+	tests := []struct {
+		desc    string
+		in      string
+		period  string
+		wantErr error
+	}{
+		{
+			desc:    "start period",
+			in:      "1336",
+			period:  StartKey,
+			wantErr: nil,
+		},
+		{
+			desc:    "end period",
+			in:      "1337",
+			period:  EndKey,
+			wantErr: nil,
+		},
+		{
+			desc:    "invalid period",
+			in:      "1338",
+			period:  "Foo",
+			wantErr: ErrPeriod,
+		},
+	}
+
+	for _, tt := range tests {
+		err := SetStage(tt.in, tt.period)
+		if !errors.Is(err, tt.wantErr) {
+			t.Errorf("SetStage(%v, %v) returned unexpected error %v", tt.in, tt.period, err)
+		}
 	}
 }
