@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build windows
 // +build windows
 
 // Package stages allows interacting with Glazier build stages.
@@ -27,6 +28,11 @@ import (
 )
 
 const (
+	// StartKey references the time that the stage started
+	StartKey = "Start"
+	// EndKey references the time that the stage ended
+	EndKey = "End"
+
 	defaultTimeout = 60 * 24 * 7 * time.Minute // 7 days
 	regStagesRoot  = `SOFTWARE\Glazier\Stages`
 	regActiveKey   = "_Active"
@@ -56,7 +62,7 @@ func NewStage() *Stage {
 
 func activeTimeFromReg(root, stageID string, period string) (time.Time, error) {
 	switch period {
-	case "Start", "End":
+	case StartKey, EndKey:
 		active, err := registry.GetString(fmt.Sprintf(`%s\%s`, root, stageID), period)
 		if err != nil && err != registry.ErrNotExist {
 			return time.Time{}, err
@@ -80,11 +86,11 @@ func activeTimeFromReg(root, stageID string, period string) (time.Time, error) {
 func (s *Stage) RetreiveTimes(root, stageID string) error {
 	var err error
 
-	if s.Start, err = activeTimeFromReg(root, stageID, "Start"); err != nil {
+	if s.Start, err = activeTimeFromReg(root, stageID, StartKey); err != nil {
 		return err
 	}
 
-	if s.End, err = activeTimeFromReg(root, stageID, "End"); err != nil {
+	if s.End, err = activeTimeFromReg(root, stageID, EndKey); err != nil {
 		return err
 	}
 
@@ -155,4 +161,33 @@ func ActiveStatus() (*Stage, error) {
 	}
 
 	return s, nil
+}
+
+// SetStage creates or updates the passed build stage in a database.
+func SetStage(stageID string, period string) error {
+	key := fmt.Sprintf(`%s\%s`, regStagesRoot, stageID)
+	time := time.Now().Format(timeFmt)
+	activeValue := stageID
+
+	if period != StartKey && period != EndKey {
+		return ErrPeriod
+	}
+
+	if period == EndKey {
+		activeValue = ""
+	}
+
+	if err := registry.Create(key); err != nil {
+		return err
+	}
+
+	if err := registry.SetString(key, period, time); err != nil {
+		return err
+	}
+
+	if err := registry.SetString(regStagesRoot, regActiveKey, activeValue); err != nil {
+		return err
+	}
+
+	return nil
 }

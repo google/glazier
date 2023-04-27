@@ -81,17 +81,20 @@ func AddRepo(name, url string, conf *Config) error {
 }
 
 // Install installs a Googet package.
-func Install(pkg, sources string, reinstall bool, conf *Config) error {
+func Install(pkg, sources string, reinstall bool, dbOnly bool, conf *Config) error {
 	if conf == nil {
 		conf = NewConfig()
 	}
 
 	cmd := []string{"-noconfirm", "install"}
 	if reinstall {
-		cmd = append(cmd, "--reinstall")
+		cmd = append(cmd, "-reinstall")
 	}
 	if sources != "" {
-		cmd = append(cmd, "--sources", sources)
+		cmd = append(cmd, "-sources", sources)
+	}
+	if dbOnly {
+		cmd = append(cmd, "-db_only")
 	}
 	cmd = append(cmd, pkg)
 

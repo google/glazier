@@ -97,8 +97,8 @@ class ConfigRunner(config_base.ConfigBase):
           raise CheckUrlError(url=url)
 
     while tasks:
-      self._build_info.ActiveConfigPath(set_to=tasks[0]['path'])
-      entry = tasks[0]['data']
+      self._build_info.ActiveConfigPath(set_to=tasks[0]['path'])  # pytype: disable=unsupported-operands  # always-use-return-annotations
+      entry = tasks[0]['data']  # pytype: disable=unsupported-operands  # always-use-return-annotations
       for element in entry:
         if element == 'policy':
           for line in entry['policy']:
