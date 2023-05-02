@@ -32,11 +32,12 @@ const (
 	StartKey = "Start"
 	// EndKey references the time that the stage ended
 	EndKey = "End"
+	// TermStage after which to consider the build completed
+	TermStage = "100"
 
 	defaultTimeout = 60 * 24 * 7 * time.Minute // 7 days
 	regStagesRoot  = `SOFTWARE\Glazier\Stages`
 	regActiveKey   = "_Active"
-	term           = "100" // Stage after which to consider the build completed
 	timeFmt        = "2006-01-02T15:04:05.000000"
 )
 
@@ -142,7 +143,7 @@ func ActiveStatus() (*Stage, error) {
 
 	// Indicates regActiveKey is empty.
 	if s.ID == "" {
-		s.ID = term
+		s.ID = TermStage
 	}
 
 	// Indicates regActiveKey doesn't exist.
@@ -156,7 +157,7 @@ func ActiveStatus() (*Stage, error) {
 	}
 
 	s.State = "Running"
-	if s.ID == term && !s.End.IsZero() {
+	if s.ID == TermStage && !s.End.IsZero() {
 		s.State = "Complete"
 	}
 
