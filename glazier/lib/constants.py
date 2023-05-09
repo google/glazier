@@ -74,6 +74,14 @@ flags.DEFINE_enum('environment', 'Host', ['Host', 'WinPE'],
                   'The running host environment.')
 flags.DEFINE_string('ntp_server', 'time.google.com',
                     'Server to use for synchronizing the local system time.')
+
+SYSLOG_PORT = flags.DEFINE_integer(
+    'syslog_port', 514, 'Syslog port to use for remote logs collection.'
+)
+SYSLOG_SERVER = flags.DEFINE_string(
+    'syslog_server', None, 'Syslog server to use for remote logs collection.'
+)
+
 flags.DEFINE_list(
     'verify_urls',
     [

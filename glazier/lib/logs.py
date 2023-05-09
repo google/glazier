@@ -114,3 +114,12 @@ def Setup():
     eh.setLevel(logging.DEBUG)
     eh.setFormatter(debug_formatter)
     logger.addHandler(eh)
+
+  if (
+      constants.SYSLOG_SERVER.value is not None
+      and constants.SYSLOG_PORT.value is not None
+  ):
+    sl = logging.handlers.SysLogHandler(
+        address=(constants.SYSLOG_SERVER.value, constants.SYSLOG_PORT.value)
+    )
+    logger.addHandler(sl)
