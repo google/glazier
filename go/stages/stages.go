@@ -34,9 +34,10 @@ const (
 	EndKey = "End"
 	// TermStage after which to consider the build completed
 	TermStage = "100"
+	// RegStagesRoot references the root Registry key under which stages exist
+	RegStagesRoot = `SOFTWARE\Glazier\Stages`
 
 	defaultTimeout = 60 * 24 * 7 * time.Minute // 7 days
-	regStagesRoot  = `SOFTWARE\Glazier\Stages`
 	regActiveKey   = "_Active"
 	timeFmt        = "2006-01-02T15:04:05.000000"
 )
@@ -84,7 +85,7 @@ func activeTimeFromReg(root, stageID string, period string) (time.Time, error) {
 
 // RetreiveTimes populates the Stage struct with the start and end times of the
 // passed stage ID.
-func (s *Stage) RetreiveTimes(root, stageID string) error {
+func (s *Stage) RetreiveTimes(root, stageID string) error { // go/LEGACY_TYPO
 	var err error
 
 	if s.Start, err = activeTimeFromReg(root, stageID, StartKey); err != nil {
@@ -101,7 +102,7 @@ func (s *Stage) RetreiveTimes(root, stageID string) error {
 func checkExpiration(stageID string) error {
 	// TODO(b/139666887): Implement stage expiration here
 	s := NewStage()
-	return s.RetreiveTimes(regStagesRoot, stageID)
+	return s.RetreiveTimes(RegStagesRoot, stageID) // go/LEGACY_TYPO
 }
 
 func activeStageFromReg(root string) (string, error) {
@@ -119,7 +120,7 @@ func activeStageFromReg(root string) (string, error) {
 // The returned uint64 can be used for comparison against greater/lesser
 // stages to determine the latest stage.
 func ActiveStage() (uint64, error) {
-	s, err := activeStageFromReg(regStagesRoot)
+	s, err := activeStageFromReg(RegStagesRoot)
 	if err != nil {
 		return 0, err
 	}
@@ -136,7 +137,7 @@ func ActiveStatus() (*Stage, error) {
 	var err error
 	s := NewStage()
 
-	s.ID, err = activeStageFromReg(regStagesRoot)
+	s.ID, err = activeStageFromReg(RegStagesRoot)
 	if err != nil {
 		return s, err
 	}
@@ -151,7 +152,7 @@ func ActiveStatus() (*Stage, error) {
 		return s, nil
 	}
 
-	err = s.RetreiveTimes(regStagesRoot, s.ID)
+	err = s.RetreiveTimes(RegStagesRoot, s.ID) // go/LEGACY_TYPO
 	if err != nil {
 		return s, err
 	}
@@ -166,7 +167,7 @@ func ActiveStatus() (*Stage, error) {
 
 // SetStage creates or updates the passed build stage in a database.
 func SetStage(stageID string, period string) error {
-	key := fmt.Sprintf(`%s\%s`, regStagesRoot, stageID)
+	key := fmt.Sprintf(`%s\%s`, RegStagesRoot, stageID)
 	time := time.Now().Format(timeFmt)
 	activeValue := stageID
 
@@ -186,7 +187,7 @@ func SetStage(stageID string, period string) error {
 		return err
 	}
 
-	if err := registry.SetString(regStagesRoot, regActiveKey, activeValue); err != nil {
+	if err := registry.SetString(RegStagesRoot, regActiveKey, activeValue); err != nil {
 		return err
 	}
 
