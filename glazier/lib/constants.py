@@ -60,20 +60,34 @@ USE_REG_64 = True
 
 ## Flags
 
-FLAGS = flags.FLAGS
-flags.DEFINE_string('binary_root_path', '/bin', 'Path to the binary storage.')
-flags.DEFINE_string('binary_server', '', 'Root URL for binary build files.')
-flags.DEFINE_boolean('config_branches', True,
-                     'The configuration repository uses branched paths.')
-flags.DEFINE_string('config_root_path', 'config',
-                    'Path to the root of the configuration directory.')
-flags.DEFINE_string('config_server', 'https://glazier-server.example.com',
-                    'Root URL for configuration build data.')
+BINARY_ROOT_PATH = flags.DEFINE_string(
+    'binary_root_path', '/bin', 'Path to the binary storage.'
+)
+BINARY_SERVER = flags.DEFINE_string(
+    'binary_server', '', 'Root URL for binary build files.'
+)
+CONFIG_BRANCHES = flags.DEFINE_boolean(
+    'config_branches', True, 'The configuration repository uses branched paths.'
+)
+CONFIG_ROOT_PATH = flags.DEFINE_string(
+    'config_root_path',
+    'config',
+    'Path to the root of the configuration directory.',
+)
+CONFIG_SERVER = flags.DEFINE_string(
+    'config_server',
+    'https://glazier-server.example.com',
+    'Root URL for configuration build data.',
+)
 
 flags.DEFINE_enum('environment', 'Host', ['Host', 'WinPE'],
                   'The running host environment.')
-flags.DEFINE_string('ntp_server', 'time.google.com',
-                    'Server to use for synchronizing the local system time.')
+
+NTP_SERVER = flags.DEFINE_string(
+    'ntp_server',
+    'time.google.com',
+    'Server to use for synchronizing the local system time.',
+)
 
 SYSLOG_PORT = flags.DEFINE_integer(
     'syslog_port', 514, 'Syslog port to use for remote logs collection.'
@@ -82,7 +96,7 @@ SYSLOG_SERVER = flags.DEFINE_string(
     'syslog_server', None, 'Syslog server to use for remote logs collection.'
 )
 
-flags.DEFINE_list(
+VERIFY_URLS = flags.DEFINE_list(
     'verify_urls',
     [
         'https://dns.google',

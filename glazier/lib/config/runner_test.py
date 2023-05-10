@@ -16,14 +16,16 @@
 
 from unittest import mock
 
+from absl import flags
 from absl.testing import absltest
 from glazier.lib import buildinfo
-from glazier.lib import constants
 from glazier.lib import events
 from glazier.lib import test_utils
 from glazier.lib.config import base
 from glazier.lib.config import files
 from glazier.lib.config import runner
+
+FLAGS = flags.FLAGS
 
 
 class ConfigRunnerTest(test_utils.GlazierTestCase):
@@ -32,7 +34,7 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
 
     super(ConfigRunnerTest, self).setUp()
     self.buildinfo = buildinfo.BuildInfo()
-    constants.FLAGS.verify_urls = None
+    FLAGS.verify_urls = ''
 
     self.cr = runner.ConfigRunner(self.buildinfo)
     self.task_list_path = self.create_tempfile(
@@ -211,7 +213,7 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
   @mock.patch.object(runner.download.Download, 'CheckUrl', autospec=True)
   def test_verify_urls(self, mock_checkurl):
     mock_checkurl.return_value = True
-    constants.FLAGS.verify_urls = ['http://www.example.com/']
+    FLAGS.verify_urls = ['http://www.example.com/']
     self.cr._ProcessTasks([])
     mock_checkurl.assert_called_with(mock.ANY, 'http://www.example.com/', [200])
     # fail

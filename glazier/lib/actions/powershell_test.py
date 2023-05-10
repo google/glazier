@@ -15,6 +15,7 @@
 
 from unittest import mock
 
+from absl import flags
 from absl.testing import absltest
 from absl.testing import parameterized
 from glazier.lib import buildinfo
@@ -23,6 +24,7 @@ from glazier.lib import events
 from glazier.lib import test_utils
 from glazier.lib.actions import powershell
 
+FLAGS = flags.FLAGS
 SCRIPT = '#Some-Script.ps1'
 SCRIPT_PATH = r'C:\Cache\Some-Script.ps1'
 ARGS = ['-Verbose', '-InformationAction', 'Continue']
@@ -33,8 +35,8 @@ TOKENIZED_COMMAND = ['Write-Verbose', 'Foo', '-Verbose', '; exit $LASTEXITCODE']
 class PowershellTest(test_utils.GlazierTestCase):
 
   def setUp(self):
-    super(PowershellTest, self).setUp()
-    buildinfo.constants.FLAGS.config_server = 'https://glazier/'
+    super().setUp()
+    FLAGS.config_server = 'https://glazier/'
     self.bi = buildinfo.BuildInfo()
 
   @mock.patch.object(

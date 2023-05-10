@@ -54,7 +54,7 @@ class TitleTest(test_utils.GlazierTestCase):
   @mock.patch.object(title.winpe, 'check_winpe', autospec=True)
   def test_base_title_wpe(self, mock_check_winpe, mock_release, mock_imageid):
     mock_check_winpe.return_value = True
-    FLAGS.config_root_path = None
+    FLAGS.config_root_path = ''
     mock_imageid.return_value = None
     mock_release.return_value = None
     self.assertEqual(title._base_title(), 'WinPE')
@@ -78,7 +78,7 @@ class TitleTest(test_utils.GlazierTestCase):
     mock_check_winpe.return_value = False
     mock_imageid.return_value = _TEST_ID
     mock_release.return_value = None
-    FLAGS.config_root_path = None
+    FLAGS.config_root_path = ''
     self.assertEqual(title._base_title(), _TEST_ID)
 
   @flagsaver.flagsaver()
@@ -89,7 +89,7 @@ class TitleTest(test_utils.GlazierTestCase):
     mock_check_winpe.return_value = False
     mock_imageid.return_value = None
     mock_release.return_value = None
-    FLAGS.config_root_path = None
+    FLAGS.config_root_path = ''
     self.assertEqual(title._base_title(), '')
 
   @mock.patch.object(title, '_base_title', autospec=True)

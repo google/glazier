@@ -13,10 +13,6 @@
 # limitations under the License.
 """Construct and set the current console title."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import logging
 import os
 from typing import Optional
@@ -55,9 +51,9 @@ def _base_title() -> Optional[str]:
 
   if winpe.check_winpe():
     base.append('WinPE')
-  if constants.FLAGS.config_root_path:
+  if constants.CONFIG_ROOT_PATH.value:
     # Existence of the constant must be checked before strip to avoid null error
-    path = constants.FLAGS.config_root_path.strip('/')
+    path = constants.CONFIG_ROOT_PATH.value.strip('/')
     if path:
       base.append(path)
   if getstage:

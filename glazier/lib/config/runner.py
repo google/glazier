@@ -88,10 +88,10 @@ class ConfigRunner(config_base.ConfigBase):
       CheckUrlError: failure to confirm verify_urls.
       ConfigRunnerError: error encountered while running a task.
     """
-    if constants.FLAGS.verify_urls:
-      logging.info('Verifying %d URL(s)', len(constants.FLAGS.verify_urls))
+    if constants.VERIFY_URLS.value:
+      logging.info('Verifying %d URL(s)', len(constants.VERIFY_URLS.value))
       dl = download.Download()
-      for url in constants.FLAGS.verify_urls:
+      for url in constants.VERIFY_URLS.value:
         if not dl.CheckUrl(url, [200]):
           # TODO(b/236982963): Include the non-200 status code in the message.
           raise CheckUrlError(url=url)

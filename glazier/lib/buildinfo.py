@@ -36,7 +36,6 @@ from gwinpy.wmi import net_info
 from gwinpy.wmi import tpm_info
 
 
-FLAGS = flags.FLAGS
 flags.DEFINE_enum(
     'glazier_spec', 'flag', list(spec.SPEC_OPTS.keys()),
     ('Which host specification module to use for determining host features '
@@ -144,7 +143,7 @@ class BuildInfo(object):
       The versioned base path to the current build as a string.
     """
     server = self.BinaryServer() or ''
-    path = FLAGS.binary_root_path.strip('/')
+    path = constants.BINARY_ROOT_PATH.value.strip('/')
     path = '%s/%s/' % (server, path)
     return path
 
@@ -160,8 +159,8 @@ class BuildInfo(object):
     if set_to:
       self._binary_server = set_to
     if not self._binary_server:
-      if FLAGS.binary_server:
-        self._binary_server = FLAGS.binary_server
+      if constants.BINARY_SERVER.value:
+        self._binary_server = constants.BINARY_SERVER.value
       else:  # backward compatibility
         self._binary_server = self.ConfigServer()
     return self._binary_server.rstrip('/')
@@ -178,7 +177,7 @@ class BuildInfo(object):
     if set_to:
       self._glazier_server = set_to
     if not self._glazier_server:
-      self._glazier_server = FLAGS.config_server
+      self._glazier_server = constants.CONFIG_SERVER.value
     return self._glazier_server.rstrip('/')
 
   @functools.lru_cache()
@@ -223,7 +222,7 @@ class BuildInfo(object):
       The versioned base path to the current build as a string.
     """
     path = self.ConfigServer() or ''
-    if FLAGS.config_branches and self.Branch():
+    if constants.CONFIG_BRANCHES.value and self.Branch():
       path += '/%s' % str(self.Branch())
     path += '/'
     return path
@@ -268,7 +267,9 @@ class BuildInfo(object):
       except files.Error:
         # Fallback to using FLAG to avoid edge case where the config server
         # written to the task list is unavailable.
-        info_file = f"{FLAGS.config_server.rstrip('/')}/version-info.yaml"
+        info_file = (
+            f"{constants.CONFIG_SERVER.value.rstrip('/')}/version-info.yaml"
+        )
         try:
           self._version_info = files.Read(info_file)
         except files.Error as e:
