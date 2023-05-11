@@ -16,6 +16,7 @@
 
 from unittest import mock
 
+from absl import flags
 from absl.testing import absltest
 from glazier import autobuild
 from glazier.lib import buildinfo
@@ -25,12 +26,14 @@ from glazier.lib import winpe
 
 from glazier.lib import errors
 
+FLAGS = flags.FLAGS
+
 
 class AutobuildTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(autobuild, 'logs', autospec=True)
   def setUp(self, logs):
-    super(AutobuildTest, self).setUp()
+    super().setUp()
     self.autobuild = autobuild.AutoBuild()
     autobuild.logging = logs.logging
 
@@ -40,7 +43,7 @@ class AutobuildTest(test_utils.GlazierTestCase):
     tasklist = autobuild.constants.SYS_TASK_LIST
     mock_check_winpe.return_value = False
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
-    autobuild.FLAGS.preserve_tasks = True
+    FLAGS.preserve_tasks = True
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
 
     # WinPE
@@ -49,7 +52,7 @@ class AutobuildTest(test_utils.GlazierTestCase):
     tasklist = autobuild.constants.WINPE_TASK_LIST
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
     self.assertTrue(autobuild.os.path.exists(tasklist))
-    autobuild.FLAGS.preserve_tasks = False
+    FLAGS.preserve_tasks = False
     self.assertEqual(self.autobuild._SetupTaskList(), tasklist)
     self.assertFalse(autobuild.os.path.exists(tasklist))
 
@@ -57,7 +60,7 @@ class AutobuildTest(test_utils.GlazierTestCase):
   @mock.patch.object(autobuild, 'os', autospec=True)
   def test_setup_task_list_error(self, mock_os, mock_log_and_exit):
     self.patch_constant_file_path(autobuild.constants, 'SYS_TASK_LIST')
-    autobuild.FLAGS.preserve_tasks = False
+    FLAGS.preserve_tasks = False
     mock_os.remove.side_effect = OSError
     self.autobuild._SetupTaskList()
     mock_log_and_exit.assert_called_with(self.autobuild._build_info, mock.ANY)

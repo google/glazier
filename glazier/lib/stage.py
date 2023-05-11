@@ -19,10 +19,6 @@ the time during which the stage began and finished, useful for tracking end to
 end progress.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import datetime
 import logging
 from typing import Optional, Tuple
@@ -33,13 +29,14 @@ from glazier.lib import registry
 
 from glazier.lib import errors
 
-FLAGS = flags.FLAGS
 STAGES_ROOT = constants.REG_ROOT + r'\Stages'
 ACTIVE_KEY = '_Active'
 
-flags.DEFINE_integer(
-    'stage_timeout_minutes', 60 * 24 * 7,
-    'Time in minutes until an active stage is considered expired.')
+_STAGE_TIMEOUT = flags.DEFINE_integer(
+    'stage_timeout_minutes',
+    60 * 24 * 7,
+    'Time in minutes until an active stage is considered expired.',
+)
 
 
 class Error(errors.GlazierError):
@@ -98,7 +95,7 @@ def exit_stage(stage_id: int):
 
 
 def _check_expiration(stage_id: int):
-  expiration = datetime.timedelta(minutes=FLAGS.stage_timeout_minutes)
+  expiration = datetime.timedelta(minutes=_STAGE_TIMEOUT.value)
   time_in_stage = get_active_time(stage_id)
   if time_in_stage > expiration:
     raise ExpirationError(stage_id)

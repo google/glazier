@@ -29,12 +29,11 @@ from glazier.lib import resources
 from glazier.lib import errors
 
 
-FLAGS = flags.FLAGS
-
 RESOURCE_PATH = 'cldr/common/supplemental/windowsZones.xml'
 
-flags.DEFINE_string('windows_zones_resource', RESOURCE_PATH,
-                    'Timezone map file location.')
+_ZONES_FILE = flags.DEFINE_string(
+    'windows_zones_resource', RESOURCE_PATH, 'Timezone map file location.'
+)
 
 
 class Error(errors.GlazierError):
@@ -46,7 +45,8 @@ class TimezoneError(Error):
   def __init__(self):
     super().__init__(
         error_code=errors.ErrorCode.TIMEZONE_ERROR,
-        message=f'Cannot load zone map from {FLAGS.windows_zones_resource}.')
+        message=f'Cannot load zone map from {_ZONES_FILE.value}.',
+    )
 
 
 class Timezone(object):
@@ -60,7 +60,7 @@ class Timezone(object):
   def LoadMap(self):
     res = resources.Resources()
     try:
-      win_zones = parse(res.GetResourceFileName(FLAGS.windows_zones_resource))
+      win_zones = parse(res.GetResourceFileName(_ZONES_FILE.value))
     except resources.FileNotFound as e:
       raise TimezoneError() from e
 

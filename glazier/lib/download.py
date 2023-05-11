@@ -33,7 +33,6 @@ import typing
 from typing import List, Optional
 import urllib.request
 
-from absl import flags
 import backoff
 from glazier.lib import beyondcorp
 from glazier.lib import constants
@@ -50,8 +49,6 @@ SLEEP = 20
 
 # Maximum amount of time to spend on all backoff retries, in seconds.
 BACKOFF_MAX_TIME = 600
-
-FLAGS = flags.FLAGS
 
 
 class Error(errors.GlazierError):
@@ -455,7 +452,7 @@ class BaseDownloader(object):
     Raises:
       SignedUrlError: Failed to obtain SignedURL.
     """
-    if not FLAGS.use_signed_url:
+    if not beyondcorp.USE_SIGNED_URL.value:
       return url
 
     try:

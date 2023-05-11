@@ -18,14 +18,15 @@ from typing import Optional
 
 from absl import flags
 
-FLAGS = flags.FLAGS
-
-flags.DEFINE_integer('default_tz_offset', 0,
-                     'Default timezone offset used for time calculations.')
+_DEFAULT_TZ_OFFSET = flags.DEFINE_integer(
+    'default_tz_offset',
+    0,
+    'Default timezone offset used for time calculations.',
+)
 
 
 def now(offset: Optional[int] = None) -> datetime.datetime:
   if not offset:
-    offset = FLAGS.default_tz_offset
+    offset = _DEFAULT_TZ_OFFSET.value
   tz = datetime.timezone(datetime.timedelta(offset))
   return datetime.datetime.now(tz)

@@ -13,13 +13,11 @@
 # limitations under the License.
 """Tests for glazier.lib.beyondcorp."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import json
 from unittest import mock
 
+from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
 from glazier.lib import beyondcorp
@@ -31,6 +29,7 @@ _TEST_SEED = '{"Seed": {"Seed": "seed_contents"}, "Signature": "Signature"}'
 _TEST_WIM = 'test_wim'
 _TEST_WIM_HASH = b'xxaroj1bgT5sObhJ0HwOtqpn+Nx0gO/Wz5wATtYK7Tk='
 DECODED_HASH = _TEST_WIM_HASH.decode('utf-8')
+FLAGS = flags.FLAGS
 
 
 def _create_sign_response(code, status, wim_hash):
@@ -74,14 +73,14 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
   def test_get_signed_url_path_and_endpoint_none(self):
-    beyondcorp.FLAGS.use_signed_url = True
-    beyondcorp.FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
+    FLAGS.use_signed_url = True
+    FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
     with self.assert_raises_with_validation(
         beyondcorp.BeyondCorpSignedUrlRequestError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
-    beyondcorp.FLAGS.sign_endpoint = None
-    beyondcorp.FLAGS.seed_path = '/seed/seed.json'
+    FLAGS.sign_endpoint = None
+    FLAGS.seed_path = '/seed/seed.json'
     with self.assert_raises_with_validation(
         beyondcorp.BeyondCorpSignedUrlRequestError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
@@ -98,9 +97,9 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
     mock_getbootwimfilepath.return_value = self.wim_path
     mock_macaddresses.return_value = ['00:00:00:00:00:00']
     mock_post.return_value = _create_sign_response(200, 'Success', DECODED_HASH)
-    beyondcorp.FLAGS.use_signed_url = True
-    beyondcorp.FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
-    beyondcorp.FLAGS.seed_path = self.seed_path
+    FLAGS.use_signed_url = True
+    FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
+    FLAGS.seed_path = self.seed_path
 
     sign = self.beyondcorp.GetSignedUrl('unstable/test.yaml')
     mock_post.assert_called_once_with(
@@ -125,9 +124,9 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
     mock_getbootwimfilepath.return_value = self.wim_path
     mock_macaddresses.return_value = ['00:00:00:00:00:00']
     mock_post.return_value = _create_sign_response(200, 'Success', DECODED_HASH)
-    beyondcorp.FLAGS.use_signed_url = True
-    beyondcorp.FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
-    beyondcorp.FLAGS.seed_path = self.seed_path
+    FLAGS.use_signed_url = True
+    FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
+    FLAGS.seed_path = self.seed_path
 
     mock_post.return_value = _create_sign_response(400, 'Success', DECODED_HASH)
     with self.assert_raises_with_validation(
@@ -163,16 +162,16 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
     mock_getbootwimfilepath.return_value = self.wim_path
     mock_macaddresses.return_value = ['00:00:00:00:00:00']
     mock_post.return_value = _create_sign_response(200, 'Success', DECODED_HASH)
-    beyondcorp.FLAGS.use_signed_url = True
-    beyondcorp.FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
-    beyondcorp.FLAGS.seed_path = self.seed_path
+    FLAGS.use_signed_url = True
+    FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
+    FLAGS.seed_path = self.seed_path
 
     mock_post.side_effect = beyondcorp.requests.exceptions.ConnectionError
     with self.assert_raises_with_validation(beyondcorp.BeyondCorpGiveUpError):
       self.beyondcorp.GetSignedUrl('unstable/test.yaml')
 
   def test_read_file(self):
-    beyondcorp.FLAGS.seed_path = self.seed_path
+    FLAGS.seed_path = self.seed_path
     seed = self.beyondcorp._ReadFile()
     self.assertEqual(
         seed,
@@ -180,18 +179,18 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
                    '"Signature": "Signature"}'))
 
     with self.assert_raises_with_validation(beyondcorp.BeyondCorpSeedFileError):
-      beyondcorp.FLAGS.seed_path = r'C:\bad_seed.json'
+      FLAGS.seed_path = r'C:\bad_seed.json'
       self.beyondcorp._ReadFile()
 
   @mock.patch.object(registry, 'set_value', autospec=True)
   def test_check_beyond_corp_signed_url_success(self, mock_set_value):
-    beyondcorp.FLAGS.use_signed_url = True
+    FLAGS.use_signed_url = True
     mock_set_value.assert_called_with = ('beyond_corp', 'True')
     self.assertTrue(self.beyondcorp.CheckBeyondCorp())
 
   @mock.patch.object(registry, 'get_value', autospec=True)
   def test_check_beyond_corp_no_signed_url_get_true(self, mock_get_value):
-    beyondcorp.FLAGS.use_signed_url = False
+    FLAGS.use_signed_url = False
     mock_get_value.return_value = 'True'
     self.assertTrue(self.beyondcorp.CheckBeyondCorp())
 
@@ -200,7 +199,7 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
   def test_check_beyond_corp_no_signed_url_get_false_set_false(
       self, mock_get_value, mock_set_value):
 
-    beyondcorp.FLAGS.use_signed_url = False
+    FLAGS.use_signed_url = False
     mock_get_value.return_value = 'False'
     self.assertFalse(self.beyondcorp.CheckBeyondCorp())
     mock_set_value.assert_called_with = ('beyond_corp', 'False')
@@ -210,7 +209,7 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
   def test_check_beyond_corp_no_signed_url_get_none_set_false(
       self, mock_get_value, mock_set_value):
 
-    beyondcorp.FLAGS.use_signed_url = False
+    FLAGS.use_signed_url = False
     mock_get_value.return_value = None
     self.assertFalse(self.beyondcorp.CheckBeyondCorp())
     mock_set_value.assert_called_with = ('beyond_corp', 'False')

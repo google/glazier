@@ -30,9 +30,9 @@ from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib import terminator
 
-FLAGS = flags.FLAGS
-flags.DEFINE_bool('preserve_tasks', False,
-                  'Preserve the existing task list, if any.')
+_PRESERVE_TASKS = flags.DEFINE_bool(
+    'preserve_tasks', False, 'Preserve the existing task list, if any.'
+)
 
 logging = logs.logging
 
@@ -50,7 +50,7 @@ class AutoBuild(object):
     if winpe.check_winpe():
       location = constants.WINPE_TASK_LIST
     logging.debug('Using task list at %s', location)
-    if not FLAGS.preserve_tasks and os.path.exists(location):
+    if not _PRESERVE_TASKS.value and os.path.exists(location):
       logging.debug('Purging old task list.')
       try:
         os.remove(location)
@@ -67,7 +67,7 @@ class AutoBuild(object):
       task_list = self._SetupTaskList()
 
       if not os.path.exists(task_list):
-        root_path = FLAGS.config_root_path or '/'
+        root_path = constants.CONFIG_ROOT_PATH.value or '/'
         try:
           b = builder.ConfigBuilder(self._build_info)
           b.Start(out_file=task_list, in_path=root_path)

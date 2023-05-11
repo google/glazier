@@ -34,15 +34,19 @@ from glazier.lib import errors
 from gwinpy.wmi import hw_info
 from gwinpy.wmi import wmi_query
 
-FLAGS = flags.FLAGS
 
 # Maximum amount of time to spend on all backoff retries, in seconds.
 BACKOFF_MAX_TIME = 600
 
-flags.DEFINE_boolean('use_signed_url', False,
-                     'Select whether or not to use signed urls')
-flags.DEFINE_string('sign_endpoint', None, 'The signing URL endpoint to use')
-flags.DEFINE_string('seed_path', None, 'Path to the seed file on disk')
+USE_SIGNED_URL = flags.DEFINE_boolean(
+    'use_signed_url', False, 'Select whether or not to use signed urls'
+)
+_SIGN_ENDPOINT = flags.DEFINE_string(
+    'sign_endpoint', None, 'The signing URL endpoint to use'
+)
+_SEED_PATH = flags.DEFINE_string(
+    'seed_path', None, 'Path to the seed file on disk'
+)
 
 
 class Error(errors.GlazierError):
@@ -120,7 +124,7 @@ class BeyondCorp(object):
       contents of the file.
     """
     try:
-      with open(FLAGS.seed_path) as p:
+      with open(_SEED_PATH.value) as p:
         return json.load(p)
     except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
       raise BeyondCorpSeedFileError() from e
@@ -134,7 +138,7 @@ class BeyondCorp(object):
       False if not running beyond_corp.
     """
 
-    if FLAGS.use_signed_url:
+    if USE_SIGNED_URL.value:
       registry.set_value('beyond_corp', 'True', path=constants.REG_ROOT)
       return True
     else:
@@ -222,11 +226,11 @@ class BeyondCorp(object):
     Returns:
       A signed_url string
     """
-    if not FLAGS.use_signed_url:
+    if not USE_SIGNED_URL.value:
       raise BeyondCorpSignedUrlRequestError(
           'use_signed_url flag not configured.')
 
-    if FLAGS.sign_endpoint is None or FLAGS.seed_path is None:
+    if _SIGN_ENDPOINT.value is None or _SEED_PATH.value is None:
       raise BeyondCorpSignedUrlRequestError(
           'sign_endpoint and seed_path cannot be None when using Signed URL.')
 
@@ -254,7 +258,7 @@ class BeyondCorp(object):
         indent=None,
         separators=(',', ': '))
 
-    res = requests.post(FLAGS.sign_endpoint, data=req)
+    res = requests.post(_SIGN_ENDPOINT.value, data=req)
 
     if (
         res.status_code != 200 or res.json()['Status'] != 'Success' or
