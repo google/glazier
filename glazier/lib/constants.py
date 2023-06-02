@@ -58,6 +58,11 @@ USB_VOLUME_LABEL = 'BEYONDCORP'
 HELP_URI = 'https://glazier-failures.example.com'
 USE_REG_64 = True
 
+# BeyondCorp
+USE_SIGNED_URL = False
+SEED_PATH = r'\path\to\seed.json'
+SIGN_ENDPOINT = 'https://glazier-images.example.com/sign'
+
 ## Flags
 
 BINARY_ROOT_PATH = flags.DEFINE_string(

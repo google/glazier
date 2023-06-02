@@ -15,6 +15,7 @@
 
 
 import json
+import os.path
 from unittest import mock
 
 from absl import flags
@@ -181,6 +182,26 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
     with self.assert_raises_with_validation(beyondcorp.BeyondCorpSeedFileError):
       FLAGS.seed_path = r'C:\bad_seed.json'
       self.beyondcorp._ReadFile()
+
+  @mock.patch.object(registry, 'set_value', autospec=True)
+  @mock.patch.object(os.path, 'exists', autospec=True)
+  def test_check_beyond_corp_signed_url_use_constants(
+      self, mock_os_path, mock_set_value
+  ):
+    beyondcorp.FLAGS.use_signed_url = False
+    mock_os_path.return_value = True
+    mock_set_value.assert_called_with = ('beyond_corp', 'False')
+    self.assertTrue(self.beyondcorp.CheckBeyondCorp())
+
+  @mock.patch.object(registry, 'set_value', autospec=True)
+  @mock.patch.object(os.path, 'exists', autospec=True)
+  def test_check_beyond_corp_signed_url_use_constants_no_seed(
+      self, mock_os_path, mock_set_value
+  ):
+    beyondcorp.FLAGS.use_signed_url = False
+    mock_os_path.return_value = False
+    mock_set_value.assert_called_with = ('beyond_corp', 'False')
+    self.assertFalse(self.beyondcorp.CheckBeyondCorp())
 
   @mock.patch.object(registry, 'set_value', autospec=True)
   def test_check_beyond_corp_signed_url_success(self, mock_set_value):
