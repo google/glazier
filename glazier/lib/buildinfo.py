@@ -19,9 +19,11 @@ import time
 from typing import Any, Dict, List, Optional
 
 # do not remove: internal placeholder 1
+
 from absl import flags
 from glazier.lib import beyondcorp
 from glazier.lib import identifier
+from glazier.lib import os_selector
 from glazier.lib import registry
 from glazier.lib import timers
 from glazier.lib import winpe
@@ -34,7 +36,6 @@ from glazier.lib import errors
 from gwinpy.wmi import hw_info
 from gwinpy.wmi import net_info
 from gwinpy.wmi import tpm_info
-
 
 flags.DEFINE_enum(
     'glazier_spec', 'flag', list(spec.SPEC_OPTS.keys()),
@@ -416,7 +417,12 @@ class BuildInfo(object):
     Returns:
       The OS string assigned to this machine.
     """
-    return spec.GetModule().GetOs()
+    self._osselector = os_selector.OSSelector()
+    os_code = spec.GetModule().GetOs()
+    if not os_code:
+      logging.debug('OS Code flag not set, running os selector')
+      os_code = self._osselector.AutoOrManual(self.ComputerModel())
+    return os_code
 
   @functools.lru_cache()
   def ComputerSerial(self) -> str:

@@ -352,8 +352,10 @@ class BuildInfoTest(test_utils.GlazierTestCase):
     self.assertEqual(self.buildinfo.ComputerName(), 'TEST-HOST')
     self.assertEqual(self.buildinfo.Fqdn(), 'TEST-HOST.example.com')
 
+  @mock.patch.object(
+      buildinfo.os_selector, 'OSSelector', autospec=True)
   @flagsaver.flagsaver
-  def test_os_spec_flags(self):
+  def test_os_spec_flags(self, mock_selector):
     FLAGS.glazier_spec = 'flag'
     FLAGS.glazier_spec_os = 'windows-10-test'
     self.assertEqual(self.buildinfo.ComputerOs(), 'windows-10-test')

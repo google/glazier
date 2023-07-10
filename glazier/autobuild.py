@@ -62,6 +62,7 @@ class AutoBuild(object):
     """Perform the build."""
     try:
       title.set_title()
+      self._build_info.ImageID()
       self._build_info.BeyondCorp()
 
       task_list = self._SetupTaskList()
