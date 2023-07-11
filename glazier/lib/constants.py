@@ -54,9 +54,16 @@ WINPE_POWERSHELL = os.path.join(WINPE_SYSTEM32, 'WindowsPowerShell', 'v1.0',
 WINPE_GOOGETROOT = os.path.join(WINPE_ROOT, os.sep, 'ProgramData', 'GooGet')
 
 # Misc
-USB_VOLUME_LABEL = 'BEYONDCORP'
 HELP_URI = 'https://glazier-failures.example.com'
 USE_REG_64 = True
+
+# BeyondCorp
+USB_VOLUME_LABEL = 'BEYONDCORP'
+USE_SIGNED_URL = False
+SEED_PATH = os.path.join('path', 'to', 'seed.json')
+SIGN_ENDPOINT = 'https://glazier-images.example.com/sign'
+BEYOND_CORP_VERIFY_URLS = ['https://dns.google',
+                           'https://glazier-images.example.com']
 
 ## Flags
 

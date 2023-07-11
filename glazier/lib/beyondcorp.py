@@ -23,6 +23,7 @@ import functools
 import hashlib
 import json
 import logging
+import os.path
 
 from absl import flags
 import backoff
@@ -47,6 +48,7 @@ _SIGN_ENDPOINT = flags.DEFINE_string(
 _SEED_PATH = flags.DEFINE_string(
     'seed_path', None, 'Path to the seed file on disk'
 )
+FLAGS = flags.FLAGS  # To modify flag values below.
 
 
 class Error(errors.GlazierError):
@@ -142,12 +144,25 @@ class BeyondCorp(object):
       registry.set_value('beyond_corp', 'True', path=constants.REG_ROOT)
       return True
     else:
-      bc = registry.get_value('beyond_corp', path=constants.REG_ROOT)
-      if bc:
-        if bc.lower() == 'true':
+      try:
+        logging.debug(
+            'use_signed_url flag not set, checking if BeyondCorp drive exists'
+        )
+        drive_letter = self._GetDisk(constants.USB_VOLUME_LABEL)
+        seed = os.path.join(drive_letter, constants.SEED_PATH)
+        if os.path.exists(seed):
+          logging.debug('BeyondCorp seed detected, setting BeyondCorp flags')
+          FLAGS.use_signed_url = constants.USE_SIGNED_URL
+          FLAGS.seed_path = seed
+          FLAGS.sign_endpoint = constants.SIGN_ENDPOINT
+          FLAGS.verify_urls = constants.BEYOND_CORP_VERIFY_URLS
+          registry.set_value(
+              'beyond_corp', 'True', path=constants.REG_ROOT
+          )
+          logging.debug('Set BeyondCorp flags.')
           return True
-        elif bc.lower() == 'false':
-          return False
+      except BeyondCorpDriveLetterError:
+        logging.debug('Failed to query WMI for BeyondCorp drive letter')
 
     registry.set_value('beyond_corp', 'False', path=constants.REG_ROOT)
     return False

@@ -21,7 +21,6 @@ from typing import Any, Dict, List, Optional
 # do not remove: internal placeholder 1
 
 from absl import flags
-from glazier.lib import beyondcorp
 from glazier.lib import identifier
 from glazier.lib import os_selector
 from glazier.lib import registry
@@ -31,6 +30,7 @@ from glazier.lib.config import files
 from glazier.lib.spec import spec
 import yaml
 
+from glazier.lib import beyondcorp
 from glazier.lib import constants
 from glazier.lib import errors
 from gwinpy.wmi import hw_info

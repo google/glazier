@@ -34,11 +34,11 @@ from typing import List, Optional
 import urllib.request
 
 import backoff
-from glazier.lib import beyondcorp
 from glazier.lib import constants
 from glazier.lib import file_util
 from glazier.lib import winpe
 
+from glazier.lib import beyondcorp
 from glazier.lib import errors
 
 if typing.TYPE_CHECKING:
