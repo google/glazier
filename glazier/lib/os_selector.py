@@ -24,7 +24,8 @@ from glazier.lib.config import files
 from glazier.lib import constants
 from glazier.lib import errors
 
-_OS_SELECTOR_CONFIG = flags.DEFINE_string('os_selector_config', '',
+_OS_SELECTOR_CONFIG = flags.DEFINE_string('os_selector_config',
+                                          constants.OS_SELECTOR_CONFIG,
                                           'Yaml file for OS selection menu')
 
 
