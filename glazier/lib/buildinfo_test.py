@@ -173,6 +173,15 @@ class BuildInfoTest(test_utils.GlazierTestCase):
     result = self.buildinfo.ImageID()
     self.assertEqual(result, '1A19SEL90000R90DZN7A-1234567')
 
+  @mock.patch.object(buildinfo.winpe, 'check_winpe', autospec=True)
+  def test_WinPE(self, mock_check_winpe):
+    mock_check_winpe.return_value = False
+    self.assertFalse(self.buildinfo.WinPE())
+
+    self.buildinfo.WinPE.cache_clear()
+    mock_check_winpe.return_value = True
+    self.assertTrue(self.buildinfo.WinPE())
+
   def test_build_pin_match(self):
     # ComputerModel
     with mock.patch.object(

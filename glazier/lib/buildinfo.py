@@ -337,6 +337,7 @@ class BuildInfo(object):
         'lab': self.Lab,
         'is_installed': self.InstalledSoftware,
         'image_type': self.ImageType,
+        'winpe': self.WinPE(),
     }
 
   @functools.lru_cache()
@@ -590,6 +591,15 @@ class BuildInfo(object):
       if os in os_codes:
         return os_codes[os]['code']
     raise UnknownOsCodeError(os)
+
+  @functools.lru_cache()
+  def WinPE(self) -> bool:
+    """Return True if the host is running inside of WinPE.
+
+    Returns:
+      Boolean state of WinPE.
+    """
+    return winpe.check_winpe()
 
   def GetBuildInfo(self) -> Dict[str, Any]:
     """Gathers all build info data.
