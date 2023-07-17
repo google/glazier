@@ -417,9 +417,9 @@ class BuildInfo(object):
     Returns:
       The OS string assigned to this machine.
     """
-    self._osselector = os_selector.OSSelector()
     os_code = spec.GetModule().GetOs()
     if not os_code:
+      self._osselector = os_selector.OSSelector()
       logging.debug('OS Code flag not set, running os selector')
       os_code = self._osselector.AutoOrManual(self.ComputerModel())
     return os_code
