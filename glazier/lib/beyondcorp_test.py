@@ -235,7 +235,7 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
         self.beyondcorp._GetDisk(beyondcorp.constants.USB_VOLUME_LABEL), 'D')
 
   def test_get_disk_none(self):
-    self.mock_wmi.return_value.Query.return_value = [mock.Mock(Name=None)]
+    self.mock_wmi.return_value.Query.return_value = []
     with self.assert_raises_with_validation(
         beyondcorp.BeyondCorpDriveLetterError):
       self.beyondcorp._GetDisk(beyondcorp.constants.USB_VOLUME_LABEL)

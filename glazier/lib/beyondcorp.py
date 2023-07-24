@@ -208,9 +208,8 @@ class BeyondCorp(object):
     except wmi_query.WmiError as e:
       raise BeyondCorpDriveLetterError(
           'Failed to query WMI for BeyondCorp drive letter.') from e
-
-    if not drive_letter:
-      raise BeyondCorpDriveLetterError('BeyondCorp drive letter was empty.')
+    except IndexError as e:
+      raise BeyondCorpDriveLetterError('No Removable Media was found.') from e
 
     logging.debug('BeyondCorp Drive letter = %s', drive_letter)
 
