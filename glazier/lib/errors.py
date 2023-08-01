@@ -277,6 +277,9 @@ class ErrorCode(enum.IntEnum):
   # Error while setting an imaging timer.
   SET_TIMER_ERROR = 7083
 
+  # Error raised by wpeutil
+  WPEUTIL_ERROR = 7084
+
 
 class GlazierError(Exception):
   """Base error for all other Glazier errors."""
