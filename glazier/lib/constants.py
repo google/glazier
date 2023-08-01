@@ -40,6 +40,7 @@ SYS_PNPUTIL = os.path.join(SYS_SYSTEM32, 'pnputil.exe')
 SYS_POWERSHELL = os.path.join(SYS_SYSTEM32, 'WindowsPowerShell', 'v1.0',
                               'powershell.exe')
 SYS_GOOGETROOT = os.path.join(SYS_ROOT, os.sep, 'ProgramData', 'GooGet')
+SYS_SEED_FILE = os.path.join(SYS_CACHE, os.sep, 'resources', 'seed.json')
 
 # WinPE
 WINPE_ROOT = 'X:'
@@ -52,6 +53,7 @@ WINPE_DISM = os.path.join(WINPE_SYSTEM32, 'dism.exe')
 WINPE_POWERSHELL = os.path.join(WINPE_SYSTEM32, 'WindowsPowerShell', 'v1.0',
                                 'powershell.exe')
 WINPE_GOOGETROOT = os.path.join(WINPE_ROOT, os.sep, 'ProgramData', 'GooGet')
+WINPE_SEED_FILE = os.path.join(WINPE_ROOT, os.sep, 'resources', 'seed.json')
 
 # Misc
 HELP_URI = 'https://glazier-failures.example.com'
