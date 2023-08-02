@@ -27,6 +27,7 @@ import os.path
 
 from absl import flags
 import backoff
+from glazier.lib import file_util
 from glazier.lib import registry
 from glazier.lib import winpe
 import requests
@@ -251,6 +252,7 @@ class BeyondCorp(object):
         'Hash': self._GetHash(self._GetBootWimFilePath()).decode('utf-8'),
     }
 
+    file_util.CreateDirectories(self._SeedPath())
     with open(self._SeedPath(), 'w') as f:
       json.dump(
           data,
