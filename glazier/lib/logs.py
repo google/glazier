@@ -73,6 +73,12 @@ def Collect(path: str):
     raise LogCollectionError() from e
 
 
+def AddSyslog(server: str, port: int) -> None:
+  """Adds a syslog handler to the logger."""
+  logger = logging.getLogger()
+  logger.addHandler(logging.handlers.SysLogHandler(address=(server, port)))
+
+
 def Setup():
   """Sets up the logging environment."""
   build_info = buildinfo.BuildInfo()
@@ -119,7 +125,4 @@ def Setup():
       constants.SYSLOG_SERVER.value is not None
       and constants.SYSLOG_PORT.value is not None
   ):
-    sl = logging.handlers.SysLogHandler(
-        address=(constants.SYSLOG_SERVER.value, constants.SYSLOG_PORT.value)
-    )
-    logger.addHandler(sl)
+    AddSyslog(constants.SYSLOG_SERVER.value, constants.SYSLOG_PORT.value)
