@@ -107,6 +107,8 @@ class BuildInfo(object):
     self._hw_info = None
     self._net_info = None
     self._release_info = None
+    self._syslog_port = None
+    self._syslog_server = None
     self._tpm_info = None
     self._version_info = None
 
@@ -628,6 +630,8 @@ class BuildInfo(object):
             'Release Path': str(self.ReleasePath()),
             'SerialNumber': str(self.ComputerSerial()),
             'Support Tier': str(self.SupportTier()),
+            'syslog_port': str(self.syslog_port),
+            'syslog_server': str(self.syslog_server),
             'tpm_present': str(self.TpmPresent()),
             'is_virtual': str(self.IsVirtual()),
         }
@@ -741,6 +745,26 @@ class BuildInfo(object):
         str(model).lower() for model in models['tier2']
     ]
     return supported_models
+
+  @property
+  def syslog_port(self) -> Optional[str]:
+    """Returns the syslog server port for remote logging."""
+    return self._syslog_port
+
+  @syslog_port.setter
+  def syslog_port(self, value: Optional[str] = None) -> Optional[str]:
+    if value:
+      self._syslog_port = value
+
+  @property
+  def syslog_server(self) -> Optional[str]:
+    """Returns the syslog server for remote logging."""
+    return self._syslog_server
+
+  @syslog_server.setter
+  def syslog_server(self, value: Optional[str] = None) -> Optional[str]:
+    if value:
+      self._syslog_server = value
 
   @functools.lru_cache()
   def SupportTier(self) -> int:

@@ -75,6 +75,8 @@ def Collect(path: str):
 
 def AddSyslog(server: str, port: int) -> None:
   """Adds a syslog handler to the logger."""
+  buildinfo.syslog_port = port
+  buildinfo.syslog_server = server
   logger = logging.getLogger()
   logger.addHandler(logging.handlers.SysLogHandler(address=(server, port)))
 
