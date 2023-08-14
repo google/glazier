@@ -238,7 +238,6 @@ class BeyondCorp(object):
     hwinfo = hw_info.HWInfo()
     drive_letter = self._GetDisk(constants.USB_VOLUME_LABEL).strip(':')
 
-    path = ''
     if _SEED_PATH.value:
       path = _SEED_PATH.value
     else:
@@ -265,7 +264,7 @@ class BeyondCorp(object):
 
     # Intentionally format bold/green, as it's an actionable log message
     logging.info(
-        '\x1b[32m\033[1mIt is now safe to unplug your USB device.\x1b[0m'
+        '\x1b[32m\033[1mIt is now safe to unplug the USB flash drive.\x1b[0m'
     )
 
   def _GetBootWimFilePath(self) -> str:

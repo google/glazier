@@ -15,6 +15,7 @@
 
 import logging
 import os
+import os.path
 from typing import Optional
 
 from glazier.lib import buildinfo
@@ -51,6 +52,9 @@ def _base_title() -> Optional[str]:
 
   if winpe.check_winpe():
     base.append('WinPE')
+    seed = constants.WINPE_SEED_FILE
+  else:
+    seed = constants.SYS_SEED_FILE
   if constants.CONFIG_ROOT_PATH.value:
     # Existence of the constant must be checked before strip to avoid null error
     path = constants.CONFIG_ROOT_PATH.value.strip('/')
@@ -62,6 +66,8 @@ def _base_title() -> Optional[str]:
     base.append(getrelease)
   if getid:
     base.append(getid)
+  if os.path.exists(seed):
+    base.append('USB ✅')
 
   # Convert list to a string, using map() to account for nonetypes
   return ' - '.join(map(str, base))
