@@ -609,7 +609,7 @@ class BuildInfo(object):
     Returns:
       Dict of build info data.
     """
-    return {
+    b = {
         'BUILD': {
             'bios_version': str(self.BIOSVersion()),
             'beyond_corp': str(self.BeyondCorp()),
@@ -630,12 +630,15 @@ class BuildInfo(object):
             'Release Path': str(self.ReleasePath()),
             'SerialNumber': str(self.ComputerSerial()),
             'Support Tier': str(self.SupportTier()),
-            'syslog_port': str(self.syslog_port),
-            'syslog_server': str(self.syslog_server),
             'tpm_present': str(self.TpmPresent()),
             'is_virtual': str(self.IsVirtual()),
         }
     }
+    if self.syslog_port:
+      b['BUILD']['syslog_port'] = str(self.syslog_port)
+    if self.syslog_server:
+      b['BUILD']['syslog_server'] = self.syslog_server
+    return b
 
   def Serialize(self, to_file):
     """Dumps internal data to a file for later reference."""

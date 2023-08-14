@@ -493,7 +493,7 @@ class BuildInfoTest(test_utils.GlazierTestCase):
     ints = self.buildinfo.NetInterfaces()
     self.assertEqual(ints[1].description, 'd2')
     mock_netinfo.assert_called_with(poll=True, active_only=True)
-    ints = self.buildinfo.NetInterfaces(False)
+    self.buildinfo.NetInterfaces(False)
     mock_netinfo.assert_called_with(poll=True, active_only=False)
 
   @mock.patch.object(files, 'Read', autospec=True)
@@ -719,29 +719,30 @@ class BuildInfoTest(test_utils.GlazierTestCase):
       self.assertIsInstance(bi['BUILD'][f], str)
 
   @mock.patch.object(timers.Timers, 'GetAll', autospec=True)
-  def test_serialize(self, mock_get_all):
-
-    mock_buildinfo = mock.Mock(spec_set=self.buildinfo)
-    mock_buildinfo._chooser_responses = {
-        'USER_choice_one': 'value1',
-        'USER_choice_two': 'value2'
+  @mock.patch.object(buildinfo.BuildInfo, 'GetBuildInfo', autospec=True)
+  def test_serialize(self, mock_buildinfo, mock_get_all):
+    bi = buildinfo.BuildInfo()
+    mock_buildinfo.return_value = {
+        'BUILD': {
+            'branch': 'testing',
+            'Model': 'test',
+            'USER_choice_one': 'value1',
+            'USER_choice_two': 'value2',
+            'SerialNumber': '123456789',
+        }
     }
     mock_get_all.return_value = {
-        'TIMER_timer_1':
-            datetime.datetime.now(
-                tz=datetime.timezone(datetime.timedelta(hours=6)))
+        'TIMER_timer_1': datetime.datetime.now(
+            tz=datetime.timezone(datetime.timedelta(hours=6))
+        )
     }
-    mock_buildinfo.Serialize = buildinfo.BuildInfo.Serialize.__get__(
-        mock_buildinfo)
-    mock_buildinfo.GetBuildInfo = buildinfo.BuildInfo.GetBuildInfo.__get__(
-        mock_buildinfo)
     yaml_path = self.create_tempfile(file_path='build_info.yaml')
-    mock_buildinfo.Serialize(yaml_path)
+    bi.Serialize(yaml_path)
     parsed = yaml.safe_load(open(yaml_path))
 
-    self.assertIn('branch', parsed['BUILD'])
-    self.assertIn('Model', parsed['BUILD'])
-    self.assertIn('SerialNumber', parsed['BUILD'])
+    self.assertEqual('testing', parsed['BUILD']['branch'])
+    self.assertEqual('test', parsed['BUILD']['Model'])
+    self.assertEqual('123456789', parsed['BUILD']['SerialNumber'])
     self.assertIn('USER_choice_two', parsed['BUILD'])
     self.assertIn('TIMER_timer_1', parsed['BUILD'])
     self.assertEqual(parsed['BUILD']['USER_choice_two'], 'value2')
