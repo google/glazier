@@ -84,14 +84,6 @@ CONFIG_SERVER = flags.DEFINE_string(
     'Root URL for configuration build data.',
 )
 
-flags.DEFINE_enum('environment', 'Host', ['Host', 'WinPE'],
-                  'The running host environment.')
-
-NTP_SERVER = flags.DEFINE_string(
-    'ntp_server',
-    'time.google.com',
-    'Server to use for synchronizing the local system time.',
-)
 
 SYSLOG_PORT = flags.DEFINE_integer(
     'syslog_port', 514, 'Syslog port to use for remote logs collection.'

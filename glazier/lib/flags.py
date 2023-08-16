@@ -33,3 +33,9 @@ GLAZIER_SPEC = flags.DEFINE_enum(
         'like Hostname and OS.'
     ),
 )
+
+NTP_SERVER = flags.DEFINE_string(
+    'ntp_server',
+    'time.google.com',
+    'Server to use for synchronizing the local system time.',
+)
