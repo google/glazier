@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional
 
 # do not remove: internal placeholder 1
 
+from glazier.lib import flags
 from glazier.lib import identifier
 from glazier.lib import os_selector
 from glazier.lib import registry
@@ -140,7 +141,7 @@ class BuildInfo(object):
       The versioned base path to the current build as a string.
     """
     server = self.BinaryServer() or ''
-    path = constants.BINARY_ROOT_PATH.value.strip('/')
+    path = flags.BINARY_ROOT_PATH.value.strip('/')
     path = '%s/%s/' % (server, path)
     return path
 
@@ -156,8 +157,8 @@ class BuildInfo(object):
     if set_to:
       self._binary_server = set_to
     if not self._binary_server:
-      if constants.BINARY_SERVER.value:
-        self._binary_server = constants.BINARY_SERVER.value
+      if flags.BINARY_SERVER.value:
+        self._binary_server = flags.BINARY_SERVER.value
       else:  # backward compatibility
         self._binary_server = self.ConfigServer()
     return self._binary_server.rstrip('/')

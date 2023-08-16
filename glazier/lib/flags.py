@@ -17,6 +17,12 @@
 from absl import flags
 from glazier.lib.spec import spec
 
+BINARY_ROOT_PATH = flags.DEFINE_string(
+    'binary_root_path', '/bin', 'Path to the binary storage.'
+)
+BINARY_SERVER = flags.DEFINE_string(
+    'binary_server', '', 'Root URL for binary build files.'
+)
 
 GLAZIER_SPEC = flags.DEFINE_enum(
     'glazier_spec',

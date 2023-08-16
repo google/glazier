@@ -70,12 +70,6 @@ BEYOND_CORP_VERIFY_URLS = ['https://dns.google',
 
 ## Flags
 
-BINARY_ROOT_PATH = flags.DEFINE_string(
-    'binary_root_path', '/bin', 'Path to the binary storage.'
-)
-BINARY_SERVER = flags.DEFINE_string(
-    'binary_server', '', 'Root URL for binary build files.'
-)
 CONFIG_BRANCHES = flags.DEFINE_boolean(
     'config_branches', True, 'The configuration repository uses branched paths.'
 )
