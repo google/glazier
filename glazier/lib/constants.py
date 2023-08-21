@@ -37,8 +37,9 @@ SYS_SYSTEM32 = os.path.join(SYS_ROOT, os.sep, 'Windows', 'System32')
 SYS_TASK_LIST = os.path.join(SYS_CACHE, 'task_list.yaml')
 SYS_DISM = os.path.join(SYS_SYSTEM32, 'dism.exe')
 SYS_PNPUTIL = os.path.join(SYS_SYSTEM32, 'pnputil.exe')
-SYS_POWERSHELL = os.path.join(SYS_SYSTEM32, 'WindowsPowerShell', 'v1.0',
-                              'powershell.exe')
+SYS_POWERSHELL = os.path.join(
+    SYS_SYSTEM32, 'WindowsPowerShell', 'v1.0', 'powershell.exe'
+)
 SYS_GOOGETROOT = os.path.join(SYS_ROOT, os.sep, 'ProgramData', 'GooGet')
 SYS_SEED_FILE = os.path.join(SYS_CACHE, os.sep, 'resources', 'seed.json')
 
@@ -50,8 +51,9 @@ WINPE_BUILD_LOG = os.path.join(WINPE_LOGS_PATH, BUILD_LOG_FILE)
 WINPE_SYSTEM32 = os.path.join(WINPE_ROOT, os.sep, 'Windows', 'System32')
 WINPE_TASK_LIST = os.path.join(WINPE_ROOT, os.sep, 'task_list.yaml')
 WINPE_DISM = os.path.join(WINPE_SYSTEM32, 'dism.exe')
-WINPE_POWERSHELL = os.path.join(WINPE_SYSTEM32, 'WindowsPowerShell', 'v1.0',
-                                'powershell.exe')
+WINPE_POWERSHELL = os.path.join(
+    WINPE_SYSTEM32, 'WindowsPowerShell', 'v1.0', 'powershell.exe'
+)
 WINPE_GOOGETROOT = os.path.join(WINPE_ROOT, os.sep, 'ProgramData', 'GooGet')
 WINPE_SEED_FILE = os.path.join(WINPE_ROOT, os.sep, 'resources', 'seed.json')
 
@@ -65,8 +67,10 @@ USB_VOLUME_LABEL = 'BEYONDCORP'
 USE_SIGNED_URL = False
 SEED_PATH = os.path.join('path', 'to', 'seed.json')
 SIGN_ENDPOINT = 'https://glazier-images.example.com/sign'
-BEYOND_CORP_VERIFY_URLS = ['https://dns.google',
-                           'https://glazier-images.example.com']
+BEYOND_CORP_VERIFY_URLS = [
+    'https://dns.google',
+    'https://glazier-images.example.com',
+]
 
 ## Flags
 
@@ -90,12 +94,4 @@ SYSLOG_PORT = flags.DEFINE_integer(
 )
 SYSLOG_SERVER = flags.DEFINE_string(
     'syslog_server', None, 'Syslog server to use for remote logs collection.'
-)
-
-VERIFY_URLS = flags.DEFINE_list(
-    'verify_urls',
-    [
-        'https://dns.google',
-    ],
-    'Comma-separated list of URLs to verify are reachable at start',
 )

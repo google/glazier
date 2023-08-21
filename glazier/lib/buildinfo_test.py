@@ -683,7 +683,9 @@ class BuildInfoTest(test_utils.GlazierTestCase):
     # default
     self.assertEqual(self.buildinfo.EncryptionLevel(), 'tpm')
 
-  def test_getBuildInfo(self):
+  @mock.patch.object(buildinfo.BuildInfo, 'BeyondCorp', autospec=True)
+  def test_getBuildInfo(self, mock_beyondcorp):
+    mock_beyondcorp.return_value = True
     mock_buildinfo = mock.Mock(spec_set=self.buildinfo)
     mock_buildinfo.GetBuildInfo = buildinfo.BuildInfo.GetBuildInfo.__get__(
         mock_buildinfo

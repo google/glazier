@@ -95,6 +95,7 @@ class BuildInfo(object):
 
   def __init__(self):
     self._active_conf_path = []
+    self._beyondcorp = None
     self._binary_server = ''
     self._chooser_pending = []
     self._chooser_responses = {}
@@ -105,6 +106,7 @@ class BuildInfo(object):
     self._syslog_port = None
     self._syslog_server = None
     self._tpm_info = None
+    self._verify_urls = None
     self._version_info = None
 
   #
@@ -344,7 +346,8 @@ class BuildInfo(object):
     Returns:
       True or False bool returned from beyondcorp lib.
     """
-    self._beyondcorp = beyondcorp.BeyondCorp()
+    if not self._beyondcorp:
+      self._beyondcorp = beyondcorp.BeyondCorp()
     return self._beyondcorp.CheckBeyondCorp()
 
   @functools.lru_cache()
@@ -797,6 +800,18 @@ class BuildInfo(object):
       True if a TPM is present, else False.
     """
     return self._TpmInfo().TpmPresent()
+
+  @property
+  def verify_urls(self) -> List[str]:
+    if self._verify_urls is not None:
+      return self._verify_urls
+    if self.BeyondCorp():
+      return constants.BEYOND_CORP_VERIFY_URLS
+    return flags.VERIFY_URLS.value
+
+  @verify_urls.setter
+  def verify_urls(self, value: List[str]) -> None:
+    self._verify_urls = value
 
   @functools.lru_cache()
   def VideoControllers(self):

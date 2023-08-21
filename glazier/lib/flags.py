@@ -39,3 +39,11 @@ NTP_SERVER = flags.DEFINE_string(
     'time.google.com',
     'Server to use for synchronizing the local system time.',
 )
+
+VERIFY_URLS = flags.DEFINE_list(
+    'verify_urls',
+    [
+        'https://dns.google',
+    ],
+    'Comma-separated list of URLs to verify are reachable at start',
+)

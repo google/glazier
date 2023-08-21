@@ -173,7 +173,6 @@ class BeyondCorp(object):
           FLAGS.use_signed_url = constants.USE_SIGNED_URL
           FLAGS.seed_path = seed
           FLAGS.sign_endpoint = constants.SIGN_ENDPOINT
-          FLAGS.verify_urls = constants.BEYOND_CORP_VERIFY_URLS
           registry.set_value(
               'beyond_corp', 'True', path=constants.REG_ROOT
           )
