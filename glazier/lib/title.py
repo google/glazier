@@ -20,6 +20,7 @@ from typing import Optional
 
 from glazier.lib import buildinfo
 from glazier.lib import constants
+from glazier.lib import flags
 from glazier.lib import stage
 from glazier.lib import winpe
 
@@ -55,9 +56,9 @@ def _base_title() -> Optional[str]:
     seed = constants.WINPE_SEED_FILE
   else:
     seed = constants.SYS_SEED_FILE
-  if constants.CONFIG_ROOT_PATH.value:
+  if flags.CONFIG_ROOT_PATH.value:
     # Existence of the constant must be checked before strip to avoid null error
-    path = constants.CONFIG_ROOT_PATH.value.strip('/')
+    path = flags.CONFIG_ROOT_PATH.value.strip('/')
     if path:
       base.append(path)
   if getstage:

@@ -16,10 +16,12 @@
 
 import os
 import sys
+
 # do not remove: internal placeholder 1
 
 from absl import app
-from absl import flags
+from absl import flags as absl_flags
+from glazier.lib import flags
 from glazier.lib import logs
 from glazier.lib import title
 from glazier.lib import winpe
@@ -30,7 +32,7 @@ from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib import terminator
 
-_PRESERVE_TASKS = flags.DEFINE_bool(
+_PRESERVE_TASKS = absl_flags.DEFINE_bool(
     'preserve_tasks', False, 'Preserve the existing task list, if any.'
 )
 
@@ -68,7 +70,7 @@ class AutoBuild(object):
       task_list = self._SetupTaskList()
 
       if not os.path.exists(task_list):
-        root_path = constants.CONFIG_ROOT_PATH.value or '/'
+        root_path = flags.CONFIG_ROOT_PATH.value or '/'
         try:
           b = builder.ConfigBuilder(self._build_info)
           b.Start(out_file=task_list, in_path=root_path)

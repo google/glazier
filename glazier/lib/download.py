@@ -33,7 +33,6 @@ from typing import List, Optional
 import urllib.request
 
 import backoff
-from glazier.lib import constants
 from glazier.lib import file_util
 from glazier.lib import flags
 from glazier.lib import winpe
@@ -458,8 +457,8 @@ class BaseDownloader(object):
     try:
       if url.startswith(flags.BINARY_SERVER.value):
         url = url.replace(f'{flags.BINARY_SERVER.value}/', '')
-      if url.startswith(constants.CONFIG_SERVER.value):
-        url = url.replace(f'{constants.CONFIG_SERVER.value}/', '')
+      if url.startswith(flags.CONFIG_SERVER.value):
+        url = url.replace(f'{flags.CONFIG_SERVER.value}/', '')
       return self._beyondcorp.GetSignedUrl(url)
     except beyondcorp.Error as e:
       raise SignedUrlError(url) from e

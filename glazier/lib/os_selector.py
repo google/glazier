@@ -16,7 +16,8 @@
 
 import re
 
-from absl import flags
+from absl import flags as absl_flags
+from glazier.lib import flags
 from glazier.lib import interact
 from glazier.lib import powershell
 from glazier.lib.config import files
@@ -24,9 +25,11 @@ from glazier.lib.config import files
 from glazier.lib import constants
 from glazier.lib import errors
 
-_OS_SELECTOR_CONFIG = flags.DEFINE_string('os_selector_config',
-                                          constants.OS_SELECTOR_CONFIG,
-                                          'Yaml file for OS selection menu')
+_OS_SELECTOR_CONFIG = absl_flags.DEFINE_string(
+    'os_selector_config',
+    constants.OS_SELECTOR_CONFIG,
+    'Yaml file for OS selection menu',
+)
 
 
 class Error(errors.GlazierError):
@@ -45,8 +48,9 @@ class OSSelector(object):
   """Creates a menu based on os_selector_config."""
 
   def __init__(self):
-    self.config = files.Read('{0}/{1}'.format(constants.CONFIG_SERVER.value,
-                                              _OS_SELECTOR_CONFIG.value))
+    self.config = files.Read(
+        '{0}/{1}'.format(flags.CONFIG_SERVER.value, _OS_SELECTOR_CONFIG.value)
+    )
     self.model = ''
 
   def _OSCode(self):

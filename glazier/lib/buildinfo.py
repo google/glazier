@@ -177,7 +177,7 @@ class BuildInfo(object):
     if set_to:
       self._glazier_server = set_to
     if not self._glazier_server:
-      self._glazier_server = constants.CONFIG_SERVER.value
+      self._glazier_server = flags.CONFIG_SERVER.value
     return self._glazier_server.rstrip('/')
 
   @functools.lru_cache()
@@ -222,7 +222,7 @@ class BuildInfo(object):
       The versioned base path to the current build as a string.
     """
     path = self.ConfigServer() or ''
-    if constants.CONFIG_BRANCHES.value and self.Branch():
+    if flags.CONFIG_BRANCHES.value and self.Branch():
       path += '/%s' % str(self.Branch())
     path += '/'
     return path
@@ -267,9 +267,7 @@ class BuildInfo(object):
       except files.Error:
         # Fallback to using FLAG to avoid edge case where the config server
         # written to the task list is unavailable.
-        info_file = (
-            f"{constants.CONFIG_SERVER.value.rstrip('/')}/version-info.yaml"
-        )
+        info_file = f"{flags.CONFIG_SERVER.value.rstrip('/')}/version-info.yaml"
         try:
           self._version_info = files.Read(info_file)
         except files.Error as e:

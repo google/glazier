@@ -24,6 +24,20 @@ BINARY_SERVER = flags.DEFINE_string(
     'binary_server', '', 'Root URL for binary build files.'
 )
 
+CONFIG_BRANCHES = flags.DEFINE_boolean(
+    'config_branches', True, 'The configuration repository uses branched paths.'
+)
+CONFIG_ROOT_PATH = flags.DEFINE_string(
+    'config_root_path',
+    'config',
+    'Path to the root of the configuration directory.',
+)
+CONFIG_SERVER = flags.DEFINE_string(
+    'config_server',
+    'https://glazier-server.example.com',
+    'Root URL for configuration build data.',
+)
+
 GLAZIER_SPEC = flags.DEFINE_enum(
     'glazier_spec',
     'flag',

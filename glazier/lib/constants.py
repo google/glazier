@@ -74,21 +74,6 @@ BEYOND_CORP_VERIFY_URLS = [
 
 ## Flags
 
-CONFIG_BRANCHES = flags.DEFINE_boolean(
-    'config_branches', True, 'The configuration repository uses branched paths.'
-)
-CONFIG_ROOT_PATH = flags.DEFINE_string(
-    'config_root_path',
-    'config',
-    'Path to the root of the configuration directory.',
-)
-CONFIG_SERVER = flags.DEFINE_string(
-    'config_server',
-    'https://glazier-server.example.com',
-    'Root URL for configuration build data.',
-)
-
-
 SYSLOG_PORT = flags.DEFINE_integer(
     'syslog_port', 514, 'Syslog port to use for remote logs collection.'
 )
