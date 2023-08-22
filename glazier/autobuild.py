@@ -20,7 +20,6 @@ import sys
 # do not remove: internal placeholder 1
 
 from absl import app
-from absl import flags as absl_flags
 from glazier.lib import flags
 from glazier.lib import logs
 from glazier.lib import title
@@ -32,9 +31,6 @@ from glazier.lib import buildinfo
 from glazier.lib import constants
 from glazier.lib import terminator
 
-_PRESERVE_TASKS = absl_flags.DEFINE_bool(
-    'preserve_tasks', False, 'Preserve the existing task list, if any.'
-)
 
 logging = logs.logging
 
@@ -52,7 +48,7 @@ class AutoBuild(object):
     if winpe.check_winpe():
       location = constants.WINPE_TASK_LIST
     logging.debug('Using task list at %s', location)
-    if not _PRESERVE_TASKS.value and os.path.exists(location):
+    if not flags.PRESERVE_TASKS.value and os.path.exists(location):
       logging.debug('Purging old task list.')
       try:
         os.remove(location)

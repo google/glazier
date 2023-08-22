@@ -54,6 +54,10 @@ NTP_SERVER = flags.DEFINE_string(
     'Server to use for synchronizing the local system time.',
 )
 
+PRESERVE_TASKS = flags.DEFINE_bool(
+    'preserve_tasks', False, 'Preserve the existing task list, if any.'
+)
+
 VERIFY_URLS = flags.DEFINE_list(
     'verify_urls',
     [
