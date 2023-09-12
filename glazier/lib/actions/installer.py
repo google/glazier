@@ -102,6 +102,9 @@ class BuildInfoSave(BaseAction):
     if os.path.exists(path):
       with open(path) as handle:
         input_config = yaml.safe_load(handle)
+        logging.debug(
+            'Writing loaded info to registry: %s', input_config['BUILD']
+        )
         self._WriteRegistry(input_config['BUILD'])
       os.remove(path)
     else:

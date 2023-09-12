@@ -638,7 +638,6 @@ class BuildInfo(object):
 
   def Serialize(self, to_file):
     """Dumps internal data to a file for later reference."""
-
     build_data = self.GetBuildInfo()
 
     # chooser data
@@ -653,6 +652,8 @@ class BuildInfo(object):
       return
     for k, v in t.items():
       build_data['BUILD'][k] = str(v)
+
+    logging.debug('Serializing build data: %s', build_data['BUILD'])
 
     with open(to_file, 'w') as handle:
       yaml.dump(build_data, handle)
@@ -751,7 +752,7 @@ class BuildInfo(object):
     return self._syslog_port
 
   @syslog_port.setter
-  def syslog_port(self, value: Optional[str] = None) -> Optional[str]:
+  def syslog_port(self, value: str):
     if value:
       self._syslog_port = value
 
@@ -761,7 +762,7 @@ class BuildInfo(object):
     return self._syslog_server
 
   @syslog_server.setter
-  def syslog_server(self, value: Optional[str] = None) -> Optional[str]:
+  def syslog_server(self, value: str):
     if value:
       self._syslog_server = value
 

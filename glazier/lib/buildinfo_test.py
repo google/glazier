@@ -687,6 +687,8 @@ class BuildInfoTest(test_utils.GlazierTestCase):
   def test_getBuildInfo(self, mock_beyondcorp):
     mock_beyondcorp.return_value = True
     mock_buildinfo = mock.Mock(spec_set=self.buildinfo)
+    mock_buildinfo.syslog_server = 'https://glazier-server-1.example.com'
+    mock_buildinfo.syslog_port = '12345'
     mock_buildinfo.GetBuildInfo = buildinfo.BuildInfo.GetBuildInfo.__get__(
         mock_buildinfo
     )
@@ -714,6 +716,8 @@ class BuildInfoTest(test_utils.GlazierTestCase):
         'Support Tier',
         'tpm_present',
         'is_virtual',
+        'syslog_server',
+        'syslog_port',
     ]:
       self.assertIn(f, bi['BUILD'])
       self.assertIsInstance(bi['BUILD'][f], str)
