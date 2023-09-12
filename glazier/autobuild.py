@@ -39,8 +39,8 @@ class AutoBuild(object):
   """The AutoBuild class manages the imaging process."""
 
   def __init__(self):
-    logs.Setup()
     self._build_info = buildinfo.BuildInfo()
+    logs.Setup(self._build_info)
 
   def _SetupTaskList(self):
     """Determines the location of the task list and erases if necessary."""

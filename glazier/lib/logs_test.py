@@ -17,6 +17,7 @@ from unittest import mock
 import zipfile
 
 from absl.testing import absltest
+from glazier.lib import buildinfo
 from glazier.lib import file_util
 from glazier.lib import logs
 from glazier.lib import test_utils
@@ -78,7 +79,7 @@ class LoggingTest(test_utils.GlazierTestCase):
     self.assertEqual(logs.GetLogsPath(), logs.constants.SYS_LOGS_PATH)
 
   @mock.patch.object(file_util, 'CreateDirectories')
-  @mock.patch.object(logs.buildinfo.BuildInfo, 'ImageID', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(winpe, 'check_winpe', autospec=True)
   @mock.patch.object(logs.logging, 'FileHandler')
   def test_setup(
@@ -87,14 +88,14 @@ class LoggingTest(test_utils.GlazierTestCase):
 
     mock_imageid.return_value = TEST_ID
     mock_check_winpe.return_value = False
-    logs.Setup()
+    logs.Setup(buildinfo.BuildInfo())
     mock_createdirectories.assert_called_with(
         r'%s\glazier.log' % logs.constants.SYS_LOGS_PATH)
     mock_filehandler.assert_called_with(
         r'%s\glazier.log' % logs.constants.SYS_LOGS_PATH)
 
   @mock.patch.object(file_util, 'CreateDirectories')
-  @mock.patch.object(logs.buildinfo.BuildInfo, 'ImageID', autospec=True)
+  @mock.patch.object(buildinfo.BuildInfo, 'ImageID', autospec=True)
   @mock.patch.object(winpe, 'check_winpe', autospec=True)
   @mock.patch.object(logs.logging, 'FileHandler')
   def test_setup_error(
@@ -105,7 +106,7 @@ class LoggingTest(test_utils.GlazierTestCase):
     mock_check_winpe.return_value = False
     mock_filehandler.side_effect = IOError
     with self.assert_raises_with_validation(logs.LogOpenError):
-      logs.Setup()
+      logs.Setup(buildinfo.BuildInfo())
     self.assertTrue(mock_createdirectories.called)
 
 if __name__ == '__main__':
