@@ -68,7 +68,7 @@ def _base_title() -> Optional[str]:
   if getid:
     base.append(getid)
   if os.path.exists(seed):
-    base.append('USB ✅')
+    base.append('USB removal OK')
 
   # Convert list to a string, using map() to account for nonetypes
   return ' - '.join(map(str, base))
