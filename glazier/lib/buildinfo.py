@@ -334,7 +334,7 @@ class BuildInfo(object):
         'lab': self.Lab,
         'is_installed': self.InstalledSoftware,
         'image_type': self.ImageType,
-        'winpe': self.WinPE(),
+        'winpe': self.WinPE,
     }
 
   @functools.lru_cache()
