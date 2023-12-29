@@ -324,6 +324,30 @@ func (s *Session) Close() {
 	}
 }
 
+// ExportLog copies events from the specified channel or log file and writes them to the target log file.
+//
+// Path should be supplied the name of the channel or the full path to a log file that contains the events that you want to export. 
+//
+// Query should be supplied a query that specifies the types of events that you want to export, including xpath and structured xml.
+//
+// TargetFilePath should be supplied the full path to the target log file that will receive the events.
+//
+// Flags should be one or more of the EVT_EXPORTLOG_FLAGS from wevtapi.
+//
+// Example:
+//   s.ExportLog("Windows Powershell", "*", "export.evtx", wevtapi.EvtExportLogChannelPath|wevtapi.EvtExportLogOverwrite)
+//
+// Ref: https://learn.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtexportlog
+func (s *Session) ExportLog(path string, query string, targetFilePath string, flags uint32) error {
+	return wevtapi.EvtExportLog(
+		s.handle,
+		windows.StringToUTF16Ptr(path),
+		windows.StringToUTF16Ptr(query),
+		helpers.StringToPtrOrNil(targetFilePath),
+		flags,
+	)
+}
+
 // OpenChannelConfig allows you to read and modify channel config properties.
 //
 // You must call Close() on the resulting ChannelConfig when finished.
