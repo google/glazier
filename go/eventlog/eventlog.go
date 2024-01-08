@@ -81,11 +81,12 @@ func (cc *ChannelConfig) Close() {
 // Results are returned as an EvtVariant with the corresponding property type populated.
 //
 // Example:
-//   p, err = cc.GetProperty(wevtapi.EvtChannelConfigOwningPublisher)
-// 	 if err != nil {
-//	   return err
-//	 }
-//   fmt.Println(p.Data.StringVal)
+//
+//	  p, err = cc.GetProperty(wevtapi.EvtChannelConfigOwningPublisher)
+//		 if err != nil {
+//		   return err
+//		 }
+//	  fmt.Println(p.Data.StringVal)
 //
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtgetchannelconfigproperty
 func (cc *ChannelConfig) GetProperty(propertyID wevtapi.EvtChannelConfigPropertyID) (EvtVariant, error) {
@@ -132,15 +133,16 @@ type Event Handle
 // This method does not support supplying insertion values.
 //
 // Example (evt is an open Event from the Openssh channel):
-//   pub, err := eventlog.LocalSession().OpenPublisherMetadata("Openssh", "", 2057)
-//   if err != nil {
-//	   return err
-//	 }
-// 	 defer pub.Close()
-//	 out, err := evt.Format(pub, 0, wevtapi.EvtFormatMessageXml)
-//	 if err != nil {
-//		 return err
-//	 }
+//
+//	  pub, err := eventlog.LocalSession().OpenPublisherMetadata("Openssh", "", 2057)
+//	  if err != nil {
+//		   return err
+//		 }
+//		 defer pub.Close()
+//		 out, err := evt.Format(pub, 0, wevtapi.EvtFormatMessageXml)
+//		 if err != nil {
+//			 return err
+//		 }
 //
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtformatmessage
 func (e *Event) Format(pub PublisherMetadata, messageID uint32, flags uint32) (string, error) {
@@ -324,12 +326,38 @@ func (s *Session) Close() {
 	}
 }
 
+// ExportLog copies events from the specified channel or log file and writes them to the target log file.
+//
+// Path should be supplied the name of the channel or the full path to a log file that contains the events that you want to export.
+//
+// Query should be supplied a query that specifies the types of events that you want to export, including xpath and structured xml.
+//
+// TargetFilePath should be supplied the full path to the target log file that will receive the events.
+//
+// Flags should be one or more of the EVT_EXPORTLOG_FLAGS from wevtapi.
+//
+// Example:
+//
+//	s.ExportLog("Windows Powershell", "*", "export.evtx", wevtapi.EvtExportLogChannelPath|wevtapi.EvtExportLogOverwrite)
+//
+// Ref: https://learn.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtexportlog
+func (s *Session) ExportLog(path string, query string, targetFilePath string, flags uint32) error {
+	return wevtapi.EvtExportLog(
+		s.handle,
+		windows.StringToUTF16Ptr(path),
+		windows.StringToUTF16Ptr(query),
+		helpers.StringToPtrOrNil(targetFilePath),
+		flags,
+	)
+}
+
 // OpenChannelConfig allows you to read and modify channel config properties.
 //
 // You must call Close() on the resulting ChannelConfig when finished.
 //
 // Example:
-//   s.OpenChannelConfig("Microsoft-Windows-DriverFrameworks-UserMode/Operational")
+//
+//	s.OpenChannelConfig("Microsoft-Windows-DriverFrameworks-UserMode/Operational")
 //
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtopenchannelconfig
 func (s *Session) OpenChannelConfig(logID string) (ChannelConfig, error) {
@@ -393,11 +421,12 @@ func (s *Session) OpenPublisherMetadata(publisherID string, logFilePath string, 
 // Close() once complete.
 //
 // Example:
-// 	 conn, err := eventlog.LocalSession().Query("Windows Powershell", "*", wevtapi.EvtQueryReverseDirection)
-// 	 if err != nil {
-//     return err
-//	 }
-//	 defer conn.Close()
+//
+//		 conn, err := eventlog.LocalSession().Query("Windows Powershell", "*", wevtapi.EvtQueryReverseDirection)
+//		 if err != nil {
+//	    return err
+//		 }
+//		 defer conn.Close()
 //
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtquery
 func (s *Session) Query(path string, query string, flags uint32) (ResultSet, error) {
@@ -533,11 +562,13 @@ const (
 // for EvtCreateRenderContext and EVT_RENDER_CONTEXT_FLAGS for more detail.
 //
 // Example, rendering all System values:
-//		eventlog.CreateRenderContext(eventlog.EvtRenderContextSystem, nil)
+//
+//	eventlog.CreateRenderContext(eventlog.EvtRenderContextSystem, nil)
 //
 // Example, rendering specific values:
-//		eventlog.CreateRenderContext(eventlog.EvtRenderContextValues, &[]string{
-//				"Event/System/TimeCreated/@SystemTime", "Event/System/Provider/@Name"})
+//
+//	eventlog.CreateRenderContext(eventlog.EvtRenderContextValues, &[]string{
+//			"Event/System/TimeCreated/@SystemTime", "Event/System/Provider/@Name"})
 //
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtcreaterendercontext
 func CreateRenderContext(flags EvtRenderContextFlags, valuePaths *[]string) (RenderContext, error) {
@@ -826,14 +857,15 @@ func Render(fragment Fragment, flag uint32) (string, error) {
 // should hold the rendered data.
 //
 // For example, rendering a string fragment successfully should return:
-//		EvtVariant {
-//			Type: EvtVarTypeString
-//			Data: EvtVariantData {
-//				...
-//				StringVal: "my rendered string"
-//				...
-//			}
+//
+//	EvtVariant {
+//		Type: EvtVarTypeString
+//		Data: EvtVariantData {
+//			...
+//			StringVal: "my rendered string"
+//			...
 //		}
+//	}
 //
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtrender
 // Ref: https://docs.microsoft.com/en-us/windows/win32/api/winevt/ns-winevt-evt_variant
