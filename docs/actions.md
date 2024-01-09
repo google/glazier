@@ -774,6 +774,16 @@ Process updates in MSU format. Downloads file, verifies hash, creates a
 SYS_CACHE\Updates folder that is used as a temp location to extract the msu
 file, and applies the update to the base image.
 
+#### Arguments
+
+*   Format: List
+    *   Arg1[list]: First update to apply
+        *   ArgA[str]: Update path (can be a full HTTP(s) URL)
+        *   ArgB[str]: Local download location.
+        *   ArgC[str]: SHA256 hash
+    *   Arg2[list]: Second update to apply (Optional)
+    *   ...
+
 #### Examples
 
 ```yaml
