@@ -778,7 +778,11 @@ file, and applies the update to the base image.
 
 ```yaml
 UpdateMSU: [
-  ['@/Driver/HP/z840/win7/20160909/kb290292.msu', 'C:\Glazier_Cache\kb290292.msu', 'cd8f4222a9ba4c4493d8df208fe38cdad969514512d6f5dfd0f7cc7e1ea2c782']
+  [
+    '@/Driver/HP/z840/win7/20160909/kb290292.msu',
+    'C:\Glazier_Cache\kb290292.msu',
+    'cd8f4222a9ba4c4493d8df208fe38cdad969514512d6f5dfd0f7cc7e1ea2c782'
+  ]
 ]
 ```
 
