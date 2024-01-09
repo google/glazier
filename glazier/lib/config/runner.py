@@ -15,7 +15,6 @@
 
 import sys
 
-from glazier.lib import constants
 from glazier.lib import events
 from glazier.lib import logs
 from glazier.lib import power
@@ -88,10 +87,10 @@ class ConfigRunner(config_base.ConfigBase):
       CheckUrlError: failure to confirm verify_urls.
       ConfigRunnerError: error encountered while running a task.
     """
-    if constants.VERIFY_URLS.value:
-      logging.info('Verifying %d URL(s)', len(constants.VERIFY_URLS.value))
+    if self._build_info.verify_urls:
+      logging.info('Verifying %d URL(s)', len(self._build_info.verify_urls))
       dl = download.Download()
-      for url in constants.VERIFY_URLS.value:
+      for url in self._build_info.verify_urls:
         if not dl.CheckUrl(url, [200]):
           # TODO(b/236982963): Include the non-200 status code in the message.
           raise CheckUrlError(url=url)

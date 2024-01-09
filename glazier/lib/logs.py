@@ -73,9 +73,17 @@ def Collect(path: str):
     raise LogCollectionError() from e
 
 
-def Setup():
+def AddSyslog(server: str, port: int, build_info: buildinfo.BuildInfo) -> None:
+  """Adds a syslog handler to the logger."""
+  build_info.syslog_port = str(port)
+  build_info.syslog_server = server
+  logger = logging.getLogger()
+  logger.addHandler(logging.handlers.SysLogHandler(address=(server, port)))
+  logging.debug('syslog handler added at %s:%s', server, port)
+
+
+def Setup(build_info: buildinfo.BuildInfo):
   """Sets up the logging environment."""
-  build_info = buildinfo.BuildInfo()
   log_file = r'%s\%s' % (GetLogsPath(), constants.BUILD_LOG_FILE)
   file_util.CreateDirectories(log_file)
 
@@ -119,7 +127,6 @@ def Setup():
       constants.SYSLOG_SERVER.value is not None
       and constants.SYSLOG_PORT.value is not None
   ):
-    sl = logging.handlers.SysLogHandler(
-        address=(constants.SYSLOG_SERVER.value, constants.SYSLOG_PORT.value)
+    AddSyslog(
+        constants.SYSLOG_SERVER.value, constants.SYSLOG_PORT.value, build_info
     )
-    logger.addHandler(sl)

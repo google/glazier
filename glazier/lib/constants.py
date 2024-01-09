@@ -37,9 +37,11 @@ SYS_SYSTEM32 = os.path.join(SYS_ROOT, os.sep, 'Windows', 'System32')
 SYS_TASK_LIST = os.path.join(SYS_CACHE, 'task_list.yaml')
 SYS_DISM = os.path.join(SYS_SYSTEM32, 'dism.exe')
 SYS_PNPUTIL = os.path.join(SYS_SYSTEM32, 'pnputil.exe')
-SYS_POWERSHELL = os.path.join(SYS_SYSTEM32, 'WindowsPowerShell', 'v1.0',
-                              'powershell.exe')
+SYS_POWERSHELL = os.path.join(
+    SYS_SYSTEM32, 'WindowsPowerShell', 'v1.0', 'powershell.exe'
+)
 SYS_GOOGETROOT = os.path.join(SYS_ROOT, os.sep, 'ProgramData', 'GooGet')
+SYS_SEED_FILE = os.path.join(SYS_CACHE, os.sep, 'resources', 'seed.json')
 
 # WinPE
 WINPE_ROOT = 'X:'
@@ -49,9 +51,11 @@ WINPE_BUILD_LOG = os.path.join(WINPE_LOGS_PATH, BUILD_LOG_FILE)
 WINPE_SYSTEM32 = os.path.join(WINPE_ROOT, os.sep, 'Windows', 'System32')
 WINPE_TASK_LIST = os.path.join(WINPE_ROOT, os.sep, 'task_list.yaml')
 WINPE_DISM = os.path.join(WINPE_SYSTEM32, 'dism.exe')
-WINPE_POWERSHELL = os.path.join(WINPE_SYSTEM32, 'WindowsPowerShell', 'v1.0',
-                                'powershell.exe')
+WINPE_POWERSHELL = os.path.join(
+    WINPE_SYSTEM32, 'WindowsPowerShell', 'v1.0', 'powershell.exe'
+)
 WINPE_GOOGETROOT = os.path.join(WINPE_ROOT, os.sep, 'ProgramData', 'GooGet')
+WINPE_SEED_FILE = os.path.join(WINPE_ROOT, os.sep, 'resources', 'seed.json')
 
 # Misc
 HELP_URI = 'https://glazier-failures.example.com'
@@ -63,51 +67,16 @@ USB_VOLUME_LABEL = 'BEYONDCORP'
 USE_SIGNED_URL = False
 SEED_PATH = os.path.join('path', 'to', 'seed.json')
 SIGN_ENDPOINT = 'https://glazier-images.example.com/sign'
-BEYOND_CORP_VERIFY_URLS = ['https://dns.google',
-                           'https://glazier-images.example.com']
+BEYOND_CORP_VERIFY_URLS = [
+    'https://dns.google',
+    'https://glazier-images.example.com',
+]
 
 ## Flags
-
-BINARY_ROOT_PATH = flags.DEFINE_string(
-    'binary_root_path', '/bin', 'Path to the binary storage.'
-)
-BINARY_SERVER = flags.DEFINE_string(
-    'binary_server', '', 'Root URL for binary build files.'
-)
-CONFIG_BRANCHES = flags.DEFINE_boolean(
-    'config_branches', True, 'The configuration repository uses branched paths.'
-)
-CONFIG_ROOT_PATH = flags.DEFINE_string(
-    'config_root_path',
-    'config',
-    'Path to the root of the configuration directory.',
-)
-CONFIG_SERVER = flags.DEFINE_string(
-    'config_server',
-    'https://glazier-server.example.com',
-    'Root URL for configuration build data.',
-)
-
-flags.DEFINE_enum('environment', 'Host', ['Host', 'WinPE'],
-                  'The running host environment.')
-
-NTP_SERVER = flags.DEFINE_string(
-    'ntp_server',
-    'time.google.com',
-    'Server to use for synchronizing the local system time.',
-)
 
 SYSLOG_PORT = flags.DEFINE_integer(
     'syslog_port', 514, 'Syslog port to use for remote logs collection.'
 )
 SYSLOG_SERVER = flags.DEFINE_string(
     'syslog_server', None, 'Syslog server to use for remote logs collection.'
-)
-
-VERIFY_URLS = flags.DEFINE_list(
-    'verify_urls',
-    [
-        'https://dns.google',
-    ],
-    'Comma-separated list of URLs to verify are reachable at start',
 )

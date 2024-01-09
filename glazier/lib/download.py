@@ -28,14 +28,13 @@ import ssl
 import sys
 import tempfile
 import time
-
 import typing
 from typing import List, Optional
 import urllib.request
 
 import backoff
-from glazier.lib import constants
 from glazier.lib import file_util
+from glazier.lib import flags
 from glazier.lib import winpe
 
 from glazier.lib import beyondcorp
@@ -456,10 +455,10 @@ class BaseDownloader(object):
       return url
 
     try:
-      if url.startswith(constants.BINARY_SERVER.value):
-        url = url.replace(f'{constants.BINARY_SERVER.value}/', '')
-      if url.startswith(constants.CONFIG_SERVER.value):
-        url = url.replace(f'{constants.CONFIG_SERVER.value}/', '')
+      if url.startswith(flags.BINARY_SERVER.value):
+        url = url.replace(f'{flags.BINARY_SERVER.value}/', '')
+      if url.startswith(flags.CONFIG_SERVER.value):
+        url = url.replace(f'{flags.CONFIG_SERVER.value}/', '')
       return self._beyondcorp.GetSignedUrl(url)
     except beyondcorp.Error as e:
       raise SignedUrlError(url) from e

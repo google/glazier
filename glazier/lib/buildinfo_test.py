@@ -17,18 +17,19 @@ import datetime
 import re
 from unittest import mock
 
-from absl import flags
+from absl import flags as absl_flags
 from absl.testing import absltest
 from absl.testing import flagsaver
 from glazier.lib import buildinfo
 from glazier.lib import test_utils
 from glazier.lib import timers
 from glazier.lib.config import files
+from glazier.lib.spec import spec
 import yaml
 
 from gwinpy.wmi.hw_info import DeviceId
 
-FLAGS = flags.FLAGS
+FLAGS = absl_flags.FLAGS
 
 _RELEASE_INFO = """
 supported_models:
@@ -290,16 +291,14 @@ class BuildInfoTest(test_utils.GlazierTestCase):
     self.assertFalse(self.buildinfo.BuildPinMatch('USER_locale', []))
     self.assertFalse(self.buildinfo.BuildPinMatch('USER_missing', ['na']))
 
-  @flagsaver.flagsaver
-  def test_image_type_ffu(self):
-    FLAGS.glazier_spec = 'flag'
-    FLAGS.glazier_spec_image_type = 'FFU'
+  @mock.patch.object(spec, 'GetModule', autospec=True)
+  def test_image_type_ffu(self, mock_spec):
+    mock_spec.return_value.GetImageType.return_value = 'FFU'
     self.assertEqual(self.buildinfo.ImageType(), 'ffu')
 
-  @flagsaver.flagsaver
-  def test_image_type_unknown(self):
-    FLAGS.glazier_spec = 'flag'
-    FLAGS.glazier_spec_image_type = ''
+  @mock.patch.object(spec, 'GetModule', autospec=True)
+  def test_image_type_unknown(self, mock_spec):
+    mock_spec.return_value.GetImageType.return_value = ''
     self.assertEqual(self.buildinfo.ImageType(), 'unknown')
 
   @mock.patch.object(buildinfo.registry, 'get_values', autospec=True)
@@ -354,31 +353,30 @@ class BuildInfoTest(test_utils.GlazierTestCase):
       self.buildinfo.ComputerModel()
 
   @flagsaver.flagsaver
-  def test_host_spec_flags(self):
-    FLAGS.glazier_spec = 'flag'
-    FLAGS.glazier_spec_hostname = 'TEST-HOST'
-    FLAGS.glazier_spec_fqdn = 'TEST-HOST.example.com'
+  @mock.patch.object(spec, 'GetModule', autospec=True)
+  def test_host_spec_flags(self, mock_spec):
+    mock_spec.return_value.GetHostname.return_value = 'TEST-HOST'
+    mock_spec.return_value.GetFqdn.return_value = 'TEST-HOST.example.com'
     self.assertEqual(self.buildinfo.ComputerName(), 'TEST-HOST')
     self.assertEqual(self.buildinfo.Fqdn(), 'TEST-HOST.example.com')
 
-  @mock.patch.object(
-      buildinfo.os_selector, 'OSSelector', autospec=True)
+  @mock.patch.object(buildinfo.os_selector, 'OSSelector', autospec=True)
+  @mock.patch.object(spec, 'GetModule', autospec=True)
   @flagsaver.flagsaver
-  def test_os_spec_flags(self, mock_selector):
-    FLAGS.glazier_spec = 'flag'
-    FLAGS.glazier_spec_os = 'windows-10-test'
+  def test_os_spec_flags(self, mock_spec, unused_selector):
+    mock_spec.return_value.GetOs.return_value = 'windows-10-test'
     self.assertEqual(self.buildinfo.ComputerOs(), 'windows-10-test')
 
+  @mock.patch.object(spec, 'GetModule', autospec=True)
   @flagsaver.flagsaver
-  def test_lab_spec_flags_true(self):
-    FLAGS.glazier_spec = 'flag'
-    FLAGS.glazier_spec_lab = 'True'
+  def test_lab_spec_flags_true(self, mock_spec):
+    mock_spec.return_value.GetLab.return_value = 'True'
     self.assertTrue(self.buildinfo.Lab())
 
+  @mock.patch.object(spec, 'GetModule', autospec=True)
   @flagsaver.flagsaver
-  def test_lab_spec_flags_false(self):
-    FLAGS.glazier_spec = 'flag'
-    FLAGS.glazier_spec_lab = ''
+  def test_lab_spec_flags_false(self, mock_spec):
+    mock_spec.return_value.GetLab.return_value = ''
     self.assertFalse(self.buildinfo.Lab())
 
   @mock.patch.object(
@@ -493,7 +491,7 @@ class BuildInfoTest(test_utils.GlazierTestCase):
     ints = self.buildinfo.NetInterfaces()
     self.assertEqual(ints[1].description, 'd2')
     mock_netinfo.assert_called_with(poll=True, active_only=True)
-    ints = self.buildinfo.NetInterfaces(False)
+    self.buildinfo.NetInterfaces(False)
     mock_netinfo.assert_called_with(poll=True, active_only=False)
 
   @mock.patch.object(files, 'Read', autospec=True)
@@ -685,8 +683,12 @@ class BuildInfoTest(test_utils.GlazierTestCase):
     # default
     self.assertEqual(self.buildinfo.EncryptionLevel(), 'tpm')
 
-  def test_getBuildInfo(self):
+  @mock.patch.object(buildinfo.BuildInfo, 'BeyondCorp', autospec=True)
+  def test_getBuildInfo(self, mock_beyondcorp):
+    mock_beyondcorp.return_value = True
     mock_buildinfo = mock.Mock(spec_set=self.buildinfo)
+    mock_buildinfo.syslog_server = 'https://glazier-server-1.example.com'
+    mock_buildinfo.syslog_port = '12345'
     mock_buildinfo.GetBuildInfo = buildinfo.BuildInfo.GetBuildInfo.__get__(
         mock_buildinfo
     )
@@ -714,34 +716,37 @@ class BuildInfoTest(test_utils.GlazierTestCase):
         'Support Tier',
         'tpm_present',
         'is_virtual',
+        'syslog_server',
+        'syslog_port',
     ]:
       self.assertIn(f, bi['BUILD'])
       self.assertIsInstance(bi['BUILD'][f], str)
 
   @mock.patch.object(timers.Timers, 'GetAll', autospec=True)
-  def test_serialize(self, mock_get_all):
-
-    mock_buildinfo = mock.Mock(spec_set=self.buildinfo)
-    mock_buildinfo._chooser_responses = {
-        'USER_choice_one': 'value1',
-        'USER_choice_two': 'value2'
+  @mock.patch.object(buildinfo.BuildInfo, 'GetBuildInfo', autospec=True)
+  def test_serialize(self, mock_buildinfo, mock_get_all):
+    bi = buildinfo.BuildInfo()
+    mock_buildinfo.return_value = {
+        'BUILD': {
+            'branch': 'testing',
+            'Model': 'test',
+            'USER_choice_one': 'value1',
+            'USER_choice_two': 'value2',
+            'SerialNumber': '123456789',
+        }
     }
     mock_get_all.return_value = {
-        'TIMER_timer_1':
-            datetime.datetime.now(
-                tz=datetime.timezone(datetime.timedelta(hours=6)))
+        'TIMER_timer_1': datetime.datetime.now(
+            tz=datetime.timezone(datetime.timedelta(hours=6))
+        )
     }
-    mock_buildinfo.Serialize = buildinfo.BuildInfo.Serialize.__get__(
-        mock_buildinfo)
-    mock_buildinfo.GetBuildInfo = buildinfo.BuildInfo.GetBuildInfo.__get__(
-        mock_buildinfo)
     yaml_path = self.create_tempfile(file_path='build_info.yaml')
-    mock_buildinfo.Serialize(yaml_path)
+    bi.Serialize(yaml_path)
     parsed = yaml.safe_load(open(yaml_path))
 
-    self.assertIn('branch', parsed['BUILD'])
-    self.assertIn('Model', parsed['BUILD'])
-    self.assertIn('SerialNumber', parsed['BUILD'])
+    self.assertEqual('testing', parsed['BUILD']['branch'])
+    self.assertEqual('test', parsed['BUILD']['Model'])
+    self.assertEqual('123456789', parsed['BUILD']['SerialNumber'])
     self.assertIn('USER_choice_two', parsed['BUILD'])
     self.assertIn('TIMER_timer_1', parsed['BUILD'])
     self.assertEqual(parsed['BUILD']['USER_choice_two'], 'value2')

@@ -31,8 +31,7 @@ FLAGS = flags.FLAGS
 class ConfigRunnerTest(test_utils.GlazierTestCase):
 
   def setUp(self):
-
-    super(ConfigRunnerTest, self).setUp()
+    super().setUp()
     self.buildinfo = buildinfo.BuildInfo()
     FLAGS.verify_urls = ''
 
@@ -40,6 +39,7 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
     self.task_list_path = self.create_tempfile(
         file_path='task_list.yaml').full_path
     self.cr._task_list_path = self.task_list_path
+    self.cr._build_info.verify_urls = []
 
   @mock.patch.object(runner.files, 'Remove', autospec=True)
   @mock.patch.object(base.actions, 'pull', autospec=True)
@@ -89,12 +89,7 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
   @mock.patch.object(runner.ConfigRunner, '_ProcessAction', autospec=True)
   @mock.patch.object(runner.ConfigRunner, '_PopTask', autospec=True)
   def test_restart_events(self, mock_poptask, mock_processaction, mock_restart):
-    conf = [{
-        'data': {
-            'Shutdown': ['25', 'Reason']
-        },
-        'path': ['path1']
-    }]
+    conf = [{'data': {'Shutdown': ['25', 'Reason']}, 'path': ['path1']}]
     event = events.RestartEvent('Some reason', timeout=25)
     mock_processaction.side_effect = event
     with self.assert_raises_with_validation(SystemExit):
@@ -125,8 +120,8 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
   @mock.patch.object(runner.ConfigRunner, '_ProcessAction', autospec=True)
   @mock.patch.object(runner.ConfigRunner, '_PopTask', autospec=True)
   def test_shutdown_events(
-      self, mock_poptask, mock_processaction, mock_shutdown):
-
+      self, mock_poptask, mock_processaction, mock_shutdown
+  ):
     conf = [{
         'data': {
             'Restart': ['25', 'Reason']
@@ -194,8 +189,8 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
   @mock.patch.object(runner.files, 'Remove', autospec=True)
   @mock.patch.object(runner.files, 'Dump', autospec=True)
   def test_start_with_actions(
-      self, mock_dump, mock_remove, mock_read, mock_settimer):
-
+      self, mock_dump, mock_remove, mock_read, mock_settimer
+  ):
     mock_read.return_value = [{
         'data': {
             'SetTimer': ['TestTimer']
@@ -213,7 +208,7 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
   @mock.patch.object(runner.download.Download, 'CheckUrl', autospec=True)
   def test_verify_urls(self, mock_checkurl):
     mock_checkurl.return_value = True
-    FLAGS.verify_urls = ['http://www.example.com/']
+    self.cr._build_info.verify_urls = ['http://www.example.com/']
     self.cr._ProcessTasks([])
     mock_checkurl.assert_called_with(mock.ANY, 'http://www.example.com/', [200])
     # fail

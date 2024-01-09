@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional
 
 # do not remove: internal placeholder 1
 
-from absl import flags
+from glazier.lib import flags
 from glazier.lib import identifier
 from glazier.lib import os_selector
 from glazier.lib import registry
@@ -36,11 +36,6 @@ from glazier.lib import errors
 from gwinpy.wmi import hw_info
 from gwinpy.wmi import net_info
 from gwinpy.wmi import tpm_info
-
-flags.DEFINE_enum(
-    'glazier_spec', 'flag', list(spec.SPEC_OPTS.keys()),
-    ('Which host specification module to use for determining host features '
-     'like Hostname and OS.'))
 
 
 class Error(errors.GlazierError):
@@ -100,6 +95,7 @@ class BuildInfo(object):
 
   def __init__(self):
     self._active_conf_path = []
+    self._beyondcorp = None
     self._binary_server = ''
     self._chooser_pending = []
     self._chooser_responses = {}
@@ -107,7 +103,10 @@ class BuildInfo(object):
     self._hw_info = None
     self._net_info = None
     self._release_info = None
+    self._syslog_port = None
+    self._syslog_server = None
     self._tpm_info = None
+    self._verify_urls = None
     self._version_info = None
 
   #
@@ -144,7 +143,7 @@ class BuildInfo(object):
       The versioned base path to the current build as a string.
     """
     server = self.BinaryServer() or ''
-    path = constants.BINARY_ROOT_PATH.value.strip('/')
+    path = flags.BINARY_ROOT_PATH.value.strip('/')
     path = '%s/%s/' % (server, path)
     return path
 
@@ -160,8 +159,8 @@ class BuildInfo(object):
     if set_to:
       self._binary_server = set_to
     if not self._binary_server:
-      if constants.BINARY_SERVER.value:
-        self._binary_server = constants.BINARY_SERVER.value
+      if flags.BINARY_SERVER.value:
+        self._binary_server = flags.BINARY_SERVER.value
       else:  # backward compatibility
         self._binary_server = self.ConfigServer()
     return self._binary_server.rstrip('/')
@@ -178,7 +177,7 @@ class BuildInfo(object):
     if set_to:
       self._glazier_server = set_to
     if not self._glazier_server:
-      self._glazier_server = constants.CONFIG_SERVER.value
+      self._glazier_server = flags.CONFIG_SERVER.value
     return self._glazier_server.rstrip('/')
 
   @functools.lru_cache()
@@ -223,7 +222,7 @@ class BuildInfo(object):
       The versioned base path to the current build as a string.
     """
     path = self.ConfigServer() or ''
-    if constants.CONFIG_BRANCHES.value and self.Branch():
+    if flags.CONFIG_BRANCHES.value and self.Branch():
       path += '/%s' % str(self.Branch())
     path += '/'
     return path
@@ -268,9 +267,7 @@ class BuildInfo(object):
       except files.Error:
         # Fallback to using FLAG to avoid edge case where the config server
         # written to the task list is unavailable.
-        info_file = (
-            f"{constants.CONFIG_SERVER.value.rstrip('/')}/version-info.yaml"
-        )
+        info_file = f"{flags.CONFIG_SERVER.value.rstrip('/')}/version-info.yaml"
         try:
           self._version_info = files.Read(info_file)
         except files.Error as e:
@@ -337,7 +334,7 @@ class BuildInfo(object):
         'lab': self.Lab,
         'is_installed': self.InstalledSoftware,
         'image_type': self.ImageType,
-        'winpe': self.WinPE(),
+        'winpe': self.WinPE,
     }
 
   @functools.lru_cache()
@@ -347,7 +344,8 @@ class BuildInfo(object):
     Returns:
       True or False bool returned from beyondcorp lib.
     """
-    self._beyondcorp = beyondcorp.BeyondCorp()
+    if not self._beyondcorp:
+      self._beyondcorp = beyondcorp.BeyondCorp()
     return self._beyondcorp.CheckBeyondCorp()
 
   @functools.lru_cache()
@@ -607,7 +605,7 @@ class BuildInfo(object):
     Returns:
       Dict of build info data.
     """
-    return {
+    b = {
         'BUILD': {
             'bios_version': str(self.BIOSVersion()),
             'beyond_corp': str(self.BeyondCorp()),
@@ -632,10 +630,14 @@ class BuildInfo(object):
             'is_virtual': str(self.IsVirtual()),
         }
     }
+    if self.syslog_port:
+      b['BUILD']['syslog_port'] = str(self.syslog_port)
+    if self.syslog_server:
+      b['BUILD']['syslog_server'] = self.syslog_server
+    return b
 
   def Serialize(self, to_file):
     """Dumps internal data to a file for later reference."""
-
     build_data = self.GetBuildInfo()
 
     # chooser data
@@ -650,6 +652,8 @@ class BuildInfo(object):
       return
     for k, v in t.items():
       build_data['BUILD'][k] = str(v)
+
+    logging.debug('Serializing build data: %s', build_data['BUILD'])
 
     with open(to_file, 'w') as handle:
       yaml.dump(build_data, handle)
@@ -742,6 +746,26 @@ class BuildInfo(object):
     ]
     return supported_models
 
+  @property
+  def syslog_port(self) -> Optional[str]:
+    """Returns the syslog server port for remote logging."""
+    return self._syslog_port
+
+  @syslog_port.setter
+  def syslog_port(self, value: str):
+    if value:
+      self._syslog_port = value
+
+  @property
+  def syslog_server(self) -> Optional[str]:
+    """Returns the syslog server for remote logging."""
+    return self._syslog_server
+
+  @syslog_server.setter
+  def syslog_server(self, value: str):
+    if value:
+      self._syslog_server = value
+
   @functools.lru_cache()
   def SupportTier(self) -> int:
     """Determines the support tier for the current device.
@@ -775,6 +799,18 @@ class BuildInfo(object):
       True if a TPM is present, else False.
     """
     return self._TpmInfo().TpmPresent()
+
+  @property
+  def verify_urls(self) -> List[str]:
+    if self._verify_urls is not None:
+      return self._verify_urls
+    if self.BeyondCorp():
+      return constants.BEYOND_CORP_VERIFY_URLS
+    return flags.VERIFY_URLS.value
+
+  @verify_urls.setter
+  def verify_urls(self, value: List[str]) -> None:
+    self._verify_urls = value
 
   @functools.lru_cache()
   def VideoControllers(self):

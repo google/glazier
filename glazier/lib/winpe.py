@@ -13,12 +13,19 @@
 # limitations under the License.
 """Encapsulates information pertaining to WinPE during the image."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import functools
+import os
+
+from glazier.lib import constants
+from glazier.lib import errors
+from glazier.lib import execute
 from glazier.lib import registry
+
+
+class UtilError(errors.GlazierError):
+
+  def __init__(self, message: str):
+    super().__init__(error_code=errors.ErrorCode.WPEUTIL_ERROR, message=message)
 
 
 @functools.lru_cache()
@@ -32,3 +39,24 @@ def check_winpe() -> bool:
       'EditionID', 'HKLM', r'SOFTWARE\Microsoft\Windows NT\CurrentVersion',
       log=False)
   return bool(value == 'WindowsPE')
+
+
+WPEUTIL = os.path.join(constants.WINPE_SYSTEM32, 'wpeutil.exe')
+
+
+def disable_firewall():
+  try:
+    execute.check_output(WPEUTIL, args=['DisableFirewall'], timeout=20)
+  except execute.Error as e:
+    raise UtilError(
+        message='wpeutil disablefirewall failed with %s' % e.message
+    ) from e
+
+
+def enable_firewall():
+  try:
+    execute.check_output(WPEUTIL, args=['EnableFirewall'], timeout=20)
+  except execute.Error as e:
+    raise UtilError(
+        message='wpeutil enablefirewall failed with %s' % e.message
+    ) from e

@@ -114,7 +114,7 @@ def Dump(path: str, data: Any, mode: str = 'w'):
     raise FileMoveError(tmp_f, path) from e
 
 
-def Read(path: str):
+def Read(path: str) -> Any:
   """Read a config file at path and return any data it contains.
 
   Will attempt to download files from remote repositories prior to reading.
@@ -137,7 +137,7 @@ def Read(path: str):
   return _YamlReader(path)
 
 
-def _YamlReader(path: str) -> str:
+def _YamlReader(path: str) -> Any:
   """Read a configuration file and return the contents.
 
   Can be overloaded to read configs from different sources.
