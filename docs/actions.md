@@ -774,12 +774,26 @@ Process updates in MSU format. Downloads file, verifies hash, creates a
 SYS_CACHE\Updates folder that is used as a temp location to extract the msu
 file, and applies the update to the base image.
 
+#### Arguments
+
+*   Format: List
+    *   Arg1[list]: First update to apply
+        *   ArgA[str]: Update path (can be a full HTTP(s) URL)
+        *   ArgB[str]: Local download location.
+        *   ArgC[str]: SHA256 hash
+    *   Arg2[list]: Second update to apply (Optional)
+    *   ...
+
 #### Examples
 
 ```yaml
-Update: ['@/Driver/HP/z840/win7/20160909/kb290292.msu',
-         'C:\Glazier_Cache\kb290292.msu',
-         'cd8f4222a9ba4c4493d8df208fe38cdad969514512d6f5dfd0f7cc7e1ea2c782']
+UpdateMSU: [
+  [
+    '@/Driver/HP/z840/win7/20160909/kb290292.msu',
+    'C:\Glazier_Cache\kb290292.msu',
+    'cd8f4222a9ba4c4493d8df208fe38cdad969514512d6f5dfd0f7cc7e1ea2c782'
+  ]
+]
 ```
 
 ### Warn
