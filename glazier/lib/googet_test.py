@@ -50,6 +50,7 @@ class GooGetTest(test_utils.GlazierTestCase):
     pkg = 'test_package_v1'
     retries = 5
     sleep_dur = 30
+    remove = True
     mock_branch.return_value = 'example'
 
     # Use hosts paths
@@ -57,28 +58,83 @@ class GooGetTest(test_utils.GlazierTestCase):
 
     mock_execute_binary.return_value = 0
 
-    # Command called successfully
+    # Uninstall Command called successfully
     self.install.LaunchGooGet(
         pkg,
         retries,
         sleep_dur,
         self.buildinfo,
+        remove,
         path=path,
-        flags=[('http://example.com/team-unstable, '
+        flags=[
+            (
+                'http://example.com/team-unstable, '
                 'http://example.co.uk/secure-unstable, '
-                'https://example.jp/unstable/'), '-reinstall', 'whatever'])
+                'https://example.jp/unstable/'
+            ),
+            'whatever',
+        ],
+    )
     cmd = [
-        '-noconfirm', f'-root={os.path.dirname(path)}', 'install', '-sources',
-        ('http://example.com/team-unstable, '
-         'http://example.co.uk/secure-unstable, '
-         'https://example.jp/unstable/'), '-reinstall', 'whatever'
+        '-noconfirm',
+        f'-root={os.path.dirname(path)}',
+        'remove',
+        '-sources',
+        (
+            'http://example.com/team-unstable, '
+            'http://example.co.uk/secure-unstable, '
+            'https://example.jp/unstable/'
+        ),
+        'whatever',
+    ]
+    cmd.extend([pkg])
+    mock_execute_binary.assert_called_with(path, cmd)
+
+    remove = False
+    # Install Command called successfully
+    self.install.LaunchGooGet(
+        pkg,
+        retries,
+        sleep_dur,
+        self.buildinfo,
+        remove,
+        path=path,
+        flags=[
+            (
+                'http://example.com/team-unstable, '
+                'http://example.co.uk/secure-unstable, '
+                'https://example.jp/unstable/'
+            ),
+            '-reinstall',
+            'whatever',
+        ],
+    )
+    cmd = [
+        '-noconfirm',
+        f'-root={os.path.dirname(path)}',
+        'install',
+        '-sources',
+        (
+            'http://example.com/team-unstable, '
+            'http://example.co.uk/secure-unstable, '
+            'https://example.jp/unstable/'
+        ),
+        '-reinstall',
+        'whatever',
     ]
     cmd.extend([pkg])
     mock_execute_binary.assert_called_with(path, cmd)
 
     # String replacement of sources flag was successful
     self.install.LaunchGooGet(
-        pkg, retries, sleep_dur, self.buildinfo, path=path, flags=self.flags)
+        pkg,
+        retries,
+        sleep_dur,
+        self.buildinfo,
+        remove,
+        path=path,
+        flags=self.flags,
+    )
     cmd = [
         '-noconfirm',
         f'-root={os.path.dirname(path)}',
@@ -95,14 +151,22 @@ class GooGetTest(test_utils.GlazierTestCase):
 
     # Only pkg
     self.install.LaunchGooGet(
-        pkg, retries, sleep_dur, self.buildinfo, path=None, flags=None)
+        pkg, retries, sleep_dur, self.buildinfo, remove, path=None, flags=None
+    )
     cmd = ['-noconfirm', f'-root={constants.SYS_GOOGETROOT}', 'install']
     cmd.extend([pkg])
     mock_execute_binary.assert_called_with(path, cmd)
 
     # No Path
     self.install.LaunchGooGet(
-        pkg, retries, sleep_dur, self.buildinfo, path=None, flags=self.flags)
+        pkg,
+        retries,
+        sleep_dur,
+        self.buildinfo,
+        remove,
+        path=None,
+        flags=self.flags,
+    )
     cmd = [
         '-noconfirm', f'-root={constants.SYS_GOOGETROOT}', 'install',
         '-sources',
@@ -115,7 +179,8 @@ class GooGetTest(test_utils.GlazierTestCase):
 
     # No flags
     self.install.LaunchGooGet(
-        pkg, retries, sleep_dur, self.buildinfo, path=path, flags=None)
+        pkg, retries, sleep_dur, self.buildinfo, remove, path=path, flags=None
+    )
     cmd = ['-noconfirm', f'-root={constants.SYS_GOOGETROOT}', 'install']
     cmd.extend([pkg])
     mock_execute_binary.assert_called_with(path, cmd)
@@ -124,14 +189,27 @@ class GooGetTest(test_utils.GlazierTestCase):
     with self.assertRaisesRegex(
         googet.Error, 'Cannot find path of GooGet binary*'):
       self.install.LaunchGooGet(
-          pkg, retries, sleep_dur, self.buildinfo, path='C:\\abc\\def\\ghi',
-          flags=self.flags)
+          pkg,
+          retries,
+          sleep_dur,
+          self.buildinfo,
+          remove,
+          path='C:\\abc\\def\\ghi',
+          flags=self.flags,
+      )
 
     # Empty Package Name
     with self.assertRaisesRegex(
         googet.Error, 'Missing package name for GooGet install.'):
       self.install.LaunchGooGet(
-          '', retries, sleep_dur, self.buildinfo, path=path, flags=self.flags)
+          '',
+          retries,
+          sleep_dur,
+          self.buildinfo,
+          remove,
+          path=path,
+          flags=self.flags,
+      )
 
     # Non zero return value
     mock_execute_binary.side_effect = googet.execute.ExecError('some_command')
@@ -139,7 +217,14 @@ class GooGetTest(test_utils.GlazierTestCase):
         googet.Error,
         'GooGet command failed after ' + str(retries) + ' attempts'):
       self.install.LaunchGooGet(
-          pkg, retries, sleep_dur, self.buildinfo, path=path, flags=self.flags)
+          pkg,
+          retries,
+          sleep_dur,
+          self.buildinfo,
+          remove,
+          path=path,
+          flags=self.flags,
+      )
 
   def test_add_flags(self):
     branch = 'example'
