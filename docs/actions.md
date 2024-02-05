@@ -288,11 +288,13 @@ Supports multiple packages via nested list structure.
             *   If the % character is used in ArgB, it will be replaced for the
                 current build branch, taken from glazier/lib/buildinfo.
         *   ArgC[str]: googet.exe location (Optional)
-            * If specified, the path to googet.exe is also used for the `-root`
-              flag when launching GooGet.
+            *   If specified, the path to googet.exe is also used for the
+                `-root` flag when launching GooGet.
         *   ArgD[int]: Installation retry attemps (optional, defaults to 5)
         *   ArgE[int]: Installation retry sleep interval in seconds (optional,
             defaults to 30)
+        *   ArgF[bool]: Whether to uninstall the package (optional, defaults to
+            False)
     *   Arg2[str]: The second GooGet package to install (Optional)
     *   ...
 
@@ -313,10 +315,13 @@ Supports multiple packages via nested list structure.
       ['test_package_v1', ['http://example.com/team-unstable, http://example.co.uk/secure-unstable, https://example.jp/unstable/ -reinstall whatever'], 'C:\ProgramData\GooGet\googet.exe'],
 
       # Package name with custom retry count of 3 and sleep interval of 60 seconds
-      ['test_package_v1', [], , 3, 60],
+      ['test_package_v1', [], 'C:\ProgramData\GooGet\googet.exe', 3, 60],
 
       # Replaces '%' in custom GooGet arguments with the current build branch
       ['test_package_v1', ['http://example.com/team-%, http://example.co.uk/secure-%, https://example.jp/%/ -reinstall whatever'], 'C:\ProgramData\GooGet\googet.exe'],
+
+      # Remove a Googet Package with custom retry count of 3 and sleep interval of 60 seconds
+      ['test_package_v1', [], 'C:\ProgramData\GooGet\googet.exe', 3, 60, true],
     ]
 ```
 

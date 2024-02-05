@@ -47,14 +47,22 @@ class GooGetInstall(BaseAction):
       else:
         sleep = 30
 
+      if len(args) > 5:
+        remove = int(args[5])
+      else:
+        remove = False
+
       try:
         install = googet.GooGetInstall()
-        install.LaunchGooGet(pkg=args[0],
-                             retries=retries,
-                             sleep=sleep,
-                             build_info=self._build_info,
-                             path=path,
-                             flags=flags)
+        install.LaunchGooGet(
+            pkg=args[0],
+            retries=retries,
+            sleep=sleep,
+            remove=remove,
+            build_info=self._build_info,
+            path=path,
+            flags=flags
+        )
       except googet.Error as e:
         raise ActionError('Failure executing GooGet command') from e
       except IndexError as e:
@@ -64,7 +72,7 @@ class GooGetInstall(BaseAction):
   def Validate(self):
     self._TypeValidator(self._args, list)
     for args in self._args:
-      if not 1 <= len(args) <= 5:
+      if not 1 <= len(args) <= 6:
         raise ValidationError(
             f'Invalid GooGet args "{args}" with length of {len(args)}')
       self._TypeValidator(args[0], str)  # Package
@@ -76,3 +84,5 @@ class GooGetInstall(BaseAction):
         self._TypeValidator(args[3], int)  # Retries
       if len(args) > 4:
         self._TypeValidator(args[4], int)  # Sleep interval
+      if len(args) > 5:
+        self._TypeValidator(args[5], bool)  # Remove

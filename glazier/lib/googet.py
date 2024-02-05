@@ -142,7 +142,7 @@ class GooGetInstall(object):
       retries: int,
       sleep: int,
       build_info: 'buildinfo.BuildInfo',
-      remove: bool = False,  # TODO(b/322877528) update docs once tested)
+      remove: bool,
       **kwargs,
   ):
     """Launch the GooGet executable with arguments.
