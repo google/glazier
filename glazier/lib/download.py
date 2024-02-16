@@ -54,6 +54,14 @@ class Error(errors.GlazierError):
   pass
 
 
+class CheckUrlError(Error):
+
+  def __init__(self, url: str):
+    super().__init__(
+        error_code=errors.ErrorCode.FAILED_URL_VERIFICATION,
+        message=f'Failed to verify url [{url}]')
+
+
 class DownloadGiveUpError(Error):
 
   def __init__(self, tries: int, elapsed: float):
@@ -350,24 +358,25 @@ class BaseDownloader(object):
 
     return self._OpenFileStream(url, status_codes)
 
-  def CheckUrl(self, url: str, status_codes: List[int]) -> bool:
+  def CheckUrl(self, url: str, status_codes: List[int]):
     """Check a remote URL for availability.
+
+    If the url returns an expected status code, the function completes
+    successfully. If not, an exception is raised.
 
     Args:
       url: A URL to access.
       status_codes: Acceptable status codes for the connection (list).
 
-    Returns:
-      True if accessing the file produced one of status_codes.
+    Raises:
+      CheckUrlError: connection to url returned an unacceptable status code.
     """
     logging.info('Checking URL: %s', url)
-
     try:
       self._OpenStream(url, status_codes=status_codes)
-      return True
-    except Error as e:
+    except Exception as e:
       logging.error(e)
-    return False
+      raise CheckUrlError(url) from e
 
   def DownloadFile(self,
                    url: str,
