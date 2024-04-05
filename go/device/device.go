@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build windows
 // +build windows
 
 // Package device supports querying information about the local device.
@@ -21,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/StackExchange/wmi"
 )
@@ -72,10 +74,12 @@ func ChassisType() (Type, error) {
 
 // Win32_ComputerSystem models the WMI object of the same name.
 type Win32_ComputerSystem struct {
-	DNSHostName string
-	Domain      string
-	DomainRole  int
-	Model       string
+	DNSHostName  string
+	Domain       string
+	DomainRole   int
+	Model        string
+	SystemFamily string
+	Manufacturer string
 }
 
 func sysInfo() (*Win32_ComputerSystem, error) {
@@ -126,6 +130,9 @@ func Model() (string, error) {
 	si, err := sysInfo()
 	if err != nil {
 		return "unknown", err
+	}
+	if strings.ToLower(si.Manufacturer) == "lenovo" {
+		return si.SystemFamily, nil
 	}
 	return si.Model, nil
 }
