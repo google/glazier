@@ -588,6 +588,12 @@ Reboot: [10, "Restarting to finish installing drivers."]
 Reboot: [10, "Restarting to finish installing drivers.", True]
 ```
 
+### RegenerateTasklist
+
+Perform a one-shot rebuild of the Glazier task list. Note that a Registry key
+created in `REG_ROOT\tasklist_regen` prevents this action from being run more
+than once.
+
 ### RmDir
 
 Remove one or more directories.
