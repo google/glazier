@@ -131,7 +131,7 @@ func Model() (string, error) {
 	if err != nil {
 		return "unknown", err
 	}
-	if strings.ToLower(si.Manufacturer) == "lenovo" {
+	if strings.EqualFold(si.Manufacturer, "lenovo") {
 		return si.SystemFamily, nil
 	}
 	return si.Model, nil
