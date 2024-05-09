@@ -29,6 +29,7 @@ RETRIES = 2
 DEFAULT_RETRIES = 5
 SLEEP = 1
 DEFAULT_SLEEP = 30
+REMOVE = False
 
 
 class GooGetTest(test_utils.GlazierTestCase):
@@ -45,11 +46,13 @@ class GooGetTest(test_utils.GlazierTestCase):
     gi.Run()
     mock_install.assert_called_with(
         pkg=PKG,
-        flags=FLAGS,
-        path=PATH,
         retries=RETRIES,
         sleep=SLEEP,
-        build_info=mock_build_info)
+        remove=REMOVE,
+        build_info=mock_build_info,
+        path=PATH,
+        flags=FLAGS,
+    )
 
     # All args multi
     action_args = [[PKG, FLAGS, PATH, RETRIES, SLEEP],
@@ -62,7 +65,9 @@ class GooGetTest(test_utils.GlazierTestCase):
         path=PATH,
         retries=RETRIES,
         sleep=SLEEP,
-        build_info=mock_build_info)
+        remove=REMOVE,
+        build_info=mock_build_info,
+    )
 
     # No flags
     action_args = [[PKG, None, PATH]]
@@ -74,7 +79,9 @@ class GooGetTest(test_utils.GlazierTestCase):
         flags=None,
         retries=DEFAULT_RETRIES,
         sleep=DEFAULT_SLEEP,
-        build_info=mock_build_info)
+        remove=REMOVE,
+        build_info=mock_build_info,
+    )
 
     # No path
     action_args = [[PKG, FLAGS]]
@@ -86,7 +93,9 @@ class GooGetTest(test_utils.GlazierTestCase):
         path=None,
         retries=DEFAULT_RETRIES,
         sleep=DEFAULT_SLEEP,
-        build_info=mock_build_info)
+        remove=REMOVE,
+        build_info=mock_build_info,
+    )
 
     # Just package
     action_args = [[PKG]]
@@ -98,7 +107,9 @@ class GooGetTest(test_utils.GlazierTestCase):
         flags=None,
         retries=DEFAULT_RETRIES,
         sleep=DEFAULT_SLEEP,
-        build_info=mock_build_info)
+        remove=REMOVE,
+        build_info=mock_build_info,
+    )
 
     # Just package multi
     action_args = [[PKG], [PKG]]
@@ -110,7 +121,9 @@ class GooGetTest(test_utils.GlazierTestCase):
         flags=None,
         retries=DEFAULT_RETRIES,
         sleep=DEFAULT_SLEEP,
-        build_info=mock_build_info)
+        remove=REMOVE,
+        build_info=mock_build_info,
+    )
 
     # Package custom retry count and sleep interval
     action_args = [[PKG, None, None, RETRIES, SLEEP]]
@@ -122,7 +135,9 @@ class GooGetTest(test_utils.GlazierTestCase):
         flags=None,
         retries=RETRIES,
         sleep=SLEEP,
-        build_info=mock_build_info)
+        remove=REMOVE,
+        build_info=mock_build_info,
+    )
 
   @parameterized.named_parameters(
       ('_googeterror', [[PKG, FLAGS, PATH, RETRIES, SLEEP]]),
@@ -137,9 +152,15 @@ class GooGetTest(test_utils.GlazierTestCase):
       gi.Run()
 
   @parameterized.named_parameters(
-      ('_valid_calls', [[PKG, FLAGS, PATH, RETRIES, SLEEP]], None),
-      ('_valid_calls_multi', [[PKG, FLAGS, PATH, RETRIES, SLEEP],
-                              [PKG, FLAGS, PATH, RETRIES, SLEEP]], None),
+      ('_valid_calls', [[PKG, FLAGS, PATH, RETRIES, SLEEP, REMOVE]], None),
+      (
+          '_valid_calls_multi',
+          [
+              [PKG, FLAGS, PATH, RETRIES, SLEEP, REMOVE],
+              [PKG, FLAGS, PATH, RETRIES, SLEEP, REMOVE],
+          ],
+          None,
+      ),
   )
   def test_validation_success(self, action_args, build_info):
     g = googet.GooGetInstall(action_args, build_info)
@@ -149,7 +170,7 @@ class GooGetTest(test_utils.GlazierTestCase):
       ('_list_not_passed', ['String'], None),
       ('_too_few_args', [[]], None),
       ('_too_many_args', [[PKG, FLAGS, PATH, 'abc']], None),
-      ('_type_error', [PKG, FLAGS, PATH, RETRIES, SLEEP, 1], None),
+      ('_type_error', [PKG, FLAGS, PATH, RETRIES, SLEEP, REMOVE, 1], None),
   )
   def test_validation_error(self, action_args, build_info):
     g = googet.GooGetInstall(action_args, build_info)

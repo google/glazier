@@ -207,13 +207,14 @@ class ConfigRunnerTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(runner.download.Download, 'CheckUrl', autospec=True)
   def test_verify_urls(self, mock_checkurl):
-    mock_checkurl.return_value = True
     self.cr._build_info.verify_urls = ['http://www.example.com/']
     self.cr._ProcessTasks([])
     mock_checkurl.assert_called_with(mock.ANY, 'http://www.example.com/', [200])
     # fail
-    mock_checkurl.return_value = False
-    with self.assert_raises_with_validation(runner.CheckUrlError):
+    mock_checkurl.side_effect = runner.download.CheckUrlError(
+        'http://www.example.com/'
+    )
+    with self.assert_raises_with_validation(runner.download.Error):
       self.cr._ProcessTasks([])
 
 

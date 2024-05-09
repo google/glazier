@@ -288,11 +288,13 @@ Supports multiple packages via nested list structure.
             *   If the % character is used in ArgB, it will be replaced for the
                 current build branch, taken from glazier/lib/buildinfo.
         *   ArgC[str]: googet.exe location (Optional)
-            * If specified, the path to googet.exe is also used for the `-root`
-              flag when launching GooGet.
+            *   If specified, the path to googet.exe is also used for the
+                `-root` flag when launching GooGet.
         *   ArgD[int]: Installation retry attemps (optional, defaults to 5)
         *   ArgE[int]: Installation retry sleep interval in seconds (optional,
             defaults to 30)
+        *   ArgF[bool]: Whether to uninstall the package (optional, defaults to
+            False)
     *   Arg2[str]: The second GooGet package to install (Optional)
     *   ...
 
@@ -313,10 +315,13 @@ Supports multiple packages via nested list structure.
       ['test_package_v1', ['http://example.com/team-unstable, http://example.co.uk/secure-unstable, https://example.jp/unstable/ -reinstall whatever'], 'C:\ProgramData\GooGet\googet.exe'],
 
       # Package name with custom retry count of 3 and sleep interval of 60 seconds
-      ['test_package_v1', [], , 3, 60],
+      ['test_package_v1', [], 'C:\ProgramData\GooGet\googet.exe', 3, 60],
 
       # Replaces '%' in custom GooGet arguments with the current build branch
       ['test_package_v1', ['http://example.com/team-%, http://example.co.uk/secure-%, https://example.jp/%/ -reinstall whatever'], 'C:\ProgramData\GooGet\googet.exe'],
+
+      # Remove a Googet Package with custom retry count of 3 and sleep interval of 60 seconds
+      ['test_package_v1', [], 'C:\ProgramData\GooGet\googet.exe', 3, 60, true],
     ]
 ```
 
@@ -583,6 +588,12 @@ Reboot: [10, "Restarting to finish installing drivers."]
 Reboot: [10, "Restarting to finish installing drivers.", True]
 ```
 
+### RegenerateTasklist
+
+Perform a one-shot rebuild of the Glazier task list. Note that a Registry key
+created in `REG_ROOT\tasklist_regen` prevents this action from being run more
+than once.
+
 ### RmDir
 
 Remove one or more directories.
@@ -774,26 +785,12 @@ Process updates in MSU format. Downloads file, verifies hash, creates a
 SYS_CACHE\Updates folder that is used as a temp location to extract the msu
 file, and applies the update to the base image.
 
-#### Arguments
-
-*   Format: List
-    *   Arg1[list]: First update to apply
-        *   ArgA[str]: Update path (can be a full HTTP(s) URL)
-        *   ArgB[str]: Local download location.
-        *   ArgC[str]: SHA256 hash
-    *   Arg2[list]: Second update to apply (Optional)
-    *   ...
-
 #### Examples
 
 ```yaml
-UpdateMSU: [
-  [
-    '@/Driver/HP/z840/win7/20160909/kb290292.msu',
-    'C:\Glazier_Cache\kb290292.msu',
-    'cd8f4222a9ba4c4493d8df208fe38cdad969514512d6f5dfd0f7cc7e1ea2c782'
-  ]
-]
+Update: ['@/Driver/HP/z840/win7/20160909/kb290292.msu',
+         'C:\Glazier_Cache\kb290292.msu',
+         'cd8f4222a9ba4c4493d8df208fe38cdad969514512d6f5dfd0f7cc7e1ea2c782']
 ```
 
 ### Warn

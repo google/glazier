@@ -136,8 +136,15 @@ class GooGetInstall(object):
     else:
       return str(constants.SYS_GOOGETROOT)
 
-  def LaunchGooGet(self, pkg: str, retries: int, sleep: int,
-                   build_info: 'buildinfo.BuildInfo', **kwargs):
+  def LaunchGooGet(
+      self,
+      pkg: str,
+      retries: int,
+      sleep: int,
+      build_info: 'buildinfo.BuildInfo',
+      remove: bool,
+      **kwargs,
+  ):
     """Launch the GooGet executable with arguments.
 
     Args:
@@ -145,8 +152,9 @@ class GooGetInstall(object):
       retries: number of times to retry a failed GooGet installation
       sleep: number of seconds between retry attempts
       build_info: current build information - used to get active release branch
+      remove: uninstall the packages (defaults to installing the package)
       **kwargs: optional parameters such as path to GooGet binary, -reinstall,
-      and/or -sources
+        and/or -sources
 
     Raises:
       GooGetBinaryNotFoundError: If googet.exe cannot be found.
@@ -169,7 +177,12 @@ class GooGetInstall(object):
     # Pass -root as GOOGETROOT environmental variable may not exist
     root = '-root=' + root_path
 
-    cmd = ['-noconfirm', root, 'install']
+    cmd = ['-noconfirm', root]
+
+    if remove:
+      cmd.append('remove')
+    else:
+      cmd.append('install')
 
     if kwargs['flags']:
       cmd.extend(self._AddFlags(kwargs['flags'], build_info.Branch()))

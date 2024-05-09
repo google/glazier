@@ -184,10 +184,11 @@ class DownloadTest(test_utils.GlazierTestCase):
 
     # match
     mock_urlopen.side_effect = iter([file_stream])
-    self.assertTrue(self._dl.CheckUrl(_TEST_URI_YAML, status_codes=[200]))
+    self._dl.CheckUrl(_TEST_URI_YAML, status_codes=[200])
     # miss
     mock_urlopen.side_effect = iter([file_stream])
-    self.assertFalse(self._dl.CheckUrl(_TEST_URI_YAML, status_codes=[201]))
+    with self.assert_raises_with_validation(download.Error):
+      self._dl.CheckUrl(_TEST_URI_YAML, status_codes=[201])
 
   @mock.patch.object(file_util, 'Copy', autospec=True)
   def test_download_file_local(self, mock_copy):
