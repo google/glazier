@@ -49,6 +49,8 @@ SLEEP = 20
 # Maximum amount of time to spend on all backoff retries, in seconds.
 BACKOFF_MAX_TIME = 600
 
+# Timeout for all blocking operations with urllib (connect, read, etc).
+TIMEOUT=60
 
 class Error(errors.GlazierError):
   pass
@@ -290,9 +292,9 @@ class BaseDownloader(object):
 
     try:
       if winpe.check_winpe():
-        file_stream = urllib.request.urlopen(url, cafile=self._ca_cert_file)
+        file_stream = urllib.request.urlopen(url, timeout=TIMEOUT, cafile=self._ca_cert_file)
       else:
-        file_stream = urllib.request.urlopen(url)
+        file_stream = urllib.request.urlopen(url, timeout=TIMEOUT)
 
     # First attempt failed with HTTPError. Reraise and trigger a retry.
     except urllib.error.HTTPError:
