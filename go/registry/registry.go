@@ -47,7 +47,7 @@ func Delete(root, name string) error {
 	return k.DeleteValue(name)
 }
 
-// GetInteger gets a string key from the registry.
+// GetInteger gets a uint64 value from the registry.
 func GetInteger(root, name string) (uint64, error) {
 	k, err := reg.OpenKey(reg.LOCAL_MACHINE, root, reg.READ)
 	if err != nil {
