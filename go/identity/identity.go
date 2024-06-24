@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/StackExchange/wmi"
+	"github.com/yusufpapurcu/wmi"
 )
 
 type Win32_ComputerSystem struct {
