@@ -17,9 +17,3 @@
 
 package helpers
 
-// Exec executes a subprocess and returns the results.
-//
-// This call is unsupported on non-Windows platforms.
-func Exec(path string, args []string, conf *ExecConfig) (ExecResult, error) {
-	return ExecResult{}, ErrUnsupported
-}
