@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build windows
 // +build windows
 
 // Package identity provides helpers for managing host identity.
@@ -22,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/StackExchange/wmi"
+	"github.com/yusufpapurcu/wmi"
 )
 
 type Win32_ComputerSystem struct {
