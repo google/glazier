@@ -39,7 +39,7 @@ class DeviceModel(BasePolicy):
 
       The installer does not recognize this hardware model (%s).
 
-      If you chose to continue, this will be an unsupported build.  The
+      If you choose to continue, this will be an unsupported build.  The
       final install MAY BE BROKEN.  You should only continue if you are
       sure you know what you're doing.  When in doubt, contact support
       for assistance.
