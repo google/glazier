@@ -355,6 +355,10 @@ func (d *Disk) Initialize(style PartitionStyle) (ExtendedStatus, error) {
 	res, err := oleutil.CallMethod(d.handle, "Initialize", int32(style), &extendedStatus)
 	if err != nil {
 		return stat, fmt.Errorf("Initialize(%d): %w", style, err)
+	} else if res.Value().(int32) == 41001 {
+		// https://learn.microsoft.com/en-us/windows-hardware/drivers/storage/initialize-msft-disk#return-value
+		// 41001 is a valid error code for a disk that is already initialized.
+		return stat, nil
 	} else if val, ok := res.Value().(int32); val != 0 || !ok {
 		return stat, fmt.Errorf("error code returned during initialization: %d", val)
 	}
