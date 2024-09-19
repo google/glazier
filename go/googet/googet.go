@@ -122,8 +122,6 @@ func Installed(initial string, conf *Config) ([]Package, error) {
 	if conf == nil {
 		conf = NewConfig()
 	}
-	// If googet installed returns no packages, it returns exit code 1.
-	conf.ExecConfig.Verifier.SuccessCodes = []int{0, 1}
 	p := []Package{}
 	args := []string{"installed", initial}
 	res, err := funcExec(conf.GooGetExe, args, &conf.ExecConfig)
