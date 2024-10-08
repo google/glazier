@@ -112,6 +112,23 @@ func RestartService(name string) error {
 	return s.Start()
 }
 
+// RestartServiceWithVerify attempts to restart local system services and verifies the service is running.
+func RestartServiceWithVerify(name string) error {
+	err := RestartService(name)
+	if err != nil {
+		return err
+	}
+	time.Sleep(10 * time.Second) // sleep to give the service time to start.
+	status, _, err := GetServiceState(name)
+	if err != nil {
+		return err
+	}
+	if status.State != svc.Running {
+		return fmt.Errorf("service %q is not running after restart, current state: %v", name, status.State)
+	}
+	return nil
+}
+
 // SetSysEnv sets a system environment variable
 func SetSysEnv(key, value string) error {
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `System\CurrentControlSet\Control\Session Manager\Environment`, registry.SET_VALUE)
