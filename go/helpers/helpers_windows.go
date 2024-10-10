@@ -112,6 +112,34 @@ func RestartService(name string) error {
 	return s.Start()
 }
 
+// RestartServiceWithVerify attempts to restart local system services and verifies the service is running with a 60 second timeout.
+func RestartServiceWithVerify(name string) error {
+	if err := RestartService(name); err != nil {
+		return err
+	}
+	st := svc.Status{
+		State: svc.StartPending,
+	}
+	retry := 0
+	for st.State == svc.StartPending {
+		deck.Infof("Waiting for service %q to start, sleeping for 5 seconds", name)
+		time.Sleep(5 * time.Second)
+		var err error
+		st, _, err = GetServiceState(name)
+		if err != nil {
+			return err
+		}
+		retry++
+		if retry > 12 {
+			return fmt.Errorf("timed out waiting for service %q to start", name)
+		}
+	}
+	if st.State != svc.Running {
+		return fmt.Errorf("service %q is not running after restart, current state: %v", name, st.State)
+	}
+	return nil
+}
+
 // SetSysEnv sets a system environment variable
 func SetSysEnv(key, value string) error {
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `System\CurrentControlSet\Control\Session Manager\Environment`, registry.SET_VALUE)
