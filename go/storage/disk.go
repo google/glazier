@@ -181,7 +181,7 @@ func (d *Disk) Close() {
 
 // ConvertStyle converts the partition style of an already initialized disk.
 //
-// Ref: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-disk-convertstyle
+// Ref: https://learn.microsoft.com/en-us/windows-hardware/drivers/storage/msft-disk-convertstyle
 func (d *Disk) ConvertStyle(style PartitionStyle) (ExtendedStatus, error) {
 	stat := ExtendedStatus{}
 	var extendedStatus ole.VARIANT
