@@ -113,23 +113,26 @@ func RestartService(name string) error {
 }
 
 // RestartServiceWithVerify attempts to restart local system services and verifies the service is running with a 60 second timeout.
-func RestartServiceWithVerify(name string) error {
+func RestartServiceWithVerify(name string, retryCount ...int) error {
+	retryAttempts := 12
+	if len(retryCount) > 0 {
+		retryAttempts = retryCount[0]
+	}
 	if err := RestartService(name); err != nil {
 		return err
 	}
 	status := svc.Status{
-          State: svc.StartPending, // Assume the service is starting
-        }
-	for retry := 0; status.State == svc.StartPending; {
+		State: svc.StartPending, // Assume the service is starting
+	}
+	for retry := 0; status.State == svc.StartPending; retry++ {
 		deck.Infof("Waiting for service %q to start, sleeping for 5 seconds", name)
 		time.Sleep(5 * time.Second)
 		var err error
-    status, _, err = GetServiceState(name)
+		status, _, err = GetServiceState(name)
 		if err != nil {
 			return err
 		}
-		retry++
-		if retry > 12 {
+		if retry == retryAttempts {
 			return fmt.Errorf("timed out waiting for service %q to start", name)
 		}
 	}
@@ -172,6 +175,37 @@ func StartService(name string) error {
 	defer s.Close()
 
 	return s.Start()
+}
+
+// StartServiceWithVerify attempts to start local system services and verifies
+// the service is running. Will retry every 5 seconds, with a default of a 60 second timeout.
+func StartServiceWithVerify(name string, retryCount ...int) error {
+	retryAttempts := 12
+	if len(retryCount) > 0 {
+		retryAttempts = retryCount[0]
+	}
+	if err := StartService(name); err != nil {
+		return err
+	}
+	status := svc.Status{
+		State: svc.StartPending, // Assume the service is starting
+	}
+	for retry := 0; status.State == svc.StartPending; retry++ {
+		deck.Infof("Waiting for service %q to start, sleeping for 5 seconds", name)
+		time.Sleep(5 * time.Second)
+		var err error
+		status, _, err = GetServiceState(name)
+		if err != nil {
+			return err
+		}
+		if retry == retryAttempts {
+			return fmt.Errorf("timed out waiting for service %q to start", name)
+		}
+	}
+	if status.State != svc.Running {
+		return fmt.Errorf("service %q is not running after start, current state: %v", name, status.State)
+	}
+	return nil
 }
 
 func stopService(s *mgr.Service) error {
