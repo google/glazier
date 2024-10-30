@@ -66,6 +66,8 @@ func Connect() (Service, error) {
 // Close frees all resources associated with a volume.
 func (svc *Service) Close() {
 	svc.wmiIntf.Release()
-	svc.wmiSvc.Release()
+	if svc.wmiSvc != nil {
+		svc.wmiSvc.Release()
+	}
 	comshim.Done()
 }
