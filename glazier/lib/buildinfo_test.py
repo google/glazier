@@ -336,6 +336,18 @@ class BuildInfoTest(test_utils.GlazierTestCase):
     with self.assert_raises_with_validation(buildinfo.Error):
       self.buildinfo.ComputerManufacturer()
 
+  @mock.patch.object(buildinfo.hw_info.HWInfo, 'Architecture', autospec=True)
+  def test_computer_architecture(self, mock_architecture):
+    mock_architecture.return_value = None
+    with self.assert_raises_with_validation(buildinfo.Error):
+      self.buildinfo.CPUArchitecture()
+    self.buildinfo.CPUArchitecture.cache_clear()
+
+    mock_architecture.return_value = 'x86'
+    result = self.buildinfo.CPUArchitecture()
+    self.assertEqual(result, 'x86')
+    self.buildinfo.CPUArchitecture.cache_clear()
+
   @mock.patch.object(
       buildinfo.hw_info.HWInfo, 'ComputerSystemModel', autospec=True)
   def test_computer_model(self, mock_model):

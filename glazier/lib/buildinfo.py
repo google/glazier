@@ -323,6 +323,7 @@ class BuildInfo(object):
 
   def GetExportedPins(self) -> Dict[str, Any]:
     return {
+        'arch': self.CPUArchitecture,
         'computer_model': self.ComputerModel,
         'computer_name': self.ComputerName,
         'device_id': self.DeviceIds,
@@ -471,6 +472,21 @@ class BuildInfo(object):
     logging.info('No TPM was detected in this machine.')
     return 'tpm'
 
+  @functools.lru_cache()
+  def CPUArchitecture(self) -> str:
+    """Determines the architecture of the current host.
+
+    Returns:
+      The architecture of the current host as a string.
+
+    Raises:
+      Error: Failure determining the system model.
+    """
+    cpuarch = self._HWInfo().Architecture()
+    if not cpuarch:
+      raise WMIError('System Architecture could not be determined.')
+    return cpuarch
+
   def InstalledSoftware(self) -> List[str]:
     """Query registry keys to find installed software.
 
@@ -607,6 +623,7 @@ class BuildInfo(object):
     """
     b = {
         'BUILD': {
+            'arch': str(self.CPUArchitecture()),
             'bios_version': str(self.BIOSVersion()),
             'beyond_corp': str(self.BeyondCorp()),
             'Binary Path': str(self.BinaryPath()),
