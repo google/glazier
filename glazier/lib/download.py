@@ -516,7 +516,7 @@ class BaseDownloader(object):
     total_size = int(file_stream.headers.get('Content-Length').strip())  # pytype: disable=attribute-error  # re-none
     return (url, total_size)
 
-  def _StreamToDisk(self,
+  def _StreamToDisk(self,  # pytype: disable=annotation-type-mismatch
                     file_stream: 'http.client.HTTPResponse',
                     show_progress: bool = None):
     """Save a file stream to disk.
