@@ -21,7 +21,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/StackExchange/wmi"
+	"github.com/yusufpapurcu/wmi"
 )
 
 var (

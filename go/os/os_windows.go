@@ -19,7 +19,7 @@
 package os
 
 import (
-	"github.com/StackExchange/wmi"
+	"github.com/yusufpapurcu/wmi"
 )
 
 // GetType attempts to distinguish between client and server OS.
