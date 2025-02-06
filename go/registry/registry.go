@@ -108,3 +108,13 @@ func SetString(root, name, value string) error {
 	defer k.Close()
 	return k.SetStringValue(name, value)
 }
+
+// SetBinary sets a binary key in the registry.
+func SetBinary(root, name string, value []byte) error {
+	k, err := reg.OpenKey(reg.LOCAL_MACHINE, root, reg.WRITE)
+	if err != nil {
+		return err
+	}
+	defer k.Close()
+	return k.SetBinaryValue(name, value)
+}
