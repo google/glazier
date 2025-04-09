@@ -297,7 +297,9 @@ class BaseDownloader(object):
             url, timeout=TIMEOUT, cafile=self._ca_cert_file
         )
       else:
-        file_stream = urllib.request.urlopen(url, timeout=TIMEOUT)
+        file_stream = urllib.request.urlopen(
+            url, timeout=TIMEOUT, cafile=self._ca_cert_file
+        )
 
     # First attempt failed with HTTPError. Reraise and trigger a retry.
     except urllib.error.HTTPError:
