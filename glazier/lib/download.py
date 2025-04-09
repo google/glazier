@@ -301,10 +301,24 @@ class BaseDownloader(object):
             url, timeout=TIMEOUT, cafile=self._ca_cert_file
         )
 
-    # First attempt failed with HTTPError. Reraise and trigger a retry.
+    # First attempt failed with HTTPError. Try something else before giving up.
     except urllib.error.HTTPError:
       logging.error('File not found on remote server: %s.', url)
-      raise
+
+      try:
+        logging.info('Trying again with machine context...')
+        ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        file_stream = urllib.request.urlopen(url, context=ctx)
+
+      # Second attempt failed with HTTPError. Reraise and trigger a retry.
+      except urllib.error.HTTPError:
+        logging.error('File not found on remote server: %s.', url)
+        raise
+
+      # Second attempt failed with URLError. Reraise and trigger a retry.
+      except urllib.error.URLError as e2:
+        logging.error('Error while downloading "%s": %s', url, e2)
+        raise
 
     # First attempt failed with URLError. Try something else before giving up.
     except urllib.error.URLError as e1:
