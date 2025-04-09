@@ -128,6 +128,9 @@ func Installed(initial string, conf *Config) ([]Package, error) {
 	if err != nil {
 		return p, err
 	}
+	if res.ExitCode != 0 {
+		return p, fmt.Errorf("googet installed returned exit code %d with stderr %v", res.ExitCode, res.Stderr)
+	}
 	lines := strings.Split(string(res.Stdout), "\n")
 	for i, r := range lines {
 		r = strings.TrimSpace(r)
