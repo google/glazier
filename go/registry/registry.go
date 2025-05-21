@@ -19,10 +19,18 @@
 package registry
 
 import (
+	"fmt"
+	"syscall"
+	"unsafe"
+
 	reg "golang.org/x/sys/windows/registry"
+	"golang.org/x/sys/windows"
 )
 
 var (
+	modShlwapi = windows.NewLazySystemDLL("shlwapi.dll")
+
+	procSHDeleteKeyW = modShlwapi.NewProc("SHDeleteKeyW")
 	// ErrNotExist indicates a registry key did not exist
 	ErrNotExist = reg.ErrNotExist
 )
@@ -45,6 +53,20 @@ func Delete(root, name string) error {
 	}
 	defer k.Close()
 	return k.DeleteValue(name)
+}
+
+// DeleteKeyRecursively deletes a key within HKLM and all its subkeys from the registry.
+func DeleteKeyRecursively(root, name string) error {
+	k, err := reg.OpenKey(reg.LOCAL_MACHINE, root, reg.ALL_ACCESS)
+	if err != nil {
+		return err
+	}
+	defer k.Close()
+	ret, _, err := procSHDeleteKeyW.Call(uintptr(syscall.Handle(k)), uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(name))))
+	if ret != 0 {
+		return fmt.Errorf("DeleteKeyRecursively failure with return code: %d and error: %v", ret, err)
+	}
+	return nil
 }
 
 // GetInteger gets a uint64 value from the registry.

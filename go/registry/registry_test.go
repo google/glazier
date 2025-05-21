@@ -35,6 +35,30 @@ func createKey(path string) error {
 	return nil
 }
 
+func TestDeleteKeyRecursively(t *testing.T) {
+	recursiveKey := rootKey + `\Chief\Cortana`
+	if err := createKey(recursiveKey); err != nil {
+		t.Fatalf("createKey(%s) produced unexpected error %v", recursiveKey, err)
+	}
+
+	if err := DeleteKeyRecursively(rootKey, "Chief"); err != nil {
+		t.Fatalf("DeleteKeyRecursively(%s) produced unexpected error %v", recursiveKey, err)
+	}
+	sKeys, err := GetSubkeys(rootKey)
+	if err != nil {
+		t.Fatalf("Failure verifying DeleteKeyRecursively(%s): %v", recursiveKey, err)
+	}
+	if len(sKeys) != 0 {
+		t.Errorf("DeleteKeyRecursively(%s) did not delete all subkeys", recursiveKey)
+	}
+}
+
+func TestDeleteKeyRecursively_WithNonExistentKey(t *testing.T) {
+	if err := DeleteKeyRecursively(rootKey, "Arbiter"); err == nil {
+		t.Fatalf("DeleteKeyRecursively(%s) unexpectedly succeeded on non-existent key", rootKey)
+	}
+}
+
 func TestSetInteger(t *testing.T) {
 	tests := []struct {
 		in    int
