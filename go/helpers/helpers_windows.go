@@ -33,8 +33,25 @@ import (
 )
 
 var (
+	moduser32            = windows.NewLazySystemDLL("user32.dll")
+	modkernel32          = windows.NewLazySystemDLL("kernel32.dll")
+	prodGetSystemMetrics = moduser32.NewProc("GetSystemMetrics")
+	prodSetWindowPos     = moduser32.NewProc("SetWindowPos")
+	prodGetConsoleWindow = modkernel32.NewProc("GetConsoleWindow")
+)
+
+var (
 	// Test helpers
 	fnProcessList = winapi.ProcessList
+)
+
+const (
+	// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics
+	smCxScreen = 0
+	smCyScreen = 1
+	// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowpos
+	swpNoZOrder   = 0x0004
+	swpShowWindow = 0x0040
 )
 
 // GetServiceState interrogates local system services and returns their status and configuration.
@@ -290,4 +307,39 @@ func StringToPtrOrNil(in string) (out *uint16) {
 		out = windows.StringToUTF16Ptr(in)
 	}
 	return
+}
+
+// SetConsoleRight sets the console window position to the right side of the screen.
+// If width or height is 0, sane defaults are used.
+func SetConsoleRight(width, height int) error {
+	// Get console window handle.
+	hwnd, _, err := prodGetConsoleWindow.Call()
+	if hwnd == 0 {
+		return fmt.Errorf("GetConsoleWindow failed: %w", err)
+	}
+	// Get screen width and height.
+	screenWidth, _, err := prodGetSystemMetrics.Call(smCxScreen)
+	if screenWidth == 0 {
+		return fmt.Errorf("GetSystemMetrics failed: %w", err)
+	}
+	screenHeight, _, err := prodGetSystemMetrics.Call(smCyScreen)
+	if screenHeight == 0 {
+		return fmt.Errorf("GetSystemMetrics failed: %w", err)
+	}
+	// Make sure to not cover taskbar.
+	if height == 0 {
+		height = int(screenHeight) - 100
+	}
+	if width == 0 {
+		width = 500
+	}
+	// Calculate the top-right position.
+	x := screenWidth - uintptr(width)
+	// Move window to top right corner.
+	// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowpos
+	returnCode, _, err := prodSetWindowPos.Call(hwnd, 0, uintptr(x), 0, uintptr(width), uintptr(height), swpNoZOrder|swpShowWindow)
+	if returnCode == 0 {
+		return fmt.Errorf("prodSetWindowPos failed: %w", err)
+	}
+	return nil
 }
