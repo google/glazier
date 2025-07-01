@@ -79,6 +79,7 @@ type Win32_ComputerSystem struct {
 	Model        string
 	SystemFamily string
 	Manufacturer string
+	PartOfDomain bool
 }
 
 func sysInfo() (*Win32_ComputerSystem, error) {
@@ -122,6 +123,15 @@ func GetDomainRole() (DomainRole, error) {
 	default:
 		return RoleUnknown, nil
 	}
+}
+
+// GetDomainJoined returns if a machine is joined to a domain.
+func GetDomainJoined() (bool, error) {
+	si, err := sysInfo()
+	if err != nil {
+		return false, err
+	}
+	return si.PartOfDomain, nil
 }
 
 // Model returns the system model.
