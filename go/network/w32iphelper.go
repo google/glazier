@@ -36,6 +36,37 @@ var (
 	procSetIPForwardEntry = modiphlpapi.NewProc("SetIpForwardEntry2") // Set IP forward entry
 )
 
+// NetworkAdapterPropertiesByMac returns the network adapter with the given mac address.
+func NetworkAdapterPropertiesByMac(naflags GAAFlags, macAddress string) (*windows.IpAdapterAddresses, error) {
+	var b []byte
+	// Recommended initial size: https://learn.microsoft.com/en-us/windows/win32/api/iphlpapi/nf-iphlpapi-getadaptersaddresses#remarks
+	l := uint32(15000)
+	for {
+		b = make([]byte, l)
+		// https://learn.microsoft.com/en-us/windows/win32/api/iphlpapi/nf-iphlpapi-getadaptersaddresses
+		err := windows.GetAdaptersAddresses(syscall.AF_UNSPEC, uint32(naflags), 0, (*windows.IpAdapterAddresses)(unsafe.Pointer(&b[0])), &l)
+		if err == nil {
+			if l == 0 {
+				return nil, nil
+			}
+			break
+		}
+		if err.(syscall.Errno) != syscall.ERROR_BUFFER_OVERFLOW {
+			return nil, os.NewSyscallError("getadaptersaddresses", err)
+		}
+		if l <= uint32(len(b)) {
+			return nil, os.NewSyscallError("getadaptersaddresses", err)
+		}
+	}
+	for aa := (*windows.IpAdapterAddresses)(unsafe.Pointer(&b[0])); aa != nil; aa = aa.Next {
+		mac := net.HardwareAddr(aa.PhysicalAddress[:aa.PhysicalAddressLength])
+		if mac.String() == macAddress {
+			return aa, nil
+		}
+	}
+	return nil, fmt.Errorf("no adapter with mac address %q found", macAddress)
+}
+
 // NetworkAdapterProperties returns the network adapter with the given name.
 func NetworkAdapterProperties(naflags GAAFlags, name string) (*windows.IpAdapterAddresses, error) {
 	var b []byte
