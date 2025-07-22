@@ -38,6 +38,7 @@ var (
 	prodGetSystemMetrics = moduser32.NewProc("GetSystemMetrics")
 	prodSetWindowPos     = moduser32.NewProc("SetWindowPos")
 	prodGetConsoleWindow = modkernel32.NewProc("GetConsoleWindow")
+	prodGetParent        = moduser32.NewProc("GetParent")
 )
 
 var (
@@ -312,11 +313,11 @@ func StringToPtrOrNil(in string) (out *uint16) {
 // SetConsoleRight sets the console window position to the right side of the screen.
 // If width or height is 0, sane defaults are used.
 func SetConsoleRight(width, height int) error {
-	// Get console window handle.
-	hwnd, _, err := prodGetConsoleWindow.Call()
-	if hwnd == 0 {
-		return fmt.Errorf("GetConsoleWindow failed: %w", err)
+	hwnd, err := findMainWindow()
+	if err != nil {
+		return fmt.Errorf("findMainWindow() failed: %w", err)
 	}
+
 	// Get screen width and height.
 	screenWidth, _, err := prodGetSystemMetrics.Call(smCxScreen)
 	if screenWidth == 0 {
@@ -342,4 +343,24 @@ func SetConsoleRight(width, height int) error {
 		return fmt.Errorf("prodSetWindowPos failed: %w", err)
 	}
 	return nil
+}
+
+// findMainWindow tries to find the main window handle for the current process.
+// It starts with the current console window and walks up the parent tree until it finds
+// the top-level window. This is useful for Windows Terminal which uses subprocesses for its UI.
+func findMainWindow() (uintptr, error) {
+	hwnd, _, _ := prodGetConsoleWindow.Call()
+	if hwnd == 0 {
+		return 0, fmt.Errorf("GetConsoleWindow failed to return a handle")
+	}
+
+	// Walk up the parent chain to find the top-level window.
+	for {
+		parent, _, _ := prodGetParent.Call(hwnd)
+		if parent == 0 {
+			break
+		}
+		hwnd = parent
+	}
+	return hwnd, nil
 }
