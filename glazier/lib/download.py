@@ -227,7 +227,7 @@ class BaseDownloader(object):
     self._debug_info = {}
     self._save_location = None
     self._default_show_progress = show_progress
-    self._ca_cert_file = None
+    self._ssl_context = None
     self._beyondcorp = beyondcorp.BeyondCorp()
 
   def _ConvertBytes(self, num_bytes: int) -> str:
@@ -294,11 +294,11 @@ class BaseDownloader(object):
     try:
       if winpe.check_winpe():
         file_stream = urllib.request.urlopen(
-            url, timeout=TIMEOUT, cafile=self._ca_cert_file
+            url, timeout=TIMEOUT, context=self._ssl_context
         )
       else:
         file_stream = urllib.request.urlopen(
-            url, timeout=TIMEOUT, cafile=self._ca_cert_file
+            url, timeout=TIMEOUT, context=self._ssl_context
         )
 
     # First attempt failed with HTTPError. Try something else before giving up.
