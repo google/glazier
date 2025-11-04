@@ -68,16 +68,20 @@ func call(args []string, conf *Config) error {
 }
 
 // AddRepo adds a googet repository to the local system.
-func AddRepo(name, url string, conf *Config) error {
+func AddRepo(name, url string, priority int, conf *Config) error {
 	if conf == nil {
 		conf = NewConfig()
 	}
-
 	if name == "" || url == "" {
 		return errors.New("must specify name and url")
 	}
 
-	return call([]string{"addrepo", name, url}, conf)
+	args := []string{"addrepo"}
+	if priority != 0 {
+		args = append(args, fmt.Sprintf("--priority %d", priority))
+	}
+	args = append(args, name, url)
+	return call(args, conf)
 }
 
 // Install installs a Googet package.
