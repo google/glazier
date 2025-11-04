@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -78,7 +79,7 @@ func AddRepo(name, url string, priority int, conf *Config) error {
 
 	args := []string{"addrepo"}
 	if priority != 0 {
-		args = append(args, fmt.Sprintf("--priority %d", priority))
+		args = append(args, "--priority", strconv.Itoa(priority))
 	}
 	args = append(args, name, url)
 	return call(args, conf)
