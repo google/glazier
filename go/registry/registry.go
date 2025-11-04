@@ -90,6 +90,17 @@ func GetSubkeys(root string) ([]string, error) {
 	return k.ReadSubKeyNames(-1)
 }
 
+// GetMultiString gets a multi-string key from the registry.
+func GetMultiString(root, name string) ([]string, error) {
+	k, err := reg.OpenKey(reg.LOCAL_MACHINE, root, reg.READ)
+	if err != nil {
+		return []string{}, err
+	}
+	defer k.Close()
+	t, _, err := k.GetStringsValue(name)
+	return t, err
+}
+
 // GetString gets a string key from the registry.
 func GetString(root, name string) (string, error) {
 	k, err := reg.OpenKey(reg.LOCAL_MACHINE, root, reg.READ)
@@ -129,6 +140,16 @@ func SetString(root, name, value string) error {
 	}
 	defer k.Close()
 	return k.SetStringValue(name, value)
+}
+
+// SetMultiString sets a multi-string key in the registry.
+func SetMultiString(root, name string, value []string) error {
+	k, err := reg.OpenKey(reg.LOCAL_MACHINE, root, reg.WRITE)
+	if err != nil {
+		return err
+	}
+	defer k.Close()
+	return k.SetStringsValue(name, value)
 }
 
 // SetBinary sets a binary key in the registry.
