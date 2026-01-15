@@ -42,7 +42,7 @@ func TestDomain(t *testing.T) {
 	}{
 		{
 			name:    "success",
-			retCode: nErrSuccess,
+			retCode: 0,
 		},
 		{
 			name:    "failure",
