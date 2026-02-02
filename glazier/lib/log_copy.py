@@ -16,6 +16,7 @@
 import logging
 import logging.handlers
 import shutil
+from typing import Optional
 
 # do not remove: internal placeholder 1
 from glazier.lib import drive_map
@@ -46,11 +47,11 @@ class LogCopyCredentials(object):
     self._username = None
     self._password = None
 
-  def GetUsername(self) -> str:
+  def GetUsername(self) -> Optional[str]:
     """Override to provide share credentials."""
     return self._username
 
-  def GetPassword(self) -> str:
+  def GetPassword(self) -> Optional[str]:
     """Override to provide share credentials."""
     return self._password
 

@@ -31,7 +31,8 @@ def get_disk_space():
     return shutil.disk_usage('/')
   except FileNotFoundError:
     logging.error(
-        'Failed to locate OS partition. Could not determine disk size.')
+        'Failed to locate OS partition. Could not determine disk size.'
+    )
 
 
 def set_disk_space() -> None:
@@ -42,10 +43,14 @@ def set_disk_space() -> None:
   is actually needed.
   """
   space = get_disk_space()
-
+  if space is None:
+    return
   for k, v in space._asdict().items():
     try:
       registry.set_value(
-          f'disk_space_{k}_bytes', str(v), path=constants.REG_ROOT)
+          f'disk_space_{k}_bytes', str(v), path=constants.REG_ROOT
+      )
     except registry.Error as e:
-      logging.error('Failed to write %s_disk_space to registry: %s', k, str(e))
+      logging.error(
+          'Failed to write %s_disk_space to registry: %s', k, str(e)
+      )
