@@ -177,3 +177,21 @@ func UserProfiles() ([]string, error) {
 	}
 	return users, nil
 }
+
+// Win32_Tpm models the WMI object of the same name.
+type Win32_Tpm struct {
+	SpecVersion string
+}
+
+// TPMVersion returns the version of the TPM on the host.
+func TPMVersion() (string, error) {
+	var result []Win32_Tpm
+	query := "SELECT * FROM Win32_Tpm"
+	if err := wmi.QueryNamespace(query, &result, `root\CIMV2\Security\MicrosoftTpm`); err != nil {
+		return "", fmt.Errorf("WMI query for Win32_Tpm failed: %w", err)
+	}
+	if len(result) < 1 {
+		return "", nil
+	}
+	return result[0].SpecVersion, nil
+}
