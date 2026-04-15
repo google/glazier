@@ -94,3 +94,13 @@ func TestWaitForProcessExit(t *testing.T) {
 		})
 	}
 }
+
+func TestHasAdmin(t *testing.T) {
+	admin, err := HasAdmin()
+	if err != nil {
+		t.Fatalf("HasAdmin() returned error: %v", err)
+	}
+	if admin {
+		t.Skip("Test running with elevated privileges, skipping check for non-elevated context.")
+	}
+}
