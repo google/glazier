@@ -39,11 +39,19 @@ var (
 	prodSetWindowPos     = moduser32.NewProc("SetWindowPos")
 	prodGetConsoleWindow = modkernel32.NewProc("GetConsoleWindow")
 	prodGetParent        = moduser32.NewProc("GetParent")
-)
 
-var (
-	// Test helpers
-	fnProcessList = winapi.ProcessList
+	// for testing
+	mgrConnect      = mgr.Connect
+	mgrDisconnect   = func(m *mgr.Mgr) error { return m.Disconnect() }
+	mgrOpenService  = func(m *mgr.Mgr, name string) (*mgr.Service, error) { return m.OpenService(name) }
+	svcClose        = func(s *mgr.Service) error { return s.Close() }
+	svcConfig       = func(s *mgr.Service) (mgr.Config, error) { return s.Config() }
+	svcQuery        = func(s *mgr.Service) (svc.Status, error) { return s.Query() }
+	svcUpdateConfig = func(s *mgr.Service, c mgr.Config) error { return s.UpdateConfig(c) }
+	svcStart        = func(s *mgr.Service) error { return s.Start() }
+	svcControl      = func(s *mgr.Service, c svc.Cmd) (svc.Status, error) { return s.Control(c) }
+	timeSleep       = time.Sleep
+	fnProcessList   = winapi.ProcessList
 )
 
 const (
@@ -57,22 +65,22 @@ const (
 
 // GetServiceState interrogates local system services and returns their status and configuration.
 func GetServiceState(name string) (svc.Status, mgr.Config, error) {
-	m, err := mgr.Connect()
+	m, err := mgrConnect()
 	if err != nil {
 		return svc.Status{}, mgr.Config{}, err
 	}
-	defer m.Disconnect()
-	s, err := m.OpenService(name)
+	defer mgrDisconnect(m)
+	s, err := mgrOpenService(m, name)
 	if err != nil {
 		return svc.Status{}, mgr.Config{}, fmt.Errorf("could not access service: %v", err)
 	}
-	defer s.Close()
+	defer svcClose(s)
 
-	config, err := s.Config()
+	config, err := svcConfig(s)
 	if err != nil {
 		return svc.Status{}, mgr.Config{}, err
 	}
-	status, err := s.Query()
+	status, err := svcQuery(s)
 	return status, config, err
 }
 
@@ -80,18 +88,18 @@ func GetServiceState(name string) (svc.Status, mgr.Config, error) {
 // https://docs.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicestartmode
 // https://docs.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicetype
 func ChangeService(name string, c mgr.Config) error {
-	m, err := mgr.Connect()
+	m, err := mgrConnect()
 	if err != nil {
 		return err
 	}
-	defer m.Disconnect()
-	s, err := m.OpenService(name)
+	defer mgrDisconnect(m)
+	s, err := mgrOpenService(m, name)
 	if err != nil {
 		return fmt.Errorf("could not access service: %v", err)
 	}
-	defer s.Close()
+	defer svcClose(s)
 
-	return s.UpdateConfig(c)
+	return svcUpdateConfig(s, c)
 }
 
 const (
@@ -112,25 +120,25 @@ func GetSysEnv(key string) (string, error) {
 
 // RestartService attempts to restart local system services.
 func RestartService(name string) error {
-	m, err := mgr.Connect()
+	m, err := mgrConnect()
 	if err != nil {
 		return err
 	}
-	defer m.Disconnect()
-	s, err := m.OpenService(name)
+	defer mgrDisconnect(m)
+	s, err := mgrOpenService(m, name)
 	if err != nil {
 		return err
 	}
-	defer s.Close()
+	defer svcClose(s)
 
-	if err := stopService(s); err != nil {
+	if err := stopService(s, name); err != nil {
 		return err
 	}
 
-	return s.Start()
+	return svcStart(s)
 }
 
-// RestartServiceWithVerify attempts to restart local system services and verifies the service is running with a 60 second timeout.
+// RestartServiceWithVerify attempts to restart local system services and verifies the service is running with a timeout.
 func RestartServiceWithVerify(name string, retryCount ...int) error {
 	retryAttempts := 12
 	if len(retryCount) > 0 {
@@ -139,24 +147,29 @@ func RestartServiceWithVerify(name string, retryCount ...int) error {
 	if err := RestartService(name); err != nil {
 		return err
 	}
-	status := svc.Status{
-		State: svc.StartPending, // Assume the service is starting
+
+	// Check the actual state immediately, rather than faking it
+	status, _, err := GetServiceState(name)
+	if err != nil {
+		return err
 	}
-	for retry := 0; status.State == svc.StartPending; retry++ {
+
+	// Loop as long as the service is NOT running
+	for retry := 0; status.State != svc.Running; retry++ {
+		if retry == retryAttempts {
+			return fmt.Errorf("timed out waiting for service %q to start", name)
+		}
+
 		deck.Infof("Waiting for service %q to start, sleeping for 5 seconds", name)
-		time.Sleep(5 * time.Second)
-		var err error
+		timeSleep(5 * time.Second)
+
 		status, _, err = GetServiceState(name)
 		if err != nil {
 			return err
 		}
-		if retry == retryAttempts {
-			return fmt.Errorf("timed out waiting for service %q to start", name)
-		}
 	}
-	if status.State != svc.Running {
-		return fmt.Errorf("service %q is not running after restart, current state: %v", name, status.State)
-	}
+
+	// If the loop exits normally, we know status.State == svc.Running
 	return nil
 }
 
@@ -181,18 +194,18 @@ func SetSysEnv(key, value string) error {
 
 // StartService attempts to start local system services.
 func StartService(name string) error {
-	m, err := mgr.Connect()
+	m, err := mgrConnect()
 	if err != nil {
 		return err
 	}
-	defer m.Disconnect()
-	s, err := m.OpenService(name)
+	defer mgrDisconnect(m)
+	s, err := mgrOpenService(m, name)
 	if err != nil {
 		return err
 	}
-	defer s.Close()
+	defer svcClose(s)
 
-	return s.Start()
+	return svcStart(s)
 }
 
 // StartServiceWithVerify attempts to start local system services and verifies
@@ -210,7 +223,7 @@ func StartServiceWithVerify(name string, retryCount ...int) error {
 	}
 	for retry := 0; status.State == svc.StartPending; retry++ {
 		deck.Infof("Waiting for service %q to start, sleeping for 5 seconds", name)
-		time.Sleep(5 * time.Second)
+		timeSleep(5 * time.Second)
 		var err error
 		status, _, err = GetServiceState(name)
 		if err != nil {
@@ -226,28 +239,28 @@ func StartServiceWithVerify(name string, retryCount ...int) error {
 	return nil
 }
 
-func stopService(s *mgr.Service) error {
+func stopService(s *mgr.Service, name string) error {
 	// although s.Control returns stat, if the service is already stopped it returns an error
-	stat, err := s.Query()
+	stat, err := svcQuery(s)
 	if err != nil {
 		return err
 	}
 	if stat.State == svc.Stopped {
 		return nil
 	}
-	stat, err = s.Control(svc.Stop)
+	stat, err = svcControl(s, svc.Stop)
 	if err != nil {
 		return err
 	}
 	retry := 0
 	for stat.State != svc.Stopped {
-		deck.Infof("Waiting for service %q to stop.", s.Name)
-		time.Sleep(5 * time.Second)
+		deck.Infof("Waiting for service %q to stop.", name)
+		timeSleep(5 * time.Second)
 		retry++
 		if retry > 12 {
-			return fmt.Errorf("timed out waiting for service %q to stop", s.Name)
+			return fmt.Errorf("timed out waiting for service %q to stop", name)
 		}
-		stat, err = s.Query()
+		stat, err = svcQuery(s)
 		if err != nil {
 			return err
 		}
@@ -257,18 +270,18 @@ func stopService(s *mgr.Service) error {
 
 // StopService attempts to stop local system services.
 func StopService(name string) error {
-	m, err := mgr.Connect()
+	m, err := mgrConnect()
 	if err != nil {
 		return err
 	}
-	defer m.Disconnect()
-	s, err := m.OpenService(name)
+	defer mgrDisconnect(m)
+	s, err := mgrOpenService(m, name)
 	if err != nil {
 		return err
 	}
-	defer s.Close()
+	defer svcClose(s)
 
-	return stopService(s)
+	return stopService(s, name)
 }
 
 // WaitForProcessExit waits for a process to stop (no longer appear in the process list).
