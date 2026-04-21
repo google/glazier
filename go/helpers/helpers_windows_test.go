@@ -24,8 +24,120 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/sys/windows/svc/mgr"
+	"golang.org/x/sys/windows/svc"
 	so "github.com/iamacarpet/go-win64api/shared"
 )
+
+type serviceState int
+
+const (
+	stateStopped serviceState = iota
+	stateStartPending
+	stateRunning
+	stateStopPending
+)
+
+type fakeService struct {
+	state []svc.State
+	t     *testing.T
+	i     int
+}
+
+func (s *fakeService) next() svc.State {
+	if s.i >= len(s.state) {
+		s.t.Fatalf("ran out of service states...")
+	}
+	st := s.state[s.i]
+	s.i++
+	return st
+}
+
+func TestRestartServiceWithVerify(t *testing.T) {
+	tests := []struct {
+		name       string
+		states     []svc.State // sequence of states returned by Query
+		startState svc.State   // state returned by Control(Stop)
+		wantErr    bool
+	}{
+		{
+			"GoodService",
+			[]svc.State{svc.Running, svc.Stopped, svc.Running},
+			svc.StopPending,
+			false,
+		},
+		{
+			"PendingService",
+			[]svc.State{svc.Running, svc.Stopped, svc.StartPending, svc.StartPending, svc.Running},
+			svc.StopPending,
+			false,
+		},
+		{
+			"TimeoutService",
+			[]svc.State{svc.Running, svc.Stopped, svc.StartPending, svc.StartPending, svc.StartPending, svc.StartPending, svc.StartPending, svc.StartPending, svc.StartPending, svc.StartPending, svc.StartPending, svc.StartPending, svc.StartPending, svc.StartPending, svc.StartPending},
+			svc.StopPending,
+			true,
+		},
+		{
+			"AlreadyStoppedService",
+			[]svc.State{svc.Stopped, svc.Running},
+			svc.Stopped,
+			false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fs := &fakeService{state: tt.states, t: t}
+			oldMgrConnect := mgrConnect
+			oldMgrDisconnect := mgrDisconnect
+			oldMgrOpenService := mgrOpenService
+			oldSvcClose := svcClose
+			oldSvcConfig := svcConfig
+			oldSvcQuery := svcQuery
+			oldSvcUpdateConfig := svcUpdateConfig
+			oldSvcStart := svcStart
+			oldSvcControl := svcControl
+			oldTimeSleep := timeSleep
+			defer func() {
+				mgrConnect = oldMgrConnect
+				mgrDisconnect = oldMgrDisconnect
+				mgrOpenService = oldMgrOpenService
+				svcClose = oldSvcClose
+				svcConfig = oldSvcConfig
+				svcQuery = oldSvcQuery
+				svcUpdateConfig = oldSvcUpdateConfig
+				svcStart = oldSvcStart
+				svcControl = oldSvcControl
+				timeSleep = oldTimeSleep
+			}()
+			mgrConnect = func() (*mgr.Mgr, error) { return nil, nil }
+			mgrDisconnect = func(*mgr.Mgr) error { return nil }
+			mgrOpenService = func(*mgr.Mgr, string) (*mgr.Service, error) { return nil, nil }
+			svcClose = func(*mgr.Service) error { return nil }
+			svcConfig = func(*mgr.Service) (mgr.Config, error) { return mgr.Config{}, nil }
+			svcQuery = func(*mgr.Service) (svc.Status, error) {
+				return svc.Status{State: fs.next()}, nil
+			}
+			svcStart = func(*mgr.Service) error { return nil }
+			svcControl = func(s *mgr.Service, c svc.Cmd) (svc.Status, error) {
+				if c == svc.Stop {
+					return svc.Status{State: tt.startState}, nil
+				}
+				return svc.Status{}, fmt.Errorf("unexpected control code: %v", c)
+			}
+			timeSleep = func(time.Duration) {}
+
+			err := RestartServiceWithVerify(tt.name, 12)
+			if err != nil && !tt.wantErr {
+				t.Errorf("RestartServiceWithVerify(%q) returned error: %v, want nil", tt.name, err)
+			}
+			if err == nil && tt.wantErr {
+				t.Errorf("RestartServiceWithVerify(%q) returned nil, want error", tt.name)
+			}
+		})
+	}
+}
 
 func TestWaitForProcessExit(t *testing.T) {
 	tests := []struct {
