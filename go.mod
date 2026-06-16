@@ -1,8 +1,6 @@
 module github.com/google/glazier
 
-go 1.23.0
-
-toolchain go1.24.4
+go 1.25.0
 
 require (
 	github.com/StackExchange/wmi v1.2.1
@@ -16,6 +14,7 @@ require (
 	github.com/iamacarpet/go-win64api v0.0.0-20240507095429-873e84e85847
 	github.com/pkg/errors v0.9.1
 	github.com/scjalliance/comshim v0.0.0-20250111221056-b2ef9d8d7e0f
+	golang.org/x/net v0.38.0
 	golang.org/x/sys v0.34.0
 )
 
@@ -25,7 +24,6 @@ require (
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.com/rickb777/date v1.21.1 // indirect
 	github.com/rickb777/plural v1.4.4 // indirect
-	golang.org/x/image v0.21.0 // indirect
-	golang.org/x/net v0.27.0 // indirect
+	golang.org/x/image v0.38.0 // indirect
 	gopkg.in/toast.v1 v1.0.0-20180812000517-0a84660828b2 // indirect
 )
