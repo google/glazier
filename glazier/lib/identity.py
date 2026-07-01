@@ -33,7 +33,7 @@ class IdentityWriteError(Error):
 
   def __init__(self, name: str):
     super().__init__(
-        error_code=errors.ErrorCode.IDENTITY_WRITE_ERROR,
+        error_code=errors.ErrorCode.IDENTITY_WRITE_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Failed to write {name} to registry')
 
 

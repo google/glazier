@@ -39,7 +39,7 @@ class NoNtpResponseError(Error):
 
   def __init__(self):
     super().__init__(
-        error_code=errors.ErrorCode.NO_NTP_RESPONSE,
+        error_code=errors.ErrorCode.NO_NTP_RESPONSE,  # pyrefly: ignore[missing-attribute]
         message='No response from NTP server.')
 
 

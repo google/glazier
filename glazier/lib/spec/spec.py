@@ -36,7 +36,7 @@ class UnknownSpec(Error):
 
   def __init__(self, spec: str):
     super().__init__(
-        error_code=errors.ErrorCode.UNKNOWN_SPEC,
+        error_code=errors.ErrorCode.UNKNOWN_SPEC,  # pyrefly: ignore[missing-attribute]
         message=f'Unknown spec: {spec}')
 
 

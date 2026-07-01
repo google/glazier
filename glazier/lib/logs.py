@@ -38,7 +38,7 @@ class LogCollectionError(Error):
 
   def __init__(self):
     super().__init__(
-        error_code=errors.ErrorCode.LOGS_COLLECTION_ERROR,
+        error_code=errors.ErrorCode.LOGS_COLLECTION_ERROR,  # pyrefly: ignore[missing-attribute]
         message='Error encountered while collecting logs')
 
 
@@ -46,7 +46,7 @@ class LogOpenError(Error):
 
   def __init__(self, log_file: str):
     super().__init__(
-        error_code=errors.ErrorCode.LOGS_OPEN_ERROR,
+        error_code=errors.ErrorCode.LOGS_OPEN_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Failed to open log file: {log_file}')
 
 

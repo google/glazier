@@ -30,7 +30,7 @@ class ConfigError(Error):
 
   def __init__(self, message: str):
     super().__init__(
-        error_code=errors.ErrorCode.CONFIG_ERROR,
+        error_code=errors.ErrorCode.CONFIG_ERROR,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 

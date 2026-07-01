@@ -22,7 +22,7 @@ class ImagingPolicyException(errors.GlazierError):
 
   def __init__(self, message: str):
     super().__init__(
-        error_code=errors.ErrorCode.POLICY_VERIFICATION_ERROR,
+        error_code=errors.ErrorCode.POLICY_VERIFICATION_ERROR,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 

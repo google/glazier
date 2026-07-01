@@ -48,7 +48,7 @@ class BatteryStatusError(Error):
 
   def __init__(self):
     super().__init__(
-        error_code=errors.ErrorCode.BATTERY_STATUS_ERROR,
+        error_code=errors.ErrorCode.BATTERY_STATUS_ERROR,  # pyrefly: ignore[missing-attribute]
         message=StripMargin('Imaging process started while on battery'),
     )
 

@@ -78,6 +78,7 @@ def log_and_exit(build_info: buildinfo.BuildInfo,
   # haven't seen before. Direct the user to the default error code
   # documentation.
   else:
+    # pyrefly: ignore[missing-attribute]
     string += (f'  1. {exception}\n'
                f'     Troubleshooting: '
                f'{constants.HELP_URI}#{errors.ErrorCode.DEFAULT}\n\n')

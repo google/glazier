@@ -65,7 +65,7 @@ class BeyondCorpGiveUpError(Error):
         'Do you have a valid network configuration?'
     )
     super().__init__(
-        error_code=errors.ErrorCode.BEYONDCORP_GIVE_UP,
+        error_code=errors.ErrorCode.BEYONDCORP_GIVE_UP,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 
@@ -73,7 +73,7 @@ class BeyondCorpSeedFileError(Error):
 
   def __init__(self, file_path: str):
     super().__init__(
-        error_code=errors.ErrorCode.BEYONDCORP_SEED_FILE_MISSING,
+        error_code=errors.ErrorCode.BEYONDCORP_SEED_FILE_MISSING,  # pyrefly: ignore[missing-attribute]
         message=f'BeyondCorp seed file not found: {file_path}',
     )
 
@@ -82,7 +82,7 @@ class BeyondCorpDriveLetterError(Error):
 
   def __init__(self, message: str):
     super().__init__(
-        error_code=errors.ErrorCode.BEYONDCORP_DRIVE_LETTER_ERROR,
+        error_code=errors.ErrorCode.BEYONDCORP_DRIVE_LETTER_ERROR,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 
@@ -90,7 +90,7 @@ class BeyondCorpSignedUrlRequestError(Error):
 
   def __init__(self, message: str):
     super().__init__(
-        error_code=errors.ErrorCode.BEYONDCORP_REQUEST_ERROR,
+        error_code=errors.ErrorCode.BEYONDCORP_REQUEST_ERROR,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 
@@ -102,7 +102,7 @@ class BeyondCorpSignedUrlResponseError(Error):
         f'Status Code: {status_code}, Status: {status}'
     )
     super().__init__(
-        error_code=errors.ErrorCode.BEYONDCORP_RESPONSE_ERROR,
+        error_code=errors.ErrorCode.BEYONDCORP_RESPONSE_ERROR,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 

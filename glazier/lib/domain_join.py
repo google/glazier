@@ -44,7 +44,7 @@ class DomainJoinError(Error):
 
   def __init__(self, message: str):
     super().__init__(
-        error_code=errors.ErrorCode.DOMAIN_JOIN_FAILURE,
+        error_code=errors.ErrorCode.DOMAIN_JOIN_FAILURE,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 
@@ -125,7 +125,7 @@ class DomainJoin(object):
         cmd += ['-OUPath', f'"{self._domain_ou}"']
       try:
         logging.debug('Attempting to join the domain %s.', self._domain_name)
-        ps.RunCommand(cmd)
+        ps.RunCommand(cmd)  # pyrefly: ignore[bad-argument-type]
       except powershell.Error as e:
         logging.error(
             'Domain join failed. Sleeping 5 minutes then trying again. (%s)', e)

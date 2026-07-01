@@ -46,7 +46,7 @@ class IllegalPinError(Error):
 
   def __init__(self, pin_name: str):
     super().__init__(
-        error_code=errors.ErrorCode.ILLEGAL_PIN,
+        error_code=errors.ErrorCode.ILLEGAL_PIN,  # pyrefly: ignore[missing-attribute]
         message=f'Referencing illegal pin name: {pin_name}')
 
 
@@ -54,7 +54,7 @@ class YamlFileError(Error):
 
   def __init__(self, path: str):
     super().__init__(
-        error_code=errors.ErrorCode.YAML_FILE_ERROR,
+        error_code=errors.ErrorCode.YAML_FILE_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Error reading YAML file: {path}')
 
 
@@ -62,7 +62,7 @@ class WMIError(Error):
 
   def __init__(self, message: str):
     super().__init__(
-        error_code=errors.ErrorCode.WMI_ERROR,
+        error_code=errors.ErrorCode.WMI_ERROR,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 
@@ -70,7 +70,7 @@ class UnknownOsCodeError(Error):
 
   def __init__(self, os: str):
     super().__init__(
-        error_code=errors.ErrorCode.UNKNOWN_OS_CODE,
+        error_code=errors.ErrorCode.UNKNOWN_OS_CODE,  # pyrefly: ignore[missing-attribute]
         message=f'Unknown OS code: {os}')
 
 
@@ -78,7 +78,7 @@ class UndeterminedHostOsError(Error):
 
   def __init__(self):
     super().__init__(
-        error_code=errors.ErrorCode.UNDETERMINED_HOST_OS,
+        error_code=errors.ErrorCode.UNDETERMINED_HOST_OS,  # pyrefly: ignore[missing-attribute]
         message='Unable to determine host OS.')
 
 
@@ -86,7 +86,7 @@ class UnsupportedReleaseVersionError(Error):
 
   def __init__(self, os: str):
     super().__init__(
-        error_code=errors.ErrorCode.UNSUPPORTED_RELEASE_VERSION,
+        error_code=errors.ErrorCode.UNSUPPORTED_RELEASE_VERSION,  # pyrefly: ignore[missing-attribute]
         message=f'Unable to find a release that supports {os}.')
 
 
