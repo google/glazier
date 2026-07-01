@@ -29,7 +29,7 @@ class ActionError(errors.GlazierError):
       message = 'Error encountered while executing action'
 
     super().__init__(
-        error_code=errors.ErrorCode.ACTION_ERROR,
+        error_code=errors.ErrorCode.ACTION_ERROR,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 
@@ -38,7 +38,7 @@ class ValidationError(errors.GlazierError):
 
   def __init__(self, message: str):
     super().__init__(
-        error_code=errors.ErrorCode.VALIDATION_ERROR,
+        error_code=errors.ErrorCode.VALIDATION_ERROR,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 

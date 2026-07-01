@@ -47,7 +47,7 @@ class ExpirationError(Error):
 
   def __init__(self, stage_id: int):
     super().__init__(
-        error_code=errors.ErrorCode.STAGE_EXPIRATION_ERROR,
+        error_code=errors.ErrorCode.STAGE_EXPIRATION_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Active stage {stage_id} has expired')
 
 
@@ -55,15 +55,15 @@ class InvalidStartTimeError(Error):
 
   def __init__(self, stage_id: int):
     super().__init__(
-        error_code=errors.ErrorCode.STAGE_INVALID_START_TIME_ERROR,
+        error_code=errors.ErrorCode.STAGE_INVALID_START_TIME_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Stage {stage_id} does not contain a valid start time.')
 
 
 class InvalidStageIdError(Error):
 
-  def __init__(self, stage_id_type: type(type)):
+  def __init__(self, stage_id_type: type(type)):  # pyrefly: ignore[invalid-annotation]
     super().__init__(
-        error_code=errors.ErrorCode.STAGE_INVALID_ID_ERROR,
+        error_code=errors.ErrorCode.STAGE_INVALID_ID_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Invalid stage ID type; got: {stage_id_type}, want: int')
 
 
@@ -71,7 +71,7 @@ class ExitError(Error):
 
   def __init__(self, stage_id: int):
     super().__init__(
-        error_code=errors.ErrorCode.STAGE_EXIT_ERROR,
+        error_code=errors.ErrorCode.STAGE_EXIT_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Error while exiting stage: {stage_id}')
 
 
@@ -79,7 +79,7 @@ class UpdateError(Error):
 
   def __init__(self, stage_id: int):
     super().__init__(
-        error_code=errors.ErrorCode.STAGE_UPDATE_ERROR,
+        error_code=errors.ErrorCode.STAGE_UPDATE_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Error while updating stage: {stage_id}')
 
 

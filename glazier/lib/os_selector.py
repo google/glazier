@@ -40,7 +40,7 @@ class UnsupportedModelError(Error):
 
   def __init__(self, model: str):
     super().__init__(
-        error_code=errors.ErrorCode.UNSUPPORTED_MODEL,
+        error_code=errors.ErrorCode.UNSUPPORTED_MODEL,  # pyrefly: ignore[missing-attribute]
         message=f'System OS/model does not have imaging support: {model}')
 
 

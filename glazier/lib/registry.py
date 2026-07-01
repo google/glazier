@@ -33,7 +33,7 @@ class RegistryWriteError(Error):
                path: Optional[str] = constants.REG_ROOT):
     message = (fr'Failed to write to registry: [{path}\{name} = {value}]')
     super().__init__(
-        error_code=errors.ErrorCode.REGISTRY_WRITE_ERROR, message=message)
+        error_code=errors.ErrorCode.REGISTRY_WRITE_ERROR, message=message)  # pyrefly: ignore[missing-attribute]
 
 
 class RegistryDeleteError(Error):
@@ -41,7 +41,7 @@ class RegistryDeleteError(Error):
   def __init__(self, name: str, path: Optional[str]):
     message = (fr'Failed to delete registry key: [{path}\{name}]')
     super().__init__(
-        error_code=errors.ErrorCode.REGISTRY_DELETE_ERROR, message=message)
+        error_code=errors.ErrorCode.REGISTRY_DELETE_ERROR, message=message)  # pyrefly: ignore[missing-attribute]
 
 
 def get_value(name: str,
@@ -64,7 +64,7 @@ def get_value(name: str,
   """
   try:
     reg = registry.Registry(root_key=root)
-    value = reg.GetKeyValue(key_path=path, key_name=name, use_64bit=use_64bit)
+    value = reg.GetKeyValue(key_path=path, key_name=name, use_64bit=use_64bit)  # pyrefly: ignore[bad-argument-type]
     if value:
       if log:
         logging.debug(r'Got registry value: %s:\%s\%s = %s.', root, path, name,
@@ -97,9 +97,9 @@ def set_value(name: str,
   try:
     reg = registry.Registry(root_key=root)
     reg.SetKeyValue(
-        key_path=path,
+        key_path=path,  # pyrefly: ignore[bad-argument-type]
         key_name=name,
-        key_value=value,
+        key_value=value,  # pyrefly: ignore[bad-argument-type]
         key_type=reg_type,
         use_64bit=use_64bit)
     if log:
@@ -186,7 +186,7 @@ def remove_value(name: str,
   """
   try:
     reg = registry.Registry(root_key=root)
-    reg.RemoveKeyValue(key_path=path, key_name=name, use_64bit=use_64bit)
+    reg.RemoveKeyValue(key_path=path, key_name=name, use_64bit=use_64bit)  # pyrefly: ignore[bad-argument-type]
     if log:
       logging.debug(r'Removed registry key: %s:\%s\%s', root, path, name)
   except registry.RegistryError as e:

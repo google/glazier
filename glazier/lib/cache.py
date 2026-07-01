@@ -37,7 +37,7 @@ class CacheError(Error):
 
   def __init__(self, file_path: str):
     super().__init__(
-        error_code=errors.ErrorCode.CACHE_MISS,
+        error_code=errors.ErrorCode.CACHE_MISS,  # pyrefly: ignore[missing-attribute]
         message=f'Unable to download required file: {file_path}')
 
 

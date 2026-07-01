@@ -40,7 +40,7 @@ class GooGetFlagError(Error):
 
   def __init__(self, message: str):
     super().__init__(
-        error_code=errors.ErrorCode.GOOGET_FLAG_ERROR,
+        error_code=errors.ErrorCode.GOOGET_FLAG_ERROR,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 
@@ -48,7 +48,7 @@ class GooGetBinaryNotFoundError(Error):
 
   def __init__(self, path: str):
     super().__init__(
-        error_code=errors.ErrorCode.GOOGET_BINARY_NOT_FOUND,
+        error_code=errors.ErrorCode.GOOGET_BINARY_NOT_FOUND,  # pyrefly: ignore[missing-attribute]
         message=f'Cannot find path of GooGet binary: {path}')
 
 
@@ -56,7 +56,7 @@ class GooGetMissingPackageNameError(Error):
 
   def __init__(self):
     super().__init__(
-        error_code=errors.ErrorCode.GOOGET_MISSING_PACKAGE_NAME,
+        error_code=errors.ErrorCode.GOOGET_MISSING_PACKAGE_NAME,  # pyrefly: ignore[missing-attribute]
         message='Missing package name for GooGet install.')
 
 
@@ -64,7 +64,7 @@ class GooGetCommandFailedError(Error):
 
   def __init__(self, retries: int):
     super().__init__(
-        error_code=errors.ErrorCode.GOOGET_COMMAND_FAILED,
+        error_code=errors.ErrorCode.GOOGET_COMMAND_FAILED,  # pyrefly: ignore[missing-attribute]
         message=f'GooGet command failed after {retries} attempts')
 
 

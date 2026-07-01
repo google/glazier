@@ -38,7 +38,7 @@ class SetTimerError(Error):
                value: str):
     message = (f'Failed to set Glazier timer: [{name} = {value}]')
     super().__init__(
-        error_code=errors.ErrorCode.SET_TIMER_ERROR, message=message)
+        error_code=errors.ErrorCode.SET_TIMER_ERROR, message=message)  # pyrefly: ignore[missing-attribute]
 
 
 class Timers(object):
@@ -54,7 +54,7 @@ class Timers(object):
       A specific named datetime value if stored, or None
     """
     timer = registry.get_value(f'TIMER_{name}', path=TIMERS_PATH)
-    return datetime.datetime.strptime(timer, '%Y-%m-%d %H:%M:%S.%f%z')
+    return datetime.datetime.strptime(timer, '%Y-%m-%d %H:%M:%S.%f%z')  # pyrefly: ignore[bad-argument-type]
 
   def GetAll(self) -> Optional[Dict[str, 'datetime.datetime']]:
     """Get the dictionary of all stored timers.

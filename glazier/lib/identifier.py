@@ -39,14 +39,14 @@ class RegistryWriteError(Error):
                path: Optional[str] = constants.REG_ROOT):
     message = (fr'Failed to write to registry: [{path}\{name} = {value}]')
     super().__init__(
-        error_code=errors.ErrorCode.REGISTRY_WRITE_ERROR, message=message)
+        error_code=errors.ErrorCode.REGISTRY_WRITE_ERROR, message=message)  # pyrefly: ignore[missing-attribute]
 
 
 class BuildInfoKeyMissingError(Error):
 
   def __init__(self, key: str, path: str):
     super().__init__(
-        error_code=errors.ErrorCode.BUILD_INFO_KEY_MISSING,
+        error_code=errors.ErrorCode.BUILD_INFO_KEY_MISSING,  # pyrefly: ignore[missing-attribute]
         message=f'Could not determine {key} from file: {path}')
 
 
@@ -54,7 +54,7 @@ class BuildInfoFileMissingError(Error):
 
   def __init__(self):
     super().__init__(
-        error_code=errors.ErrorCode.BUILD_INFO_FILE_MISSING,
+        error_code=errors.ErrorCode.BUILD_INFO_FILE_MISSING,  # pyrefly: ignore[missing-attribute]
         message='Could not locate build info file.')
 
 
