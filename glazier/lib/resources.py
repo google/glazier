@@ -33,7 +33,7 @@ class FileNotFound(Error):
 
   def __init__(self, path: str):
     super().__init__(
-        error_code=errors.ErrorCode.FILE_NOT_FOUND,
+        error_code=errors.ErrorCode.FILE_NOT_FOUND,  # pyrefly: ignore[missing-attribute]
         message=f'The following path does not exist: {path}')
 
 
@@ -60,7 +60,7 @@ class Resources(object):
       FileNotFound: No file exists at the determined path.
     """
     file_name = file_name.strip('/')
-    path = os.path.join(self._path, file_name)
+    path = os.path.join(self._path, file_name)  # pyrefly: ignore[no-matching-overload]
 
     if os.path.exists(path):
       return path

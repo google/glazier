@@ -36,7 +36,7 @@ class ConfigRunnerError(Error):
 
   def __init__(self):
     super().__init__(
-        error_code=errors.ErrorCode.FAILED_TASK_LIST_RUN,
+        error_code=errors.ErrorCode.FAILED_TASK_LIST_RUN,  # pyrefly: ignore[missing-attribute]
         message='Failed to execute the task list')
 
 
@@ -44,7 +44,7 @@ class UnknownPolicyError(Error):
 
   def __init__(self, policy: str):
     super().__init__(
-        error_code=errors.ErrorCode.UNKNOWN_POLICY,
+        error_code=errors.ErrorCode.UNKNOWN_POLICY,  # pyrefly: ignore[missing-attribute]
         message=f'Unknown imaging policy [{policy}]')
 
 

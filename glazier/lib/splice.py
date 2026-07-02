@@ -33,7 +33,7 @@ class IdentityError(Error):
 
   def __init__(self, prop: str):
     super().__init__(
-        error_code=errors.ErrorCode.SPLICE_IDENTITY_ERROR,
+        error_code=errors.ErrorCode.SPLICE_IDENTITY_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Error while determining {prop}')
 
 
@@ -41,7 +41,7 @@ class DomainJoinError(Error):
 
   def __init__(self, attempts: int):
     super().__init__(
-        error_code=errors.ErrorCode.DOMAIN_JOIN_FAILURE,
+        error_code=errors.ErrorCode.DOMAIN_JOIN_FAILURE,  # pyrefly: ignore[missing-attribute]
         message=f'Failed to join domain after {attempts} attempt(s).')
 
 

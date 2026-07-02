@@ -31,7 +31,7 @@ class FileMoveError(Error):
 
   def __init__(self, src: str, dest: str):
     super().__init__(
-        error_code=errors.ErrorCode.FILE_MOVE_ERROR,
+        error_code=errors.ErrorCode.FILE_MOVE_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Failed to move file from {src} to {dest}')
 
 
@@ -39,7 +39,7 @@ class FileRemoveError(Error):
 
   def __init__(self, path: str):
     super().__init__(
-        error_code=errors.ErrorCode.FILE_REMOVE_ERROR,
+        error_code=errors.ErrorCode.FILE_REMOVE_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Failed to remove file: {path}')
 
 
@@ -47,7 +47,7 @@ class FileWriteError(Error):
 
   def __init__(self, path: str):
     super().__init__(
-        error_code=errors.ErrorCode.FILE_WRITE_ERROR,
+        error_code=errors.ErrorCode.FILE_WRITE_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Failed to write file: {path}')
 
 
@@ -55,7 +55,7 @@ class FileReadError(Error):
 
   def __init__(self, path: str):
     super().__init__(
-        error_code=errors.ErrorCode.FILE_READ_ERROR,
+        error_code=errors.ErrorCode.FILE_READ_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Failed to read file: {path}')
 
 
@@ -63,7 +63,7 @@ class FileDownloadError(Error):
 
   def __init__(self, url: str):
     super().__init__(
-        error_code=errors.ErrorCode.FILE_DOWNLOAD_ERROR,
+        error_code=errors.ErrorCode.FILE_DOWNLOAD_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Could not download file: {url}')
 
 

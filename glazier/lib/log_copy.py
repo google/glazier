@@ -36,7 +36,7 @@ class LogCopyError(Error):
 
   def __init__(self, message: str):
     super().__init__(
-        error_code=errors.ErrorCode.LOG_COPY_FAILURE,
+        error_code=errors.ErrorCode.LOG_COPY_FAILURE,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 
@@ -96,7 +96,7 @@ class LogCopy(object):
     destination_file_date = gtime.now().replace(microsecond=0)
     destination_file_date = destination_file_date.isoformat()
     destination_file_date = destination_file_date.replace(':', '')
-    return 'l:\\' + hostname + '-' + destination_file_date + '.log'
+    return 'l:\\' + hostname + '-' + destination_file_date + '.log'  # pyrefly: ignore[unsupported-operation]
 
   def _ShareUpload(self, source_log: str, share: str):
     """Copy the log file to a network file share.

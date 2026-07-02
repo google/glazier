@@ -70,7 +70,7 @@ class ConfigBuilderError(Error):
 
   def __init__(self):
     super().__init__(
-        error_code=errors.ErrorCode.FAILED_TASK_LIST_BUILD,
+        error_code=errors.ErrorCode.FAILED_TASK_LIST_BUILD,  # pyrefly: ignore[missing-attribute]
         message='Failed to build the task list')
 
 
@@ -78,7 +78,7 @@ class SysInfoError(Error):
 
   def __init__(self):
     super().__init__(
-        error_code=errors.ErrorCode.SYS_INFO,
+        error_code=errors.ErrorCode.SYS_INFO,  # pyrefly: ignore[missing-attribute]
         message='Error gathering system information')
 
 
@@ -86,7 +86,7 @@ class UnknownActionError(Error):
 
   def __init__(self, action: str):
     super().__init__(
-        error_code=errors.ErrorCode.UNKNOWN_ACTION,
+        error_code=errors.ErrorCode.UNKNOWN_ACTION,  # pyrefly: ignore[missing-attribute]
         message=f'Unknown imaging action [{action}]')
 
 

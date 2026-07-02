@@ -35,7 +35,7 @@ class CannotSetConsoleTitleError(Error):
 
   def __init__(self):
     super().__init__(
-        error_code=errors.ErrorCode.CANNOT_SET_CONSOLE_TITLE,
+        error_code=errors.ErrorCode.CANNOT_SET_CONSOLE_TITLE,  # pyrefly: ignore[missing-attribute]
         message='Failed to set console title')
 
 

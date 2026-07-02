@@ -45,7 +45,7 @@ class UnsupportedParameterError(Error):
         f'not found in {supported_params_str}.'
     )
     super().__init__(
-        error_code=errors.ErrorCode.POWERSHELL_UNSUPPORTED_PARAMETER,
+        error_code=errors.ErrorCode.POWERSHELL_UNSUPPORTED_PARAMETER,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 
@@ -53,7 +53,7 @@ class PowerShellExecutionError(Error):
 
   def __init__(self):
     super().__init__(
-        error_code=errors.ErrorCode.POWERSHELL_EXECUTION_ERROR,
+        error_code=errors.ErrorCode.POWERSHELL_EXECUTION_ERROR,  # pyrefly: ignore[missing-attribute]
         message='Error encountered during PowerShell execution')
 
 
@@ -61,7 +61,7 @@ class InvalidPathError(Error):
 
   def __init__(self, path: str):
     super().__init__(
-        error_code=errors.ErrorCode.POWERSHELL_INVALID_PATH,
+        error_code=errors.ErrorCode.POWERSHELL_INVALID_PATH,  # pyrefly: ignore[missing-attribute]
         message=f'A path required by PowerShell in invalid: {path}')
 
 
@@ -74,7 +74,7 @@ class UnsupportedExecutionPolicyError(Error):
         f'not found in {supported_policies_str}.'
     )
     super().__init__(
-        error_code=errors.ErrorCode.POWERSHELL_UNSUPPORTED_EXECUTION_POLICY,
+        error_code=errors.ErrorCode.POWERSHELL_UNSUPPORTED_EXECUTION_POLICY,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 
@@ -114,7 +114,7 @@ class PowerShell(object):
     try:
       return execute.execute_binary(
           _Powershell(), ['-NoProfile', '-NoLogo', op] + args, ok_result,
-          self.shell, self.log)
+          self.shell, self.log)  # pyrefly: ignore[bad-argument-type]
     except execute.Error as e:
       raise PowerShellExecutionError() from e
 
@@ -212,7 +212,7 @@ class PowerShell(object):
     """Start the PowerShell interpreter."""
     try:
       execute.execute_binary(
-          _Powershell(), ['-NoProfile', '-NoLogo'], shell=self.shell,
-          log=self.log)
+          _Powershell(), ['-NoProfile', '-NoLogo'], shell=self.shell,  # pyrefly: ignore[bad-argument-type]
+          log=self.log)  # pyrefly: ignore[bad-argument-type]
     except execute.Error as e:
       raise PowerShellExecutionError() from e

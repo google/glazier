@@ -57,7 +57,7 @@ def _exception_validation_predicate(exception):
   # implementation somewhere.
   glazier_errors = errors.get_glazier_error_lineage(exception)
   for glazier_error in glazier_errors:
-    if glazier_error.error_code == errors.ErrorCode.DEFAULT:
+    if glazier_error.error_code == errors.ErrorCode.DEFAULT:  # pyrefly: ignore[missing-attribute]
       return False
 
   return True

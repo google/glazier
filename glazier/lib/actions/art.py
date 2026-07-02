@@ -29,7 +29,7 @@ class FileNotFound(Error):
 
   def __init__(self, path: str):
     super().__init__(
-        error_code=errors.ErrorCode.FILE_NOT_FOUND,
+        error_code=errors.ErrorCode.FILE_NOT_FOUND,  # pyrefly: ignore[missing-attribute]
         message=f'The following path does not exist: {path}')
 
 

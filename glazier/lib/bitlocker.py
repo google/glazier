@@ -31,7 +31,7 @@ class BitlockerEnableTpmError(Error):
 
   def __init__(self):
     super().__init__(
-        error_code=errors.ErrorCode.BITLOCKER_ENABLE_TPM_FAILED,
+        error_code=errors.ErrorCode.BITLOCKER_ENABLE_TPM_FAILED,  # pyrefly: ignore[missing-attribute]
         message='Error while enabling TPM via Powershell')
 
 
@@ -39,7 +39,7 @@ class BitlockerActivationFailedError(Error):
 
   def __init__(self):
     super().__init__(
-        error_code=errors.ErrorCode.BITLOCKER_ACTIVATION_FAILED,
+        error_code=errors.ErrorCode.BITLOCKER_ACTIVATION_FAILED,  # pyrefly: ignore[missing-attribute]
         message='Bitlocker activation failed')
 
 
@@ -47,7 +47,7 @@ class BitlockerUnknownModeError(Error):
 
   def __init__(self, mode: str):
     super().__init__(
-        error_code=errors.ErrorCode.BITLOCKER_UNKNOWN_MODE,
+        error_code=errors.ErrorCode.BITLOCKER_UNKNOWN_MODE,  # pyrefly: ignore[missing-attribute]
         message=f'Unknown mode: {mode}')
 
 

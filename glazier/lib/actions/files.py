@@ -41,7 +41,7 @@ class Execute(BaseAction):
       raise ActionError() from e
 
     try:
-      command_list = shlex.split(command_cache, posix=False)
+      command_list = shlex.split(command_cache, posix=False)  # pyrefly: ignore[bad-argument-type]
       result = execute.execute_binary(
           command_list[0],
           command_list[1:],

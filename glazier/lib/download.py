@@ -61,7 +61,7 @@ class CheckUrlError(Error):
 
   def __init__(self, url: str):
     super().__init__(
-        error_code=errors.ErrorCode.FAILED_URL_VERIFICATION,
+        error_code=errors.ErrorCode.FAILED_URL_VERIFICATION,  # pyrefly: ignore[missing-attribute]
         message=f'Failed to verify url [{url}]')
 
 
@@ -69,7 +69,7 @@ class DownloadGiveUpError(Error):
 
   def __init__(self, tries: int, elapsed: float):
     super().__init__(
-        error_code=errors.ErrorCode.DOWNLOAD_GIVE_UP,
+        error_code=errors.ErrorCode.DOWNLOAD_GIVE_UP,  # pyrefly: ignore[missing-attribute]
         message=f'Failed after {tries} attempt(s) over {elapsed:0.1f} seconds')
 
 
@@ -77,7 +77,7 @@ class DownloadFailedError(Error):
 
   def __init__(self, url: str, code: int):
     super().__init__(
-        error_code=errors.ErrorCode.DOWNLOAD_FAILED,
+        error_code=errors.ErrorCode.DOWNLOAD_FAILED,  # pyrefly: ignore[missing-attribute]
         message=f'Invalid return code [{code}] for file {url}')
 
 
@@ -85,7 +85,7 @@ class InvalidRemoteUrlError(Error):
 
   def __init__(self, url: str):
     super().__init__(
-        error_code=errors.ErrorCode.DOWNLOAD_INVALID_REMOTE_URL,
+        error_code=errors.ErrorCode.DOWNLOAD_INVALID_REMOTE_URL,  # pyrefly: ignore[missing-attribute]
         message=f'Invalid remote server URL "{url}".')
 
 
@@ -93,7 +93,7 @@ class LocalCopyError(Error):
 
   def __init__(self, src: str, dest: str):
     super().__init__(
-        error_code=errors.ErrorCode.DOWNLOAD_LOCAL_COPY_ERROR,
+        error_code=errors.ErrorCode.DOWNLOAD_LOCAL_COPY_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Unable to copy local file from {src} to {dest}')
 
 
@@ -101,7 +101,7 @@ class SignedUrlError(Error):
 
   def __init__(self, url: str):
     super().__init__(
-        error_code=errors.ErrorCode.DOWNLOAD_SIGNED_URL_ERROR,
+        error_code=errors.ErrorCode.DOWNLOAD_SIGNED_URL_ERROR,  # pyrefly: ignore[missing-attribute]
         message=f'Failed to obtain signed URL: {url}')
 
 
@@ -109,7 +109,7 @@ class MissingFileStreamError(Error):
 
   def __init__(self):
     super().__init__(
-        error_code=errors.ErrorCode.DOWNLOAD_MISSING_FILE_STREAM,
+        error_code=errors.ErrorCode.DOWNLOAD_MISSING_FILE_STREAM,  # pyrefly: ignore[missing-attribute]
         message='Cannot save to disk, missing file stream')
 
 
@@ -117,7 +117,7 @@ class StreamToDiskError(Error):
 
   def __init__(self, message: str):
     super().__init__(
-        error_code=errors.ErrorCode.DOWNLOAD_STREAM_TO_DISK_ERROR,
+        error_code=errors.ErrorCode.DOWNLOAD_STREAM_TO_DISK_ERROR,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 
@@ -125,7 +125,7 @@ class FileValidationError(Error):
 
   def __init__(self, message: str):
     super().__init__(
-        error_code=errors.ErrorCode.DOWNLOAD_VALIDATION_ERROR,
+        error_code=errors.ErrorCode.DOWNLOAD_VALIDATION_ERROR,  # pyrefly: ignore[missing-attribute]
         message=message)
 
 
@@ -239,7 +239,7 @@ class BaseDownloader(object):
     Returns:
       size: The number of bytes in human readable format (string).
     """
-    num_bytes = float(num_bytes)
+    num_bytes = float(num_bytes)  # pyrefly: ignore[bad-assignment]
     if num_bytes >= 1099511627776:
       terabytes = num_bytes / 1099511627776
       size = '%.2fTB' % terabytes
@@ -534,7 +534,7 @@ class BaseDownloader(object):
 
   def _StreamToDisk(self,  # pytype: disable=annotation-type-mismatch
                     file_stream: 'http.client.HTTPResponse',
-                    show_progress: bool = None):
+                    show_progress: bool = None):  # pyrefly: ignore[bad-function-definition]
     """Save a file stream to disk.
 
     Args:
@@ -555,7 +555,7 @@ class BaseDownloader(object):
     url, total_size = self._GetFileStreamSize(file_stream)
 
     try:
-      with open(self._save_location, 'wb') as output_file:
+      with open(self._save_location, 'wb') as output_file:  # pyrefly: ignore[no-matching-overload]
         logging.info('Downloading file "%s" to "%s".',
                      url.split('?')[0], self._save_location)
         while 1:
@@ -588,12 +588,12 @@ class BaseDownloader(object):
     Raises:
       FileValidationError: File failed validation.
     """
-    if not os.path.exists(self._save_location):
+    if not os.path.exists(self._save_location):  # pyrefly: ignore[bad-argument-type]
       self._StoreDebugInfo(file_stream)
       raise FileValidationError(
           f'Could not locate file at {self._save_location}')
 
-    actual_file_size = os.path.getsize(self._save_location)
+    actual_file_size = os.path.getsize(self._save_location)  # pyrefly: ignore[bad-argument-type]
     if actual_file_size != expected_size:
       self._StoreDebugInfo(file_stream)
       message = (

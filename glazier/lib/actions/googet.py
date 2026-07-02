@@ -58,7 +58,7 @@ class GooGetInstall(BaseAction):
             pkg=args[0],
             retries=retries,
             sleep=sleep,
-            remove=remove,
+            remove=remove,  # pyrefly: ignore[bad-argument-type]
             build_info=self._build_info,
             path=path,
             flags=flags
