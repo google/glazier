@@ -644,6 +644,7 @@ class BuildInfo(object):
             'SerialNumber': str(self.ComputerSerial()),
             'Support Tier': str(self.SupportTier()),
             'tpm_present': str(self.TpmPresent()),
+            'image_type': str(self.ImageType()),
             'is_virtual': str(self.IsVirtual()),
         }
     }

@@ -727,6 +727,7 @@ class BuildInfoTest(test_utils.GlazierTestCase):
         'SerialNumber',
         'Support Tier',
         'tpm_present',
+        'image_type',
         'is_virtual',
         'syslog_server',
         'syslog_port',
