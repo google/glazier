@@ -44,7 +44,7 @@ func CheckLicense(slicBinary string) error {
 
 	if out.ExitCode != 0 {
 		deck.Warningf("%q Stderr:\n%s", slicBinary, string(out.Stderr))
-		return fmt.Errorf(fmt.Sprintf("failed to execute %q. Exit code: %d", slicBinary, out.ExitCode))
+		return fmt.Errorf("failed to execute %q. Exit code: %d", slicBinary, out.ExitCode)
 	}
 
 	deck.Info("System is licensed to run Windows.")
