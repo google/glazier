@@ -91,7 +91,8 @@ class DriverWIM(BaseAction):
       execute.execute_binary(
           constants.SYS_PNPUTIL,
           ['/add-driver', f'{mount_dir}*.inf', '/subdirs'],
-          shell=True)
+          shell=False,
+      )
     except execute.Error as e:
       raise ActionError(
           f'Error adding drivers to DriverStore from {mount_dir}.') from e
@@ -117,7 +118,8 @@ class DriverWIM(BaseAction):
       execute.execute_binary(
           constants.WINPE_DISM,
           ['/Image:c:', '/Add-Driver', f'/Driver:{mount_dir}', '/Recurse'],
-          shell=True)
+          shell=False,
+      )
     except execute.Error as e:
       raise ActionError(
           f'Error applying drivers to image from {mount_dir}.') from e
@@ -147,11 +149,16 @@ class DriverWIM(BaseAction):
     # mount image
     try:
       execute.execute_binary(
-          dism_path, [
-              '/Mount-Image', f'/ImageFile:{wim_file}',
-              f'/MountDir:{mount_dir}', '/ReadOnly', '/Index:1'
+          dism_path,
+          [
+              '/Mount-Image',
+              f'/ImageFile:{wim_file}',
+              f'/MountDir:{mount_dir}',
+              '/ReadOnly',
+              '/Index:1',
           ],
-          shell=True)
+          shell=False,
+      )
     except execute.Error as e:
       raise ActionError(f'Unable to mount image {wim_file}.') from e
 
@@ -166,6 +173,7 @@ class DriverWIM(BaseAction):
       execute.execute_binary(
           dism_path,
           ['/Unmount-Image', f'/MountDir:{mount_dir}', '/Discard'],
-          shell=True)
+          shell=False,
+      )
     except execute.Error as e:
       raise ActionError('Error unmounting image. Unable to continue.') from e

@@ -60,10 +60,29 @@ class DriversTest(test_utils.GlazierTestCase):
         show_progress=True)
     mock_verifyshahash.assert_called_with(mock.ANY, local, sha_256)
     cache = drivers.constants.SYS_CACHE
-    mock_execute_binary.assert_called_with(
-        f'{drivers.constants.WINPE_SYSTEM32}/dism.exe',
-        ['/Unmount-Image', f'/MountDir:{cache}\\Drivers\\', '/Discard'],
-        shell=True)
+    mock_execute_binary.assert_has_calls([
+        mock.call(
+            drivers.constants.WINPE_DISM,
+            [
+                '/Mount-Image',
+                f'/ImageFile:{local}',
+                f'/MountDir:{cache}\\Drivers\\',
+                '/ReadOnly',
+                '/Index:1',
+            ],
+            shell=False,
+        ),
+        mock.call(
+            drivers.constants.SYS_PNPUTIL,
+            ['/add-driver', f'{cache}\\Drivers\\*.inf', '/subdirs'],
+            shell=False,
+        ),
+        mock.call(
+            drivers.constants.WINPE_DISM,
+            ['/Unmount-Image', f'/MountDir:{cache}\\Drivers\\', '/Discard'],
+            shell=False,
+        ),
+    ])
     mock_createdirectories.assert_called_with('%s\\Drivers\\' % cache)
 
     # Invalid format
@@ -89,6 +108,67 @@ class DriversTest(test_utils.GlazierTestCase):
         [0, 0, drivers.execute.ExecError('some_command')])
     with self.assert_raises_with_validation(drivers.ActionError):
       dw.Run()
+
+  @mock.patch.object(drivers.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(BuildInfo, 'ReleasePath')
+  @mock.patch.object(BuildInfo, 'Branch')
+  @mock.patch('glazier.lib.download.Download.VerifyShaHash', autospec=True)
+  @mock.patch('glazier.lib.download.Download.DownloadFile', autospec=True)
+  @mock.patch.object(drivers.execute, 'execute_binary', autospec=True)
+  @mock.patch.object(drivers.file_util, 'CreateDirectories', autospec=True)
+  def test_driver_wim_winpe(
+      self,
+      mock_createdirectories,
+      mock_execute_binary,
+      mock_downloadfile,
+      mock_verifyshahash,
+      mock_branch,
+      mock_releasepath,
+      mock_check_winpe,
+  ):
+    bi = BuildInfo()
+    remote = '@Drivers/Lenovo/W54x-Win10-Storage.wim'
+    local = r'c:\W54x-Win10-Storage.wim'
+    sha_256 = 'D30F9DB0698C87901DF6824D11203BDC2D6DAAF0CE14ABD7C0A7B75974936748'
+    conf = {
+        'data': {'driver': [[remote, local, sha_256]]},
+        'path': ['/autobuild'],
+    }
+    mock_branch.return_value = 'stable'
+    mock_releasepath.return_value = '/'
+    mock_check_winpe.return_value = True
+
+    dw = drivers.DriverWIM(conf['data']['driver'], bi)
+    dw.Run()
+    cache = drivers.constants.SYS_CACHE
+    mock_execute_binary.assert_has_calls([
+        mock.call(
+            drivers.constants.WINPE_DISM,
+            [
+                '/Mount-Image',
+                f'/ImageFile:{local}',
+                f'/MountDir:{cache}\\Drivers\\',
+                '/ReadOnly',
+                '/Index:1',
+            ],
+            shell=False,
+        ),
+        mock.call(
+            drivers.constants.WINPE_DISM,
+            [
+                '/Image:c:',
+                '/Add-Driver',
+                f'/Driver:{cache}\\Drivers\\',
+                '/Recurse',
+            ],
+            shell=False,
+        ),
+        mock.call(
+            drivers.constants.WINPE_DISM,
+            ['/Unmount-Image', f'/MountDir:{cache}\\Drivers\\', '/Discard'],
+            shell=False,
+        ),
+    ])
 
   @parameterized.named_parameters(
       ('_invalid_arg_type_1', 'String', None),

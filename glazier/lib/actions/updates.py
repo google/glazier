@@ -94,10 +94,14 @@ class UpdateMSU(BaseAction):
     # Apply updates to  image
     try:
       execute.execute_binary(
-          constants.WINPE_DISM, [
-              '/image:c:\\', '/Add-Package', f'/PackagePath:{msu_file}',
-              f'/ScratchDir:{scratch_dir}'
+          constants.WINPE_DISM,
+          [
+              '/image:c:\\',
+              '/Add-Package',
+              f'/PackagePath:{msu_file}',
+              f'/ScratchDir:{scratch_dir}',
           ],
-          shell=True)
+          shell=False,
+      )
     except execute.Error as e:
       raise ActionError(f'Failed to process update {msu_file}') from e

@@ -60,12 +60,15 @@ class UpdatesTest(test_utils.GlazierTestCase):
     mock_verifyshahash.assert_called_with(mock.ANY, local, sha_256)
     cache = updates.constants.SYS_CACHE
     mock_execute_binary.assert_called_with(
-        f'{updates.constants.SYS_SYSTEM32}/dism.exe', [
-            '/image:c:\\', '/Add-Package',
+        updates.constants.WINPE_DISM,
+        [
+            '/image:c:\\',
+            '/Add-Package',
             '/PackagePath:c:\\KB2990941-v3-x64.msu',
-            f'/ScratchDir:{cache}\\Updates\\'
+            f'/ScratchDir:{cache}\\Updates\\',
         ],
-        shell=True)
+        shell=False,
+    )
     mock_createdirectories.assert_called_with('%s\\Updates\\' % cache)
 
     # Invalid format
