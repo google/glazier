@@ -21,12 +21,13 @@ import time
 import typing
 from typing import List, Optional
 
-# do not remove: internal placeholder 1
 from glazier.lib import constants
 from glazier.lib import execute
 from glazier.lib import winpe
 
 from glazier.lib import errors
+
+_SOURCE_REGEX = re.compile(r'(https?://|^[a-zA-Z]:\\|^\\\\)')
 
 if typing.TYPE_CHECKING:
   from glazier.lib import buildinfo
@@ -41,7 +42,8 @@ class GooGetFlagError(Error):
   def __init__(self, message: str):
     super().__init__(
         error_code=errors.ErrorCode.GOOGET_FLAG_ERROR,  # pyrefly: ignore[missing-attribute]
-        message=message)
+        message=message,
+    )
 
 
 class GooGetBinaryNotFoundError(Error):
@@ -49,7 +51,8 @@ class GooGetBinaryNotFoundError(Error):
   def __init__(self, path: str):
     super().__init__(
         error_code=errors.ErrorCode.GOOGET_BINARY_NOT_FOUND,  # pyrefly: ignore[missing-attribute]
-        message=f'Cannot find path of GooGet binary: {path}')
+        message=f'Cannot find path of GooGet binary: {path}',
+    )
 
 
 class GooGetMissingPackageNameError(Error):
@@ -57,7 +60,8 @@ class GooGetMissingPackageNameError(Error):
   def __init__(self):
     super().__init__(
         error_code=errors.ErrorCode.GOOGET_MISSING_PACKAGE_NAME,  # pyrefly: ignore[missing-attribute]
-        message='Missing package name for GooGet install.')
+        message='Missing package name for GooGet install.',
+    )
 
 
 class GooGetCommandFailedError(Error):
@@ -65,15 +69,16 @@ class GooGetCommandFailedError(Error):
   def __init__(self, retries: int):
     super().__init__(
         error_code=errors.ErrorCode.GOOGET_COMMAND_FAILED,  # pyrefly: ignore[missing-attribute]
-        message=f'GooGet command failed after {retries} attempts')
+        message=f'GooGet command failed after {retries} attempts',
+    )
 
 
 class GooGetInstall(object):
   """Install an application via GooGet."""
 
-  def _AddFlags(self,
-                flags: List[str],
-                branch: Optional[str] = None) -> List[str]:
+  def _AddFlags(
+      self, flags: List[str], branch: Optional[str] = None
+  ) -> List[str]:
     r"""Add optional flags to GooGet command.
 
     Short name support:
@@ -103,11 +108,12 @@ class GooGetInstall(object):
 
     if re.search(r'(-sources)', str(flags)):
       raise GooGetFlagError(
-          'Sources keyword detected, Enter URL without \'-sources\'')
+          "Sources keyword detected, Enter URL without '-sources'"
+      )
 
     for flag in flags:
       # Find all URLs
-      if re.findall(r'http[s]?://', str(flag)):
+      if _SOURCE_REGEX.search(str(flag)):
         # If the % character was used, replace that with the build branch
         flag = re.sub(r'(?<!\\)%', str(branch), flag)
 
@@ -129,6 +135,36 @@ class GooGetInstall(object):
       flags.extend(options)
 
     return flags
+
+  def _FindLocalPackage(
+      self, pkg: str, flags: Optional[List[str]]
+  ) -> Optional[str]:
+    """Checks the flags for a local directory containing the package.
+
+    Args:
+      pkg: The package name.
+      flags: List of flags to scan for a path.
+
+    Returns:
+      The normalized absolute path to the local package, or None.
+    """
+    if not isinstance(flags, list):
+      return None
+
+    for flag in flags:
+      # Matches Windows drive paths (e.g. X:\) or UNC paths (e.g. \\)
+      if re.match(r'(^[a-zA-Z]:\\|^\\\\)', str(flag)):
+        potential_path = os.path.normpath(os.path.join(str(flag), f'{pkg}.goo'))
+        logging.info('Checking for local package at %s', potential_path)
+        if os.path.exists(potential_path):
+          logging.info(
+              'Local package found: %s. Installing directly.',
+              potential_path,
+          )
+          return potential_path
+        logging.info('Local package not found at %s.', potential_path)
+
+    return None
 
   def _GooGet(self) -> str:
     if winpe.check_winpe():
@@ -184,11 +220,21 @@ class GooGetInstall(object):
     else:
       cmd.append('install')
 
-    if kwargs['flags']:
-      cmd.extend(self._AddFlags(kwargs['flags'], build_info.Branch()))
+    local_path = None
+    if not remove:
+      local_path = self._FindLocalPackage(pkg, kwargs.get('flags'))
 
-    # Add the package name to the end of the command, this must be done last.
-    cmd.append(pkg)
+    flags = kwargs.get('flags') or []
+    if local_path:
+      clean_flags = [f for f in flags if not _SOURCE_REGEX.search(str(f))]
+      target = local_path
+    else:
+      clean_flags = flags
+      target = pkg
+
+    if clean_flags:
+      cmd.extend(self._AddFlags(clean_flags, build_info.Branch()))
+    cmd.append(target)
 
     max_attempts = retries + 1
 
