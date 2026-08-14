@@ -14,14 +14,21 @@
 
 """Actions for interacting with the company domain."""
 
+import re
+
 from glazier.lib.actions.base import ActionError
 from glazier.lib.actions.base import BaseAction
 from glazier.lib.actions.base import ValidationError
+
 from glazier.lib import domain_join
+
+_OU_REGEX = re.compile(
+    r'^([A-Za-z]+=[A-Za-z0-9\s._-]+)(,\s*[A-Za-z]+=[A-Za-z0-9\s._-]+)*$'
+)
 
 
 class DomainJoin(BaseAction):
-  """Create an imaging timer."""
+  """Joins the host to an Active Directory domain."""
 
   def Run(self):
     method = str(self._args[0])
@@ -39,3 +46,5 @@ class DomainJoin(BaseAction):
     self._ListOfStringsValidator(self._args, length=2, max_length=3)
     if self._args[0] not in domain_join.AUTH_OPTS:
       raise ValidationError(f'Invalid join method: {self._args[0]}')
+    if len(self._args) > 2 and not _OU_REGEX.match(self._args[2]):
+      raise ValidationError(f'Invalid OU path: {self._args[2]}')

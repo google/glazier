@@ -51,14 +51,54 @@ class DomainTest(test_utils.GlazierTestCase):
       ('_invalid_list_member_types', [1, 2, 3], None),
       ('_list_too_short', [1], None),
       ('_invalid_list_member_values', ['unknown'], None),
+      (
+          '_invalid_ou_format',
+          ['interactive', 'domain.test.com', 'invalid_ou'],
+          None,
+      ),
+      (
+          '_invalid_ou_injection_semicolon',
+          ['interactive', 'domain.test.com', '"; calc.exe; "'],
+          None,
+      ),
+      (
+          '_invalid_ou_injection_powershell',
+          ['interactive', 'domain.test.com', 'OU=$(calc.exe)'],
+          None,
+      ),
+      (
+          '_invalid_ou_injection_quotes',
+          ['interactive', 'domain.test.com', 'OU=Test"; calc.exe #'],
+          None,
+      ),
   )
   def test_domain_join_validation_failure(self, join_args, build_info):
     dj = domain.DomainJoin(join_args, build_info)
     with self.assert_raises_with_validation(domain.ValidationError):
       dj.Validate()
 
-  def test_domain_join_validation_success(self):
-    dj = domain.DomainJoin(['interactive', 'domain.test.com'], None)
+  @parameterized.named_parameters(
+      ('_no_ou', ['interactive', 'domain.test.com']),
+      (
+          '_standard_ou',
+          [
+              'interactive',
+              'domain.test.com',
+              'OU=Test,DC=DOMAIN,DC=TEST,DC=COM',
+          ],
+      ),
+      ('_single_ou', ['auto', 'domain.test.com', 'OU=Computers']),
+      (
+          '_spaced_ou',
+          [
+              'interactive',
+              'domain.test.com',
+              'OU=Test, DC=DOMAIN, DC=TEST, DC=COM',
+          ],
+      ),
+  )
+  def test_domain_join_validation_success(self, join_args):
+    dj = domain.DomainJoin(join_args, None)
     dj.Validate()
 
 
