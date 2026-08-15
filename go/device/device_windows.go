@@ -204,6 +204,39 @@ func Model() (string, error) {
 	return model, nil
 }
 
+// HardwareModel reports the normalized hardware model of the host in lowercase.
+//
+// For Lenovo devices, it returns the 4-character Machine Type extracted from
+// the 10-character SystemProductName (e.g. "21nv" from "21NVS12300").
+// For other manufacturers (Dell, HP, VMs), it returns the trimmed, lowercased
+// SystemProductName (e.g. "precision 5570", "google compute engine").
+func HardwareModel() (string, error) {
+	model, err := registryGetString(`HARDWARE\DESCRIPTION\System\BIOS`, "SystemProductName")
+	if err != nil {
+		if errors.Is(err, reg.ErrNotExist) {
+			return "", nil
+		}
+		return "", fmt.Errorf("reading SystemProductName registry value: %w", err)
+	}
+	model = strings.TrimSpace(model)
+	if model == "" {
+		return "", nil
+	}
+
+	manufacturer, err := registryGetString(`HARDWARE\DESCRIPTION\System\BIOS`, "SystemManufacturer")
+	if err != nil && !errors.Is(err, reg.ErrNotExist) {
+		return "", fmt.Errorf("reading SystemManufacturer registry value: %w", err)
+	}
+
+	// Lenovo uses 10-character MTMs (e.g. 21NVS12300, 21KDS15P00) where the first
+	// 4 characters represent the Machine Type (e.g. 21NV, 21KD).
+	// For other manufacturers (Dell, HP, VMs), the Model is already the unified model name.
+	if strings.EqualFold(strings.TrimSpace(manufacturer), "lenovo") && len(model) >= 4 {
+		return strings.ToLower(model[:4]), nil
+	}
+	return strings.ToLower(model), nil
+}
+
 // Win32_NTDomain models the WMI object of the same name.
 type Win32_NTDomain struct {
 	ClientSiteName       string

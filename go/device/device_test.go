@@ -26,6 +26,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	reg "golang.org/x/sys/windows/registry"
 )
 
 func TestChassisType(t *testing.T) {
@@ -220,6 +221,7 @@ func TestModel(t *testing.T) {
 
 	tests := []struct {
 		name            string
+		isLive          bool
 		manufacturer    string
 		manufacturerErr error
 		family          string
@@ -229,6 +231,10 @@ func TestModel(t *testing.T) {
 		want            string
 		wantErr         bool
 	}{
+		{
+			name:   "Live_VM",
+			isLive: true,
+		},
 		{
 			name:         "NonLenovo",
 			manufacturer: "Dell Inc.",
@@ -265,6 +271,19 @@ func TestModel(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.isLive {
+				registryGetString = origRegistryGetString
+				got, err := Model()
+				if err != nil {
+					t.Fatalf("Model() error = %v, wantErr = %v", err, tt.wantErr)
+				}
+				if got == "" || got == "unknown" {
+					t.Errorf("Model() live returned %q, want valid model name", got)
+				}
+				t.Logf("Model() on live system = %q", got)
+				return
+			}
+
 			registryGetString = func(path, name string) (string, error) {
 				if path != `HARDWARE\DESCRIPTION\System\BIOS` {
 					return "", fmt.Errorf("unexpected registry path %q", path)
@@ -287,6 +306,140 @@ func TestModel(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("Model() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHardwareModel(t *testing.T) {
+	origRegistryGetString := registryGetString
+	defer func() { registryGetString = origRegistryGetString }()
+
+	tests := []struct {
+		name             string
+		isLive           bool
+		mockModel        string
+		mockManufacturer string
+		mockModelErr     error
+		mockMfgErr       error
+		wantModel        string
+		wantErr          bool
+	}{
+		{
+			name:   "Live_VM",
+			isLive: true,
+		},
+		{
+			name:             "Lenovo_X1_2in1_Gen10",
+			mockModel:        "21NVS12300",
+			mockManufacturer: "LENOVO",
+			wantModel:        "21nv",
+		},
+		{
+			name:             "Lenovo_X1_Carbon_Gen12",
+			mockModel:        "21KDS15P00",
+			mockManufacturer: "Lenovo",
+			wantModel:        "21kd",
+		},
+		{
+			name:             "Lenovo_Short_Model",
+			mockModel:        "X1",
+			mockManufacturer: "LENOVO",
+			wantModel:        "x1",
+		},
+		{
+			name:             "Dell_Precision",
+			mockModel:        "Precision 5570",
+			mockManufacturer: "Dell Inc.",
+			wantModel:        "precision 5570",
+		},
+		{
+			name:             "HP_ZBook",
+			mockModel:        "HP ZBook Studio G8",
+			mockManufacturer: "HP",
+			wantModel:        "hp zbook studio g8",
+		},
+		{
+			name:             "Google_VM",
+			mockModel:        "Google Compute Engine",
+			mockManufacturer: "Google",
+			wantModel:        "google compute engine",
+		},
+		{
+			name:             "Whitespace_Trimming_And_Lowercase",
+			mockModel:        "  21NVS12300  ",
+			mockManufacturer: "  LENOVO  ",
+			wantModel:        "21nv",
+		},
+		{
+			name:             "Empty_Model",
+			mockModel:        "   ",
+			mockManufacturer: "LENOVO",
+			wantModel:        "",
+		},
+		{
+			name:         "Missing_Model_Registry_Key",
+			mockModelErr: reg.ErrNotExist,
+			wantModel:    "",
+		},
+		{
+			name:         "Model_Registry_Error",
+			mockModelErr: errors.New("access denied"),
+			wantErr:      true,
+		},
+		{
+			name:             "Missing_Manufacturer_Registry_Key",
+			mockModel:        "Precision 5570",
+			mockMfgErr:       reg.ErrNotExist,
+			wantModel:        "precision 5570",
+		},
+		{
+			name:             "Manufacturer_Registry_Error",
+			mockModel:        "Precision 5570",
+			mockMfgErr:       errors.New("access denied"),
+			wantErr:          true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.isLive {
+				registryGetString = origRegistryGetString
+				got, err := HardwareModel()
+				if err != nil {
+					t.Fatalf("HardwareModel() error = %v, wantErr %v", err, tc.wantErr)
+				}
+				want, err := Model()
+				if err != nil {
+					t.Fatalf("Model() error = %v", err)
+				}
+				if got != strings.ToLower(want) {
+					t.Errorf("HardwareModel() = %q, want %q (strings.ToLower(Model()))", got, strings.ToLower(want))
+				}
+				t.Logf("HardwareModel() on live system = %q", got)
+				return
+			}
+
+			registryGetString = func(path, name string) (string, error) {
+				if path != `HARDWARE\DESCRIPTION\System\BIOS` {
+					return "", fmt.Errorf("unexpected registry path: %s", path)
+				}
+				switch name {
+				case "SystemProductName":
+					return tc.mockModel, tc.mockModelErr
+				case "SystemManufacturer":
+					return tc.mockManufacturer, tc.mockMfgErr
+				default:
+					return "", fmt.Errorf("unexpected value name: %s", name)
+				}
+			}
+
+			got, err := HardwareModel()
+			if (err != nil) != tc.wantErr {
+				t.Fatalf("HardwareModel() error = %v, wantErr %v", err, tc.wantErr)
+			}
+			if got != tc.wantModel {
+				t.Errorf("HardwareModel() = %q, want %q", got, tc.wantModel)
 			}
 		})
 	}
