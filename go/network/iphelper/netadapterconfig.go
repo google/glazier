@@ -209,7 +209,9 @@ func (n *AdapterConfiguration) Query() error {
 
 // StaticRoute sets the static route for the network adapter.
 //
-// IMPORTANT: This method ONLY supports Ipv4.
+// IMPORTANT: This method leverages Win32_NetworkAdapterConfiguration.EnableStatic,
+// which ONLY supports IPv4. For modern IPv6 or dual-stack route configuration,
+// use w32iphelper.SetForwardRoute (via SetIpForwardEntry2) or PowerShell NetTCPIP cmdlets.
 //
 // Ref: https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/enablestatic-method-in-class-win32-networkadapterconfiguration
 func (n *AdapterConfiguration) StaticRoute(ipaddress []string, subnetMask []string) error {
