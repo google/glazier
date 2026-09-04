@@ -122,8 +122,13 @@ class DownloadTest(test_utils.GlazierTestCase):
     super(DownloadTest, self).setUp()
     self._dl = download.BaseDownloader()
 
+    # Written as bytes, not str: absltest's create_tempfile() opens a str
+    # `content` in text mode, so on Windows the '\n' in _TEST_INI would be
+    # translated to '\r\n' on disk and the hardcoded SHA256 below would no
+    # longer match. Bytes content is written via write_bytes(), with no
+    # newline translation, on every platform.
     self.input_ini_path = self.create_tempfile(
-        file_path='input.ini', content=_TEST_INI)
+        file_path='input.ini', content=_TEST_INI.encode('utf-8'))
 
     # Very important, unless you want tests that fail indefinitely to backoff
     # for 10 minutes.
