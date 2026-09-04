@@ -33,7 +33,9 @@ def main():
                                           glazier.__name__ + '.'):
     if '_test' in test:
       print('**** %s ****\n' % test)
-      proc = subprocess.Popen(['python', '-m', test], stderr=subprocess.PIPE)
+      proc = subprocess.Popen(
+          [sys.executable, '-m', test], stderr=subprocess.PIPE
+      )
       _, err = proc.communicate()
       err = err.decode()
       print(err)
