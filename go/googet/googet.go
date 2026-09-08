@@ -204,6 +204,9 @@ func PackageVersion(pkg string) (string, error) {
 		if errors.Is(err, helpers.ErrTimeout) {
 			return "unknown", fmt.Errorf("execution timed out after %v", conf.ExecConfig.Timeout)
 		}
+		if strings.Contains(string(out.Stdout), "No package matching filter") {
+			return "unknown", nil
+		}
 		return "unknown", err
 	}
 	ver := regexp.MustCompile(`[\d\.\-]+@[\d]+`).Find(out.Stdout)
