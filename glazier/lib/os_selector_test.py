@@ -107,5 +107,17 @@ class OsSelectorTest(test_utils.GlazierTestCase):
     self.selector.model = '20FR'
     self.assertTrue(self.selector._GetResponse(), 'windows-10-stable')
 
+  @mock.patch.object(builtins, 'input', autospec=True)
+  @mock.patch.object(os_selector, '_StartPs', autospec=True)
+  def test_get_response_powershell(self, mock_start_ps, mock_input):
+    mock_input.side_effect = ['p', '1', '1']
+    self.assertEqual(self.selector._GetResponse(), 'windows-10-stable')
+    mock_start_ps.assert_called_once_with()
+
+  @mock.patch.object(builtins, 'input', autospec=True)
+  def test_get_response_unknown_letter(self, mock_input):
+    mock_input.side_effect = ['e', '1', '1']
+    self.assertEqual(self.selector._GetResponse(), 'windows-10-stable')
+
 if __name__ == '__main__':
   absltest.main()
