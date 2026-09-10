@@ -91,7 +91,8 @@ class OSSelector(object):
     print('\nAdvanced options:')
     print('P. Start PowerShell')
 
-    choices = 'pe'
+    # Advanced options; the OS numbers are appended below.
+    choices = 'p'
     # OS Selection Menu
     print('\nPlease select the Windows OS to install:')
     for os in self.config['os']:  # pytype: disable=unsupported-operands  # always-use-return-annotations
@@ -132,18 +133,19 @@ class OSSelector(object):
 
   def _GetResponse(self):
     """Obtain and evaluate user input."""
-    valid_responses = self._ShowMenu()
-    response = ''
-    answer_track = 1
-    while not re.match(valid_responses, response):
-      print('')
-      response = input('Select from choices: ').lower()
-    if response == 'p':
-      _StartPs()
-    else:
+    while True:
+      valid_responses = self._ShowMenu()
+      response = ''
+      while not re.match(valid_responses, response):
+        print('')
+        response = input('Select from choices: ').lower()
+      if response == 'p':
+        # Back to the menu once the shell is closed.
+        _StartPs()
+        continue
       answer_os = int(response) - 1
       answer_track = self._TrackMenu(self.config['os'][answer_os])  # pytype: disable=unsupported-operands  # always-use-return-annotations
-    return self.config['os'][answer_os][1][answer_track]  # pytype: disable=unsupported-operands  # always-use-return-annotations
+      return self.config['os'][answer_os][1][answer_track]  # pytype: disable=unsupported-operands  # always-use-return-annotations
 
   def _TrackMenu(self, os):
     """Display track selection menu."""
