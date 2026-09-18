@@ -13,6 +13,7 @@
 # limitations under the License.
 """Tests for glazier.lib.logs."""
 
+import os
 from unittest import mock
 import zipfile
 
@@ -49,8 +50,11 @@ class LoggingTest(test_utils.GlazierTestCase):
     zip_path = self.create_tempfile(file_path='glazier.zip').full_path
     logs.Collect(zip_path)
 
+    # zipfile.write() derives the archive name by stripping any drive letter
+    # and leading path separators, then normalizing to '/'.
+    arcname = os.path.splitdrive(files[1])[1].replace(os.sep, '/').lstrip('/')
     with zipfile.ZipFile(zip_path, 'r') as out:
-      with out.open(files[1].lstrip('/')) as f2:
+      with out.open(arcname) as f2:
         self.assertEqual(f2.read(), b'log2 content')
 
   def test_collect_io_err(self):
