@@ -70,7 +70,7 @@ class Label(tk.Frame):
 
   def __init__(self, root, text, font_name='Helvetica', font_size=16):
     tk.Frame.__init__(self, root)
-    self.label = tk.Label(self, text=text, font=font_name, font_size=font_size)  # pytype: disable=wrong-keyword-args
+    self.label = tk.Label(self, text=text, font=font_name, font_size=font_size)  # pyrefly: ignore[unexpected-keyword]
     self.label.grid(row=0, column=0, padx=20)
 
 

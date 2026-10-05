@@ -529,10 +529,10 @@ class BaseDownloader(object):
       on_giveup=BackoffGiveupHandler)
   def _GetFileStreamSize(self, file_stream: 'http.client.HTTPResponse'):
     url = file_stream.geturl()
-    total_size = int(file_stream.headers.get('Content-Length').strip())  # pytype: disable=attribute-error  # re-none
+    total_size = int(file_stream.headers.get('Content-Length').strip())  # pyrefly: ignore[missing-attribute]
     return (url, total_size)
 
-  def _StreamToDisk(self,  # pytype: disable=annotation-type-mismatch
+  def _StreamToDisk(self,
                     file_stream: 'http.client.HTTPResponse',
                     show_progress: bool = None):  # pyrefly: ignore[bad-function-definition]
     """Save a file stream to disk.

@@ -50,7 +50,7 @@ class PSScript(BaseAction):
 
     logging.info('Interpreting PowerShell script: %s', script)
     try:
-      script = cache.Cache().CacheFromLine(script, self._build_info)  # pytype: disable=annotation-type-mismatch
+      script = cache.Cache().CacheFromLine(script, self._build_info)  # pyrefly: ignore[bad-assignment]
     except cache.Error as e:
       raise ActionError() from e
 
@@ -140,7 +140,7 @@ class PSCommand(BaseAction):
     if command[0] and command[0].endswith('.ps1'):
       logging.info('Interpreting PowerShell script: %s', command[0])
       try:
-        command[0] = cache.Cache().CacheFromLine(command[0], self._build_info)  # pytype: disable=container-type-mismatch
+        command[0] = cache.Cache().CacheFromLine(command[0], self._build_info)  # pyrefly: ignore[unsupported-operation]
       except cache.Error as e:
         raise ActionError() from e
 

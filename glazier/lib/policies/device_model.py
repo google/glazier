@@ -63,7 +63,7 @@ class DeviceModel(BasePolicy):
       return True
     return False
 
-  def Verify(self) -> bool:  # pytype: disable=signature-mismatch  # overriding-return-type-checks
+  def Verify(self) -> bool:
     model = self._build_info.ComputerModel()
     logging.debug('Verifying hardware support tier for %s.', model)
     tier = self._build_info.SupportTier()

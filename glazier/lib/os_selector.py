@@ -63,7 +63,7 @@ class OSSelector(object):
       UnsupportedModelError
     """
     try:
-      os_code = self.config['os'][0][1][0]  # pytype: disable=unsupported-operands  # always-use-return-annotations
+      os_code = self.config['os'][0][1][0]
     except IndexError as e:
       raise UnsupportedModelError(self.model) from e
     return os_code
@@ -94,8 +94,8 @@ class OSSelector(object):
     choices = 'pe'
     # OS Selection Menu
     print('\nPlease select the Windows OS to install:')
-    for os in self.config['os']:  # pytype: disable=unsupported-operands  # always-use-return-annotations
-      num = self.config['os'].index(os)  # pytype: disable=unsupported-operands  # always-use-return-annotations
+    for os in self.config['os']:
+      num = self.config['os'].index(os)
       printstring = self._PrintOSOption(os, num)
       if printstring:
         print(printstring)
@@ -105,10 +105,10 @@ class OSSelector(object):
   def _TrimOSConfig(self):
     """Helper method to trim the OS selection menu."""
     config = []
-    for os in self.config['os']:  # pytype: disable=unsupported-operands  # always-use-return-annotations
+    for os in self.config['os']:
       if self._IsModelAllowed(os):
         config += [os]
-    self.config['os'] = config  # pytype: disable=unsupported-operands  # always-use-return-annotations
+    self.config['os'] = config
 
   def _PrintOSOption(self, os, num):
     if not os[3]:
@@ -142,8 +142,8 @@ class OSSelector(object):
       _StartPs()
     else:
       answer_os = int(response) - 1
-      answer_track = self._TrackMenu(self.config['os'][answer_os])  # pytype: disable=unsupported-operands  # always-use-return-annotations
-    return self.config['os'][answer_os][1][answer_track]  # pytype: disable=unsupported-operands  # always-use-return-annotations
+      answer_track = self._TrackMenu(self.config['os'][answer_os])
+    return self.config['os'][answer_os][1][answer_track]  # pyrefly: ignore[unbound-name]
 
   def _TrackMenu(self, os):
     """Display track selection menu."""
