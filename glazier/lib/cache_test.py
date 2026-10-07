@@ -74,7 +74,7 @@ class CacheTest(test_utils.GlazierTestCase):
     path = self.cache._DestinationPath(
         'C:', 'http://some.web.address/folder/other/'
         'an_installer.msi')
-    self.assertEqual(path, os.path.join('C:', 'an_installer.msi'))
+    self.assertEqual(path, os.path.join('C:' + os.sep, 'an_installer.msi'))
 
   def test_find_download(self):
     line_test = self.cache._FindDownload('powershell -file '

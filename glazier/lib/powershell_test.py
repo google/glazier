@@ -13,6 +13,7 @@
 # limitations under the License.
 """Tests for glazier.lib.powershell."""
 
+import os
 from unittest import mock
 
 from absl import flags
@@ -115,7 +116,8 @@ class PowershellTest(test_utils.GlazierTestCase):
     script_path = resource_dir.create_file(file_path='bin/script.ps1').full_path
     args = ['>>', 'out.txt']
     self.ps.RunResource('bin/script.ps1', args=args)
-    mock_runlocal.assert_called_with(self.ps, script_path, args, None)
+    mock_runlocal.assert_called_with(
+        self.ps, os.path.normpath(script_path), args, None)
 
     # Not Found
     with self.assert_raises_with_validation(powershell.InvalidPathError):

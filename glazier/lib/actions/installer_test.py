@@ -13,6 +13,7 @@
 # limitations under the License.
 """Tests for glazier.lib.actions.installer."""
 
+import os
 from unittest import mock
 
 from absl.testing import absltest
@@ -126,7 +127,7 @@ class InstallerTest(test_utils.GlazierTestCase):
     d = installer.BuildInfoDump(None, mock_buildinfo)
     d.Run()
     mock_buildinfo.Serialize.assert_called_with(
-        '{}/build_info.yaml'.format(constants.SYS_CACHE))
+        os.path.join(constants.SYS_CACHE, 'build_info.yaml'))
 
   @mock.patch.object(installer.registry, 'set_value', autospec=True)
   @mock.patch.object(buildinfo, 'BuildInfo', autospec=True)
@@ -157,7 +158,7 @@ class InstallerTest(test_utils.GlazierTestCase):
     installer.BuildInfoSave(None, mock_buildinfo).Run()
     mock_debug.assert_called_with(
         '%s does not exist - skipped processing.',
-        '{}/build_info.yaml'.format(constants.SYS_CACHE))
+        os.path.join(constants.SYS_CACHE, 'build_info.yaml'))
 
   def test_change_server(self):
     build_info = buildinfo.BuildInfo()
@@ -170,13 +171,12 @@ class InstallerTest(test_utils.GlazierTestCase):
 
   @mock.patch.object(installer.file_system, 'CopyFile', autospec=True)
   def test_exit_win_pe(self, mock_copyfile):
-    cache = constants.SYS_CACHE
     ex = installer.ExitWinPE(None, None)
     with self.assert_raises_with_validation(events.RestartEvent):
       ex.Run()
     mock_copyfile.assert_has_calls([
-        mock.call(['/task_list.yaml',
-                   '%s/task_list.yaml' % cache], mock.ANY),
+        mock.call([constants.WINPE_TASK_LIST,
+                   constants.SYS_TASK_LIST], mock.ANY),
     ])
     mock_copyfile.return_value.Run.assert_called()
 
