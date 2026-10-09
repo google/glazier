@@ -48,8 +48,9 @@ supported syntax.
     configuration handler may call to perform a variety of tasks during imaging.
 *   [Policy Modules](policies.md) - Policy modules determine whether or not
     Autobuild should be allowed to proceed with an installation.
-*   [Error Handling](error_codes.md) - Policy modules determine whether or not
-    Autobuild should be allowed to proceed with an installation.
+*   [Error Handling](error_codes.md) - Glazier error codes are four digit
+    numbers (7XXX) attached to exceptions, giving users actionable feedback
+    about failures during imaging.
 *   [Config Handlers](./setup/config_handlers.md) - The Glazier configuration
     handling libraries are responsible for taking the configuration language as
     input, determining which commands apply to the current system, and executing
