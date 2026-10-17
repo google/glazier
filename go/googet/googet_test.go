@@ -16,11 +16,45 @@ package googet
 
 import (
 	"errors"
+	"runtime"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/glazier/go/helpers"
 )
+
+func TestNewConfigGooGetExe(t *testing.T) {
+	tests := []struct {
+		desc       string
+		machine    string
+		machineErr error
+		env        string
+		want       string
+		// windowsOnly skips the case on other platforms.
+		windowsOnly bool
+	}{
+		{desc: "machine value wins", machine: `C:\ProgramData\GooGet`, env: `C:\Users\Public\GooGet`, want: `C:\ProgramData\GooGet\googet.exe`},
+		{desc: "environment fallback", machineErr: errors.New("not found"), env: `C:\GooGet`, want: `C:\GooGet\googet.exe`},
+		{desc: "empty machine value", env: `C:\GooGet`, want: `C:\GooGet\googet.exe`},
+		{desc: "no root", machineErr: errors.New("not found"), want: ""},
+		{desc: "relative root", machineErr: errors.New("not found"), env: "GooGet", want: "", windowsOnly: true},
+		{desc: "relative machine value", machine: "GooGet", env: `C:\GooGet`, want: `C:\GooGet\googet.exe`, windowsOnly: true},
+	}
+	orig := funcMachineGooGetRoot
+	t.Cleanup(func() { funcMachineGooGetRoot = orig })
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			if tt.windowsOnly && runtime.GOOS != "windows" {
+				t.Skip("filepath.IsAbs knows drive letters only on Windows")
+			}
+			funcMachineGooGetRoot = func() (string, error) { return tt.machine, tt.machineErr }
+			t.Setenv("GooGetRoot", tt.env)
+			if got := NewConfig().GooGetExe; got != tt.want {
+				t.Errorf("NewConfig().GooGetExe = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestInstall(t *testing.T) {
 	tests := []struct {
