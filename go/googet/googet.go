@@ -19,31 +19,51 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/google/deck"
 	"github.com/google/glazier/go/helpers"
+	"github.com/google/glazier/go/registry"
+)
+
+const (
+	// envVar is the environment variable that holds the GooGet root directory.
+	envVar = "GooGetRoot"
+	// machineEnvironment is the registry key of the machine-wide environment
+	// variables, where the GooGet installer stores GooGetRoot.
+	machineEnvironment = `SYSTEM\CurrentControlSet\Control\Session Manager\Environment`
 )
 
 var (
 	// Test Helpers
 	funcExec = helpers.Exec
+	// funcMachineGooGetRoot returns the GooGetRoot value of the machine-wide
+	// environment, which only administrators can change.
+	funcMachineGooGetRoot = func() (string, error) { return registry.GetString(machineEnvironment, envVar) }
 )
 
 // Config provides the ability to customize GooGet behavior.
 type Config struct {
-	GooGetExe  string
+	GooGetExe string
+	// Root is the GooGet root directory that commands pass to googet.exe with
+	// -root. If Root is empty, googet.exe reads the GooGetRoot variable of the
+	// process environment.
+	Root       string
 	ExecConfig helpers.ExecConfig
 }
 
 // NewConfig generates a new Config object.
 func NewConfig() *Config {
 	timeout := 10 * time.Minute
+	root := gooGetRoot()
 	return &Config{
-		GooGetExe: os.Getenv("GooGetRoot") + `\googet.exe`,
+		GooGetExe: gooGetExe(root),
+		Root:      root,
 		ExecConfig: helpers.ExecConfig{
 			Timeout:  &timeout,
 			Verifier: helpers.NewExecVerifier(),
@@ -51,12 +71,54 @@ func NewConfig() *Config {
 	}
 }
 
+// gooGetRoot returns the GooGet root directory. It prefers the machine-wide
+// GooGetRoot value in the registry, which only administrators can change, over
+// the environment of the process. It returns "" if neither names an absolute
+// directory.
+func gooGetRoot() string {
+	root, err := funcMachineGooGetRoot()
+	if err != nil || !isAbsRoot(root) {
+		root = os.Getenv(envVar)
+	}
+	if !isAbsRoot(root) {
+		return ""
+	}
+	return root
+}
+
+// gooGetExe returns the path of googet.exe in root. It returns "" if root is
+// empty, so that commands fail instead of running a googet.exe relative to the
+// current drive.
+func gooGetExe(root string) string {
+	if root == "" {
+		return ""
+	}
+	return root + `\googet.exe`
+}
+
+// isAbsRoot reports whether root names an absolute directory. A relative root
+// would run a googet.exe from the current directory or drive.
+// filepath.IsAbs knows drive letters only on Windows.
+func isAbsRoot(root string) bool {
+	return root != "" && (runtime.GOOS != "windows" || filepath.IsAbs(root))
+}
+
+// execGooGet runs googet.exe with args. It passes conf.Root with -root, so
+// that googet.exe uses the root that NewConfig resolved instead of the
+// GooGetRoot variable of the process environment.
+func execGooGet(args []string, conf *Config) (helpers.ExecResult, error) {
+	if conf.Root != "" {
+		args = append([]string{"-root", conf.Root}, args...)
+	}
+	return funcExec(conf.GooGetExe, args, &conf.ExecConfig)
+}
+
 func call(args []string, conf *Config) error {
 	if conf == nil {
 		conf = NewConfig()
 	}
 
-	res, err := funcExec(conf.GooGetExe, args, &conf.ExecConfig)
+	res, err := execGooGet(args, conf)
 	deck.Infof("Executing: %s %v", conf.GooGetExe, args)
 	if err != nil {
 		deck.Errorf("googet stdout: %v", string(res.Stdout))
@@ -129,7 +191,7 @@ func Installed(initial string, conf *Config) ([]Package, error) {
 	}
 	p := []Package{}
 	args := []string{"installed", initial}
-	res, err := funcExec(conf.GooGetExe, args, &conf.ExecConfig)
+	res, err := execGooGet(args, conf)
 	if err != nil {
 		return p, err
 	}
@@ -167,7 +229,7 @@ func ListRepos(conf *Config) ([]Repo, error) {
 
 	repos := []Repo{}
 	args := []string{"listrepos"}
-	res, err := funcExec(conf.GooGetExe, args, &conf.ExecConfig)
+	res, err := execGooGet(args, conf)
 	if err != nil {
 		return repos, err
 	}
@@ -199,7 +261,7 @@ func ListRepos(conf *Config) ([]Repo, error) {
 func PackageVersion(pkg string) (string, error) {
 	conf := NewConfig()
 
-	out, err := funcExec(conf.GooGetExe, []string{"installed", pkg}, &conf.ExecConfig)
+	out, err := execGooGet([]string{"installed", pkg}, conf)
 	if err != nil {
 		if errors.Is(err, helpers.ErrTimeout) {
 			return "unknown", fmt.Errorf("execution timed out after %v", conf.ExecConfig.Timeout)

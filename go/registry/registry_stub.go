@@ -16,3 +16,10 @@
 // +build !windows
 
 package registry
+
+import "errors"
+
+// GetString returns an error: the registry exists only on Windows.
+func GetString(root, name string) (string, error) {
+	return "", errors.New("registry: not supported")
+}

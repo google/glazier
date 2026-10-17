@@ -16,11 +16,126 @@ package googet
 
 import (
 	"errors"
+	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/glazier/go/helpers"
 )
+
+func TestNewConfigGooGetExe(t *testing.T) {
+	tests := []struct {
+		desc       string
+		machine    string
+		machineErr error
+		env        string
+		want       string
+		// windowsOnly skips the case on other platforms.
+		windowsOnly bool
+	}{
+		{desc: "machine value wins", machine: `C:\ProgramData\GooGet`, env: `C:\Users\Public\GooGet`, want: `C:\ProgramData\GooGet\googet.exe`},
+		{desc: "environment fallback", machineErr: errors.New("not found"), env: `C:\GooGet`, want: `C:\GooGet\googet.exe`},
+		{desc: "empty machine value", env: `C:\GooGet`, want: `C:\GooGet\googet.exe`},
+		{desc: "no root", machineErr: errors.New("not found"), want: ""},
+		{desc: "relative root", machineErr: errors.New("not found"), env: "GooGet", want: "", windowsOnly: true},
+		{desc: "relative machine value", machine: "GooGet", env: `C:\GooGet`, want: `C:\GooGet\googet.exe`, windowsOnly: true},
+	}
+	orig := funcMachineGooGetRoot
+	t.Cleanup(func() { funcMachineGooGetRoot = orig })
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			if tt.windowsOnly && runtime.GOOS != "windows" {
+				t.Skip("filepath.IsAbs knows drive letters only on Windows")
+			}
+			funcMachineGooGetRoot = func() (string, error) { return tt.machine, tt.machineErr }
+			t.Setenv("GooGetRoot", tt.env)
+			conf := NewConfig()
+			if got := conf.GooGetExe; got != tt.want {
+				t.Errorf("NewConfig().GooGetExe = %q, want %q", got, tt.want)
+			}
+			if got, want := conf.Root, strings.TrimSuffix(tt.want, `\googet.exe`); got != want {
+				t.Errorf("NewConfig().Root = %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+func TestCommandsPassRoot(t *testing.T) {
+	origExec := funcExec
+	origRoot := funcMachineGooGetRoot
+	t.Cleanup(func() {
+		funcExec = origExec
+		funcMachineGooGetRoot = origRoot
+	})
+	var gotPath string
+	var gotArgs []string
+	funcExec = func(path string, args []string, v *helpers.ExecConfig) (helpers.ExecResult, error) {
+		gotPath = path
+		gotArgs = args
+		return helpers.ExecResult{}, nil
+	}
+	funcMachineGooGetRoot = func() (string, error) { return `X:\machine`, nil }
+	t.Setenv("GooGetRoot", `X:\env`)
+
+	conf := &Config{GooGetExe: `X:\conf\googet.exe`, Root: `X:\conf`}
+	tests := []struct {
+		desc     string
+		run      func() error
+		wantPath string
+		wantArgs []string
+	}{
+		{
+			desc:     "call",
+			run:      func() error { return Update(conf) },
+			wantPath: `X:\conf\googet.exe`,
+			wantArgs: []string{"-root", `X:\conf`, "-noconfirm", "update"},
+		},
+		{
+			desc:     "Installed",
+			run:      func() error { _, err := Installed("pkg", conf); return err },
+			wantPath: `X:\conf\googet.exe`,
+			wantArgs: []string{"-root", `X:\conf`, "installed", "pkg"},
+		},
+		{
+			desc:     "ListRepos",
+			run:      func() error { _, err := ListRepos(conf); return err },
+			wantPath: `X:\conf\googet.exe`,
+			wantArgs: []string{"-root", `X:\conf`, "listrepos"},
+		},
+		{
+			desc:     "PackageVersion uses the machine root",
+			run:      func() error { _, err := PackageVersion("pkg"); return err },
+			wantPath: `X:\machine\googet.exe`,
+			wantArgs: []string{"-root", `X:\machine`, "installed", "pkg"},
+		},
+		{
+			desc:     "nil config uses the machine root",
+			run:      func() error { return Update(nil) },
+			wantPath: `X:\machine\googet.exe`,
+			wantArgs: []string{"-root", `X:\machine`, "-noconfirm", "update"},
+		},
+		{
+			desc:     "no root",
+			run:      func() error { return Update(&Config{GooGetExe: `X:\conf\googet.exe`}) },
+			wantPath: `X:\conf\googet.exe`,
+			wantArgs: []string{"-noconfirm", "update"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			if err := tt.run(); err != nil {
+				t.Fatalf("%s returned error: %v", tt.desc, err)
+			}
+			if gotPath != tt.wantPath {
+				t.Errorf("%s ran %q, want %q", tt.desc, gotPath, tt.wantPath)
+			}
+			if diff := cmp.Diff(tt.wantArgs, gotArgs); diff != "" {
+				t.Errorf("%s args mismatch (-want +got):\n%s", tt.desc, diff)
+			}
+		})
+	}
+}
 
 func TestInstall(t *testing.T) {
 	tests := []struct {
@@ -56,6 +171,11 @@ func TestInstall(t *testing.T) {
 			wantErr:   nil,
 		},
 	}
+	// Without a GooGet root, the commands pass no -root flag.
+	origRoot := funcMachineGooGetRoot
+	t.Cleanup(func() { funcMachineGooGetRoot = origRoot })
+	funcMachineGooGetRoot = func() (string, error) { return "", errors.New("not found") }
+	t.Setenv("GooGetRoot", "")
 	for _, tt := range tests {
 		a := []string{}
 		funcExec = func(path string, args []string, v *helpers.ExecConfig) (helpers.ExecResult, error) {
