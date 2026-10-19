@@ -259,12 +259,14 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 	if err := cmd.Start(); err != nil {
 		return result, fmt.Errorf("cmd.Start: %w", err)
 	}
+	killProc, closeProc := manageProcess(cmd.Process)
+	defer closeProc()
 
 	var timer *time.Timer
 	// Create a timer that will kill the process
 	if conf.Timeout != nil {
 		timer = time.AfterFunc(*conf.Timeout, func() {
-			cmd.Process.Kill()
+			killProc()
 		})
 	}
 

@@ -19,7 +19,10 @@ package helpers
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"regexp"
+	"strconv"
 	"syscall"
 	"time"
 	"unsafe"
@@ -54,6 +57,57 @@ const (
 	swpNoZOrder   = 0x0004
 	swpShowWindow = 0x0040
 )
+
+func manageProcess(proc *os.Process) (kill func(), cleanup func()) {
+	defaultKill := func() {
+		if proc != nil {
+			exec.Command(os.ExpandEnv("${SystemRoot}\\System32\\taskkill.exe"), "/T", "/F", "/PID", strconv.Itoa(proc.Pid)).Run()
+			proc.Kill()
+		}
+	}
+	noop := func() {}
+	if proc == nil {
+		return defaultKill, noop
+	}
+
+	job, err := windows.CreateJobObject(nil, nil)
+	if err != nil {
+		deck.Warningf("unable to create job object: %v", err)
+		return defaultKill, noop
+	}
+	info := windows.JOBOBJECT_EXTENDED_LIMIT_INFORMATION{
+		BasicLimitInformation: windows.JOBOBJECT_BASIC_LIMIT_INFORMATION{
+			LimitFlags: windows.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+		},
+	}
+	if _, err := windows.SetInformationJobObject(
+		job,
+		windows.JobObjectExtendedLimitInformation,
+		uintptr(unsafe.Pointer(&info)),
+		uint32(unsafe.Sizeof(info)),
+	); err != nil {
+		deck.Warningf("unable to set JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE limit flag on job: %v", err)
+	}
+	hProc, err := windows.OpenProcess(windows.PROCESS_SET_QUOTA|windows.PROCESS_TERMINATE, false, uint32(proc.Pid))
+	if err != nil {
+		windows.CloseHandle(job)
+		deck.Warningf("unable to open process for job object association: %v", err)
+		return defaultKill, noop
+	}
+	defer windows.CloseHandle(hProc)
+	if err := windows.AssignProcessToJobObject(job, hProc); err != nil {
+		windows.CloseHandle(job)
+		deck.Warningf("unable to associate process with job object: %v", err)
+		return defaultKill, noop
+	}
+	return func() {
+		if err := windows.TerminateJobObject(job, 1); err != nil {
+			defaultKill()
+		}
+	}, func() {
+		windows.CloseHandle(job)
+	}
+}
 
 // GetServiceState interrogates local system services and returns their status and configuration.
 func GetServiceState(name string) (svc.Status, mgr.Config, error) {

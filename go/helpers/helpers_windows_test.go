@@ -18,8 +18,10 @@
 package helpers
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 	"time"
@@ -102,5 +104,27 @@ func TestHasAdmin(t *testing.T) {
 	}
 	if admin {
 		t.Skip("Test running with elevated privileges, skipping check for non-elevated context.")
+	}
+}
+
+func TestExecuteTimeoutKillsChildProcessTree(t *testing.T) {
+	timeout := 200 * time.Millisecond
+	var stdout, stderr bytes.Buffer
+	start := time.Now()
+	_, err := execute(
+		os.ExpandEnv("${SystemRoot}\\System32\\cmd.exe"),
+		[]string{"/c", PsPath, "-NoProfile", "-NonInteractive", "-NoLogo", "-Command", "Start-Sleep -Seconds 30"},
+		&ExecConfig{
+			Timeout:     &timeout,
+			WriteStdOut: &stdout,
+			WriteStdErr: &stderr,
+		},
+	)
+	elapsed := time.Since(start)
+	if !errors.Is(err, ErrTimeout) {
+		t.Errorf("execute() error = %v, want %v", err, ErrTimeout)
+	}
+	if elapsed >= 15*time.Second {
+		t.Errorf("execute() elapsed = %v, want < 15s (child process kept pipes open after timeout)", elapsed)
 	}
 }

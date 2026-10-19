@@ -17,3 +17,13 @@
 
 package helpers
 
+import "os"
+
+func manageProcess(proc *os.Process) (kill func(), cleanup func()) {
+	return func() {
+		if proc != nil {
+			proc.Kill()
+		}
+	}, func() {}
+}
+
