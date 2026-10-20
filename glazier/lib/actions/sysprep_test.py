@@ -14,11 +14,20 @@
 
 """Tests for glazier.lib.actions.sysprep."""
 
+import builtins
 from unittest import mock
 
 from absl.testing import absltest
 from glazier.lib import test_utils
 from glazier.lib.actions import sysprep
+from glazier.lib.config import files
+
+_REAL_OPEN = builtins.open
+
+
+def _open_with_cp1252_default(*args, **kwargs):
+  kwargs.setdefault('encoding', 'cp1252')
+  return _REAL_OPEN(*args, **kwargs)
 
 
 UNATTEND_XML = r"""<?xml version='1.0' encoding='utf-8'?>
@@ -56,6 +65,34 @@ UNATTEND_XML = r"""<?xml version='1.0' encoding='utf-8'?>
 
 
 class SysprepTest(test_utils.GlazierTestCase):
+
+  def test_config_uses_utf8(self):
+    yaml_path = self.create_tempfile(file_path='utf8.yaml').full_path
+    with _REAL_OPEN(yaml_path, 'wb') as handle:
+      handle.write(b'name: caf\xc3\xa9')
+
+    with mock.patch('builtins.open', side_effect=_open_with_cp1252_default):
+      config = files.Read(yaml_path)
+
+    self.assertEqual(config['name'], 'caf\u00e9')
+
+  def test_unattend_uses_utf8(self):
+    unattend_path = self.create_tempfile(
+        file_path='utf8-unattend.xml', content=UNATTEND_XML).full_path
+    xml_data = UNATTEND_XML.encode('ascii').replace(
+        b'<RegisteredOwner>Employee</RegisteredOwner>',
+        b'<RegisteredOwner>cafe\xcc\x81</RegisteredOwner>')
+    with _REAL_OPEN(unattend_path, 'wb') as handle:
+      handle.write(xml_data)
+
+    st = sysprep.SetUnattendTimeZone([], mock.Mock())
+    with mock.patch('builtins.open', side_effect=_open_with_cp1252_default):
+      st._EditUnattend('Yakutsk Standard Time', unattend_path)
+
+    with _REAL_OPEN(unattend_path, 'rb') as handle:
+      updated_xml = handle.read().decode('utf-8')
+    self.assertIn('<RegisteredOwner>cafe\u0301</RegisteredOwner>', updated_xml)
+    self.assertIn('<TimeZone>Yakutsk Standard Time</TimeZone>', updated_xml)
 
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   def test_set_unattend_time_zone_edit_unattend(self, mock_buildinfo):
