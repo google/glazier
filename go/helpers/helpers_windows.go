@@ -29,7 +29,7 @@ import (
 	"golang.org/x/sys/windows/svc/mgr"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows"
-	"github.com/iamacarpet/go-win64api"
+	so "github.com/iamacarpet/go-win64api/shared"
 )
 
 var (
@@ -43,8 +43,39 @@ var (
 
 var (
 	// Test helpers
-	fnProcessList = winapi.ProcessList
+	fnProcessList = processList
 )
+
+// processList returns the running processes from a Toolhelp32 snapshot.
+// Only Pid, Ppid, and Executable are set. Unlike winapi.ProcessList, it does
+// not enable SeDebugPrivilege and it builds on all Windows architectures.
+func processList() ([]so.Process, error) {
+	snap, err := windows.CreateToolhelp32Snapshot(windows.TH32CS_SNAPPROCESS, 0)
+	if err != nil {
+		return nil, fmt.Errorf("windows.CreateToolhelp32Snapshot: %w", err)
+	}
+	defer windows.CloseHandle(snap)
+
+	var entry windows.ProcessEntry32
+	entry.Size = uint32(unsafe.Sizeof(entry))
+	if err := windows.Process32First(snap, &entry); err != nil {
+		return nil, fmt.Errorf("windows.Process32First: %w", err)
+	}
+	var procs []so.Process
+	for {
+		procs = append(procs, so.Process{
+			Pid:        int(entry.ProcessID),
+			Ppid:       int(entry.ParentProcessID),
+			Executable: windows.UTF16ToString(entry.ExeFile[:]),
+		})
+		if err := windows.Process32Next(snap, &entry); err != nil {
+			if err == windows.ERROR_NO_MORE_FILES {
+				return procs, nil
+			}
+			return nil, fmt.Errorf("windows.Process32Next: %w", err)
+		}
+	}
+}
 
 const (
 	// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics
@@ -286,7 +317,7 @@ loop:
 		case <-r.C:
 			procs, err := fnProcessList()
 			if err != nil {
-				return fmt.Errorf("winapi.ProcessList: %w", err)
+				return fmt.Errorf("processList: %w", err)
 			}
 			for _, p := range procs {
 				if matcher.MatchString(p.Executable) {
