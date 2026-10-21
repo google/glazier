@@ -24,6 +24,7 @@ import hashlib
 import json
 import logging
 import os.path
+from typing import Any
 
 from absl import flags
 import backoff
@@ -117,6 +118,21 @@ def GetBackoffMaxTime():
 
 def BackoffGiveupHandler(details):
   raise BeyondCorpGiveUpError(details['tries'], details['elapsed'])
+
+
+def _IsProcessedSeed(data: dict[str, Any]) -> bool:
+  """Returns whether a seed was already written by _WriteSeedFile.
+
+  A raw OCI seed only has Seed and Signature at the top level (its Hash is
+  nested under Seed). A processed seed also carries the device Mac and the
+  boot.wim Hash at the top level.
+
+  Args:
+    data: Parsed seed file contents.
+  """
+  mac = data.get('Mac')
+  wim_hash = data.get('Hash')
+  return bool(mac) and isinstance(wim_hash, str) and bool(wim_hash)
 
 
 class BeyondCorp(object):
@@ -232,22 +248,47 @@ class BeyondCorp(object):
 
     return drive_letter
 
+  def _ResolveSeedSource(self) -> tuple[str, str | None]:
+    """Resolves the source seed path and, if queried, the USB drive letter.
+
+    The USB drive is only queried when --seed_path is unset, so a build that
+    already has a seed on disk keeps working after the USB was unplugged. The
+    drive letter is returned rather than memoized because the USB can be
+    reinserted on a different letter during the life of this object.
+
+    Returns:
+      A tuple of (seed path, USB drive letter without a colon, or None if the
+      USB drive was not queried).
+    """
+    if _SEED_PATH.value:
+      return _SEED_PATH.value, None
+    drive_letter = self._GetDisk(constants.USB_VOLUME_LABEL).strip(':')
+    return (
+        os.path.join(f'{drive_letter}:', os.sep, 'oci', 'seed.json'),
+        drive_letter,
+    )
+
   def _WriteSeedFile(self) -> None:
     """Writes seed.json to disk, leveraging data from multiple sources."""
-    hwinfo = hw_info.HWInfo()
-    drive_letter = self._GetDisk(constants.USB_VOLUME_LABEL).strip(':')
-
-    if _SEED_PATH.value:
-      path = _SEED_PATH.value
-    else:
-      path = os.path.join(f'{drive_letter}:', os.sep, 'oci', 'seed.json')
-
+    path, drive_letter = self._ResolveSeedSource()
     data = self._ReadFile(path)
+
+    if _IsProcessedSeed(data):
+      # An earlier stage already bound this seed to the device and boot.wim,
+      # and the USB may be gone by now. Reuse its Mac and Hash.
+      logging.debug('Reusing processed seed from %s', path)
+      mac, wim_hash = data['Mac'], data['Hash']
+    else:
+      mac = hw_info.HWInfo().MacAddresses()
+      wim_hash = self._GetHash(self._GetBootWimFilePath(drive_letter)).decode(
+          'utf-8'
+      )
+
     data = {
-        'Mac': hwinfo.MacAddresses(),
+        'Mac': mac,
         'Seed': data['Seed'],
         'Signature': data['Signature'],
-        'Hash': self._GetHash(self._GetBootWimFilePath()).decode('utf-8'),
+        'Hash': wim_hash,
     }
 
     file_util.CreateDirectories(self._SeedPath())
@@ -266,9 +307,17 @@ class BeyondCorp(object):
         '\x1b[32m\033[1mIt is now safe to unplug the USB flash drive.\x1b[0m'
     )
 
-  def _GetBootWimFilePath(self) -> str:
-    """Primarily exists for easier unit testing."""
-    drive_letter = self._GetDisk(constants.USB_VOLUME_LABEL).strip(':')
+  def _GetBootWimFilePath(self, drive_letter: str | None = None) -> str:
+    """Returns the boot.wim path on the USB drive.
+
+    Args:
+      drive_letter: USB drive letter without a colon. Queried from WMI if unset.
+
+    Returns:
+      Path to boot.wim on the USB drive.
+    """
+    if not drive_letter:
+      drive_letter = self._GetDisk(constants.USB_VOLUME_LABEL).strip(':')
     return fr'{drive_letter}:\sources\boot.wim'
 
   @backoff.on_exception(
