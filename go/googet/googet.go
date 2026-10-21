@@ -19,18 +19,32 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/google/deck"
 	"github.com/google/glazier/go/helpers"
+	"github.com/google/glazier/go/registry"
+)
+
+const (
+	// envVar is the environment variable that holds the GooGet root directory.
+	envVar = "GooGetRoot"
+	// machineEnvironment is the registry key of the machine-wide environment
+	// variables, where the GooGet installer stores GooGetRoot.
+	machineEnvironment = `SYSTEM\CurrentControlSet\Control\Session Manager\Environment`
 )
 
 var (
 	// Test Helpers
 	funcExec = helpers.Exec
+	// funcMachineGooGetRoot returns the GooGetRoot value of the machine-wide
+	// environment, which only administrators can change.
+	funcMachineGooGetRoot = func() (string, error) { return registry.GetString(machineEnvironment, envVar) }
 )
 
 // Config provides the ability to customize GooGet behavior.
@@ -43,12 +57,35 @@ type Config struct {
 func NewConfig() *Config {
 	timeout := 10 * time.Minute
 	return &Config{
-		GooGetExe: os.Getenv("GooGetRoot") + `\googet.exe`,
+		GooGetExe: gooGetExe(),
 		ExecConfig: helpers.ExecConfig{
 			Timeout:  &timeout,
 			Verifier: helpers.NewExecVerifier(),
 		},
 	}
+}
+
+// gooGetExe returns the path of googet.exe in the GooGet root directory. It
+// prefers the machine-wide GooGetRoot value in the registry, which only
+// administrators can change, over the environment of the process. It returns
+// "" if neither names an absolute directory, so that commands fail instead of
+// running a googet.exe relative to the current drive.
+func gooGetExe() string {
+	root, err := funcMachineGooGetRoot()
+	if err != nil || !isAbsRoot(root) {
+		root = os.Getenv(envVar)
+	}
+	if !isAbsRoot(root) {
+		return ""
+	}
+	return root + `\googet.exe`
+}
+
+// isAbsRoot reports whether root names an absolute directory. A relative root
+// would run a googet.exe from the current directory or drive.
+// filepath.IsAbs knows drive letters only on Windows.
+func isAbsRoot(root string) bool {
+	return root != "" && (runtime.GOOS != "windows" || filepath.IsAbs(root))
 }
 
 func call(args []string, conf *Config) error {
