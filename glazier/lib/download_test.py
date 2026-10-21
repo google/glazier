@@ -137,16 +137,14 @@ class DownloadTest(test_utils.GlazierTestCase):
     self.assertEqual(self._dl._ConvertBytes(56755555555), '52.86GB')
     self.assertEqual(self._dl._ConvertBytes(6785555555555), '6.17TB')
 
-  @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
-  def test_open_stream_internal(self, mock_urlopen, mock_check_winpe):
+  def test_open_stream_internal(self, mock_urlopen):
 
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
     url = _TEST_URI_YAML
     httperr = download.urllib.error.HTTPError('Error', None, None, None, None)
     urlerr = download.urllib.error.URLError('Error')
-    mock_check_winpe.return_value = False
 
     # 200
     mock_urlopen.side_effect = iter([httperr, urlerr, file_stream])
@@ -163,24 +161,69 @@ class DownloadTest(test_utils.GlazierTestCase):
     with self.assert_raises_with_validation(download.Error):
       self._dl._OpenStream(url)
 
-  @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
+  @mock.patch.object(download.time, 'sleep', autospec=True)
+  @mock.patch.object(download, 'logging', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
-  def test_open_file_stream_gives_up(self, mock_urlopen, mock_check_winpe):
+  def test_open_file_stream_retries_with_original_context(
+      self,
+      mock_urlopen,
+      mock_logging,
+      unused_mock_sleep,
+  ):
 
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
-    mock_check_winpe.return_value = False
+    url = _TEST_URI_YAML
+    not_found = download.urllib.error.HTTPError(
+        url, 404, 'Not Found', None, None
+    )
+    unavailable = download.urllib.error.HTTPError(
+        url, 503, 'Service Unavailable', None, None
+    )
+    urlerr = download.urllib.error.URLError('Connection refused')
+    mock_urlopen.side_effect = iter(
+        [not_found, unavailable, urlerr, file_stream]
+    )
+
+    res = self._dl._OpenFileStream(url)
+
+    self.assertEqual(res, file_stream)
+    # Each error is retried by @backoff with the original arguments. There is
+    # no extra attempt with a different SSL context or without a timeout.
+    expected_call = mock.call(
+        url, timeout=download.TIMEOUT, context=self._dl._ssl_context
+    )
+    self.assertEqual(mock_urlopen.call_args_list, [expected_call] * 4)
+
+    errors_logged = [c.args for c in mock_logging.error.call_args_list]
+    self.assertIn(('File not found on remote server: %s.', url), errors_logged)
+    self.assertIn(
+        (
+            'HTTP error %s while downloading "%s": %s',
+            503,
+            url,
+            'Service Unavailable',
+        ),
+        errors_logged,
+    )
+    self.assertIn(
+        ('Error while downloading "%s": %s', url, urlerr), errors_logged
+    )
+
+  @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
+  def test_open_file_stream_gives_up(self, mock_urlopen):
+
+    file_stream = mock.Mock()
+    file_stream.getcode.return_value = 200
 
     mock_urlopen.side_effect = self.failing_url_open
     with self.assert_raises_with_validation(download.Error):
       self._dl._OpenStream(_TEST_URI_YAML)
 
-  @mock.patch.object(download.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(download.urllib.request, 'urlopen', autospec=True)
-  def test_check_url(self, mock_urlopen, mock_check_winpe):
+  def test_check_url(self, mock_urlopen):
     file_stream = mock.Mock()
     file_stream.getcode.return_value = 200
-    mock_check_winpe.return_value = False
 
     # match
     mock_urlopen.side_effect = iter([file_stream])
