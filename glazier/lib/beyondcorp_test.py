@@ -103,7 +103,35 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
   @mock.patch.object(winpe, 'check_winpe', autospec=True)
   def test_seed_path_sys(self, mock_check_winpe):
     mock_check_winpe.return_value = False
-    self.assertEqual(self.beyondcorp._SeedPath(), constants.SYS_SEED_FILE)
+    # Compare with the constants module that beyondcorp reads, which can
+    # override SYS_SEED_FILE. WINPE_SEED_FILE is not overridden, so the
+    # WinPE test can use the constants imported here.
+    self.assertEqual(
+        self.beyondcorp._SeedPath(), beyondcorp.constants.SYS_SEED_FILE
+    )
+
+  @mock.patch.object(beyondcorp.BeyondCorp, '_WriteSeedFile', autospec=True)
+  @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
+  @mock.patch.object(beyondcorp.requests, 'post', autospec=True)
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
+  def test_get_signed_url_existing_sys_seed(
+      self, mock_check_winpe, mock_post, mock_getdisk, mock_write_seed_file
+  ):
+    mock_check_winpe.return_value = False
+    self.patch_constant(beyondcorp.constants, 'SYS_SEED_FILE', self.seed_dst)
+    mock_getdisk.side_effect = beyondcorp.BeyondCorpDriveLetterError(
+        'No Removable Media was found.'
+    )
+    mock_post.return_value = _create_sign_response(200, 'Success', DECODED_HASH)
+    FLAGS.use_signed_url = True
+    FLAGS.sign_endpoint = 'https://sign-endpoint/sign'
+
+    sign = self.beyondcorp.GetSignedUrl('unstable/test.yaml')
+
+    self.assertEqual(sign, DECODED_HASH)
+    mock_post.assert_called_once_with(FLAGS.sign_endpoint, data=_TEST_SEED)
+    mock_getdisk.assert_not_called()
+    mock_write_seed_file.assert_not_called()
 
   @mock.patch.object(winpe, 'check_winpe', autospec=True)
   def test_seed_path_winpe(self, mock_check_winpe):
