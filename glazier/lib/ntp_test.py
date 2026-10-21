@@ -27,13 +27,12 @@ from glazier.lib import test_utils
 
 class NtpTest(test_utils.GlazierTestCase):
 
+  @mock.patch.object(ntp.time, 'localtime', side_effect=time.gmtime)
   @mock.patch.object(ntp.time, 'sleep', autospec=True)
   @mock.patch.object(execute, 'execute_binary', autospec=True)
   @mock.patch.object(ntp.ntplib.NTPClient, 'request', autospec=True)
-  def test_sync_clock_to_ntp(self, request, eb, sleep):
+  def test_sync_clock_to_ntp(self, request, eb, sleep, unused_localtime):
 
-    os.environ['TZ'] = 'UTC'
-    time.tzset()
     return_time = mock.Mock()
     return_time.ref_time = 1453220630.64458
     request.side_effect = iter([None, None, None, return_time])
@@ -49,10 +48,12 @@ class NtpTest(test_utils.GlazierTestCase):
     request.assert_called_with(mock.ANY, 'time.google.com', version=3)
     eb.assert_has_calls([
         mock.call(
-            f'{constants.SYS_SYSTEM32}/cmd.exe', ['/c', 'date', '01-19-2016'],
+            os.path.join(constants.WINPE_SYSTEM32, 'cmd.exe'),
+            ['/c', 'date', '01-19-2016'],
             shell=True),
         mock.call(
-            f'{constants.SYS_SYSTEM32}/cmd.exe', ['/c', 'time', '16:23:50'],
+            os.path.join(constants.WINPE_SYSTEM32, 'cmd.exe'),
+            ['/c', 'time', '16:23:50'],
             shell=True)
     ])
 
