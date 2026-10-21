@@ -41,7 +41,9 @@ SYS_POWERSHELL = os.path.join(
     SYS_SYSTEM32, 'WindowsPowerShell', 'v1.0', 'powershell.exe'
 )
 SYS_GOOGETROOT = os.path.join(SYS_ROOT, os.sep, 'ProgramData', 'GooGet')
-SYS_SEED_FILE = os.path.join(SYS_CACHE, os.sep, 'resources', 'seed.json')
+# Do not add os.sep here: a bare separator component resets the join to the
+# drive root, which would yield C:\resources\seed.json.
+SYS_SEED_FILE = os.path.join(SYS_CACHE, 'resources', 'seed.json')
 
 # WinPE
 WINPE_ROOT = 'X:'
