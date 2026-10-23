@@ -24,6 +24,7 @@ from glazier.lib.buildinfo import BuildInfo
 
 class DriversTest(test_utils.GlazierTestCase):
 
+  @mock.patch.object(drivers.winpe, 'check_winpe', autospec=True)
   @mock.patch.object(BuildInfo, 'ReleasePath')
   @mock.patch.object(BuildInfo, 'Branch')
   @mock.patch('glazier.lib.download.Download.VerifyShaHash', autospec=True)
@@ -32,7 +33,7 @@ class DriversTest(test_utils.GlazierTestCase):
   @mock.patch.object(drivers.file_util, 'CreateDirectories', autospec=True)
   def test_driver_wim(self, mock_createdirectories, mock_execute_binary,
                       mock_downloadfile, mock_verifyshahash, mock_branch,
-                      mock_releasepath):
+                      mock_releasepath, mock_check_winpe):
 
     bi = BuildInfo()
 
@@ -49,6 +50,7 @@ class DriversTest(test_utils.GlazierTestCase):
     }
     mock_branch.return_value = 'stable'
     mock_releasepath.return_value = '/'
+    mock_check_winpe.return_value = False
 
     # Success
     dw = drivers.DriverWIM(conf['data']['driver'], bi)
@@ -62,7 +64,7 @@ class DriversTest(test_utils.GlazierTestCase):
     cache = drivers.constants.SYS_CACHE
     mock_execute_binary.assert_has_calls([
         mock.call(
-            drivers.constants.WINPE_DISM,
+            drivers.constants.SYS_DISM,
             [
                 '/Mount-Image',
                 f'/ImageFile:{local}',
@@ -78,7 +80,7 @@ class DriversTest(test_utils.GlazierTestCase):
             shell=False,
         ),
         mock.call(
-            drivers.constants.WINPE_DISM,
+            drivers.constants.SYS_DISM,
             ['/Unmount-Image', f'/MountDir:{cache}\\Drivers\\', '/Discard'],
             shell=False,
         ),
