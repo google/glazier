@@ -19,7 +19,10 @@ package helpers
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"regexp"
+	"strconv"
 	"syscall"
 	"time"
 	"unsafe"
@@ -85,6 +88,15 @@ const (
 	swpNoZOrder   = 0x0004
 	swpShowWindow = 0x0040
 )
+
+func killProcessTree(p *os.Process) {
+	if p == nil {
+		return
+	}
+	// taskkill /T walks the PPID chain, so run it before killing the parent.
+	exec.Command(os.ExpandEnv(`${SystemRoot}\System32\taskkill.exe`), "/T", "/F", "/PID", strconv.Itoa(p.Pid)).Run()
+	p.Kill()
+}
 
 // GetServiceState interrogates local system services and returns their status and configuration.
 func GetServiceState(name string) (svc.Status, mgr.Config, error) {

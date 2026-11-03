@@ -17,3 +17,10 @@
 
 package helpers
 
+import "os"
+
+func killProcessTree(p *os.Process) {
+	if p != nil {
+		p.Kill()
+	}
+}

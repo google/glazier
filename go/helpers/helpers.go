@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -253,6 +254,11 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 		cmd.Stderr = &errbuf
 	}
 
+	if conf.Timeout != nil {
+		// Give up on lingering pipe holders after the process exits.
+		cmd.WaitDelay = 10 * time.Second
+	}
+
 	start := time.Now()
 	// Start command asynchronously
 	deck.InfofA("Executing: %v \n", cmd.Args).With(deck.V(2)).Go()
@@ -261,15 +267,19 @@ func execute(path string, args []string, conf *ExecConfig) (ExecResult, error) {
 	}
 
 	var timer *time.Timer
+	var done atomic.Bool
 	// Create a timer that will kill the process
 	if conf.Timeout != nil {
 		timer = time.AfterFunc(*conf.Timeout, func() {
-			cmd.Process.Kill()
+			if !done.Load() { // taskkill /PID isn't safe after Wait (PID reuse)
+				killProcessTree(cmd.Process)
+			}
 		})
 	}
 
 	// Wait for execution
 	result.ExitErr = cmd.Wait()
+	done.Store(true)
 
 	// Populate the result object
 	result.Stdout = outbuf.Bytes()
