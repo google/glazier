@@ -47,16 +47,20 @@ _TEST_SEED = ("""
 }
 """ % DECODED_HASH).replace('\n', '').replace('  ', '')
 
-_TEST_SEED_NO_PATH = ("""
-{
-  "Mac": ["00:00:00:00:00:00"],
-  "Seed": {
-        "Seed": "SPROUT"
-    },
-  "Signature": "AUTOGRAPH",
-  "Hash": "%s"
-}
-""" % DECODED_HASH).replace('\n', '').replace('  ', '')
+# A seed as written to the OCI USB. The Hash is nested under Seed, and there
+# is no top-level Mac or Hash.
+_RAW_OCI_SEED = json.dumps({
+    'Seed': {'Seed': 'SPROUT', 'Hash': 'NESTED'},
+    'Signature': 'AUTOGRAPH',
+})
+
+# A seed already processed by _WriteSeedFile in an earlier stage.
+_PROCESSED_SEED = json.dumps({
+    'Hash': 'PROCESSED_SENTINEL',
+    'Mac': ['11:11:11:11:11:11'],
+    'Seed': {'Seed': 'SPROUT'},
+    'Signature': 'AUTOGRAPH',
+})
 
 FLAGS = flags.FLAGS
 
@@ -103,12 +107,23 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
   @mock.patch.object(winpe, 'check_winpe', autospec=True)
   def test_seed_path_sys(self, mock_check_winpe):
     mock_check_winpe.return_value = False
-    self.assertEqual(self.beyondcorp._SeedPath(), constants.SYS_SEED_FILE)
+    self.assertEqual(
+        self.beyondcorp._SeedPath(), beyondcorp.constants.SYS_SEED_FILE
+    )
 
   @mock.patch.object(winpe, 'check_winpe', autospec=True)
   def test_seed_path_winpe(self, mock_check_winpe):
     mock_check_winpe.return_value = True
-    self.assertEqual(self.beyondcorp._SeedPath(), constants.WINPE_SEED_FILE)
+    self.assertEqual(
+        self.beyondcorp._SeedPath(), beyondcorp.constants.WINPE_SEED_FILE
+    )
+
+  def test_sys_seed_file_under_sys_cache(self):
+    # A stray os.sep in the join used to reset the path to the drive root.
+    self.assertEqual(
+        constants.SYS_SEED_FILE,
+        os.path.join(constants.SYS_CACHE, 'resources', 'seed.json'),
+    )
 
   def test_get_signed_url_disabled(self):
     with self.assert_raises_with_validation(
@@ -251,20 +266,127 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
     mock_seed_path.return_value = self.seed_dst
     mock_getbootwimfilepath.return_value = self.wim_path
     mock_macaddresses.return_value = ['00:00:00:00:00:00']
-    beyondcorp.FLAGS.seed_path = self.seed_src
+    beyondcorp.FLAGS.seed_path = self.create_tempfile(
+        file_path='raw_seed.json', content=_RAW_OCI_SEED
+    ).full_path
 
     self.beyondcorp._WriteSeedFile()
 
-    # self.assertTrue(mock_macaddresses.called)
     mock_dump.assert_called_once_with(
-        json.loads(_TEST_SEED_NO_PATH),
+        {
+            'Hash': DECODED_HASH,
+            'Mac': ['00:00:00:00:00:00'],
+            'Seed': {'Seed': 'SPROUT', 'Hash': 'NESTED'},
+            'Signature': 'AUTOGRAPH',
+        },
         mock.ANY,
         ensure_ascii=True,
         sort_keys=True,
         indent=2,
         separators=(',', ': '),
     )
+    self.assertTrue(mock_macaddresses.called)
     self.assertTrue(mock_getbootwimfilepath.called)
+
+  @mock.patch.object(beyondcorp.BeyondCorp, '_SeedPath', autospec=True)
+  @mock.patch.object(beyondcorp.BeyondCorp, '_GetHash', autospec=True)
+  @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
+  @mock.patch.object(beyondcorp.hw_info, 'HWInfo', autospec=True)
+  def test_write_seed_file_processed_seed_skips_usb(
+      self, mock_hwinfo, mock_getdisk, mock_gethash, mock_seed_path
+  ):
+    # Host OS after the USB was unplugged: --seed_path points at the seed
+    # that WinPE already processed and copied to the system drive.
+    mock_getdisk.side_effect = beyondcorp.BeyondCorpDriveLetterError(
+        'No Removable Media was found.'
+    )
+    dst = os.path.join(self.create_tempdir().full_path, 'out', 'seed.json')
+    mock_seed_path.return_value = dst
+    beyondcorp.FLAGS.seed_path = self.create_tempfile(
+        file_path='processed_seed.json', content=_PROCESSED_SEED
+    ).full_path
+
+    self.beyondcorp._WriteSeedFile()
+
+    with open(dst) as f:
+      self.assertEqual(json.load(f), json.loads(_PROCESSED_SEED))
+    mock_getdisk.assert_not_called()
+    mock_gethash.assert_not_called()
+    mock_hwinfo.assert_not_called()
+
+  @mock.patch.object(beyondcorp.BeyondCorp, '_SeedPath', autospec=True)
+  @mock.patch.object(beyondcorp.BeyondCorp, '_ReadFile', autospec=True)
+  @mock.patch.object(beyondcorp.BeyondCorp, '_GetHash', autospec=True)
+  @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
+  @mock.patch.object(beyondcorp.hw_info.HWInfo, 'MacAddresses', autospec=True)
+  def test_write_seed_file_no_seed_path_reads_usb(
+      self,
+      mock_macaddresses,
+      mock_getdisk,
+      mock_gethash,
+      mock_readfile,
+      mock_seed_path,
+  ):
+    mock_getdisk.return_value = 'E:'
+    mock_gethash.return_value = b'USBHASH'
+    mock_readfile.return_value = json.loads(_RAW_OCI_SEED)
+    mock_macaddresses.return_value = ['00:00:00:00:00:00']
+    dst = os.path.join(self.create_tempdir().full_path, 'seed.json')
+    mock_seed_path.return_value = dst
+    beyondcorp.FLAGS.seed_path = None
+
+    self.beyondcorp._WriteSeedFile()
+
+    mock_readfile.assert_called_once_with(
+        self.beyondcorp, os.path.join('E:', os.sep, 'oci', 'seed.json')
+    )
+    # The drive letter is resolved once and reused for the boot.wim path.
+    mock_getdisk.assert_called_once_with(
+        self.beyondcorp, beyondcorp.constants.USB_VOLUME_LABEL
+    )
+    # _GetHash is wrapped in lru_cache, so autospec may not record self.
+    mock_gethash.assert_called_once()
+    self.assertEqual(mock_gethash.call_args.args[-1], r'E:\sources\boot.wim')
+    with open(dst) as f:
+      self.assertEqual(json.load(f)['Hash'], 'USBHASH')
+
+  @mock.patch.object(beyondcorp.BeyondCorp, '_SeedPath', autospec=True)
+  @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
+  @mock.patch.object(beyondcorp.hw_info.HWInfo, 'MacAddresses', autospec=True)
+  def test_write_seed_file_raw_seed_without_usb_raises(
+      self, mock_macaddresses, mock_getdisk, mock_seed_path
+  ):
+    # A raw seed still needs the USB to hash boot.wim.
+    mock_getdisk.side_effect = beyondcorp.BeyondCorpDriveLetterError(
+        'No Removable Media was found.'
+    )
+    mock_macaddresses.return_value = ['00:00:00:00:00:00']
+    mock_seed_path.return_value = os.path.join(
+        self.create_tempdir().full_path, 'seed.json'
+    )
+    beyondcorp.FLAGS.seed_path = self.create_tempfile(
+        file_path='raw_seed.json', content=_RAW_OCI_SEED
+    ).full_path
+
+    with self.assert_raises_with_validation(
+        beyondcorp.BeyondCorpDriveLetterError
+    ):
+      self.beyondcorp._WriteSeedFile()
+    self.assertFalse(os.path.exists(mock_seed_path.return_value))
+
+  def test_is_processed_seed(self):
+    cases = {
+        'processed': (json.loads(_PROCESSED_SEED), True),
+        'raw_oci': (json.loads(_RAW_OCI_SEED), False),
+        'no_mac': ({'Hash': 'h', 'Seed': {}, 'Signature': 's'}, False),
+        'empty_mac': ({'Mac': [], 'Hash': 'h'}, False),
+        'no_hash': ({'Mac': ['m'], 'Seed': {'Hash': 'h'}}, False),
+        'empty_hash': ({'Mac': ['m'], 'Hash': ''}, False),
+        'non_str_hash': ({'Mac': ['m'], 'Hash': {'x': 'y'}}, False),
+    }
+    for name, (data, expected) in cases.items():
+      with self.subTest(name=name):
+        self.assertEqual(beyondcorp._IsProcessedSeed(data), expected)
 
   @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
   def test_get_boot_wim_file_path(self, mock_getdisk):
@@ -272,6 +394,13 @@ class BeyondCorpTest(test_utils.GlazierTestCase):
     self.assertEqual(
         self.beyondcorp._GetBootWimFilePath(), r'D:\sources\boot.wim'
     )
+
+  @mock.patch.object(beyondcorp.BeyondCorp, '_GetDisk', autospec=True)
+  def test_get_boot_wim_file_path_with_drive_letter(self, mock_getdisk):
+    self.assertEqual(
+        self.beyondcorp._GetBootWimFilePath('F'), r'F:\sources\boot.wim'
+    )
+    mock_getdisk.assert_not_called()
 
   def test_read_file(self):
     FLAGS.seed_path = self.seed_dst
