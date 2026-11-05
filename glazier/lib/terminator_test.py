@@ -132,6 +132,186 @@ class LogAndExitTest(test_utils.GlazierTestCase):
     ]
     self.assert_lines_match_patterns(critical_msg.splitlines(), patterns)
 
+  @mock.patch.object(terminator.logs, 'Collect', autospec=True)
+  @mock.patch.object(terminator, 'logging', autospec=True)
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
+  def test_logs_before_collect(
+      self, mock_check_winpe, mock_logging, mock_collect
+  ):
+
+    mock_check_winpe.return_value = True
+    # Raised and caught here, so log_and_exit runs outside an except block
+    # with an exception that carries a traceback.
+    raised = test_utils.raise_from(EXCEPTION_1, GLAZIER_ERROR_1)
+    self.assertIsNotNone(raised.__traceback__)
+
+    collect_errors = [
+        None,
+        terminator.logs.LogCollectionError(),
+        RuntimeError('unexpected'),
+        KeyboardInterrupt(),
+    ]
+    order = []
+
+    def _record(name, error=None):
+
+      def _side_effect(*unused_args, **unused_kwargs):
+        order.append(name)
+        if error is not None:
+          raise error
+
+      return _side_effect
+
+    mock_logging.debug.side_effect = _record('debug')
+    mock_logging.critical.side_effect = _record('critical')
+    for collect_error in collect_errors:
+      with self.subTest(collect_error=repr(collect_error)):
+        order.clear()
+        mock_collect.side_effect = _record('collect', collect_error)
+
+        with self.assertRaises(SystemExit) as cm:
+          terminator.log_and_exit(terminator.buildinfo.BuildInfo(), raised)
+
+        self.assertEqual(cm.exception.code, 1)
+        self.assertEqual(order, ['debug', 'critical', 'collect'])
+        traceback_msg = mock_logging.debug.call_args[0][0]
+        self.assertIn('Traceback (most recent call last)', traceback_msg)
+        self.assertIn('GlazierError One', traceback_msg)
+        self.assertIn(
+            'IMAGING PROCESS FAILED', mock_logging.critical.call_args[0][0]
+        )
+
+  @mock.patch.object(terminator.logs, 'Collect', autospec=True)
+  @mock.patch.object(terminator, 'logging', autospec=True)
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
+  def test_no_collect(self, mock_check_winpe, mock_logging, mock_collect):
+
+    mock_check_winpe.return_value = True
+    with self.assertRaises(SystemExit) as cm:
+      terminator.log_and_exit(
+          terminator.buildinfo.BuildInfo(), GLAZIER_ERROR_1, collect=False
+      )
+
+    self.assertEqual(cm.exception.code, 1)
+    mock_collect.assert_not_called()
+    self.assertTrue(mock_logging.critical.called)
+
+  @mock.patch.object(terminator.logs, 'Collect', autospec=True)
+  @mock.patch.object(terminator, 'logging', autospec=True)
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
+  def test_composition_error_still_collects_and_exits(
+      self, mock_check_winpe, mock_logging, mock_collect
+  ):
+
+    # Fail only the composition call; the later CachePath() call for log
+    # collection also checks for WinPE.
+    mock_check_winpe.side_effect = [RuntimeError('check_winpe failed'), True]
+
+    with self.assertRaises(SystemExit) as cm:
+      terminator.log_and_exit(terminator.buildinfo.BuildInfo(), GLAZIER_ERROR_1)
+
+    self.assertEqual(cm.exception.code, 1)
+    mock_collect.assert_called_once()
+    mock_logging.exception.assert_called_once_with(
+        'Failed to compose the detailed failure message.'
+    )
+    critical_msg = mock_logging.critical.call_args[0][0]
+    self.assert_lines_match_patterns(
+        critical_msg,
+        [
+            r'.*IMAGING PROCESS FAILED.*',
+            r'.*1\. GlazierError: GlazierError One \(Error Code: 111\).*',
+            r'.*[*]+.*',
+        ],
+    )
+
+  @mock.patch.object(terminator.logs, 'Collect', autospec=True)
+  @mock.patch.object(terminator, 'logging', autospec=True)
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
+  def test_unprintable_exception_still_collects_and_exits(
+      self, mock_check_winpe, mock_logging, mock_collect
+  ):
+
+    class UnprintableError(Exception):
+
+      def __str__(self):
+        raise RuntimeError('__str__ failed')
+
+    mock_check_winpe.return_value = True
+
+    with self.assertRaises(SystemExit) as cm:
+      terminator.log_and_exit(
+          terminator.buildinfo.BuildInfo(), UnprintableError()
+      )
+
+    self.assertEqual(cm.exception.code, 1)
+    mock_collect.assert_called_once()
+    mock_logging.exception.assert_called_once_with(
+        'Failed to compose the detailed failure message.'
+    )
+    critical_msg = mock_logging.critical.call_args[0][0]
+    self.assert_lines_match_patterns(
+        critical_msg.splitlines(),
+        [
+            r'.*IMAGING PROCESS FAILED.*',
+            r'^  1\. UnprintableError$',
+            r'.*[*]+.*',
+        ],
+    )
+
+  def test_exception_summary_unknown_type_name(self):
+
+    class _NamelessMeta(type):
+
+      @property
+      def __name__(cls):
+        raise RuntimeError('__name__ failed')
+
+    class NamelessError(Exception, metaclass=_NamelessMeta):
+
+      def __str__(self):
+        raise RuntimeError('__str__ failed')
+
+    self.assertEqual(
+        terminator._exception_summary(NamelessError()), 'Unknown error'
+    )
+
+  @mock.patch.object(terminator.logs, 'Collect', autospec=True)
+  @mock.patch.object(terminator, 'logging', autospec=True)
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
+  def test_unexpected_collect_error_logs_and_exits(
+      self, mock_check_winpe, mock_logging, mock_collect
+  ):
+
+    mock_check_winpe.return_value = True
+    mock_collect.side_effect = RuntimeError('unexpected')
+
+    with self.assertRaises(SystemExit) as cm:
+      terminator.log_and_exit(terminator.buildinfo.BuildInfo(), GLAZIER_ERROR_1)
+
+    self.assertEqual(cm.exception.code, 1)
+    mock_logging.exception.assert_called_once_with(
+        'Failed to log the failure or collect logs.'
+    )
+
+  @mock.patch.object(terminator.logs, 'Collect', autospec=True)
+  @mock.patch.object(terminator, 'logging', autospec=True)
+  @mock.patch.object(winpe, 'check_winpe', autospec=True)
+  def test_collect_interrupted_logs_and_exits(
+      self, mock_check_winpe, mock_logging, mock_collect
+  ):
+
+    mock_check_winpe.return_value = True
+    mock_collect.side_effect = KeyboardInterrupt()
+
+    with self.assertRaises(SystemExit) as cm:
+      terminator.log_and_exit(terminator.buildinfo.BuildInfo(), GLAZIER_ERROR_1)
+
+    self.assertEqual(cm.exception.code, 1)
+    mock_logging.error.assert_called_once_with(
+        'Interrupted before exit; logs may not have been collected.'
+    )
+
 
 if __name__ == '__main__':
   absltest.main()

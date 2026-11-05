@@ -24,7 +24,6 @@ import logging
 import os
 import re
 import socket
-import ssl
 import sys
 import tempfile
 import time
@@ -35,7 +34,6 @@ import urllib.request
 import backoff
 from glazier.lib import file_util
 from glazier.lib import flags
-from glazier.lib import winpe
 
 from glazier.lib import beyondcorp
 from glazier.lib import errors
@@ -292,52 +290,23 @@ class BaseDownloader(object):
       logging.debug('Expected status code(s): %s', status_codes)
 
     try:
-      if winpe.check_winpe():
-        file_stream = urllib.request.urlopen(
-            url, timeout=TIMEOUT, context=self._ssl_context
-        )
+      file_stream = urllib.request.urlopen(
+          url, timeout=TIMEOUT, context=self._ssl_context
+      )
+
+    # Reraise HTTP and URL errors so that @backoff retries the request.
+    except urllib.error.HTTPError as e:
+      if e.code == 404:
+        logging.error('File not found on remote server: %s.', url)
       else:
-        file_stream = urllib.request.urlopen(
-            url, timeout=TIMEOUT, context=self._ssl_context
+        logging.error(
+            'HTTP error %s while downloading "%s": %s', e.code, url, e.reason
         )
+      raise
 
-    # First attempt failed with HTTPError. Try something else before giving up.
-    except urllib.error.HTTPError:
-      logging.error('File not found on remote server: %s.', url)
-
-      try:
-        logging.info('Trying again with machine context...')
-        ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        file_stream = urllib.request.urlopen(url, context=ctx)
-
-      # Second attempt failed with HTTPError. Reraise and trigger a retry.
-      except urllib.error.HTTPError:
-        logging.error('File not found on remote server: %s.', url)
-        raise
-
-      # Second attempt failed with URLError. Reraise and trigger a retry.
-      except urllib.error.URLError as e2:
-        logging.error('Error while downloading "%s": %s', url, e2)
-        raise
-
-    # First attempt failed with URLError. Try something else before giving up.
-    except urllib.error.URLError as e1:
-      logging.error('Error while downloading "%s": %s', url, e1)
-
-      try:
-        logging.info('Trying again with machine context...')
-        ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        file_stream = urllib.request.urlopen(url, context=ctx)
-
-      # Second attempt failed with HTTPError. Reraise and trigger a retry.
-      except urllib.error.HTTPError:
-        logging.error('File not found on remote server: %s.', url)
-        raise
-
-      # Second attempt failed with URLError. Reraise and trigger a retry.
-      except urllib.error.URLError as e2:
-        logging.error('Error while downloading "%s": %s', url, e2)
-        raise
+    except urllib.error.URLError as e:
+      logging.error('Error while downloading "%s": %s', url, e)
+      raise
 
     # We successfully retrieved a file stream, so just return it.
     if file_stream.getcode() in (status_codes or [200]):

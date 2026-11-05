@@ -17,8 +17,13 @@
 from unittest import mock
 
 from absl.testing import absltest
+from absl.testing import parameterized
 from glazier.lib import test_utils
 from glazier.lib.actions import sysprep
+
+_NO_RESPONSE_WARNING = 'No DHCP option 101 response received from server %s.'
+_DECODE_WARNING = 'Could not decode DHCP option 101 response %r from server %s.'
+_FALLBACK_WARNING = 'Falling back to default timezone %s.'
 
 
 UNATTEND_XML = r"""<?xml version='1.0' encoding='utf-8'?>
@@ -75,14 +80,21 @@ class SysprepTest(test_utils.GlazierTestCase):
       st._EditUnattend(
           'Yakutsk Standard Time', '/windows/panther/noneattend.xml')
 
+  @mock.patch.object(sysprep.time, 'sleep', autospec=True)
   @mock.patch.object(sysprep.timezone, 'Timezone', autospec=True)
   @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
   @mock.patch.object(
-      sysprep.SetUnattendTimeZone, '_EditUnattend', autospec=True)
+      sysprep.SetUnattendTimeZone, '_EditUnattend', autospec=True
+  )
   @mock.patch.object(sysprep.dhcp, 'GetDhcpOption', autospec=True)
   def test_set_unattend_time_zone_run(
-      self, mock_getdhcpoption, mock_editunattend, mock_buildinfo,
-      mock_timezone):
+      self,
+      mock_getdhcpoption,
+      mock_editunattend,
+      mock_buildinfo,
+      mock_timezone,
+      mock_sleep,
+  ):
 
     mock_buildinfo.NetInterfaces.return_value = [
         mock.Mock(
@@ -143,6 +155,107 @@ class SysprepTest(test_utils.GlazierTestCase):
     st.Run()
     mock_editunattend.assert_called_with(st, u'Pacific Standard Time')
     self.assertFalse(mock_timezone.called)
+
+  @parameterized.named_parameters(
+      dict(
+          testcase_name='success_attempt_1',
+          responses=[b'Antarctica/McMurdo'],
+          expected_queries=1,
+          expected_sleeps=[],
+          expected_zone='New Zealand Standard Time',
+          expected_warnings=[],
+      ),
+      dict(
+          testcase_name='success_attempt_3',
+          responses=[None, b'', b'Antarctica/McMurdo'],
+          expected_queries=3,
+          expected_sleeps=[mock.call(5)] * 2,
+          expected_zone='New Zealand Standard Time',
+          expected_warnings=[
+              mock.call(_NO_RESPONSE_WARNING, '255.255.255.255'),
+          ],
+      ),
+      dict(
+          testcase_name='all_none',
+          responses=[None] * 5,
+          expected_queries=5,
+          expected_sleeps=[mock.call(5)] * 4,
+          expected_zone='Pacific Standard Time',
+          expected_warnings=[mock.call(_NO_RESPONSE_WARNING, '255.255.255.255')]
+          * 5
+          + [mock.call(_FALLBACK_WARNING, 'Pacific Standard Time')],
+      ),
+      dict(
+          testcase_name='all_str',
+          responses=['Antarctica/McMurdo'] * 5,
+          expected_queries=5,
+          expected_sleeps=[mock.call(5)] * 4,
+          expected_zone='Pacific Standard Time',
+          expected_warnings=[
+              mock.call(
+                  _DECODE_WARNING, 'Antarctica/McMurdo', '255.255.255.255'
+              )
+          ]
+          * 5
+          + [mock.call(_FALLBACK_WARNING, 'Pacific Standard Time')],
+      ),
+      dict(
+          testcase_name='all_invalid_utf8',
+          responses=[b'\xff'] * 5,
+          expected_queries=5,
+          expected_sleeps=[mock.call(5)] * 4,
+          expected_zone='Pacific Standard Time',
+          expected_warnings=[
+              mock.call(_DECODE_WARNING, b'\xff', '255.255.255.255')
+          ]
+          * 5
+          + [mock.call(_FALLBACK_WARNING, 'Pacific Standard Time')],
+      ),
+  )
+  @mock.patch.object(sysprep, 'logging', autospec=True)
+  @mock.patch.object(sysprep.time, 'sleep', autospec=True)
+  @mock.patch.object(sysprep.timezone, 'Timezone', autospec=True)
+  @mock.patch('glazier.lib.buildinfo.BuildInfo', autospec=True)
+  @mock.patch.object(
+      sysprep.SetUnattendTimeZone, '_EditUnattend', autospec=True
+  )
+  @mock.patch.object(sysprep.dhcp, 'GetDhcpOption', autospec=True)
+  def test_set_unattend_time_zone_run_retries(
+      self,
+      mock_getdhcpoption,
+      mock_editunattend,
+      mock_buildinfo,
+      mock_timezone,
+      mock_sleep,
+      mock_logging,
+      responses,
+      expected_queries,
+      expected_sleeps,
+      expected_zone,
+      expected_warnings,
+  ):
+
+    # A single interface with no explicit DHCP server makes exactly one DHCP
+    # query per attempt.
+    mock_buildinfo.NetInterfaces.return_value = [
+        mock.Mock(
+            ip_address='127.0.0.1',
+            mac_address='11:22:33:44:55:66',
+            dhcp_server=None,
+        ),
+    ]
+    mock_timezone.return_value.TranslateZone.return_value = (
+        'New Zealand Standard Time'
+    )
+    mock_getdhcpoption.side_effect = responses
+    st = sysprep.SetUnattendTimeZone([], mock_buildinfo)
+
+    st.Run()
+
+    self.assertEqual(mock_getdhcpoption.call_count, expected_queries)
+    self.assertEqual(mock_sleep.call_args_list, expected_sleeps)
+    mock_editunattend.assert_called_once_with(st, expected_zone)
+    self.assertEqual(mock_logging.warning.call_args_list, expected_warnings)
 
 
 if __name__ == '__main__':
