@@ -149,7 +149,7 @@ def _YamlReader(path: str) -> Any:
     The parsed content of the yaml file.
   """
   try:
-    with open(path, 'r') as yaml_file:
+    with open(path, 'r', encoding='utf-8') as yaml_file:
       yaml_config = yaml.safe_load(yaml_file)
   except IOError as e:
     raise FileReadError(path) from e

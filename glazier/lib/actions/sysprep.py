@@ -37,13 +37,13 @@ class SetUnattendTimeZone(BaseAction):
     """
     lines = []
     try:
-      with open(unattend_path) as unattend:
+      with open(unattend_path, encoding='utf-8') as unattend:
         lines = unattend.readlines()
       lines = [
           re.sub('<TimeZone>.*?</TimeZone>', '<TimeZone>%s</TimeZone>' % zone,
                  l) for l in lines
       ]
-      with open(unattend_path, 'w') as unattend:
+      with open(unattend_path, 'w', encoding='utf-8') as unattend:
         unattend.write(''.join(lines))
     except IOError as e:
       raise ActionError('Unable to set time zone in unattend.xml') from e
