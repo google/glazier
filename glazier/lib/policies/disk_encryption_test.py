@@ -13,10 +13,11 @@
 # limitations under the License.
 """Tests for glazier.lib.policies.disk_encryption."""
 
+from unittest import mock
+
 from absl.testing import absltest
 from glazier.lib import test_utils
 from glazier.lib.policies import disk_encryption
-import mock
 
 
 class DiskEncryptionTest(test_utils.GlazierTestCase):

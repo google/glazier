@@ -14,11 +14,11 @@
 
 """Tests for glazier.lib.policies.os."""
 
+from unittest import mock
+
 from absl.testing import absltest
 from glazier.lib import test_utils
 from glazier.lib.policies import os
-
-import mock
 
 
 class OsTest(test_utils.GlazierTestCase):
